@@ -1,0 +1,2397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Phoenix — Team Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --or:#f97316;--or-dk:#c2410c;--or-lt:#fff7ed;
+  --brown:#92400e;--dark:#431407;
+  --g50:#fafafa;--g100:#f5f5f5;--g200:#e5e5e5;--g300:#d4d4d4;
+  --g400:#a3a3a3;--g500:#737373;--g600:#525252;--g800:#262626;
+  --red:#dc2626;--green:#16a34a;--blue:#2563eb;
+  --grad:linear-gradient(160deg,#431407 0%,#7c2d12 45%,#c2410c 100%);
+  --hgrad:linear-gradient(135deg,#92400e 0%,#c2410c 100%);
+}
+body{font-family:'Poppins',sans-serif;background:var(--grad);background-attachment:fixed;min-height:100vh;color:#111;}
+
+/* ── LOGIN ── */
+#pg-login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+.login-card{background:#fff;border-radius:20px;padding:44px 38px;width:100%;max-width:420px;box-shadow:0 24px 64px rgba(0,0,0,.4);text-align:center;position:relative;overflow:hidden;}
+.login-card::before{content:'';position:absolute;top:0;left:0;right:0;height:5px;background:var(--grad);}
+.login-logo{font-size:2.8rem;margin-bottom:10px;}
+.login-title{font-size:1.5rem;font-weight:700;color:#111;margin-bottom:2px;}
+.login-sub{font-size:.78rem;color:var(--g500);margin-bottom:28px;text-transform:uppercase;letter-spacing:1px;}
+.lerr{background:#fee2e2;color:var(--red);padding:9px 13px;border-radius:8px;font-size:.8rem;margin-bottom:12px;display:none;text-align:left;}
+.l-group{display:flex;flex-direction:column;gap:4px;margin-bottom:14px;text-align:left;}
+.l-group label{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--g600);}
+.l-group input,.l-group select{padding:10px 13px;border:2px solid var(--g200);border-radius:8px;font-size:.875rem;font-family:'Poppins',sans-serif;color:#111;outline:none;transition:border-color .15s;width:100%;background:#fff;}
+.l-group input:focus,.l-group select:focus{border-color:var(--or);}
+.btn-primary{width:100%;padding:13px;background:var(--hgrad);color:#fff;border:none;border-radius:8px;font-size:.95rem;font-weight:600;cursor:pointer;margin-top:6px;font-family:'Poppins',sans-serif;transition:opacity .15s;}
+.btn-primary:hover{opacity:.88;}
+
+/* ── APP SHELL ── */
+#pg-app{display:none;min-height:100vh;}
+.app-wrap{display:flex;min-height:100vh;}
+
+/* ── SIDEBAR ── */
+.sidebar{width:224px;min-height:100vh;background:rgba(8,3,1,.82);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;flex-shrink:0;border-right:1px solid rgba(255,255,255,.08);box-shadow:4px 0 24px rgba(0,0,0,.4);}
+.sb-brand{padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,.1);}
+.sb-logo{font-size:1.4rem;margin-bottom:4px;}
+.sb-title{font-size:1rem;font-weight:600;color:#fff;letter-spacing:-.3px;}
+.sb-sub{font-size:.6rem;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.8px;margin-top:1px;}
+.sb-sect{padding:14px 14px 4px;font-size:.58rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.35);}
+.sb-item{display:flex;align-items:center;gap:9px;padding:9px 14px;font-size:.82rem;font-weight:400;color:rgba(255,255,255,.6);cursor:pointer;border-left:3px solid transparent;transition:all .15s;margin:1px 0;}
+.sb-item:hover{background:rgba(255,255,255,.1);color:#fff;}
+.sb-item.active{background:rgba(255,255,255,.1);color:#FCD34D;border-left-color:#FCD34D;}
+.sb-badge{background:#dc2626;color:#fff;font-size:.55rem;font-weight:700;border-radius:999px;padding:2px 5px;margin-left:auto;}
+.sb-footer{margin-top:auto;padding:12px 14px;border-top:1px solid rgba(255,255,255,.1);}
+.sb-user-name{font-size:.78rem;font-weight:500;color:rgba(255,255,255,.85);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sb-user-role{font-size:.62rem;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.5px;}
+.btn-logout{width:100%;padding:7px;background:transparent;color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.18);border-radius:7px;font-size:.76rem;font-weight:500;cursor:pointer;font-family:'Poppins',sans-serif;margin-top:8px;transition:all .15s;}
+.btn-logout:hover{background:rgba(220,38,38,.7);color:#fff;border-color:rgba(220,38,38,.7);}
+
+/* ── CONTENT ── */
+.content{flex:1;min-width:0;margin:10px 10px 10px 0;border-radius:16px;overflow:hidden;background:#faf9f8;box-shadow:0 24px 64px rgba(0,0,0,.35);}
+.topbar{background:#fff;padding:14px 22px;border-bottom:3px solid var(--or);display:flex;align-items:center;justify-content:space-between;gap:12px;border-radius:16px 16px 0 0;}
+.tb-title{font-size:.98rem;font-weight:600;color:#111;}
+.tb-sub{font-size:.72rem;color:var(--g500);margin-top:2px;}
+.main{padding:20px 22px;}
+
+/* ── LABELS ── */
+.slbl{font-size:.62rem;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--g500);margin-bottom:10px;margin-top:18px;display:flex;align-items:center;gap:8px;}
+.slbl:first-child{margin-top:0;}
+.slbl::after{content:'';flex:1;height:1px;background:var(--g200);}
+
+/* ── STAT CARDS ── */
+.srow{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:18px;}
+.sc{background:#fff;border:1px solid var(--g200);border-radius:12px;padding:16px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.06);position:relative;overflow:hidden;}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--hgrad);}
+.sc.g::before{background:linear-gradient(90deg,#15803d,#22c55e);}
+.sc.b::before{background:linear-gradient(90deg,#1d4ed8,#60a5fa);}
+.sc.r::before{background:linear-gradient(90deg,#b91c1c,#ef4444);}
+.sc.a::before{background:linear-gradient(90deg,#92400e,#f59e0b);}
+.sc .sv{font-size:1.9rem;font-weight:700;color:#111;line-height:1;margin-bottom:3px;}
+.sc .sk{font-size:.6rem;font-weight:500;text-transform:uppercase;letter-spacing:.5px;color:var(--g500);}
+
+/* ── COVERAGE TILES ── */
+.cov-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:18px;}
+.cov-tile{background:#fff;border:2px solid var(--g200);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:all .15s;}
+.cov-tile:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(0,0,0,.1);}
+.cov-tile.done{border-color:#bbf7d0;background:#f0fdf4;}
+.cov-tile.pend{border-color:#fde68a;background:#fffbeb;}
+.cov-tile.over{border-color:#fecaca;background:#fff5f5;}
+.cov-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.82rem;font-weight:700;flex-shrink:0;}
+.done .cov-icon{background:#dcfce7;color:#15803d;}
+.pend .cov-icon{background:#fef3c7;color:#92400e;}
+.over .cov-icon{background:#fee2e2;color:#b91c1c;}
+.cov-name{font-size:.82rem;font-weight:600;color:#111;line-height:1.3;flex:1;}
+.cov-meta{font-size:.65rem;color:var(--g500);margin-top:2px;}
+.cov-bdg{font-size:.6rem;padding:3px 7px;border-radius:999px;font-weight:600;flex-shrink:0;}
+.done .cov-bdg{background:#dcfce7;color:#15803d;}
+.pend .cov-bdg{background:#fef3c7;color:#92400e;}
+.over .cov-bdg{background:#fee2e2;color:#b91c1c;}
+
+/* ── NTE ROW ── */
+.nte-row{background:#fff;border:1px solid var(--g200);border-radius:10px;padding:11px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 4px rgba(0,0,0,.04);}
+.nte-av{width:34px;height:34px;border-radius:50%;background:var(--hgrad);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:700;flex-shrink:0;}
+.nte-nm{font-size:.83rem;font-weight:600;color:#111;}
+.nte-tm{font-size:.67rem;color:var(--g500);}
+.nte-pills{display:flex;gap:5px;flex-wrap:wrap;flex:1;}
+.np{font-size:.63rem;font-weight:500;padding:3px 8px;border-radius:999px;}
+.np.perf{background:#fee2e2;color:#b91c1c;}
+.np.att{background:#fef9c3;color:#854d0e;}
+.np.idle{background:#e0f2fe;color:#0369a1;}
+.np.adh{background:#f0fdf4;color:#166534;}
+.np.ztp{background:#fce7f3;color:#9d174d;}
+.np.oth{background:#f5f5f5;color:var(--g600);}
+.nte-ct{font-size:.78rem;font-weight:700;min-width:52px;text-align:right;}
+.ct0{color:#16a34a;}.ct1{color:#854d0e;}.ct2{color:#b91c1c;}
+
+/* ── OVERDUE ── */
+.od-card{background:#fff;border:2px solid #fecaca;border-radius:12px;overflow:hidden;margin-bottom:18px;}
+.od-hdr{background:#fee2e2;padding:9px 14px;}
+.od-hdr span{font-size:.82rem;font-weight:600;color:#b91c1c;}
+.od-item{padding:11px 14px;border-bottom:1px solid #fef2f2;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.od-item:last-child{border-bottom:none;}
+.od-agent{font-size:.82rem;font-weight:600;color:#111;min-width:140px;}
+.od-days{background:#fee2e2;color:#b91c1c;font-size:.62rem;font-weight:700;padding:3px 8px;border-radius:999px;}
+.od-empty{padding:16px;text-align:center;font-size:.8rem;color:#16a34a;font-weight:500;}
+
+/* ── WOW ── */
+.wow-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:18px;}
+.wow-c{background:#fff;border:1px solid var(--g200);border-radius:12px;padding:14px 16px;box-shadow:0 1px 6px rgba(0,0,0,.05);}
+.wow-c h4{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--g500);margin-bottom:10px;}
+.wrow{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--g100);font-size:.8rem;}
+.wrow:last-child{border-bottom:none;padding-top:8px;font-weight:600;}
+.wv.up{color:#16a34a;}.wv.dn{color:#dc2626;}.wv.nt{color:var(--g500);}
+
+/* ── AGENT: 4-WEEK TRAILING ── */
+.trail-card{background:#fff;border:1px solid var(--g200);border-radius:14px;padding:18px;margin-bottom:18px;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+.trail-hdr{font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--g500);margin-bottom:14px;padding-bottom:9px;border-bottom:2px solid var(--or);}
+.trail-weeks{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.tw{background:var(--g50);border:2px solid var(--g200);border-radius:10px;padding:12px;text-align:center;position:relative;overflow:hidden;transition:border-color .15s;}
+.tw:hover{border-color:var(--or);}
+.tw.latest{border-color:var(--or);background:var(--or-lt);}
+.tw.latest::before{content:'Latest';position:absolute;top:0;left:0;right:0;background:var(--or);color:#fff;font-size:.55rem;font-weight:700;padding:2px;text-transform:uppercase;letter-spacing:.5px;}
+.tw.latest .tw-inn{margin-top:12px;}
+.tw-wk{font-size:.7rem;font-weight:600;color:var(--g500);margin-bottom:5px;text-transform:uppercase;}
+.tw-qa{font-size:1.7rem;font-weight:700;line-height:1;margin-bottom:2px;}
+.tw-qa.na{font-size:.95rem;color:var(--g400);}
+.tw-lbl{font-size:.55rem;text-transform:uppercase;letter-spacing:.4px;color:var(--g400);}
+.tw-mets{display:flex;flex-direction:column;gap:3px;margin-top:7px;}
+.tw-m{font-size:.63rem;color:var(--g600);display:flex;justify-content:space-between;}
+.tw-m strong{color:#111;}
+.tw-bar-w{height:4px;background:var(--g200);border-radius:2px;margin-top:5px;overflow:hidden;}
+.tw-bar{height:100%;background:linear-gradient(90deg,var(--brown),var(--or));border-radius:2px;transition:width .6s ease;}
+.tw-trend{font-size:.64rem;margin-top:4px;font-weight:600;}
+.tw-trend.up{color:#16a34a;}.tw-trend.dn{color:#dc2626;}.tw-trend.nt{color:var(--g500);}
+.tw-date{font-size:.58rem;color:var(--g400);margin-top:3px;}
+.tw-none{font-size:.7rem;color:var(--g400);font-style:italic;padding:10px 0;}
+
+/* ── MY COACHING LOG ── */
+.my-log{background:#fff;border:1px solid var(--g200);border-radius:12px;padding:15px 16px;margin-bottom:12px;box-shadow:0 1px 6px rgba(0,0,0,.05);border-left:4px solid var(--or);transition:border-left-color .2s;}
+.my-log.acked{border-left-color:#22c55e;}
+.my-log.committed{border-left-color:#2563eb;}
+.ml-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;gap:8px;}
+.ml-title{font-size:.88rem;font-weight:600;color:#111;}
+.ml-wk{background:var(--or);color:#fff;border-radius:999px;padding:2px 8px;font-size:.63rem;font-weight:600;flex-shrink:0;}
+.ml-date{font-size:.68rem;color:var(--g500);margin-bottom:6px;}
+.ml-mets{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px;}
+.ml-met{font-size:.7rem;color:var(--g500);background:var(--g100);padding:3px 8px;border-radius:6px;}
+.ml-met strong{color:#111;}
+.ml-notes{font-size:.78rem;color:var(--g600);line-height:1.6;margin-bottom:10px;white-space:pre-line;}
+.ml-foot{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+.ack-btn{padding:6px 14px;border-radius:999px;font-size:.72rem;font-weight:600;cursor:pointer;border:2px solid;font-family:'Poppins',sans-serif;transition:all .15s;}
+.ack-btn.need{background:#fef3c7;color:#92400e;border-color:#fde68a;}
+.ack-btn.need:hover{background:#FCD34D;color:var(--dark);border-color:#FCD34D;}
+.ack-btn.done{background:#dcfce7;color:#15803d;border-color:#bbf7d0;cursor:default;}
+.ack-tag{font-size:.62rem;color:#16a34a;font-weight:500;}
+.commit-tag{font-size:.62rem;color:#2563eb;font-weight:500;}
+
+/* ── COMMITMENT FORM ── */
+.commit-form{background:linear-gradient(135deg,#eff6ff,#dbeafe);border:2px solid #bfdbfe;border-radius:12px;padding:16px;margin-top:10px;}
+.cf-title{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#1e40af;margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+.cf-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.cf-g{display:flex;flex-direction:column;gap:3px;}
+.cf-g label{font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:#1e40af;}
+.cf-g textarea{padding:8px 10px;border:2px solid #bfdbfe;border-radius:7px;font-size:.8rem;font-family:'Poppins',sans-serif;color:#111;outline:none;resize:none;min-height:60px;transition:border-color .15s;background:#fff;}
+.cf-g textarea:focus{border-color:#2563eb;}
+.cf-g.full{grid-column:1/-1;}
+.commit-hint{font-size:.68rem;color:#3b82f6;font-weight:400;margin-left:4px;}
+.btn-submit-commit{padding:8px 18px;background:#2563eb;color:#fff;border:none;border-radius:7px;font-size:.76rem;font-weight:600;cursor:pointer;font-family:'Poppins',sans-serif;transition:opacity .15s;}
+.btn-submit-commit:hover{opacity:.88;}
+.btn-submit-commit:disabled{opacity:.5;cursor:default;}
+.commit-saved{background:#eff6ff;border:2px solid #bfdbfe;border-radius:12px;padding:12px 14px;margin-top:8px;}
+.cs-hdr{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:#1e40af;margin-bottom:10px;}
+.cs-item{margin-bottom:8px;}
+.cs-lbl{font-size:.62rem;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:#3b82f6;}
+.cs-val{font-size:.8rem;color:#111;line-height:1.6;margin-top:2px;}
+
+/* ── MY NTE / FT ── */
+.my-nte{background:#fff;border:1px solid var(--g200);border-radius:12px;padding:13px 15px;margin-bottom:8px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 4px rgba(0,0,0,.04);}
+.mn-ic{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0;}
+.mn-ic.perf{background:#fee2e2;}.mn-ic.att{background:#fef9c3;}.mn-ic.idle{background:#e0f2fe;}.mn-ic.adh{background:#f0fdf4;}.mn-ic.oth{background:#f5f5f5;}
+.mn-body{flex:1;}
+.mn-title{font-size:.83rem;font-weight:600;color:#111;}
+.mn-date{font-size:.67rem;color:var(--g500);margin-top:2px;}
+.mn-bdg{font-size:.63rem;font-weight:600;padding:4px 10px;border-radius:999px;}
+.mn-bdg.perf{background:#fee2e2;color:#b91c1c;}.mn-bdg.att{background:#fef9c3;color:#854d0e;}.mn-bdg.idle{background:#e0f2fe;color:#0369a1;}.mn-bdg.adh{background:#f0fdf4;color:#166534;}.mn-bdg.oth{background:#f5f5f5;color:var(--g600);}
+.my-ft{background:#fff;border:1px solid var(--g200);border-radius:12px;padding:13px 15px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,.04);}
+.ft-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;gap:8px;}
+.ft-topic{font-size:.83rem;font-weight:600;color:#111;flex:1;}
+.ft-st{font-size:.62rem;font-weight:600;padding:3px 8px;border-radius:999px;}
+.ft-st.pend{background:#fef3c7;color:#92400e;}.ft-st.done{background:#dcfce7;color:#15803d;}.ft-st.over{background:#fee2e2;color:#b91c1c;}
+.ft-opp{font-size:.76rem;color:var(--g600);line-height:1.5;}
+.ft-date{font-size:.67rem;color:var(--g500);margin-top:5px;}
+.ft-date.over{color:#b91c1c;font-weight:600;}
+
+/* ── OM TEAM CARDS ── */
+.team-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-bottom:20px;}
+.team-card{background:#fff;border:1px solid var(--g200);border-radius:14px;padding:16px;cursor:pointer;transition:all .15s;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+.team-card:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,0,0,.12);border-color:var(--or);}
+.tc-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+.tc-name{font-size:.88rem;font-weight:700;color:#111;line-height:1.3;}
+.tc-cnt{font-size:.65rem;color:var(--g500);background:var(--g100);padding:3px 8px;border-radius:999px;}
+.tc-prog-w{height:6px;background:var(--g200);border-radius:3px;margin-bottom:10px;overflow:hidden;}
+.tc-prog{height:100%;background:var(--hgrad);border-radius:3px;transition:width .5s ease;}
+.tc-stats{display:flex;gap:6px;flex-wrap:wrap;}
+.tc-s{font-size:.63rem;font-weight:500;padding:3px 7px;border-radius:999px;}
+.tc-s.g{background:#dcfce7;color:#15803d;}
+.tc-s.r{background:#fee2e2;color:#b91c1c;}
+.tc-s.o{background:#fef3c7;color:#92400e;}
+.tc-s.b{background:#eff6ff;color:#1e40af;}
+table td{border-bottom:1px solid var(--g100);}
+table tr:last-child td{border-bottom:none;}
+
+/* ── SESSION CARDS (SheetDB coaching logs) ── */
+.session-card{background:#fff;border:1px solid var(--g200);border-left:4px solid var(--or);border-radius:12px;margin-bottom:10px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.04);}
+.sc-head{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;cursor:pointer;transition:background .12s;user-select:none;}
+.sc-head:hover{background:#fafafa;}
+.sc-body{padding:0 16px 14px;border-top:1px solid var(--g100);}
+.sc-section{margin-top:12px;}
+.sc-lbl{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--g500);margin-bottom:5px;display:flex;align-items:center;gap:6px;}
+.sc-text{font-size:.8rem;color:#111;line-height:1.55;background:var(--g50);border-radius:8px;padding:8px 11px;white-space:pre-wrap;word-break:break-word;}
+.sc-cm{background:#eff6ff;border:1px solid #bfdbfe;border-radius:9px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;}
+.cm-row{display:flex;gap:0;flex-direction:column;}
+.cm-key{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#1e40af;margin-bottom:2px;}
+.cm-val{font-size:.8rem;color:#111;line-height:1.5;background:#fff;border-radius:6px;padding:6px 9px;}
+.sessions-filter{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center;}
+.sf-btn{padding:5px 13px;border-radius:999px;font-size:.72rem;font-weight:600;cursor:pointer;border:2px solid var(--g200);background:#fff;color:var(--g600);font-family:'Poppins',sans-serif;transition:all .15s;}
+.sf-btn:hover,.sf-btn.active{background:var(--or);color:#fff;border-color:var(--or);}
+
+/* ── EMPTY ── */
+.empty{text-align:center;padding:36px 20px;color:var(--g400);}
+.empty .ei{font-size:2.4rem;margin-bottom:8px;}
+.empty p{font-size:.82rem;}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:20px;right:20px;background:var(--hgrad);color:#fff;padding:10px 16px;border-radius:8px;font-size:.82rem;font-weight:500;transform:translateY(80px);opacity:0;transition:all .25s;z-index:9999;border-left:4px solid #FCD34D;box-shadow:0 8px 24px rgba(0,0,0,.3);}
+#toast.on{transform:translateY(0);opacity:1;}
+#loading{position:fixed;top:0;left:0;height:3px;background:var(--or);width:0%;transition:width .3s;z-index:9999;}
+.spin{display:inline-block;width:18px;height:18px;border:3px solid rgba(249,115,22,.3);border-top-color:var(--or);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-view{display:flex;align-items:center;justify-content:center;min-height:300px;gap:12px;color:var(--g500);font-size:.85rem;}
+.hidden{display:none!important;}
+.chip{display:inline-block;padding:3px 9px;border-radius:999px;font-size:.68rem;font-weight:500;background:var(--or-lt);color:var(--or-dk);border:1px solid #fed7aa;}
+@keyframes pop{from{transform:translateY(16px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+</style>
+</head>
+<body>
+
+<div id="loading"></div>
+<div id="toast"></div>
+
+<!-- ════════════════════════════════════ LOGIN ════════════════════════════════════ -->
+<div id="pg-login">
+  <div class="login-card">
+    <div class="login-logo">🔥</div>
+    <div class="login-title">PHOENIX</div>
+    <div class="login-sub">Team Portal</div>
+    <div class="lerr" id="lerr"></div>
+    <div class="l-group">
+      <label>Work Email</label>
+      <input type="email" id="l-email" placeholder="yourname@homeaglow.com" autocomplete="off"/>
+    </div>
+    <button class="btn-primary" onclick="doLogin()">Access Portal →</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════ APP ════════════════════════════════════ -->
+<div id="pg-app">
+  <div class="app-wrap">
+
+    <!-- SIDEBAR -->
+    <nav class="sidebar">
+      <div class="sb-brand">
+        <div class="sb-logo">🔥</div>
+        <div class="sb-title">PHOENIX</div>
+        <div class="sb-sub">Team Portal</div>
+      </div>
+
+      <!-- OM NAV -->
+      <div id="om-nav" class="hidden">
+        <div class="sb-sect">OM OVERVIEW</div>
+        <div class="sb-item active" onclick="showTab('om','coverage')"><span>🏢</span><span>All Teams</span></div>
+        <div class="sb-item" onclick="showTab('om','sessions')"><span>📋</span><span>All Sessions</span></div>
+        <div class="sb-item" onclick="showTab('om','nte')"><span>📝</span><span>NTE Overview</span></div>
+        <div class="sb-item" onclick="showTab('om','wow')"><span>📈</span><span>Cross-Team WoW</span></div>
+        <div class="sb-sect">MANAGEMENT</div>
+        <div class="sb-item" onclick="showTab('om','roster')"><span>👥</span><span>Roster Manager</span></div>
+      </div>
+
+      <!-- TL NAV -->
+      <div id="tl-nav" class="hidden">
+        <div class="sb-sect">OVERVIEW</div>
+        <div class="sb-item active" onclick="showTab('tl','coverage')"><span>📊</span><span>Team Dashboard</span></div>
+        <div class="sb-item" onclick="showTab('tl','sessions')"><span>📋</span><span>Team Sessions</span></div>
+        <div class="sb-item" onclick="showTab('tl','nte')"><span>📝</span><span>NTE Summary</span></div>
+        <div class="sb-item" onclick="showTab('tl','wow')"><span>📈</span><span>Week-over-Week</span></div>
+        <div class="sb-sect">MANAGEMENT</div>
+        <div class="sb-item" onclick="showTab('tl','roster')"><span>👥</span><span>Team Roster</span></div>
+      </div>
+
+      <!-- AGENT NAV -->
+      <div id="agent-nav" class="hidden">
+        <div class="sb-sect">MY PORTAL</div>
+        <div class="sb-item active" onclick="showTab('agent','perf')"><span>📊</span><span>My Performance</span></div>
+        <div class="sb-item" onclick="showTab('agent','logs')" id="nav-logs"><span>📋</span><span>My Coaching Logs</span></div>
+        <div class="sb-item" onclick="showTab('agent','commits')"><span>📌</span><span>My Commitments</span></div>
+      </div>
+
+      <div class="sb-footer">
+        <div class="sb-user-name" id="sb-name">—</div>
+        <div class="sb-user-role" id="sb-role">—</div>
+        <button class="btn-logout" onclick="doLogout()">Sign Out</button>
+      </div>
+    </nav>
+
+    <!-- CONTENT -->
+    <div class="content">
+      <div class="topbar">
+        <div>
+          <div class="tb-title" id="tb-title">Dashboard</div>
+          <div class="tb-sub" id="tb-sub">Loading…</div>
+        </div>
+        <div class="chip" id="tb-week">—</div>
+      </div>
+      <div class="main" id="main-body">
+        <div class="loading-view"><div class="spin"></div> Loading your data…</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════ SCRIPT ════════════════════════════════════ -->
+<script>
+/* ─────────────────────────────────────────────────────────────────
+   FIREBASE CONFIG — REAL PROJECT (same as phoenix_coaching_log.html)
+───────────────────────────────────────────────────────────────── */
+const FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyDtvFa8jjJh6_MeYCT6hB7dw_wTM-xjas4",
+  authDomain:        "phoenix-coaching.firebaseapp.com",
+  projectId:         "phoenix-coaching",
+  storageBucket:     "phoenix-coaching.firebasestorage.app",
+  messagingSenderId: "930144157431",
+  appId:             "1:930144157431:web:94bdd4450432bdb55addf2"
+};
+
+/* ─────────────────────────────────────────────────────────────────
+   ROSTER — keep in sync with phoenix_coaching_log.html
+───────────────────────────────────────────────────────────────── */
+const OM_EMAIL = 'milettegaw@homeaglowsales.com';
+
+// TL email → team name
+const TL_TEAM_MAP = {
+  'reyoglimen@homeaglowsales.com':       'Team Jhay Oglimen',
+  'jumardelacruz@homeaglowsales.com':    'Team Jumz Delacruz',
+  'florencellait@homeaglowsales.com':    'Team Florence Llait',
+  'dopearbundang@homeaglowsalestwo.com': 'Phoenix Transition Team',
+  'jerseydeguzman@homeaglowsalesone.com':'Team Jersey Deguzman',
+};
+
+// Agent email → full name (from main app EMAIL_TO_AGENT)
+const EMAIL_TO_AGENT = {
+  'jardenepetines@homeaglowsalestwo.com':'Jardene Petines',
+  'cjgarces@homeaglowsales.com':'CJ Garces',
+  'clentvaldez@homeaglowsalestwo.com':'Clent Valdez',
+  'jessafrayna@homeaglowsalestwo.com':'Jessa Frayna',
+  'alimsinha@homeaglowsalestwo.com':'Alim Sinha',
+  'angelikagonzales@homeaglowsalestwo.com':'Angelika Gonzales',
+  'rafaelviray@homeaglowsalestwo.com':'Rafael Viray',
+  'renatobisquerajr@homeaglowsalestwo.com':'Renato Bisquera Jr',
+  'kingmartinez@homeaglowsales.com':'King Martinez',
+  'leslyfaustino@homeaglowsalestwo.com':'Lesly Faustino',
+  'amerismael@homeaglowsalesone.com':'Amer Ismael',
+  'erickacondecion@homeaglowsales.com':'Ericka Condecion',
+  'mariomapa@homeaglowsales.com':'Mario Mapa',
+  'shirlybastasa@homeaglowsalesone.com':'Shirly Bastasa',
+  'shimonnipigaredo@homeaglowsales.com':'Shimonni Pigaredo',
+  'jennyeslabra@homeaglowsalestwo.com':'Jenny Eslabra',
+  'jomarkilme@homeaglowsalestwo.com':'Jomar Kilme',
+  'melcahparas@homeaglowsalestwo.com':'Melcah Paras',
+  'cindybalazuela@homeaglowsales.com':'Cindy Balazuela',
+  'ma.christinadiaz@homeaglowsalesone.com':'Ma. Christina Diaz',
+  'jennylynbalagtas@homeaglowsalestwo.com':'Jennylyn Balagtas',
+  'jedelynberio@homeaglowsalestwo.com':'Jedelyn Berio',
+  'braddperalta@homeaglowsalestwo.com':'Bradd Peralta',
+  'jaygabales@homeaglowsalestwo.com':'Jay Gabales',
+  'diorezatomilloso@homeaglowsales.com':'Dioreza Tomilloso',
+  'chesterbanluta@homeaglowsales.com':'Chester Banuta',
+  'lestermamaril@homeaglowsalesone.com':'Lester Mamaril',
+  'mariefevillanueva@homeaglowsalestwo.com':'Mariefe Villanueva',
+  'angelomiranda@homeaglowsales.com':'Angelo Miranda',
+  'joanlibongcogon@homeaglowsales.com':'Joan Libongcogon',
+  'gracedominaro@homeaglowsalesone.com':'Grace Dominaro',
+  'haroldlaz@homeaglowsales.com':'Harold Laz',
+  'nealmirasol@homeaglowsalesone.com':'Neal Jason Mirasol',
+  'jhayrenvillanueva@homeaglowsalesone.com':'Jhayren Villanueva',
+  'giomarginer@homeaglowsalestwo.com':'Giomar Giner',
+  'leslielogan@homeaglowsalestwo.com':'Leslie Logan',
+  'bienylsalvador@homeaglowsalestwo.com':'Bienyl Salvador',
+  'roxannehila@homeaglowsalestwo.com':'Roxanne Hila',
+  'lancedabu@homeaglowsales.com':'Lance Dabu',
+  'edinrivas@homeaglowsales.com':'Edin Rivas',
+};
+
+const DEFAULT_TLS = ['Team Jhay Oglimen','Team Jumz Delacruz','Team Florence Llait','Team Jersey Deguzman','Phoenix Transition Team'];
+
+/* ─────────────────────────────────────────────────────────────────
+   GLOBALS
+───────────────────────────────────────────────────────────────── */
+let FSB = null, FB_READY = false;
+let CU  = {};
+let rosterAgents = []; // [{name, tl}]
+let DB  = { logs:[], nte:[], ft:[], cm:{} };
+let CURRENT_WEEK = '';
+let _unsubs = [];
+let sheetRows = []; // normalized rows from SheetDB (coaching logs)
+
+/* ─────────────────────────────────────────────────────────────────
+   INIT
+───────────────────────────────────────────────────────────────── */
+(function init(){
+  const n = new Date();
+  const jan1 = new Date(n.getFullYear(),0,1);
+  const wk = Math.ceil(((n-jan1)/86400000 + jan1.getDay()+1)/7);
+  CURRENT_WEEK = 'WK'+wk;
+  document.getElementById('tb-week').textContent = CURRENT_WEEK;
+
+  // Check saved session
+  const saved = sessionStorage.getItem('px_portal_user');
+  if(saved){ try{ CU=JSON.parse(saved); }catch(e){} }
+
+  // Init Firebase
+  try{
+    if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    FSB = firebase.firestore();
+    FB_READY = true;
+  }catch(e){ console.warn('Firebase init failed:', e); }
+
+  if(CU.email) startApp();
+})();
+
+/* ─────────────────────────────────────────────────────────────────
+   AUTH
+───────────────────────────────────────────────────────────────── */
+function doLogin(){
+  const email = document.getElementById('l-email').value.trim().toLowerCase();
+  if(!email){ showErr('Please enter your email address.'); return; }
+
+  if(email === OM_EMAIL){
+    CU = { email, role:'om', name:'Operations Manager' };
+    sessionStorage.setItem('px_portal_user', JSON.stringify(CU));
+    startApp();
+    return;
+  }
+
+  const tlTeam = TL_TEAM_MAP[email];
+  if(tlTeam){
+    CU = { email, role:'tl', team: tlTeam, name: tlTeam };
+    sessionStorage.setItem('px_portal_user', JSON.stringify(CU));
+    startApp();
+    return;
+  }
+
+  const agentName = EMAIL_TO_AGENT[email];
+  if(!agentName){
+    showErr('Email not found in the Phoenix roster. Please check your email or contact your TL.');
+    return;
+  }
+
+  CU = { email, role:'agent', name: agentName, agentName };
+  sessionStorage.setItem('px_portal_user', JSON.stringify(CU));
+  startApp();
+}
+
+function doLogout(){
+  _unsubs.forEach(u=>u()); _unsubs=[];
+  sessionStorage.removeItem('px_portal_user');
+  location.reload();
+}
+
+function showErr(msg){
+  const el=document.getElementById('lerr');
+  el.textContent=msg; el.style.display='block';
+  setTimeout(()=>el.style.display='none',5000);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   START APP
+───────────────────────────────────────────────────────────────── */
+function startApp(){
+  document.getElementById('pg-login').style.display='none';
+  document.getElementById('pg-app').style.display='block';
+  document.getElementById('sb-name').textContent = CU.name || CU.email;
+  const roleLabel = CU.role==='om' ? 'Operations Manager' : CU.role==='tl' ? 'Team Lead' : 'Sales Agent';
+  document.getElementById('sb-role').textContent = roleLabel;
+  document.getElementById('tb-sub').textContent  = (CU.agentName||CU.name) + ' · ' + CURRENT_WEEK;
+
+  // Load SheetDB coaching data for all roles
+  loadSheetDB();
+
+  if(CU.role==='om'){
+    document.getElementById('om-nav').classList.remove('hidden');
+    loadOMData();
+  } else if(CU.role==='tl'){
+    document.getElementById('tl-nav').classList.remove('hidden');
+    loadTLData();
+  } else {
+    document.getElementById('agent-nav').classList.remove('hidden');
+    loadAgentData();
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   DATA — OM (all teams, no filter)
+───────────────────────────────────────────────────────────────── */
+let OM_roster = {}; // teamName → [{name,tl,email}]
+let OM_db = { logs:[], nte:[], ft:[], cm:{}, rawRoster:[] };
+
+function loadOMData(){
+  setBar(20);
+  if(!FB_READY){ useDemoOM(); return; }
+  _unsubs.forEach(u=>u()); _unsubs=[];
+
+  const u1 = FSB.collection('px_roster').onSnapshot(snap=>{
+    OM_db.rawRoster=[];
+    snap.docs.forEach(doc=>{
+      const d=doc.data();
+      if(d.agents){
+        Object.entries(d.agents.teamLead||{}).forEach(([name,tl])=>{
+          OM_db.rawRoster.push({name,tl,email:''});
+        });
+      }
+      // flat format: {name, tl, email}
+      if(d.name && d.tl) OM_db.rawRoster.push({name:d.name,tl:d.tl,email:d.email||''});
+    });
+    rebuildOMRoster();
+  },()=>{ rebuildOMRoster(); });
+
+  const u2 = FSB.collection('px_logs').onSnapshot(snap=>{
+    OM_db.logs = snap.docs.map(d=>({...d.data(),id:d.id}));
+    setBar(60); renderIfOM();
+  },()=>{});
+
+  const u3 = FSB.collection('px_nte').onSnapshot(snap=>{
+    OM_db.nte = snap.docs.map(d=>({...d.data(),id:d.id}));
+    renderIfOM();
+  },()=>{});
+
+  const u4 = FSB.collection('px_ft').onSnapshot(snap=>{
+    OM_db.ft = snap.docs.map(d=>({...d.data(),id:d.id}));
+    renderIfOM();
+  },()=>{});
+
+  const u5 = FSB.collection('px_cm').onSnapshot(snap=>{
+    OM_db.cm={};
+    snap.docs.forEach(d=>OM_db.cm[d.id]=d.data());
+    renderIfOM();
+  },()=>{});
+
+  _unsubs=[u1,u2,u3,u4,u5];
+  setTimeout(()=>{ setBar(100); rebuildOMRoster(); showTab('om','coverage'); },2500);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   SHEETDB — live coaching logs (read-only)
+───────────────────────────────────────────────────────────────── */
+const SHEETDB_URL = 'https://sheetdb.io/api/v1/hxgegag6py2q0';
+
+// Normalize name typos/variants from the sheet to match AGENT_REGISTRY
+const SHEET_NAME_FIXES = {
+  'Bradd Peralta':  'Brad Peralta',
+  'Harold Laz':     'Harold Diaz',
+  'Lester Mamaril': 'Lester Mamari',
+  'Chester Banuta': 'Chester Baniluta',
+};
+function normalizeAgentName(name){
+  const n=(name||'').trim();
+  return SHEET_NAME_FIXES[n]||n;
+}
+function normalizeSheetRow(r){
+  return {
+    id:           r.ID||'',
+    date:         r.DATE||'',
+    agent:        normalizeAgentName(r.Agent||''),
+    rawAgent:     r.Agent||'',
+    team:         r['Team Lead']||'',
+    wk:           r['WK#']||'',
+    leads:        r['Leads ']||r['Leads']||'',
+    connect:      r['Connect']||'',
+    sales:        r['Sales']||'',
+    tcr:          r['TCR%']||'',
+    csr:          r['CSR%']||'',
+    cvr:          r['CVR%']||'',
+    wk2cvr:       r['WK2 CVR%']||'',
+    highlights:   r['Hihglights']||r['Highlights']||'',
+    opportunities:r['Opportunities']||'',
+    notes:        r['Coaching Notes']||'',
+    sit:          r['Commitment - Situation']||'',
+    task:         r['Commitment - Task']||'',
+    action:       r['Commitment - Action']||'',
+    result:       r['Commitment - Result']||'',
+    cmTL:         r['Commitment TL']||'',
+    cmStatus:     r['Commitment Status']||'',
+    agentEmail:   r['Agent Email']||'',
+    loggedAt:     r['Logged At']||'',
+  };
+}
+
+async function loadSheetDB(){
+  try{
+    const res=await fetch(SHEETDB_URL);
+    const data=await res.json();
+    sheetRows=(data||[]).map(normalizeSheetRow)
+      .filter(r=>r.agent)
+      .sort((a,b)=>new Date(b.date)-new Date(a.date));
+  }catch(e){
+    console.warn('SheetDB load failed:',e);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   SESSION CARD — expandable coaching log card from SheetDB
+───────────────────────────────────────────────────────────────── */
+function buildSessionCard(row, opts){
+  opts=opts||{};
+  const showAgent=!!opts.showAgent;
+  const showTeam=!!opts.showTeam;
+  const noWrap=!!opts.noWrap; // if true, skip the outer .session-card div (caller wraps)
+  const uid='sc'+Math.random().toString(36).slice(2,7);
+  const hasCm=row.sit||row.task||row.action||row.result;
+  const hasContent=row.highlights||row.opportunities||row.notes||hasCm;
+
+  const mets=[];
+  if(row.leads)    mets.push(`<span class="ml-met">Leads <strong>${esc(row.leads)}</strong></span>`);
+  if(row.connect)  mets.push(`<span class="ml-met">Connect <strong>${esc(row.connect)}</strong></span>`);
+  if(row.sales)    mets.push(`<span class="ml-met">Sales <strong>${esc(row.sales)}</strong></span>`);
+  if(row.tcr)      mets.push(`<span class="ml-met">TCR <strong>${pct(row.tcr)}</strong></span>`);
+  if(row.csr)      mets.push(`<span class="ml-met">CSR <strong>${pct(row.csr)}</strong></span>`);
+  if(row.cvr)      mets.push(`<span class="ml-met">CVR <strong>${pct(row.cvr)}</strong></span>`);
+  if(row.wk2cvr)   mets.push(`<span class="ml-met">WK2 CVR <strong>${pct(row.wk2cvr)}</strong></span>`);
+
+  const cmStatus=row.cmStatus||'';
+  const cmBadge=cmStatus?`<span style="display:inline-block;padding:2px 9px;border-radius:10px;font-size:.63rem;font-weight:700;${cmStatus.toLowerCase().includes('done')||cmStatus.toLowerCase().includes('met')?'background:#dcfce7;color:#15803d':'background:#fef3c7;color:#92400e'}">${esc(cmStatus)}</span>`:'';
+
+  const inner=`
+    <div class="sc-head" onclick="(function(u){var b=document.getElementById('b'+u);var a=document.getElementById('a'+u);if(!b)return;var open=b.style.display!=='none';b.style.display=open?'none':'block';if(a)a.textContent=open?'▼ details':'▲ close';}('${uid}'))">
+      <div style="flex:1;min-width:0;">
+        ${showAgent?`<div style="font-size:.9rem;font-weight:600;color:#111;margin-bottom:3px;">${esc(row.agent)}</div>`:''}
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <span style="font-size:.74rem;color:var(--g500);">${fd(row.date)}</span>
+          ${showTeam&&row.team?`<span style="font-size:.7rem;color:var(--or);font-weight:500;">· ${esc(row.team)}</span>`:''}
+          ${row.wk?`<span style="font-size:.67rem;background:#f3f4f6;color:var(--g600);padding:2px 8px;border-radius:8px;font-weight:600;">${esc(row.wk)}</span>`:''}
+        </div>
+        ${mets.length?`<div class="ml-mets" style="margin-top:5px;">${mets.join('')}</div>`:''}
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
+        ${cmBadge}
+        ${hasContent?`<span id="a${uid}" style="font-size:.63rem;color:var(--g400);">▼ details</span>`:''}
+      </div>
+    </div>
+    ${hasContent?`<div class="sc-body" id="b${uid}" style="display:none;">
+      ${row.highlights?`<div class="sc-section"><div class="sc-lbl">✨ Highlights</div><div class="sc-text">${esc(row.highlights)}</div></div>`:''}
+      ${row.opportunities?`<div class="sc-section"><div class="sc-lbl">🎯 Opportunities</div><div class="sc-text">${esc(row.opportunities)}</div></div>`:''}
+      ${row.notes?`<div class="sc-section"><div class="sc-lbl">📝 Coaching Notes</div><div class="sc-text">${esc(row.notes)}</div></div>`:''}
+      ${hasCm?`<div class="sc-section">
+        <div class="sc-lbl">📌 Commitment <span style="text-transform:none;font-weight:400;font-size:.7rem;letter-spacing:0;color:var(--g400);">(S.T.A.R.)</span> ${cmBadge}</div>
+        <div class="sc-cm">
+          ${row.sit?   `<div class="cm-row"><div class="cm-key">S — Situation</div><div class="cm-val">${esc(row.sit)}</div></div>`:''}
+          ${row.task?  `<div class="cm-row"><div class="cm-key">T — Task</div><div class="cm-val">${esc(row.task)}</div></div>`:''}
+          ${row.action?`<div class="cm-row"><div class="cm-key">A — Action</div><div class="cm-val">${esc(row.action)}</div></div>`:''}
+          ${row.result?`<div class="cm-row"><div class="cm-key">R — Result</div><div class="cm-val">${esc(row.result)}</div></div>`:''}
+          ${row.cmTL?  `<div style="margin-top:4px;padding-top:8px;border-top:1px solid #bfdbfe;font-size:.72rem;color:#1e40af;"><strong>TL Commitment:</strong> ${esc(row.cmTL)}</div>`:''}
+        </div>
+      </div>`:''}
+    </div>`:''}`;
+  return noWrap ? inner : `<div class="session-card" id="${uid}" data-wk="${esc(row.wk||'')}" data-team="${esc((AGENT_REGISTRY[row.agent]||{}).tl||row.team||'')}">${inner}</div>`;
+}
+
+function buildWkSelect(rows, onchange_expr){
+  const wks=[...new Set(rows.map(r=>r.wk).filter(Boolean))].sort((a,b)=>{
+    const na=parseInt((a||'').replace('WK','')), nb=parseInt((b||'').replace('WK',''));
+    return nb-na; // newest first
+  });
+  if(wks.length<2) return ''; // no point showing filter for 0-1 weeks
+  const opts=wks.map(w=>`<option value="${esc(w)}"${w===CURRENT_WEEK?'':''} >${esc(w)}</option>`).join('');
+  return `<div style="display:flex;align-items:center;gap:6px;">
+    <span style="font-size:.72rem;color:var(--g500);font-weight:600;white-space:nowrap;">Filter WK#:</span>
+    <select onchange="${onchange_expr}" style="padding:5px 10px;border:1.5px solid var(--g200);border-radius:8px;font-size:.74rem;font-family:'Poppins',sans-serif;color:#111;background:#fff;cursor:pointer;outline:none;">
+      <option value="">All Weeks</option>
+      ${opts}
+    </select>
+  </div>`;
+}
+
+function filterSessionsByWk(wk){
+  const cards=document.querySelectorAll('#main-body [data-wk]');
+  cards.forEach(c=>{
+    c.style.display=(!wk||c.dataset.wk===wk)?'':'none';
+  });
+  // Update per-team section labels visibility in OM all-sessions view
+  const lbls=document.querySelectorAll('#main-body .slbl[data-team-lbl]');
+  lbls.forEach(lbl=>{
+    const team=lbl.dataset.teamLbl;
+    const anyVisible=[...document.querySelectorAll(`#main-body [data-wk][data-team="${team}"]`)].some(c=>c.style.display!=='none');
+    lbl.style.display=anyVisible?'':'none';
+  });
+  // Update count label
+  const countEl=document.getElementById('sess-count-lbl');
+  if(countEl){
+    const vis=[...cards].filter(c=>c.style.display!=='none').length;
+    const total=cards.length;
+    countEl.textContent=wk?`${vis} session${vis!==1?'s':''} in ${wk}`:`${total} session${total!==1?'s':''} total`;
+  }
+}
+
+function buildAllSessions(){
+  const wkSel=buildWkSelect(sheetRows,"filterSessionsByWk(this.value)");
+  const addBtn=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span id="sess-count-lbl" style="font-size:.82rem;color:var(--g600);"><strong>${sheetRows.length}</strong> coaching session${sheetRows.length!==1?'s':''} across all teams — newest first</span>
+      ${wkSel}
+    </div>
+    <button onclick="openAddSessionModal()" style="display:flex;align-items:center;gap:6px;padding:8px 15px;background:var(--or);color:#fff;border:none;border-radius:9px;font-size:.76rem;font-weight:600;cursor:pointer;font-family:'Poppins',sans-serif;box-shadow:0 2px 8px rgba(234,88,12,.25);">
+      ➕ Log Session
+    </button>
+  </div>`;
+  if(!sheetRows.length) return addBtn+`<div class="empty"><div class="ei">📋</div><p>Loading coaching sessions…<br><span style="font-size:.72rem;color:var(--g400);">Refresh in a moment if this persists.</span></p></div>`;
+  let html=addBtn;
+  DEFAULT_TLS.forEach(team=>{
+    const rows=sheetRows.filter(r=>(AGENT_REGISTRY[r.agent]||{}).tl===team||r.team===team);
+    if(!rows.length) return;
+    html+=`<div class="slbl" data-team-lbl="${esc(team)}">${esc(team)} — ${rows.length} session${rows.length!==1?'s':''}</div>`;
+    html+=rows.map(r=>buildSessionCard(r,{showAgent:true})).join('');
+  });
+  const others=sheetRows.filter(r=>!DEFAULT_TLS.some(t=>(AGENT_REGISTRY[r.agent]||{}).tl===t||r.team===t));
+  if(others.length){
+    html+=`<div class="slbl" data-team-lbl="Other">Other — ${others.length} session${others.length!==1?'s':''}</div>`;
+    html+=others.map(r=>buildSessionCard(r,{showAgent:true,showTeam:true})).join('');
+  }
+  return html;
+}
+
+function buildTeamSessions(team){
+  const rows=sheetRows.filter(r=>(AGENT_REGISTRY[r.agent]||{}).tl===team||r.team===team);
+  const wkSel=buildWkSelect(rows,"filterSessionsByWk(this.value)");
+  const addBtn=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span id="sess-count-lbl" style="font-size:.82rem;color:var(--g600);"><strong>${rows.length}</strong> session${rows.length!==1?'s':''} — newest first</span>
+      ${wkSel}
+    </div>
+    <button onclick="openAddSessionModal()" style="display:flex;align-items:center;gap:6px;padding:8px 15px;background:var(--or);color:#fff;border:none;border-radius:9px;font-size:.76rem;font-weight:600;cursor:pointer;font-family:'Poppins',sans-serif;box-shadow:0 2px 8px rgba(234,88,12,.25);">
+      ➕ Log Session
+    </button>
+  </div>`;
+  if(!rows.length) return addBtn+`<div class="empty"><div class="ei">📋</div><p>No coaching sessions yet.<br><span style="font-size:.72rem;color:var(--g400);">Use the button above to log the first one.</span></p></div>`;
+  return addBtn+rows.map(r=>buildSessionCard(r,{showAgent:true})).join('');
+}
+
+function buildAgentSessions(agentName){
+  const rows=sheetRows.filter(r=>r.agent===agentName);
+  if(!rows.length) return `<div class="empty"><div class="ei">📋</div><p>No coaching sessions on file yet.<br><span style="font-size:.72rem;color:var(--g400);">Check back after your next coaching session.</span></p></div>`;
+  const wkSel=buildWkSelect(rows,"filterSessionsByWk(this.value)");
+  const cards=rows.map(r=>{
+    const sheetHasCm=r.sit||r.task||r.action||r.result;
+    const fbCm=DB.cm[r.id];
+    const hasCm=sheetHasCm||fbCm;
+    let commitSection='';
+    if(!hasCm){
+      // Agent can add their commitment for this session
+      const uid='cm'+Math.random().toString(36).slice(2,7);
+      commitSection=`<div style="border-top:1px solid var(--g100);padding:12px 16px 14px;">
+        <div id="cm-tog-${uid}" onclick="(function(){var f=document.getElementById('cm-frm-${uid}');var t=document.getElementById('cm-tog-${uid}');if(!f)return;var open=f.style.display!=='none';f.style.display=open?'none':'block';t.style.background=open?'':'var(--or-lt)';t.style.color=open?'':'var(--or-dk)';})()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 13px;background:#f8fafc;border:1.5px dashed var(--g300);border-radius:8px;cursor:pointer;font-size:.74rem;font-weight:600;color:var(--g600);transition:all .15s;">
+          📌 Add My Commitment
+        </div>
+        <div id="cm-frm-${uid}" style="display:none;margin-top:12px;">
+          <div class="commit-form">
+            <div class="cf-title">📌 My Commitment <span class="commit-hint">(S.T.A.R.)</span></div>
+            <div class="cf-row">
+              <div class="cf-g"><label>S — Situation</label><textarea id="cm-sit-${r.id}" placeholder="Describe the current situation or challenge…" rows="2"></textarea></div>
+              <div class="cf-g"><label>T — Task</label><textarea id="cm-task-${r.id}" placeholder="What task or goal are you committing to?" rows="2"></textarea></div>
+              <div class="cf-g"><label>A — Action</label><textarea id="cm-act-${r.id}" placeholder="What specific actions will you take?" rows="2"></textarea></div>
+              <div class="cf-g"><label>R — Result</label><textarea id="cm-res-${r.id}" placeholder="What result or improvement do you expect?" rows="2"></textarea></div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:8px;">
+              <button onclick="document.getElementById('cm-frm-${uid}').style.display='none'" style="padding:7px 12px;background:none;border:1px solid var(--g300);border-radius:7px;font-size:.74rem;cursor:pointer;font-family:'Poppins',sans-serif;color:var(--g600);">Cancel</button>
+              <button class="btn-submit-commit" id="cm-submit-${r.id}" onclick="submitSheetCommit('${r.id}','${uid}')">Save Commitment</button>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    } else if(fbCm&&!sheetHasCm){
+      // Firebase commitment exists (saved via portal), show it
+      commitSection=`<div style="border-top:1px solid var(--g100);padding:12px 16px 14px;">${buildCommitSaved(fbCm)}</div>`;
+    }
+    return buildSessionCard(r,{})+commitSection
+      ? `<div style="background:#fff;border:1px solid var(--g200);border-radius:12px;margin-bottom:10px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.04);" data-wk="${esc(r.wk||'')}">${buildSessionCard(r,{noWrap:true})}${commitSection}</div>`
+      : buildSessionCard(r,{});
+  }).join('');
+  const hdr=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+    <span id="sess-count-lbl" class="slbl" style="margin-bottom:0;">My Coaching Sessions — <strong>${rows.length}</strong> total</span>
+    ${wkSel}
+  </div>`;
+  return hdr+cards;
+}
+
+// ── TENURE / START DATE HELPERS ────────────────────────────────
+// Reverse lookup: agent name → email from EMAIL_TO_AGENT
+const AGENT_TO_EMAIL = Object.fromEntries(Object.entries(EMAIL_TO_AGENT).map(([e,n])=>[n,e]));
+
+/* ─────────────────────────────────────────────────────────────────
+   AGENT REGISTRY — source of truth for names, teams & start dates
+   (from onboarding records / HR spreadsheet)
+───────────────────────────────────────────────────────────────── */
+const AGENT_REGISTRY = {
+  // ── Team Florence Llait ──────────────────────────────────────
+  'Brad Peralta':       { tl:'Team Florence Llait', startDate:'2026-03-09' },
+  'Cindy Balazuela':    { tl:'Team Florence Llait', startDate:'2026-03-23' },
+  'Dioreza Tomilloso':  { tl:'Team Florence Llait', startDate:'2026-02-17' },
+  'Chester Baniluta':   { tl:'Team Florence Llait', startDate:'2026-03-23' },
+  'Jennylyn Balagtas':  { tl:'Team Florence Llait', startDate:'2026-03-30' },
+  'Jomar Kilme':        { tl:'Team Florence Llait', startDate:'2026-03-09' },
+  'Melcah Paras':       { tl:'Team Florence Llait', startDate:'2026-03-09' },
+  // ── Team Jersey Deguzman ─────────────────────────────────────
+  'Bienyl Salvador':    { tl:'Team Jersey Deguzman', startDate:'2026-04-13' },
+  'Edin Rivas':         { tl:'Team Jersey Deguzman', startDate:'2026-04-06' },
+  'Giomar Giner':       { tl:'Team Jersey Deguzman', startDate:'2026-04-13' },
+  'Jhayren Villanueva': { tl:'Team Jersey Deguzman', startDate:'2026-04-06' },
+  'Lance Dabu':         { tl:'Team Jersey Deguzman', startDate:'2026-04-06' },
+  'Leslie Logan':       { tl:'Team Jersey Deguzman', startDate:'2026-04-13' },
+  'Neal Jason Mirasol': { tl:'Team Jersey Deguzman', startDate:'2026-04-13' },
+  'Roxanne Hila':       { tl:'Team Jersey Deguzman', startDate:'2026-04-13' },
+  // ── Team Jhay Oglimen ────────────────────────────────────────
+  'Amer Ismael':        { tl:'Team Jhay Oglimen',   startDate:'2024-11-18' },
+  'Ericka Condecion':   { tl:'Team Jhay Oglimen',   startDate:'2026-03-23' },
+  'King Martinez':      { tl:'Team Jhay Oglimen',   startDate:'2025-01-06' },
+  'Mario Mapa':         { tl:'Team Jhay Oglimen',   startDate:'2026-03-23' },
+  'Harold Diaz':        { tl:'Team Jhay Oglimen',   startDate:'2026-04-06' },
+  'Joan Libongcogon':   { tl:'Team Jhay Oglimen',   startDate:'2026-04-13' },
+  'Mariefe Villanueva': { tl:'Team Jhay Oglimen',   startDate:'2026-03-30' },
+  'Shimonni Pigaredo':  { tl:'Team Jhay Oglimen',   startDate:'2026-03-23' },
+  // ── Team Jumz Delacruz ───────────────────────────────────────
+  'Alim Sinha':         { tl:'Team Jumz Delacruz',  startDate:'2026-03-09' },
+  'Angelika Gonzales':  { tl:'Team Jumz Delacruz',  startDate:'2026-03-16' },
+  'CJ Garces':          { tl:'Team Jumz Delacruz',  startDate:'2026-05-26' },
+  'Clent Valdez':       { tl:'Team Jumz Delacruz',  startDate:'2025-09-29' },
+  'Jardene Petines':    { tl:'Team Jumz Delacruz',  startDate:'2026-05-05' },
+  'Jessa Frayna':       { tl:'Team Jumz Delacruz',  startDate:'2026-03-16' },
+  'Rafael Viray':       { tl:'Team Jumz Delacruz',  startDate:'2026-04-06' },
+  'Lester Mamari':      { tl:'Team Jumz Delacruz',  startDate:'2026-03-30' },
+  'Angelo Miranda':     { tl:'Team Jumz Delacruz',  startDate:'2026-04-06' },
+  'Renato Bisquera':    { tl:'Team Jumz Delacruz',  startDate:'2026-03-16' },
+  // ── Phoenix Transition Team ──────────────────────────────────
+  'Cheryl Sayon':       { tl:'Phoenix Transition Team', startDate:'2026-06-01' },
+  'Darlyn Acuriza':     { tl:'Phoenix Transition Team', startDate:'2026-06-01' },
+  'Emmanuel Maturana':  { tl:'Phoenix Transition Team', startDate:'2026-06-01' },
+  'Kris Mayes':         { tl:'Phoenix Transition Team', startDate:'2026-06-01' },
+  'Joenel Las':         { tl:'Phoenix Transition Team', startDate:'2026-06-08' },
+};
+
+/* ─────────────────────────────────────────────────────────────────
+   TENURE HELPERS — Monday-anchored week count + category badge
+   Tenure = weeks from start date to the Monday of the current week
+───────────────────────────────────────────────────────────────── */
+function getMondayOf(date){
+  const d=new Date(date);
+  const day=d.getDay(); // 0=Sun … 6=Sat
+  const diff=(day===0)?-6:(1-day);
+  d.setDate(d.getDate()+diff);
+  d.setHours(0,0,0,0);
+  return d;
+}
+function calcTenureWeeks(startDateStr){
+  if(!startDateStr) return null;
+  const start=new Date(startDateStr+'T00:00:00');
+  const currentMonday=getMondayOf(new Date());
+  const ms=currentMonday-start;
+  if(ms<0) return null; // future start date
+  return Math.floor(ms/(7*24*60*60*1000));
+}
+function getTenureCategory(weeks){
+  if(weeks===null||weeks===undefined) return null;
+  if(weeks<3)  return '< 3 wks';
+  if(weeks<=4) return '3-4 wks';
+  if(weeks<=6) return '5-6 wks';
+  if(weeks<=10)return '7-10 wks';
+  return '11+ wks';
+}
+const TENURE_BADGE={
+  '< 3 wks': 'background:#e0f2fe;color:#0369a1;',
+  '3-4 wks': 'background:#dcfce7;color:#15803d;',
+  '5-6 wks': 'background:#fef9c3;color:#854d0e;',
+  '7-10 wks':'background:#fff7ed;color:#c2410c;',
+  '11+ wks': 'background:#f3e8ff;color:#7e22ce;',
+};
+function tenureBadgeHtml(startDateStr){
+  const w=calcTenureWeeks(startDateStr);
+  const cat=getTenureCategory(w);
+  if(!cat) return '<span style="color:var(--g300);font-size:.72rem;">—</span>';
+  const style=TENURE_BADGE[cat]||'background:#f3f4f6;color:#374151;';
+  return `<span style="${style}padding:3px 9px;border-radius:12px;font-size:.7rem;font-weight:700;white-space:nowrap;">${cat}</span>`;
+}
+// Backward-compat alias used elsewhere (returns category string)
+function calcTenure(startDateStr){
+  const w=calcTenureWeeks(startDateStr);
+  return getTenureCategory(w)||'—';
+}
+
+// Build rich agent info from logs + NTEs for a given name+tl
+function agentProfile(name, tl, logs, nte, rawRoster){
+  const aLogs=logs.filter(l=>l.agent===name).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const aNTEs=nte.filter(n=>n.agent===name);
+
+  // Start date priority: 1) AGENT_REGISTRY, 2) px_roster, 3) earliest log
+  const reg=AGENT_REGISTRY[name];
+  const rosterEntry=rawRoster.find(r=>r.name===name);
+  const startDate = reg?.startDate || rosterEntry?.startDate || rosterEntry?.start || aLogs[0]?.date || null;
+
+  // Last session
+  const lastLog=aLogs.length?aLogs[aLogs.length-1]:null;
+
+  // Email: from reverse map or roster
+  const email = AGENT_TO_EMAIL[name] || rosterEntry?.email || '';
+
+  return {
+    name, tl, email,
+    startDate,
+    tenureWeeks: calcTenureWeeks(startDate),
+    tenure: calcTenure(startDate),         // category string e.g. "7-10 wks"
+    sessions: aLogs.length,
+    lastSession: lastLog?.date||null,
+    latestCVR: lastLog?.cvr||null,
+    ntes: aNTEs.length,
+  };
+}
+
+function rebuildOMRoster(){
+  OM_roster={};
+  DEFAULT_TLS.forEach(t=>OM_roster[t]=[]);
+
+  // Seed every agent from AGENT_REGISTRY first (they should all appear even without logs)
+  const seen=new Set();
+  Object.entries(AGENT_REGISTRY).forEach(([name,info])=>{
+    const tl=info.tl;
+    if(!OM_roster[tl]) OM_roster[tl]=[];
+    OM_roster[tl].push(agentProfile(name,tl,OM_db.logs,OM_db.nte,OM_db.rawRoster));
+    seen.add(name+'|||'+tl);
+  });
+
+  // Also add any agent from logs not in registry (new hires not yet recorded)
+  OM_db.logs.forEach(l=>{
+    if(!l.tl||!l.agent) return;
+    const key=l.agent+'|||'+l.tl;
+    if(seen.has(key)) return;
+    seen.add(key);
+    if(!OM_roster[l.tl]) OM_roster[l.tl]=[];
+    OM_roster[l.tl].push(agentProfile(l.agent,l.tl,OM_db.logs,OM_db.nte,OM_db.rawRoster));
+  });
+
+  // Also add anyone from px_roster not yet accounted for
+  OM_db.rawRoster.forEach(r=>{
+    if(!r.name||!r.tl) return;
+    const key=r.name+'|||'+r.tl;
+    if(seen.has(key)) return;
+    seen.add(key);
+    if(!OM_roster[r.tl]) OM_roster[r.tl]=[];
+    OM_roster[r.tl].push(agentProfile(r.name,r.tl,OM_db.logs,OM_db.nte,OM_db.rawRoster));
+  });
+
+  // Sort each team alphabetically
+  Object.keys(OM_roster).forEach(t=>OM_roster[t].sort((a,b)=>a.name.localeCompare(b.name)));
+}
+
+let _omReady=false;
+function renderIfOM(){ if(!_omReady){ _omReady=true; showTab('om','coverage'); } }
+
+/* ─────────────────────────────────────────────────────────────────
+   DATA — TL
+───────────────────────────────────────────────────────────────── */
+function loadTLData(){
+  setBar(20);
+  if(!FB_READY){ useDemoTL(); return; }
+  const team = CU.team;
+  _unsubs.forEach(u=>u()); _unsubs=[];
+
+  let rawTLRoster = [];
+  const u1 = FSB.collection('px_roster').onSnapshot(snap=>{
+    rawTLRoster = [];
+    snap.docs.forEach(doc=>{
+      const d=doc.data();
+      if(d.agents){
+        Object.entries(d.agents.teamLead||{}).forEach(([name,tl])=>{
+          if(tl===team) rawTLRoster.push({name,tl,email:d.email||''});
+        });
+      } else if(d.name && d.tl===team){
+        rawTLRoster.push(d);
+      }
+    });
+    rebuildTLRoster();
+  },()=>{ rebuildTLRoster(); });
+
+  function rebuildTLRoster(){
+    // Build from logs (primary) — captures every agent ever coached
+    const seen=new Set();
+    rosterAgents=[];
+    (DB.logs||[]).forEach(l=>{
+      if(!l.agent||seen.has(l.agent)) return;
+      seen.add(l.agent);
+      rosterAgents.push(agentProfile(l.agent,team,DB.logs,DB.nte,rawTLRoster));
+    });
+    // Add px_roster entries not yet in logs
+    rawTLRoster.forEach(r=>{
+      if(r.name&&!seen.has(r.name)){
+        seen.add(r.name);
+        rosterAgents.push(agentProfile(r.name,team,DB.logs,DB.nte,rawTLRoster));
+      }
+    });
+    rosterAgents.sort((a,b)=>a.name.localeCompare(b.name));
+    if(!rosterAgents.length) rosterAgents=getDemoRoster(team);
+  }
+
+  const u2 = FSB.collection('px_logs').where('tl','==',team).onSnapshot(snap=>{
+    DB.logs = snap.docs.map(d=>({...d.data(),id:d.id}));
+    rebuildTLRoster(); // refresh roster with real log data
+    setBar(60); renderIfReady();
+  },()=>{});
+
+  const u3 = FSB.collection('px_nte').where('tl','==',team).onSnapshot(snap=>{
+    DB.nte = snap.docs.map(d=>({...d.data(),id:d.id}));
+    rebuildTLRoster(); // refresh tenure cross-reference from NTEs
+    renderIfReady();
+  },()=>{});
+
+  const u4 = FSB.collection('px_ft').where('tl','==',team).onSnapshot(snap=>{
+    DB.ft = snap.docs.map(d=>({...d.data(),id:d.id}));
+    renderIfReady();
+  },()=>{});
+
+  const u5 = FSB.collection('px_cm').onSnapshot(snap=>{
+    DB.cm={};
+    snap.docs.forEach(d=>DB.cm[d.id]=d.data());
+    renderIfReady();
+  },()=>{});
+
+  _unsubs=[u1,u2,u3,u4,u5];
+  setTimeout(()=>{ setBar(100); if(!rosterAgents.length) rosterAgents=getDemoRoster(team); showTab('tl','coverage'); },2500);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   DATA — AGENT
+───────────────────────────────────────────────────────────────── */
+function loadAgentData(){
+  setBar(20);
+  if(!FB_READY){ useDemoAgent(); return; }
+  const agentName = CU.agentName;
+  _unsubs.forEach(u=>u()); _unsubs=[];
+
+  const u1 = FSB.collection('px_logs').where('agent','==',agentName).onSnapshot(snap=>{
+    DB.logs = snap.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>new Date(b.date)-new Date(a.date));
+    updatePendingBadge();
+    setBar(60); renderIfAgent();
+  },()=>{ useDemoAgent(); });
+
+  const u2 = FSB.collection('px_nte').where('agent','==',agentName).onSnapshot(snap=>{
+    DB.nte = snap.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>new Date(b.date)-new Date(a.date));
+    renderIfAgent();
+  },()=>{});
+
+  const u3 = FSB.collection('px_ft').where('agent','==',agentName).onSnapshot(snap=>{
+    DB.ft = snap.docs.map(d=>({...d.data(),id:d.id}));
+    renderIfAgent();
+  },()=>{});
+
+  const u4 = FSB.collection('px_cm').onSnapshot(snap=>{
+    DB.cm={};
+    snap.docs.forEach(d=>DB.cm[d.id]=d.data());
+    renderIfAgent();
+  },()=>{});
+
+  _unsubs=[u1,u2,u3,u4];
+  setTimeout(()=>{ setBar(100); showTab('agent','perf'); },2000);
+}
+
+let _tlReady=false, _agentReady=false;
+function renderIfReady(){ if(!_tlReady){ _tlReady=true; showTab('tl','coverage'); } }
+function renderIfAgent(){ if(!_agentReady){ _agentReady=true; showTab('agent','perf'); } }
+
+// Expose OM_db as DB alias when in OM role for shared helpers
+function activeDB(){ return CU.role==='om' ? OM_db : DB; }
+
+function updatePendingBadge(){
+  const n = DB.logs.filter(l=>!l.acknowledged).length;
+  const b = document.getElementById('pending-badge');
+  if(b){ b.textContent=n; b.classList.toggle('hidden', n===0); }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   NAV
+───────────────────────────────────────────────────────────────── */
+function showTab(role, tab){
+  document.querySelectorAll('.sb-item').forEach(el=>{
+    el.classList.remove('active');
+    const oc=el.getAttribute('onclick')||'';
+    if(oc.includes("'"+tab+"'")) el.classList.add('active');
+  });
+  const titles = {
+    om:   {coverage:'All Teams Overview',sessions:'All Sessions',nte:'NTE Overview',wow:'Cross-Team WoW',roster:'Roster Manager'},
+    tl:   {coverage:'Team Dashboard',sessions:'Team Sessions',nte:'NTE Summary',wow:'Week-over-Week',roster:'Team Roster'},
+    agent:{perf:'My Performance',logs:'My Coaching Logs',commits:'My Commitments'}
+  };
+  document.getElementById('tb-title').textContent = (titles[role]||{})[tab]||'Portal';
+  if(role==='om')    renderOM(tab);
+  else if(role==='tl') renderTL(tab);
+  else               renderAgent(tab);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   OM RENDERS
+───────────────────────────────────────────────────────────────── */
+function renderOM(tab){
+  const el=document.getElementById('main-body');
+  if(tab==='coverage') el.innerHTML = buildOMCoverage();
+  else if(tab==='sessions') el.innerHTML = buildAllSessions();
+  else if(tab==='nte') el.innerHTML = buildOMNTE();
+  else if(tab==='wow') el.innerHTML = buildOMWoW();
+  else if(tab==='roster') el.innerHTML = buildRosterManager('om');
+}
+
+function buildOMCoverage(){
+  const logs=OM_db.logs, nte=OM_db.nte, ft=OM_db.ft;
+  const allAgentCount = Object.values(OM_roster).reduce((s,a)=>s+a.length,0);
+  const coachedNames  = new Set(logs.filter(l=>isThisWeek(l.date)||l.wk===CURRENT_WEEK).map(l=>l.agent));
+  const allAgents     = Object.values(OM_roster).flat();
+  const coached = allAgents.filter(a=>coachedNames.has(a.name)).length;
+  const odFTs   = ft.filter(f=>f.status!=='Done'&&f.applied!=='Yes'&&isPastDue(f.targetDate||f.date));
+  const unacked = logs.filter(l=>!l.acknowledged).length;
+
+  // Per-team summary cards
+  const teamCards = DEFAULT_TLS.map(team=>{
+    const members = OM_roster[team]||[];
+    const tCoachedNames = new Set(logs.filter(l=>l.tl===team&&(isThisWeek(l.date)||l.wk===CURRENT_WEEK)).map(l=>l.agent));
+    const tCoached = members.filter(a=>tCoachedNames.has(a.name)).length;
+    const tNTE   = nte.filter(n=>n.tl===team).length;
+    const tOver  = members.filter(a=>{
+      if(tCoachedNames.has(a.name)) return false;
+      const last=logs.filter(l=>l.tl===team&&l.agent===a.name).sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+      return last&&((new Date()-new Date(last.date))/86400000)>14;
+    }).length;
+    const pct = members.length ? Math.round((tCoached/members.length)*100) : 0;
+    return `<div class="team-card" onclick="omExpandTeam('${esc(team)}')">
+      <div class="tc-hdr">
+        <div class="tc-name">${esc(team)}</div>
+        <div class="tc-cnt">${members.length} agents</div>
+      </div>
+      <div class="tc-prog-w"><div class="tc-prog" style="width:${pct}%"></div></div>
+      <div class="tc-stats">
+        <span class="tc-s g">✓ ${tCoached} coached</span>
+        ${tOver?`<span class="tc-s r">⚠ ${tOver} overdue</span>`:''}
+        ${tNTE?`<span class="tc-s o">📝 ${tNTE} NTEs</span>`:''}
+        <span class="tc-s b">${pct}% done</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  // All-agent tile grid (expandable by team, starts collapsed)
+  const agentGrid = DEFAULT_TLS.map(team=>{
+    const members=OM_roster[team]||[];
+    if(!members.length) return '';
+    const tCoachedNames=new Set(logs.filter(l=>l.tl===team&&(isThisWeek(l.date)||l.wk===CURRENT_WEEK)).map(l=>l.agent));
+    const tiles=members.map(a=>{
+      const isCoachedThisWk=tCoachedNames.has(a.name);
+      const lastLog=logs.filter(l=>l.agent===a.name&&l.tl===team).sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+      const lastDate=lastLog?.date||null;
+      const isOver=!isCoachedThisWk&&lastDate&&((new Date()-new Date(lastDate))/86400000)>14;
+      let cls='pend',icon='!',badge='Pending';
+      if(isCoachedThisWk){cls='done';icon='✓';badge='Coached';}
+      else if(isOver){cls='over';icon='✕';badge='Overdue';}
+      const hasCm=lastLog&&OM_db.cm[lastLog.id];
+      return `<div class="cov-tile ${cls}" onclick="openOMAgentProfile('${esc(a.name)}','${esc(team)}')">
+        <div class="cov-icon">${icon}</div>
+        <div style="flex:1;">
+          <div class="cov-name">${esc(a.name)}</div>
+          <div class="cov-meta">${lastDate?'Last: '+fd(lastDate):'No sessions'}${hasCm?' · 📌':''}</div>
+        </div>
+        <div class="cov-bdg">${badge}</div>
+      </div>`;
+    }).join('');
+    return `<div class="om-team-section" id="ts-${team.replace(/\s/g,'-')}">
+      <div class="slbl" onclick="toggleTeamSection('${esc(team)}')" style="cursor:pointer;">
+        ${esc(team)} <span style="font-size:.65rem;color:var(--or);">▼ click to toggle</span>
+      </div>
+      <div class="cov-grid" id="tsg-${team.replace(/\s/g,'-')}">${tiles}</div>
+    </div>`;
+  }).join('');
+
+  return `<div class="srow">
+    <div class="sc"><div class="sv">${DEFAULT_TLS.length}</div><div class="sk">Teams</div></div>
+    <div class="sc"><div class="sv">${allAgentCount}</div><div class="sk">Total Agents</div></div>
+    <div class="sc g"><div class="sv">${coached}</div><div class="sk">Coached This Week</div></div>
+    <div class="sc r"><div class="sv">${odFTs.length}</div><div class="sk">Overdue FTs</div></div>
+    <div class="sc a"><div class="sv">${unacked}</div><div class="sk">Pending Acks</div></div>
+    <div class="sc b"><div class="sv">${nte.length}</div><div class="sk">NTEs Org-Wide</div></div>
+  </div>
+  <div class="slbl">Team-by-Team Summary — click to view agent tiles</div>
+  <div class="team-grid">${teamCards}</div>
+  ${agentGrid}`;
+}
+
+function buildOMNTE(){
+  const nte=OM_db.nte;
+  if(!nte.length) return '<div class="empty"><div class="ei">📝</div><p>No NTE records found org-wide.</p></div>';
+  let html='';
+  DEFAULT_TLS.forEach(team=>{
+    const tNTEs=nte.filter(n=>n.tl===team);
+    if(!tNTEs.length) return;
+    html+=`<div class="slbl">${esc(team)} — ${tNTEs.length} NTE${tNTEs.length!==1?'s':''}</div>`;
+    // Group by agent
+    const byAgent={};
+    tNTEs.forEach(n=>{ if(!byAgent[n.agent])byAgent[n.agent]=[]; byAgent[n.agent].push(n); });
+    html+=Object.entries(byAgent).map(([agent,ns])=>{
+      const byType={};
+      ns.forEach(n=>{ const k=nteKey(n.type||n.nteType||'Others'); byType[k]=(byType[k]||0)+1; });
+      const pills=Object.entries(byType).map(([k,c])=>`<span class="np ${k}">${nteLbl(k)} ×${c}</span>`).join('');
+      const ct=ns.length;
+      return `<div class="nte-row">
+        <div class="nte-av">${initials(agent)}</div>
+        <div style="flex:0 0 160px;"><div class="nte-nm">${esc(agent)}</div><div class="nte-tm">${esc(team)}</div></div>
+        <div class="nte-pills">${pills}</div>
+        <div class="nte-ct ${ct===0?'ct0':ct<=1?'ct1':'ct2'}">${ct} NTE${ct!==1?'s':''}</div>
+      </div>`;
+    }).join('');
+  });
+  // Summary totals
+  const byType={};
+  nte.forEach(n=>{ const k=nteKey(n.type||n.nteType||'Others'); byType[k]=(byType[k]||0)+1; });
+  const summaryPills=Object.entries(byType).map(([k,c])=>`<div class="sc"><div class="sv">${c}</div><div class="sk">${nteLbl(k)}</div></div>`).join('');
+  return `<div class="srow">${summaryPills}</div>${html}`;
+}
+
+function buildOMWoW(){
+  const logs=OM_db.logs, nte=OM_db.nte, ft=OM_db.ft;
+  const cur=parseInt(CURRENT_WEEK.replace('WK','')), prev='WK'+(cur-1);
+  const avg=(arr,field)=>{ const vs=arr.filter(l=>l[field]).map(l=>parseFloat(l[field])); return vs.length?(vs.reduce((a,b)=>a+b,0)/vs.length).toFixed(1)+'%':'N/A'; };
+  const arrow=(n)=>n===0?'':n>0?`<span style="color:#16a34a;font-size:.7rem;"> ↑+${n}</span>`:`<span style="color:#dc2626;font-size:.7rem;"> ↓${n}</span>`;
+
+  const rows = DEFAULT_TLS.map(team=>{
+    // Firebase portal-logged sessions
+    const cL=logs.filter(l=>l.tl===team&&l.wk===CURRENT_WEEK);
+    const pL=logs.filter(l=>l.tl===team&&l.wk===prev);
+    // SheetDB coaching logs (Excel source)
+    const cCL=sheetRows.filter(r=>(AGENT_REGISTRY[r.agent]||{}).tl===team||r.team===team).filter(r=>r.wk===CURRENT_WEEK);
+    const pCL=sheetRows.filter(r=>(AGENT_REGISTRY[r.agent]||{}).tl===team||r.team===team).filter(r=>r.wk===prev);
+    // NTEs
+    const cN=nte.filter(n=>n.tl===team&&n.wk===CURRENT_WEEK).length;
+    const pN=nte.filter(n=>n.tl===team&&n.wk===prev).length;
+    // Follow-throughs
+    const cFT=ft.filter(f=>f.tl===team&&f.wk===CURRENT_WEEK).length;
+    const pFT=ft.filter(f=>f.tl===team&&f.wk===prev).length;
+    // CVR from SheetDB (richer data); fallback to Firebase
+    const cvrSrc=cCL.length?cCL:cL;
+    const pvrSrc=pCL.length?pCL:pL;
+    const cCVR=avg(cvrSrc,'cvr'), pCVR=avg(pvrSrc,'cvr');
+    const cvrDiff=!isNaN(parseFloat(cCVR))&&!isNaN(parseFloat(pCVR))?parseFloat(cCVR)-parseFloat(pCVR):null;
+    const tdC='padding:9px 12px;text-align:center;border-bottom:1px solid var(--g100);font-size:.79rem;';
+    return `<tr style="transition:background .1s;" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">
+      <td style="padding:9px 14px;font-weight:600;border-bottom:1px solid var(--g100);font-size:.79rem;">${esc(team)}</td>
+      <td style="${tdC}">${cCL.length}${arrow(cCL.length-pCL.length)}</td>
+      <td style="${tdC}">${cL.length}${arrow(cL.length-pL.length)}</td>
+      <td style="${tdC}">${cN}${arrow(cN-pN)}</td>
+      <td style="${tdC}">${cFT}${arrow(cFT-pFT)}</td>
+      <td style="${tdC}">${cCVR!=='N/A'?cCVR:'—'}</td>
+      <td style="${tdC}">${pCVR!=='N/A'?pCVR:'—'}</td>
+      <td style="${tdC}">${cvrDiff!==null?(cvrDiff>0?`<span style="color:#16a34a">↑ +${cvrDiff.toFixed(1)}%</span>`:`<span style="color:#dc2626">↓ ${cvrDiff.toFixed(1)}%</span>`):'—'}</td>
+    </tr>`;
+  }).join('');
+
+  // Totals row
+  const totCL=sheetRows.filter(r=>r.wk===CURRENT_WEEK).length;
+  const prevCL=sheetRows.filter(r=>r.wk===prev).length;
+  const totL=logs.filter(l=>l.wk===CURRENT_WEEK).length;
+  const prevL=logs.filter(l=>l.wk===prev).length;
+  const totN=nte.filter(n=>n.wk===CURRENT_WEEK).length;
+  const prevN=nte.filter(n=>n.wk===prev).length;
+  const totFT=ft.filter(f=>f.wk===CURRENT_WEEK).length;
+  const prevFT=ft.filter(f=>f.wk===prev).length;
+  const tdT='padding:9px 12px;text-align:center;font-size:.79rem;font-weight:700;background:#f8fafc;';
+  const totalsRow=`<tr style="border-top:2px solid var(--g200);">
+    <td style="padding:9px 14px;font-weight:700;font-size:.79rem;background:#f8fafc;color:var(--g500);">TOTAL</td>
+    <td style="${tdT}">${totCL}${arrow(totCL-prevCL)}</td>
+    <td style="${tdT}">${totL}${arrow(totL-prevL)}</td>
+    <td style="${tdT}">${totN}${arrow(totN-prevN)}</td>
+    <td style="${tdT}">${totFT}${arrow(totFT-prevFT)}</td>
+    <td style="${tdT}" colspan="3"></td>
+  </tr>`;
+
+  const th='padding:10px 12px;text-align:center;font-weight:600;font-size:.73rem;';
+  return `<div class="slbl">All Teams Week-over-Week: ${CURRENT_WEEK} vs ${prev}</div>
+  <div style="background:#fff;border:1px solid var(--g200);border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);">
+    <table style="width:100%;border-collapse:collapse;font-size:.82rem;">
+      <thead style="background:var(--hgrad);color:#fff;">
+        <tr>
+          <th style="padding:10px 14px;text-align:left;font-weight:600;font-size:.73rem;">Team</th>
+          <th style="${th}">📋 Coaching<br><span style="font-weight:400;font-size:.67rem;opacity:.8;">(Excel)</span></th>
+          <th style="${th}">🖊️ Portal<br><span style="font-weight:400;font-size:.67rem;opacity:.8;">Logged</span></th>
+          <th style="${th}">⚠️ NTEs</th>
+          <th style="${th}">🔄 Follow-Throughs</th>
+          <th style="${th}">CVR%<br><span style="font-weight:400;font-size:.67rem;opacity:.8;">${CURRENT_WEEK}</span></th>
+          <th style="${th}">CVR%<br><span style="font-weight:400;font-size:.67rem;opacity:.8;">${prev}</span></th>
+          <th style="${th}">CVR Δ</th>
+        </tr>
+      </thead>
+      <tbody>${rows}${totalsRow}</tbody>
+    </table>
+  </div>
+  <div style="margin-top:8px;font-size:.7rem;color:var(--g400);">
+    📋 Coaching = sessions from Excel sheet · 🖊️ Portal Logged = sessions added directly via portal · 🔄 Follow-Throughs = FTs logged this week
+  </div>`;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   ROSTER MANAGER — OM (all teams) & TL (own team)
+───────────────────────────────────────────────────────────────── */
+function buildRosterManager(role){
+  const isOM = role==='om';
+  const teamsToShow = isOM ? DEFAULT_TLS : [CU.team];
+  const tlOptions = DEFAULT_TLS.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('');
+  const tdS='padding:9px 12px;font-size:.78rem;';
+
+  const addForm = `<div style="background:#fff;border:2px solid var(--or);border-radius:14px;padding:18px;margin-bottom:20px;">
+    <div style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--or-dk);margin-bottom:14px;">➕ Add Agent to Roster</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr${isOM?' 1fr':''} 160px 140px;gap:10px;align-items:end;">
+      <div class="l-group" style="margin:0;"><label>Full Name</label><input id="rm-name" placeholder="Agent full name"/></div>
+      <div class="l-group" style="margin:0;"><label>Email</label><input id="rm-email" type="email" placeholder="agent@homeaglowsales.com"/></div>
+      ${isOM?`<div class="l-group" style="margin:0;"><label>Team</label><select id="rm-team">${tlOptions}</select></div>`:`<input type="hidden" id="rm-team" value="${esc(CU.team||'')}"/>`}
+      <div class="l-group" style="margin:0;"><label>Start Date</label><input id="rm-startdate" type="date" title="Agent's first day — tenure auto-calculated"/></div>
+      <button onclick="addRosterAgent()" style="padding:10px 14px;background:var(--hgrad);color:#fff;border:none;border-radius:8px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:'Poppins',sans-serif;white-space:nowrap;">Add Agent</button>
+    </div>
+    <div style="margin-top:8px;font-size:.7rem;color:var(--g400);">💡 Agents already coached will auto-appear below from coaching history. Add manually only for new agents not yet in logs.</div>
+  </div>`;
+
+  const teamTables = teamsToShow.map(team=>{
+    const members = (isOM ? OM_roster[team] : rosterAgents.filter(a=>a.tl===team)) || [];
+
+    // Summary bar
+    const totalSessions = members.reduce((s,a)=>s+(a.sessions||0),0);
+    const totalNTEs     = members.reduce((s,a)=>s+(a.ntes||0),0);
+    const infoBar = members.length
+      ? `<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:4px;font-size:.71rem;color:var(--g400);">
+          <span>🗂️ ${totalSessions} total sessions</span>
+          <span>⚠️ ${totalNTEs} NTEs</span>
+          <span>📅 Tenure auto-calc'd from earliest coaching log</span>
+        </div>` : '';
+
+    const colspan = 8;
+    const rows = members.length
+      ? members.map((a,i)=>{
+          const nteBadge = a.ntes
+            ? `<span style="background:#fee2e2;color:#b91c1c;padding:2px 7px;border-radius:10px;font-size:.66rem;font-weight:700;">${a.ntes}</span>`
+            : `<span style="background:#dcfce7;color:#166534;padding:2px 7px;border-radius:10px;font-size:.66rem;font-weight:700;">0</span>`;
+          const sessionBadge = a.sessions
+            ? `<span style="background:#eff6ff;color:#1d4ed8;padding:2px 7px;border-radius:10px;font-size:.66rem;font-weight:700;">${a.sessions}</span>`
+            : `<span style="color:var(--g300);font-size:.72rem;">—</span>`;
+          const startDisp = a.startDate
+            ? `<span style="font-size:.72rem;">${a.startDate}</span>`
+            : `<span style="color:var(--g300);font-size:.72rem;font-style:italic;">Not recorded</span>`;
+          const tenureDisp = tenureBadgeHtml(a.startDate);
+          const lastDisp = a.lastSession
+            ? `<span style="font-size:.71rem;">${a.lastSession}</span>`
+            : `<span style="color:var(--g300);font-size:.72rem;">—</span>`;
+
+          return `<tr style="${i%2===0?'background:#fafafa':'background:#fff'}">
+            <td style="${tdS}font-weight:600;">${esc(a.name)}</td>
+            <td style="${tdS}color:var(--g500);">${esc(a.email||'—')}</td>
+            <td style="${tdS}">${startDisp}</td>
+            <td style="${tdS}">${tenureDisp}</td>
+            <td style="${tdS}text-align:center;">${sessionBadge}</td>
+            <td style="${tdS}">${lastDisp}</td>
+            <td style="${tdS}text-align:center;">${nteBadge}</td>
+            <td style="${tdS}">
+              <button onclick="removeRosterAgent('${esc(a.name).replace(/'/g,"\\'")}','${esc(team).replace(/'/g,"\\'")}')\"
+                style="padding:4px 10px;background:#fee2e2;color:#b91c1c;border:1px solid #fecaca;border-radius:6px;font-size:.68rem;font-weight:600;cursor:pointer;font-family:'Poppins',sans-serif;">Remove</button>
+            </td>
+          </tr>`;
+        }).join('')
+      : `<tr><td colspan="${colspan}" style="padding:18px;text-align:center;color:var(--g400);font-size:.8rem;font-style:italic;">No agents found. They'll appear automatically once coaching logs exist.</td></tr>`;
+
+    const thS='padding:9px 12px;text-align:left;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--g500);white-space:nowrap;';
+    return `<div style="margin-bottom:24px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <div>
+          <div style="font-size:.84rem;font-weight:700;color:#111;">${esc(team)}</div>
+          ${infoBar}
+        </div>
+        <span class="chip">${members.length} agent${members.length!==1?'s':''}</span>
+      </div>
+      <div style="background:#fff;border:1px solid var(--g200);border-radius:12px;overflow:auto;box-shadow:0 1px 6px rgba(0,0,0,.05);">
+        <table style="width:100%;border-collapse:collapse;font-size:.82rem;min-width:760px;">
+          <thead style="background:var(--g100);">
+            <tr>
+              <th style="${thS}">Name</th>
+              <th style="${thS}">Email</th>
+              <th style="${thS}">Start Date</th>
+              <th style="${thS}">Tenure</th>
+              <th style="${thS}text-align:center;">Sessions</th>
+              <th style="${thS}">Last Session</th>
+              <th style="${thS}text-align:center;">NTEs</th>
+              <th style="${thS}">Action</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>`;
+  }).join('');
+
+  return `${addForm}${teamTables}`;
+}
+
+async function addRosterAgent(){
+  const name=(document.getElementById('rm-name').value||'').trim();
+  const email=(document.getElementById('rm-email').value||'').trim().toLowerCase();
+  const team=(document.getElementById('rm-team').value||'').trim();
+  const startDate=(document.getElementById('rm-startdate')?.value||'').trim();
+  if(!name||!team){ toast('Name and team are required.'); return; }
+  const docData={ name, email, tl:team, startDate, at:new Date().toISOString().slice(0,10) };
+  if(FB_READY){
+    try{
+      await FSB.collection('px_roster').add(docData);
+      toast('✅ Agent added to roster!');
+    }catch(e){ toast('Error saving to Firestore. Check permissions.'); console.error(e); }
+  } else {
+    // Demo update — build a full profile so table renders properly
+    const profile = {name,email,tl:team,startDate,tenure:calcTenure(startDate),sessions:0,lastSession:null,ntes:0};
+    if(!OM_roster[team]) OM_roster[team]=[];
+    OM_roster[team].push(profile);
+    if(!rosterAgents.find(a=>a.name===name&&a.tl===team)) rosterAgents.push(profile);
+    toast('✅ Agent added (demo mode)');
+  }
+  // Clear form
+  ['rm-name','rm-email','rm-startdate'].forEach(id=>{ const el=document.getElementById(id); if(el)el.value=''; });
+  setTimeout(()=>{ if(CU.role==='om') showTab('om','roster'); else showTab('tl','roster'); },400);
+}
+
+async function removeRosterAgent(name, team){
+  if(!confirm(`Remove ${name} from ${team}?`)) return;
+  if(FB_READY){
+    try{
+      const snap=await FSB.collection('px_roster').where('name','==',name).where('tl','==',team).get();
+      if(snap.empty){
+        // Try nested agents format
+        const snap2=await FSB.collection('px_roster').get();
+        for(const doc of snap2.docs){
+          const d=doc.data();
+          if(d.agents&&d.agents.teamLead&&d.agents.teamLead[name]===team){
+            const updated={...d.agents.teamLead}; delete updated[name];
+            await FSB.collection('px_roster').doc(doc.id).update({'agents.teamLead':updated});
+            toast('✅ Agent removed from roster.');
+            setTimeout(()=>{ if(CU.role==='om') showTab('om','roster'); else showTab('tl','roster'); },400);
+            return;
+          }
+        }
+        toast('Agent not found in Firestore — may already be removed.');
+        return;
+      }
+      for(const doc of snap.docs) await FSB.collection('px_roster').doc(doc.id).delete();
+      toast('✅ Agent removed from roster.');
+    }catch(e){ toast('Error removing. Check permissions.'); console.error(e); }
+  } else {
+    if(OM_roster[team]) OM_roster[team]=OM_roster[team].filter(a=>a.name!==name);
+    rosterAgents=rosterAgents.filter(a=>!(a.name===name&&a.tl===team));
+    toast('✅ Agent removed (demo mode)');
+  }
+  setTimeout(()=>{ if(CU.role==='om') showTab('om','roster'); else showTab('tl','roster'); },400);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   OM AGENT PROFILE
+───────────────────────────────────────────────────────────────── */
+function openOMAgentProfile(name, team){
+  // Temporarily set DB to OM_db so openAgentProfile helper can use it
+  const _savedDB=DB;
+  DB=OM_db;
+  openAgentProfile(name);
+  DB=_savedDB;
+}
+
+function toggleTeamSection(team){
+  const g=document.getElementById('tsg-'+team.replace(/\s/g,'-'));
+  if(g) g.style.display=g.style.display==='none'?'':'none';
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   TL RENDERS
+───────────────────────────────────────────────────────────────── */
+function renderTL(tab){
+  const el=document.getElementById('main-body');
+  if(tab==='coverage') el.innerHTML = buildCoverage();
+  else if(tab==='sessions') el.innerHTML = buildTeamSessions(CU.team);
+  else if(tab==='nte') el.innerHTML = buildTLNTE();
+  else if(tab==='wow') el.innerHTML = buildWoW();
+  else if(tab==='roster') el.innerHTML = buildRosterManager('tl');
+}
+
+function isThisWeek(dateStr){
+  const d=new Date(dateStr);
+  const now=new Date();
+  const mon=new Date(now); mon.setDate(now.getDate()-(now.getDay()||7)+1); mon.setHours(0,0,0,0);
+  const sun=new Date(mon); sun.setDate(mon.getDate()+6); sun.setHours(23,59,59,999);
+  return d>=mon&&d<=sun;
+}
+function isPastDue(d){ return d&&new Date(d)<new Date(); }
+
+function buildCoverage(){
+  const agents = rosterAgents.length ? rosterAgents : getDemoRoster(CU.team);
+  // Count coached from BOTH Firebase logs and SheetDB (Excel) sessions this week
+  const fbCoachedNames = new Set(DB.logs.filter(l=>isThisWeek(l.date)||l.wk===CURRENT_WEEK).map(l=>l.agent));
+  const sheetCoachedNames = new Set(
+    sheetRows.filter(r=>{
+      const inTeam=(AGENT_REGISTRY[r.agent]||{}).tl===CU.team||r.team===CU.team;
+      return inTeam && (isThisWeek(r.date)||r.wk===CURRENT_WEEK);
+    }).map(r=>r.agent)
+  );
+  const coachedNames = new Set([...fbCoachedNames,...sheetCoachedNames]);
+  // Total raw session count this week from both sources (not unique agents — actual sessions)
+  const fbSessionsThisWk = DB.logs.filter(l=>isThisWeek(l.date)||l.wk===CURRENT_WEEK).length;
+  const sheetSessionsThisWk = sheetRows.filter(r=>{
+    const inTeam=(AGENT_REGISTRY[r.agent]||{}).tl===CU.team||r.team===CU.team;
+    return inTeam && (isThisWeek(r.date)||r.wk===CURRENT_WEEK);
+  }).length;
+  const totalSessionsThisWk = fbSessionsThisWk + sheetSessionsThisWk;
+  let coached=0,pend=0,over=0;
+
+  const tiles = agents.map(a=>{
+    const name=a.name;
+    const isCoachedThisWk = coachedNames.has(name);
+    // For date display prefer SheetDB if available this week
+    const sheetLogThisWk = sheetCoachedNames.has(name)
+      ? sheetRows.filter(r=>r.agent===name&&(isThisWeek(r.date)||r.wk===CURRENT_WEEK)).sort((a,b)=>new Date(b.date)-new Date(a.date))[0]
+      : null;
+    const fbLog = DB.logs.filter(l=>l.agent===name).sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+    const lastDate = sheetLogThisWk?.date || fbLog?.date || null;
+    const isOver = !isCoachedThisWk && lastDate && ((new Date()-new Date(lastDate))/86400000)>14;
+    const isSheetCoached = sheetCoachedNames.has(name) && !fbCoachedNames.has(name);
+    let cls='pend',icon='!',badge='Pending',meta='No session this week';
+    if(isCoachedThisWk){
+      cls='done';icon='✓';
+      badge = isSheetCoached ? 'Coached ✦' : 'Coached';
+      meta='Done '+fd(lastDate);coached++;
+    } else if(isOver){cls='over';icon='✕';badge='Overdue';meta='Last: '+(lastDate?fd(lastDate):'Never');over++;}
+    else{meta=lastDate?'Last: '+fd(lastDate):'No sessions yet';pend++;}
+    // Show acknowledgement+commitment status (Firebase sessions only)
+    const log = fbCoachedNames.has(name) ? DB.logs.find(l=>l.agent===name&&(isThisWeek(l.date)||l.wk===CURRENT_WEEK)) : null;
+    const ackIcon = log?(log.acknowledged?'✓ Acked':'⏳ Pending ack'):'';
+    const hasCm = log&&DB.cm[log.id];
+    return `<div class="cov-tile ${cls}" onclick="openAgentProfile('${esc(name)}')">
+      <div class="cov-icon">${icon}</div>
+      <div style="flex:1;">
+        <div class="cov-name">${esc(name)}</div>
+        <div class="cov-meta">${meta}${ackIcon?'&nbsp;·&nbsp;'+ackIcon:''}${hasCm?' · 📌':''}</div>
+      </div>
+      <div class="cov-bdg">${badge}</div>
+    </div>`;
+  }).join('');
+
+  const odFTs = DB.ft.filter(f=>f.status!=='Done'&&f.applied!=='Yes'&&isPastDue(f.targetDate||f.date));
+  const odRows = odFTs.length
+    ? odFTs.map(f=>{
+        const days=Math.floor((new Date()-new Date(f.targetDate||f.date))/86400000);
+        return `<div class="od-item"><div class="od-agent">${esc(f.agent)}</div><div style="font-size:.76rem;color:var(--g600);flex:1;">${esc(f.opp||f.topic||'—')}</div><div class="od-days">${days}d overdue</div></div>`;
+      }).join('')
+    : '<div class="od-empty">✅ No overdue follow-throughs</div>';
+
+  return `<div class="srow">
+    <div class="sc"><div class="sv">${agents.length}</div><div class="sk">Total Agents</div></div>
+    <div class="sc g"><div class="sv">${coached}</div><div class="sk">Coached This Week</div></div>
+    <div class="sc a"><div class="sv">${pend}</div><div class="sk">Pending</div></div>
+    <div class="sc r"><div class="sv">${over}</div><div class="sk">Overdue</div></div>
+    <div class="sc b"><div class="sv">${DB.nte.length}</div><div class="sk">NTEs Total</div></div>
+    <div class="sc" style="background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;"><div class="sv" style="color:#fff;">${totalSessionsThisWk}</div><div class="sk" style="color:rgba(255,255,255,.8);">Sessions Logged Wk</div></div>
+  </div>
+  <div class="slbl">Team Coverage — sessions this week (click agent to view full profile)</div>
+  <div class="cov-grid">${tiles||'<p style="color:var(--g400);font-size:.82rem;">No agents in roster yet.</p>'}</div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-top:18px;margin-bottom:6px;flex-wrap:wrap;gap:8px;">
+    <span class="slbl" style="margin-bottom:0;">Overdue Follow-Throughs</span>
+    <button onclick="openAddFTModal()" style="display:flex;align-items:center;gap:6px;padding:7px 13px;background:#2563eb;color:#fff;border:none;border-radius:9px;font-size:.74rem;font-weight:600;cursor:pointer;font-family:'Poppins',sans-serif;box-shadow:0 2px 8px rgba(37,99,235,.22);">
+      ➕ Log Follow-Through
+    </button>
+  </div>
+  <div class="od-card">${odFTs.length?`<div class="od-hdr"><span>⚠️ ${odFTs.length} follow-through${odFTs.length>1?'s':''} past target date</span></div>`:''}${odRows}</div>`;
+}
+
+function buildTLNTE(){
+  const agents = rosterAgents.length ? rosterAgents : getDemoRoster(CU.team);
+  const addBtn=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+    <span class="slbl" style="margin-bottom:0;">NTE Count Per Agent — all time</span>
+    <button onclick="openAddNTEModal()" style="display:flex;align-items:center;gap:6px;padding:8px 15px;background:#ef4444;color:#fff;border:none;border-radius:9px;font-size:.76rem;font-weight:600;cursor:pointer;font-family:'Poppins',sans-serif;box-shadow:0 2px 8px rgba(239,68,68,.22);">
+      ➕ Log NTE
+    </button>
+  </div>`;
+  const rows = agents.map(a=>{
+    const ag=a.name;
+    const agNTEs=DB.nte.filter(n=>n.agent===ag);
+    const byType={};
+    agNTEs.forEach(n=>{ const k=nteKey(n.type||n.nteType||'Others'); byType[k]=(byType[k]||0)+1; });
+    const pills=Object.entries(byType).map(([k,c])=>`<span class="np ${k}">${nteLbl(k)} ×${c}</span>`).join('');
+    const ct=agNTEs.length;
+    return `<div class="nte-row">
+      <div class="nte-av">${initials(ag)}</div>
+      <div style="flex:0 0 160px;"><div class="nte-nm">${esc(ag)}</div><div class="nte-tm">${esc(a.tl||CU.team)}</div></div>
+      <div class="nte-pills">${pills||'<span style="font-size:.7rem;color:var(--g400);">No NTEs</span>'}</div>
+      <div class="nte-ct ${ct===0?'ct0':ct<=1?'ct1':'ct2'}">${ct} NTE${ct!==1?'s':''}</div>
+    </div>`;
+  }).join('');
+  return addBtn+rows;
+}
+
+function buildWoW(){
+  const cur  = parseInt(CURRENT_WEEK.replace('WK',''));
+  const prev = 'WK'+(cur-1);
+  const cLogs=DB.logs.filter(l=>l.wk===CURRENT_WEEK);
+  const pLogs=DB.logs.filter(l=>l.wk===prev);
+  const avg=(arr,field)=>{ const vs=arr.filter(l=>l[field]).map(l=>parseFloat(l[field])); return vs.length?(vs.reduce((a,b)=>a+b,0)/vs.length).toFixed(1)+'%':'N/A'; };
+  const cNTE=DB.nte.filter(n=>n.wk===CURRENT_WEEK);
+  const pNTE=DB.nte.filter(n=>n.wk===prev);
+  const cFT=DB.ft.filter(f=>f.wk===CURRENT_WEEK).length;
+  const pFT=DB.ft.filter(f=>f.wk===prev).length;
+
+  function card(title,cv,pv,unit=''){
+    const cn=parseFloat(cv),pn=parseFloat(pv);
+    let diff='—',cls='nt';
+    if(!isNaN(cn)&&!isNaN(pn)){ const d=cn-pn; diff=(d>0?'+':'')+d.toFixed(d%1===0?0:1)+unit; cls=d>0?'up':d<0?'dn':'nt'; }
+    return `<div class="wow-c"><h4>${title}</h4>
+      <div class="wrow"><span>This Week (${CURRENT_WEEK})</span><span class="wv">${cv}</span></div>
+      <div class="wrow"><span>Last Week (${prev})</span><span class="wv">${pv}</span></div>
+      <div class="wrow"><span>Change</span><span class="wv ${cls}">${diff}</span></div>
+    </div>`;
+  }
+  return `<div class="slbl">Week-over-Week — ${CURRENT_WEEK} vs ${prev}</div>
+  <div class="wow-g">
+    ${card('📋 Sessions',cLogs.length,pLogs.length)}
+    ${card('📝 NTEs Issued',cNTE.length,pNTE.length)}
+    ${card('🔄 FTs Logged',cFT,pFT)}
+    ${card('⭐ Avg CVR%',avg(cLogs,'cvr'),avg(pLogs,'cvr'),'%')}
+    ${card('📞 Avg TCR%',avg(cLogs,'tcr'),avg(pLogs,'tcr'),'%')}
+    ${card('💰 Avg CSR%',avg(cLogs,'csr'),avg(pLogs,'csr'),'%')}
+  </div>`;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   AGENT RENDERS
+───────────────────────────────────────────────────────────────── */
+function renderAgent(tab){
+  const el=document.getElementById('main-body');
+  if(tab==='perf')    el.innerHTML = buildPerf();
+  else if(tab==='logs')    el.innerHTML = buildAgentSessions(CU.agentName);
+  else if(tab==='commits') el.innerHTML = buildCommits();
+}
+
+function buildPerf(){
+  // Prefer SheetDB data if available for this agent
+  const agentSheetLogs=sheetRows.filter(r=>r.agent===CU.agentName);
+  // Normalize SheetDB row to same shape expected by the trailing card renderer
+  const normSheet=r=>({
+    id:r.id, date:r.date, wk:r.wk||r.date,
+    leads:r.leads, conn:r.connect, sales:r.sales,
+    tcr:r.tcr, csr:r.csr, cvr:r.cvr, wk2:r.wk2cvr,
+    hi:r.highlights, opp:r.opportunities, notes:r.notes,
+    acknowledged:true, // sheet sessions are always acknowledged
+  });
+  const sourceLogs=agentSheetLogs.length
+    ? agentSheetLogs.map(normSheet)
+    : [...DB.logs].sort((a,b)=>new Date(b.date)-new Date(a.date));
+
+  const sorted=sourceLogs;
+  const seen=new Set(),fourWks=[];
+  for(const l of sorted){ const key=l.wk||l.date; if(!seen.has(key)){seen.add(key);fourWks.push(l);} if(fourWks.length===4)break; }
+  while(fourWks.length<4) fourWks.push(null);
+  fourWks.reverse();
+
+  const latestLog=sorted[0];
+  const latestCVR=latestLog?.cvr?parseFloat(latestLog.cvr):null;
+  const totalSessions=agentSheetLogs.length||DB.logs.length;
+  const hasCm=agentSheetLogs.some(r=>r.sit||r.task||r.action||r.result);
+  const acked=DB.logs.filter(l=>l.acknowledged).length;
+  const pend=0; // read-only portal — no pending acks
+  const committed=hasCm?agentSheetLogs.filter(r=>r.sit||r.task||r.action||r.result).length:Object.keys(DB.cm).length;
+  // Sessions this week — from SheetDB + Firebase
+  const sheetThisWk = agentSheetLogs.filter(r=>isThisWeek(r.date)||r.wk===CURRENT_WEEK).length;
+  const fbThisWk    = DB.logs.filter(l=>isThisWeek(l.date)||l.wk===CURRENT_WEEK).length;
+  const sessionsThisWk = sheetThisWk + fbThisWk;
+
+  const trail = fourWks.map((l,i)=>{
+    const isLatest=i===3&&l;
+    if(!l) return `<div class="tw"><div class="tw-inn"><div class="tw-wk">No Data</div><div class="tw-none">No session yet</div></div></div>`;
+    const cvr=l.cvr?parseFloat(l.cvr):null;
+    const tcr=l.tcr?parseFloat(l.tcr):null;
+    const csr=l.csr?parseFloat(l.csr):null;
+    const barPct=cvr?Math.max(0,Math.min(100,cvr*5)).toFixed(0):0;
+    const prev=i>0?fourWks[i-1]:null;
+    const prevCVR=prev?.cvr?parseFloat(prev.cvr):null;
+    let trendTxt='',trendCls='nt';
+    if(cvr&&prevCVR){ const d=cvr-prevCVR; trendTxt=(d>0?'↑ +':'↓ ')+Math.abs(d).toFixed(1)+'%'; trendCls=d>0?'up':'dn'; }
+    const hasCm=!!DB.cm[l.id];
+    return `<div class="tw${isLatest?' latest':''}">
+      <div class="tw-inn">
+        <div class="tw-wk">${l.wk}</div>
+        <div class="tw-qa${cvr?'':' na'}" style="${cvr?(cvr>=15?'color:#16a34a':cvr>=8?'color:#92400e':'color:#dc2626'):'color:var(--g400)'}">${cvr?cvr+'%':'N/A'}</div>
+        <div class="tw-lbl">CVR%</div>
+        <div class="tw-mets">
+          ${tcr?`<div class="tw-m"><span>TCR%</span><strong>${tcr}%</strong></div>`:''}
+          ${csr?`<div class="tw-m"><span>CSR%</span><strong>${csr}%</strong></div>`:''}
+          ${l.leads?`<div class="tw-m"><span>Leads</span><strong>${l.leads}</strong></div>`:''}
+          ${l.sales?`<div class="tw-m"><span>Sales</span><strong>${l.sales}</strong></div>`:''}
+        </div>
+        ${cvr?`<div class="tw-bar-w"><div class="tw-bar" style="width:${barPct}%"></div></div>`:''}
+        ${trendTxt?`<div class="tw-trend ${trendCls}">${trendTxt}</div>`:''}
+        ${hasCm?`<div style="font-size:.6rem;color:#2563eb;margin-top:3px;">📌 Committed</div>`:''}
+        <div class="tw-date">${fd(l.date)}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  return `<div class="srow">
+    <div class="sc" style="--c:${latestCVR?latestCVR>=15?'#16a34a':latestCVR>=8?'#92400e':'#dc2626':'var(--g500)'}">
+      <div class="sv" style="color:${latestCVR?latestCVR>=15?'#16a34a':latestCVR>=8?'#92400e':'#dc2626':'var(--g500)'}">${latestCVR?latestCVR+'%':'—'}</div>
+      <div class="sk">Latest CVR%</div>
+    </div>
+    <div class="sc g"><div class="sv">${totalSessions}</div><div class="sk">Total Sessions</div></div>
+    <div class="sc" style="background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;">
+      <div class="sv" style="color:#fff;">${sessionsThisWk}</div>
+      <div class="sk" style="color:rgba(255,255,255,.8);">This Week (${CURRENT_WEEK})</div>
+    </div>
+    ${committed?`<div class="sc b"><div class="sv">${committed}</div><div class="sk">Commitments Logged</div></div>`:''}
+    ${DB.nte.length?`<div class="sc r"><div class="sv">${DB.nte.length}</div><div class="sk">NTE Records</div></div>`:''}
+  </div>
+  <div class="trail-card">
+    <div class="trail-hdr">📊 4-Session Trailing Performance — from your coaching logs</div>
+    <div class="trail-weeks">${trail}</div>
+  </div>
+  <div style="text-align:center;margin-top:14px;">
+    <span style="cursor:pointer;font-size:.78rem;color:var(--or);font-weight:600;text-decoration:underline;" onclick="showTab('agent','logs')">View all coaching sessions with full details →</span>
+  </div>`;
+}
+
+function buildLogs(){
+  if(!DB.logs.length) return `<div class="empty"><div class="ei">📋</div><p>No coaching sessions found yet. Check back after your next session.</p></div>`;
+  const html=DB.logs.map(l=>{
+    const acked=l.acknowledged;
+    const cm=DB.cm[l.id];
+    const hasCm=!!cm;
+    const mets=[];
+    if(l.leads) mets.push(`<span class="ml-met">Leads <strong>${l.leads}</strong></span>`);
+    if(l.conn)  mets.push(`<span class="ml-met">Connect <strong>${l.conn}</strong></span>`);
+    if(l.sales) mets.push(`<span class="ml-met">Sales <strong>${l.sales}</strong></span>`);
+    if(l.tcr)   mets.push(`<span class="ml-met">TCR <strong>${pct(l.tcr)}</strong></span>`);
+    if(l.csr)   mets.push(`<span class="ml-met">CSR <strong>${pct(l.csr)}</strong></span>`);
+    if(l.cvr)   mets.push(`<span class="ml-met">CVR <strong>${pct(l.cvr)}</strong></span>`);
+    if(l.wk2)   mets.push(`<span class="ml-met">WK2CVR <strong>${pct(l.wk2)}</strong></span>`);
+    const leftBorder = hasCm?'#2563eb':acked?'#22c55e':'var(--or)';
+
+    return `<div class="my-log" id="log-${l.id}" style="border-left-color:${leftBorder};">
+      <div class="ml-head">
+        <div class="ml-title">Coaching Session${l.tl?' — '+esc(l.tl):''}</div>
+        <span class="ml-wk">${esc(l.wk||'')}</span>
+      </div>
+      <div class="ml-date">${fd(l.date)} · TL: ${esc(l.tl||'—')}</div>
+      ${mets.length?`<div class="ml-mets">${mets.join('')}</div>`:''}
+      ${l.hi?`<div style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--g500);margin-bottom:3px;">✨ Highlights</div><div class="ml-notes">${esc(l.hi)}</div>`:''}
+      ${l.opp?`<div style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--g500);margin-bottom:3px;">🎯 Opportunities</div><div class="ml-notes">${esc(l.opp)}</div>`:''}
+      ${l.notes?`<div style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--g500);margin-bottom:3px;">📝 Coaching Notes</div><div class="ml-notes">${esc(l.notes)}</div>`:''}
+      <div class="ml-foot">
+        <div>${acked?`<span class="ack-tag">✓ Acknowledged ${fd(l.ack_at||'')}</span>`:''}
+        ${hasCm?`<span class="commit-tag" style="margin-left:8px;">📌 Commitment logged</span>`:''}</div>
+        ${acked
+          ? `<button class="ack-btn done">✓ Acknowledged</button>`
+          : `<button class="ack-btn need" onclick="openAckForm('${l.id}',this)">Acknowledge + Commit →</button>`}
+      </div>
+      <!-- COMMITMENT FORM / SAVED -->
+      <div id="cf-${l.id}" style="display:none;margin-top:10px;">${buildCommitForm(l.id,cm)}</div>
+    </div>`;
+  }).join('');
+  return `<div class="slbl">My Coaching Sessions — newest first</div>${html}`;
+}
+
+function buildCommitForm(logId, existingCm){
+  if(existingCm){
+    return buildCommitSaved(existingCm);
+  }
+  return `<div class="commit-form">
+    <div class="cf-title">📌 Your Commitment <span class="commit-hint">(S.T.A.R. Format)</span></div>
+    <div class="cf-row">
+      <div class="cf-g">
+        <label>S — Situation</label>
+        <textarea id="cm-sit-${logId}" placeholder="Describe the current situation or challenge…" rows="3"></textarea>
+      </div>
+      <div class="cf-g">
+        <label>T — Task</label>
+        <textarea id="cm-task-${logId}" placeholder="What task or goal are you committing to?" rows="3"></textarea>
+      </div>
+      <div class="cf-g">
+        <label>A — Action</label>
+        <textarea id="cm-act-${logId}" placeholder="What specific actions will you take?" rows="3"></textarea>
+      </div>
+      <div class="cf-g">
+        <label>R — Result</label>
+        <textarea id="cm-res-${logId}" placeholder="What result or improvement do you expect?" rows="3"></textarea>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:4px;">
+      <div style="font-size:.7rem;color:var(--g500);">Your TL will see this commitment after you submit.</div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="document.getElementById('cf-${logId}').style.display='none'" style="padding:7px 12px;background:none;border:1px solid var(--g300);border-radius:7px;font-size:.74rem;cursor:pointer;font-family:'Poppins',sans-serif;color:var(--g600);">Cancel</button>
+        <button class="btn-submit-commit" id="cm-submit-${logId}" onclick="submitCommit('${logId}')">Save Commitment</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function buildCommitSaved(cm){
+  const fields=[
+    {lbl:'S — Situation',val:cm.sit||cm.situation||''},
+    {lbl:'T — Task',val:cm.task||''},
+    {lbl:'A — Action',val:cm.act||cm.action||''},
+    {lbl:'R — Result',val:cm.res||cm.result||''},
+  ].filter(f=>f.val);
+  if(!fields.length) return '';
+  return `<div class="commit-saved">
+    <div class="cs-hdr">📌 Your Commitment — ${cm.at?fd(cm.at):''}</div>
+    ${fields.map(f=>`<div class="cs-item"><div class="cs-lbl">${f.lbl}</div><div class="cs-val">${esc(f.val)}</div></div>`).join('')}
+  </div>`;
+}
+
+function buildCommits(){
+  // Show all sessions where commitment was made
+  const withCm = DB.logs.filter(l=>DB.cm[l.id]).sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const withoutCm = DB.logs.filter(l=>!DB.cm[l.id]&&l.acknowledged).sort((a,b)=>new Date(b.date)-new Date(a.date));
+  if(!DB.logs.length) return '<div class="empty"><div class="ei">📌</div><p>No coaching sessions yet.</p></div>';
+  let html='';
+  if(withCm.length){
+    html += `<div class="slbl">Commitments Logged (${withCm.length})</div>`;
+    html += withCm.map(l=>{
+      const cm=DB.cm[l.id];
+      return `<div style="background:#fff;border:1px solid #bfdbfe;border-left:4px solid #2563eb;border-radius:12px;padding:15px 16px;margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;">
+          <div style="font-size:.85rem;font-weight:600;color:#111;">Session: ${l.wk||'—'}</div>
+          <span style="background:#eff6ff;color:#1e40af;border-radius:999px;padding:2px 8px;font-size:.63rem;font-weight:600;">${fd(l.date)}</span>
+        </div>
+        ${buildCommitSaved(cm)}
+      </div>`;
+    }).join('');
+  }
+  if(withoutCm.length){
+    html += `<div class="slbl">Sessions Without Commitment Yet (${withoutCm.length})</div>`;
+    html += withoutCm.map(l=>`<div style="background:#fff;border:1px solid var(--g200);border-left:4px solid var(--g300);border-radius:12px;padding:13px 16px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+      <div>
+        <div style="font-size:.82rem;font-weight:600;color:#111;">${l.wk||'—'} · ${fd(l.date)}</div>
+        <div style="font-size:.7rem;color:var(--g500);">Acknowledged · No commitment written</div>
+      </div>
+      <button onclick="showTab('agent','logs')" style="padding:6px 12px;background:var(--or-lt);color:var(--or-dk);border:1px solid #fed7aa;border-radius:7px;font-size:.72rem;font-weight:500;cursor:pointer;font-family:'Poppins',sans-serif;white-space:nowrap;">Add Commitment</button>
+    </div>`).join('');
+  }
+  const unacked = DB.logs.filter(l=>!l.acknowledged);
+  if(unacked.length){
+    html += `<div class="slbl">Awaiting Acknowledgement (${unacked.length})</div>`;
+    html += unacked.map(l=>`<div style="background:#fffbeb;border:2px solid #fde68a;border-radius:12px;padding:13px 16px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+      <div>
+        <div style="font-size:.82rem;font-weight:600;color:#92400e;">${l.wk||'—'} · ${fd(l.date)}</div>
+        <div style="font-size:.7rem;color:#854d0e;">Not yet acknowledged — commitment not available</div>
+      </div>
+      <button onclick="showTab('agent','logs')" style="padding:6px 12px;background:#FCD34D;color:#431407;border:none;border-radius:7px;font-size:.72rem;font-weight:600;cursor:pointer;font-family:'Poppins',sans-serif;white-space:nowrap;">Acknowledge →</button>
+    </div>`).join('');
+  }
+  return html || '<div class="empty"><div class="ei">📌</div><p>No sessions found.</p></div>';
+}
+
+function buildNTE(){
+  if(!DB.nte.length) return `<div style="background:#f0fdf4;border:2px solid #bbf7d0;border-radius:14px;padding:32px;text-align:center;">
+    <div style="font-size:2.2rem;margin-bottom:8px;">🎉</div>
+    <div style="font-size:.95rem;font-weight:600;color:#15803d;">No NTEs on record</div>
+    <div style="font-size:.78rem;color:#16a34a;margin-top:4px;">Keep up the great work!</div>
+  </div>`;
+  const html=DB.nte.map(n=>{
+    const k=nteKey(n.type||n.nteType||'Others');
+    return `<div class="my-nte">
+      <div class="mn-ic ${k}">${nteIcon(k)}</div>
+      <div class="mn-body"><div class="mn-title">Notice to Explain — ${esc(n.type||n.nteType||'Others')}</div>
+        <div class="mn-date">${fd(n.date)} ${n.wk?'· '+n.wk:''} ${n.tl?'· '+esc(n.tl):''}</div>
+        ${n.notes||n.pts?`<div style="font-size:.75rem;color:var(--g600);margin-top:4px;">${esc(n.notes||n.pts||'')}</div>`:''}
+      </div>
+      <div class="mn-bdg ${k}">${esc(n.type||n.nteType||'Others')}</div>
+    </div>`;
+  }).join('');
+  return `<div class="slbl">My NTE Records</div>${html}`;
+}
+
+function buildFT(){
+  if(!DB.ft.length) return '<div class="empty"><div class="ei">🔄</div><p>No follow-throughs yet.</p></div>';
+  const html=DB.ft.sort((a,b)=>new Date(b.date)-new Date(a.date)).map(f=>{
+    const isDone=f.applied==='Yes'||f.status==='Done';
+    const isOver=!isDone&&isPastDue(f.targetDate||f.date);
+    const cls=isDone?'done':isOver?'over':'pend';
+    const lbl=isDone?'Completed ✓':isOver?'Overdue ⚠️':'In Progress';
+    return `<div class="my-ft">
+      <div class="ft-top"><div class="ft-topic">${esc(f.opp||f.topic||'Follow-through')}</div><span class="ft-st ${cls}">${lbl}</span></div>
+      ${f.air?`<div class="ft-opp">Aircall: <a href="${esc(f.air)}" target="_blank" style="color:#2563eb;">${esc(f.air)}</a></div>`:''}
+      <div class="ft-date${isOver?' over':''}">Date: ${fd(f.date)}${f.targetDate?' · Target: '+fd(f.targetDate):''}</div>
+    </div>`;
+  }).join('');
+  return `<div class="slbl">My Follow-Throughs</div>${html}`;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   ACKNOWLEDGE + COMMIT
+───────────────────────────────────────────────────────────────── */
+function openAckForm(logId, btn){
+  // Show commitment form, then when submitted → also acknowledge
+  const cfEl=document.getElementById('cf-'+logId);
+  if(cfEl){
+    cfEl.style.display='block';
+    cfEl.scrollIntoView({behavior:'smooth',block:'center'});
+    btn.textContent='↑ Fill commitment above to acknowledge';
+  }
+}
+
+async function submitCommit(logId){
+  const sit  = (document.getElementById('cm-sit-' +logId)||{}).value||'';
+  const task = (document.getElementById('cm-task-'+logId)||{}).value||'';
+  const act  = (document.getElementById('cm-act-' +logId)||{}).value||'';
+  const res  = (document.getElementById('cm-res-' +logId)||{}).value||'';
+
+  if(!sit&&!task&&!act&&!res){ toast('Please fill in at least one commitment field.'); return; }
+
+  const btn=document.getElementById('cm-submit-'+logId);
+  if(btn){ btn.disabled=true; btn.textContent='Saving…'; }
+
+  const now=new Date().toISOString().slice(0,10);
+  const cmData={ sit,task,act,res,
+    situation:sit, action:act, result:res,
+    agentEmail:CU.email, agentName:CU.agentName,
+    at: now, tl: DB.logs.find(l=>l.id===logId)?.tl||'' };
+
+  const ackData={ acknowledged:true, ack_by:CU.agentName, ack_at:now };
+
+  if(FB_READY){
+    try{
+      await FSB.collection('px_cm').doc(logId).set(cmData);
+      await FSB.collection('px_logs').doc(logId).update(ackData);
+      DB.cm[logId]=cmData;
+      const log=DB.logs.find(l=>l.id===logId);
+      if(log) Object.assign(log,ackData);
+      updatePendingBadge();
+      toast('✅ Commitment saved & session acknowledged!');
+      showTab('agent','logs');
+    }catch(e){ console.error(e); if(btn){btn.disabled=false;btn.textContent='Save Commitment';} toast('Error saving. Please try again.'); }
+  } else {
+    // Demo
+    DB.cm[logId]=cmData;
+    const log=DB.logs.find(l=>l.id===logId);
+    if(log) Object.assign(log,ackData);
+    updatePendingBadge();
+    toast('✅ Commitment saved & acknowledged (demo)');
+    showTab('agent','logs');
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   TL / OM ADD FORMS — Log Session · Log NTE · Log Follow-Through
+───────────────────────────────────────────────────────────────── */
+function getTeamAgents(){
+  // Returns array of agent names for the current user's team (TL) or all agents (OM)
+  if(CU.role==='om'){
+    return Object.keys(AGENT_REGISTRY).sort();
+  }
+  return (rosterAgents.length ? rosterAgents : []).map(a=>a.name).filter(Boolean);
+}
+
+function modalOverlay(id, content){
+  const ex=document.getElementById(id); if(ex) ex.remove();
+  const o=document.createElement('div');
+  o.id=id; o.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:600;display:flex;align-items:center;justify-content:center;padding:16px;';
+  o.innerHTML=`<div style="background:#fff;border-radius:18px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;box-shadow:0 30px 80px rgba(0,0,0,.4);animation:pop .2s ease;">${content}</div>`;
+  document.body.appendChild(o);
+  o.addEventListener('click',e=>{ if(e.target===o) o.remove(); });
+  return o;
+}
+
+function openAddSessionModal(){
+  const agents=getTeamAgents();
+  const agOpts=agents.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  const today=new Date().toISOString().slice(0,10);
+  modalOverlay('__add-session-modal',`
+    <div style="background:var(--hgrad);height:52px;border-radius:18px 18px 0 0;"></div>
+    <div style="padding:18px 22px 26px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div style="font-size:1.1rem;font-weight:700;">📋 Log Coaching Session</div>
+        <button onclick="document.getElementById('__add-session-modal').remove()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--g400);line-height:1;">×</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 14px;">
+        <div><label style="font-size:.72rem;font-weight:600;color:var(--g600);display:block;margin-bottom:4px;">Agent *</label>
+          <select id="as-agent" style="width:100%;padding:8px 10px;border:1.5px solid var(--g300);border-radius:8px;font-family:'Poppins',sans-serif;font-size:.8rem;"><option value="">— select —</option>${agOpts}</select></div>
+        <div><label style="font-size:.72rem;font-weight:600;color:var(--g600);display:block;margin-bottom:4px;">Date *</label>
+          <input type="date" id="as-date" value="${today}" style="width:100%;padding:8px 10px;border:1.5px solid var(--g300);border-radius:8px;font-family:'Poppins',sans-serif;font-size:.8rem;box-sizing:border-box;"></div>
+        <div><label style="font-size:.72rem;font-weight:600;color:var(--g600);display:block;margin-bottom:4px;">Leads</label>
+          <input type="number" id="as-leads" placeholder="0" min="0" style="width:100%;padding:8px 10px;border:1.5px solid var(--g300);border-radius:8px;font-family:'Poppins',sans-serif;font-size:.8rem;box-sizing:border-box;"></div>
+        <div><label style="font-size:.72rem;font-weight:600;color:var(--g600);display:block;margin-bottom:4px;">Connect</label>
+          <input type="number" id="as-connect" placeholder="0" min="0" style="width:100%;padding:8px 10px;border:1.5px solid var(--g300);border-radius:8px;font-family:'Poppins',sans-serif;font-size:.8rem;box-sizing:border-box;"></div>
+        <div><label style="font-size:.72rem;font-weight:600;color:var(--g600);display:block;margin-bottom:4px;">Sales</label>
+          <input type="number" id="as-sales" placeholder="0" min="0" style="width:100%;padding:8px 10px;border:1.5px solid var(--g300);border-radius:8px;font-family:'Poppins',sans-serif;font-size:.8rem;box-sizing:border-box;"></div>
+        <div><label style="font-size:.72rem;font-weight:600;color:var(--g600);display:block;margin-bottom:4px;">TCR %</label>
+          <input type="number" id="as-tcr" placeholder="0.0" step="0.1" min="0" style="width:100%;padding:8px 10px;border:1.5px solid var(--g300);border-radius:8px;font-family:'Poppins',sans-serif;font-size:.8rem;box-sizing:border-box;"></div>
+        <div><label style="font-size:.72rem;font-weight:600;color:var(--g600);display:block;margin-bottom:4px;">CSR %</label>
+          <input type="number" id="as-csr" placeholder="0.0" step="0.1" min="0" style="width:100%;padding:8px 10px;border:1.5px solid var(--g300);border-radius:8px;font-family:'Poppins',sans-serif;font-size:.8rem;box-sizing:border-box;"></div>
+        <div><label style="font-size:.72rem;font-weight:600;color:var(--g600);display:block;margin-bottom:4px;">CVR %</label>
+          <input type="number" id="as-cvr" placeholder="0.0" step="0.1" min="0" style="width:100%;padding:8px 10px;border:1.5px solid var(--g300);border-radius:8px;font-family:'Poppins',sans-serif;font-size:.8rem;box-sizing:border-box;"></div>
+        <div><label style="font-size:.72rem;font-weight:600;color:var(--g600);display:block;margin-bottom:4px;">WK2 CVR %</label>
+          <input type="number" id="as-wk2cvr" placeholder="0.0" step="0.1" min="0" style="width:100%;padding:8px 10px;border:1.5px solid var(--g300);border-radius:8px;font-family:'Poppins',sans-serif;font-size:.8rem;box-sizing:border-box;"></div>
+      </div>
+      <div style="margin-top:12px;display:flex;flex-direction:column;gap:10px;">
+        <div><label style="font-size:.72rem;font-weight:600;color:var(--g600);display:block;margin-bottom:4px;">✨ Highlights</label>
+          <textarea id="as-hi" rows="2" placeholder="What did the agent do well?" style="width:100%;padding:8px 10px;border:1.5px solid var(--g300);border-radius:8px;font-family:'Poppins',sans-serif;font-size:.8rem;box-sizing:border-box;resize:vertical;"></textarea></div>
+        <div><label style="font-size:.72rem;font-weight:600;color:var(--g600);display:block;margin-bottom:4px;">🎯 Opportunities</label>
+          <textarea id="as-opp" rows="2" placeholder="Areas for improvement…" style="width:100%;padding:8px 10px;border:1.5px solid var(--g300);border-radius:8px;font-family:'Poppins',sans-serif;font-size:.8rem;box-sizing:border-box;resize:vertical;"></textarea></div>
+        <div><label style="font-size:.72rem;font-weight:600;color:var(--g600);display:block;margin-bottom:4px;">📝 Coaching Notes</label>
+          <textarea id="as-notes" rows="2" placeholder="Key discussion points, action items…" style="width:100%;padding:8px 10px;border:1.5px solid var(--g300);border-radius:8px;font-family:'Poppins',sans-serif;font-size:.8rem;box-sizing:border-box;resize:vertical;"></textarea></div>
+      </div>
+      <div style="margin-top:14px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:13px 14px;">
+        <div style="font-size:.72rem;font-weight:700;color:#1e40af;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">📌 Commitment (S.T.A.R.) — optional</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div><label style="font-size:.7rem;font-weight:600;color:#1e40af;display:block;margin-bottom:3px;">S — Situation</label>
+            <textarea id="as-sit" rows="2" style="width:100%;padding:7px 9px;border:1.5px solid #bfdbfe;border-radius:7px;font-family:'Poppins',sans-serif;font-size:.78rem;box-sizing:border-box;resize:vertical;"></textarea></div>
+          <div><label style="font-size:.7rem;font-weight:600;color:#1e40af;display:block;margin-bottom:3px;">T — Task</label>
+            <textarea id="as-task" rows="2" style="width:100%;padding:7px 9px;border:1.5px solid #bfdbfe;border-radius:7px;font-family:'Poppins',sans-serif;font-size:.78rem;box-sizing:border-box;resize:vertical;"></textarea></div>
+          <div><label style="font-size:.7rem;font-weight:600;color:#1e40af;display:block;margin-bottom:3px;">A — Action</label>
+            <textarea id="as-act" rows="2" style="width:100%;padding:7px 9px;border:1.5px solid #bfdbfe;border-radius:7px;font-family:'Poppins',sans-serif;font-size:.78rem;box-sizing:border-box;resize:vertical;"></textarea></div>
+          <div><label style="font-size:.7rem;font-weight:600;color:#1e40af;display:block;margin-bottom:3px;">R — Result</label>
+            <textarea id="as-res" rows="2" style="width:100%;padding:7px 9px;border:1.5px solid #bfdbfe;border-radius:7px;font-family:'Poppins',sans-serif;font-size:.78rem;box-sizing:border-box;resize:vertical;"></textarea></div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px;">
+        <button onclick="document.getElementById('__add-session-modal').remove()" style="padding:9px 16px;background:none;border:1.5px solid var(--g300);border-radius:9px;font-family:'Poppins',sans-serif;font-size:.8rem;cursor:pointer;color:var(--g600);">Cancel</button>
+        <button id="as-save-btn" onclick="saveNewSession()" style="padding:9px 18px;background:var(--or);color:#fff;border:none;border-radius:9px;font-family:'Poppins',sans-serif;font-size:.8rem;font-weight:600;cursor:pointer;">Save Session</button>
+      </div>
+    </div>`);
+}
+
+async function saveNewSession(){
+  const agent=document.getElementById('as-agent').value.trim();
+  const date =document.getElementById('as-date').value.trim();
+  if(!agent||!date){ toast('Agent and date are required.'); return; }
+  const btn=document.getElementById('as-save-btn');
+  if(btn){ btn.disabled=true; btn.textContent='Saving…'; }
+  const g=id=>{ const el=document.getElementById(id); return el?(el.value||'').trim():''; };
+  const agInfo=AGENT_REGISTRY[agent]||{};
+  const data={
+    agent, date,
+    tl: agInfo.tl||CU.team||CU.agentName||'',
+    wk: CURRENT_WEEK,
+    leads:g('as-leads'), conn:g('as-connect'), sales:g('as-sales'),
+    tcr:g('as-tcr'), csr:g('as-csr'), cvr:g('as-cvr'), wk2:g('as-wk2cvr'),
+    hi:g('as-hi'), opp:g('as-opp'), notes:g('as-notes'),
+    acknowledged:false,
+    createdBy:CU.email||CU.agentName, createdAt:new Date().toISOString().slice(0,10),
+  };
+  const sit=g('as-sit'), task=g('as-task'), act=g('as-act'), res=g('as-res');
+  if(FB_READY){
+    try{
+      const ref=await FSB.collection('px_logs').add(data);
+      if(sit||task||act||res){
+        const cm={sit,task,action:act,result:res,act,res,situation:sit,
+          at:new Date().toISOString().slice(0,10), tl:data.tl};
+        await FSB.collection('px_cm').doc(ref.id).set(cm);
+      }
+      document.getElementById('__add-session-modal').remove();
+      toast('✅ Session saved!');
+      // Re-render current tab
+      const tab=CU.role==='om'?'sessions':'sessions';
+      showTab(CU.role, tab);
+    }catch(e){ console.error(e); if(btn){btn.disabled=false;btn.textContent='Save Session';} toast('Error saving. Please try again.'); }
+  } else {
+    const fakeId='demo-'+Date.now();
+    DB.logs.push({...data,id:fakeId});
+    if(sit||task||act||res) DB.cm[fakeId]={sit,task,action:act,result:res,act,res,situation:sit,at:new Date().toISOString().slice(0,10)};
+    document.getElementById('__add-session-modal').remove();
+    toast('✅ Session saved (demo)!');
+    showTab(CU.role,'sessions');
+  }
+}
+
+function openAddNTEModal(){
+  const agents=getTeamAgents();
+  const agOpts=agents.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  const today=new Date().toISOString().slice(0,10);
+  const nteTypes=['Attendance','Late','Performance','Behavior','Others'];
+  modalOverlay('__add-nte-modal',`
+    <div style="background:linear-gradient(135deg,#ef4444,#dc2626);height:52px;border-radius:18px 18px 0 0;"></div>
+    <div style="padding:18px 22px 26px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div style="font-size:1.1rem;font-weight:700;">📝 Log NTE</div>
+        <button onclick="document.getElementById('__add-nte-modal').remove()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--g400);line-height:1;">×</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 14px;">
+        <div><label style="font-size:.72rem;font-weight:600;color:var(--g600);display:block;margin-bottom:4px;">Agent *</label>
+          <select id="nte-agent" style="width:100%;padding:8px 10px;border:1.5px solid var(--g300);border-radius:8px;font-family:'Poppins',sans-serif;font-size:.8rem;"><option value="">— select —</option>${agOpts}</select></div>
+        <div><label style="font-size:.72rem;font-weight:600;color:var(--g600);display:block;margin-bottom:4px;">Date *</label>
+          <input type="date" id="nte-date" value="${today}" style="width:100%;padding:8px 10px;border:1.5px solid var(--g300);border-radius:8px;font-family:'Poppins',sans-serif;font-size:.8rem;box-sizing:border-box;"></div>
+        <div style="grid-column:1/-1;"><label style="font-size:.72rem;font-weight:600;color:var(--g600);display:block;margin-bottom:4px;">NTE Type *</label>
+          <select id="nte-type" style="width:100%;padding:8px 10px;border:1.5px solid var(--g300);border-radius:8px;font-family:'Poppins',sans-serif;font-size:.8rem;">
+            <option value="">— select type —</option>
+            ${nteTypes.map(t=>`<option value="${t}">${t}</option>`).join('')}
+          </select></div>
+        <div style="grid-column:1/-1;"><label style="font-size:.72rem;font-weight:600;color:var(--g600);display:block;margin-bottom:4px;">Notes / Details</label>
+          <textarea id="nte-notes" rows="3" placeholder="Describe the incident or reason…" style="width:100%;padding:8px 10px;border:1.5px solid var(--g300);border-radius:8px;font-family:'Poppins',sans-serif;font-size:.8rem;box-sizing:border-box;resize:vertical;"></textarea></div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px;">
+        <button onclick="document.getElementById('__add-nte-modal').remove()" style="padding:9px 16px;background:none;border:1.5px solid var(--g300);border-radius:9px;font-family:'Poppins',sans-serif;font-size:.8rem;cursor:pointer;color:var(--g600);">Cancel</button>
+        <button id="nte-save-btn" onclick="saveNewNTE()" style="padding:9px 18px;background:#ef4444;color:#fff;border:none;border-radius:9px;font-family:'Poppins',sans-serif;font-size:.8rem;font-weight:600;cursor:pointer;">Save NTE</button>
+      </div>
+    </div>`);
+}
+
+async function saveNewNTE(){
+  const agent=document.getElementById('nte-agent').value.trim();
+  const date =document.getElementById('nte-date').value.trim();
+  const type =document.getElementById('nte-type').value.trim();
+  const notes=(document.getElementById('nte-notes')||{}).value||'';
+  if(!agent||!date||!type){ toast('Agent, date and type are required.'); return; }
+  const btn=document.getElementById('nte-save-btn');
+  if(btn){ btn.disabled=true; btn.textContent='Saving…'; }
+  const agInfo=AGENT_REGISTRY[agent]||{};
+  const data={ agent, date, type, nteType:type, notes, tl:agInfo.tl||CU.team||'', wk:CURRENT_WEEK,
+    createdBy:CU.email||CU.agentName, createdAt:new Date().toISOString().slice(0,10) };
+  if(FB_READY){
+    try{
+      await FSB.collection('px_nte').add(data);
+      document.getElementById('__add-nte-modal').remove();
+      toast('✅ NTE logged!');
+      showTab(CU.role,'nte');
+    }catch(e){ console.error(e); if(btn){btn.disabled=false;btn.textContent='Save NTE';} toast('Error saving. Please try again.'); }
+  } else {
+    DB.nte.push({...data,id:'demo-'+Date.now()});
+    document.getElementById('__add-nte-modal').remove();
+    toast('✅ NTE logged (demo)!');
+    showTab(CU.role,'nte');
+  }
+}
+
+function openAddFTModal(){
+  const agents=getTeamAgents();
+  const agOpts=agents.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  const today=new Date().toISOString().slice(0,10);
+  modalOverlay('__add-ft-modal',`
+    <div style="background:linear-gradient(135deg,#2563eb,#1d4ed8);height:52px;border-radius:18px 18px 0 0;"></div>
+    <div style="padding:18px 22px 26px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div style="font-size:1.1rem;font-weight:700;">🔄 Log Follow-Through</div>
+        <button onclick="document.getElementById('__add-ft-modal').remove()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--g400);line-height:1;">×</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 14px;">
+        <div><label style="font-size:.72rem;font-weight:600;color:var(--g600);display:block;margin-bottom:4px;">Agent *</label>
+          <select id="ft-agent" style="width:100%;padding:8px 10px;border:1.5px solid var(--g300);border-radius:8px;font-family:'Poppins',sans-serif;font-size:.8rem;"><option value="">— select —</option>${agOpts}</select></div>
+        <div><label style="font-size:.72rem;font-weight:600;color:var(--g600);display:block;margin-bottom:4px;">Date *</label>
+          <input type="date" id="ft-date" value="${today}" style="width:100%;padding:8px 10px;border:1.5px solid var(--g300);border-radius:8px;font-family:'Poppins',sans-serif;font-size:.8rem;box-sizing:border-box;"></div>
+        <div style="grid-column:1/-1;"><label style="font-size:.72rem;font-weight:600;color:var(--g600);display:block;margin-bottom:4px;">Opportunity / Topic *</label>
+          <input type="text" id="ft-opp" placeholder="What is this follow-through about?" style="width:100%;padding:8px 10px;border:1.5px solid var(--g300);border-radius:8px;font-family:'Poppins',sans-serif;font-size:.8rem;box-sizing:border-box;"></div>
+        <div><label style="font-size:.72rem;font-weight:600;color:var(--g600);display:block;margin-bottom:4px;">Target Date</label>
+          <input type="date" id="ft-target" style="width:100%;padding:8px 10px;border:1.5px solid var(--g300);border-radius:8px;font-family:'Poppins',sans-serif;font-size:.8rem;box-sizing:border-box;"></div>
+        <div><label style="font-size:.72rem;font-weight:600;color:var(--g600);display:block;margin-bottom:4px;">Status</label>
+          <select id="ft-status" style="width:100%;padding:8px 10px;border:1.5px solid var(--g300);border-radius:8px;font-family:'Poppins',sans-serif;font-size:.8rem;">
+            <option value="Pending">Pending</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Done">Done</option>
+          </select></div>
+        <div style="grid-column:1/-1;"><label style="font-size:.72rem;font-weight:600;color:var(--g600);display:block;margin-bottom:4px;">Aircall Link (optional)</label>
+          <input type="url" id="ft-air" placeholder="https://…" style="width:100%;padding:8px 10px;border:1.5px solid var(--g300);border-radius:8px;font-family:'Poppins',sans-serif;font-size:.8rem;box-sizing:border-box;"></div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px;">
+        <button onclick="document.getElementById('__add-ft-modal').remove()" style="padding:9px 16px;background:none;border:1.5px solid var(--g300);border-radius:9px;font-family:'Poppins',sans-serif;font-size:.8rem;cursor:pointer;color:var(--g600);">Cancel</button>
+        <button id="ft-save-btn" onclick="saveNewFT()" style="padding:9px 18px;background:#2563eb;color:#fff;border:none;border-radius:9px;font-family:'Poppins',sans-serif;font-size:.8rem;font-weight:600;cursor:pointer;">Save Follow-Through</button>
+      </div>
+    </div>`);
+}
+
+async function saveNewFT(){
+  const agent=document.getElementById('ft-agent').value.trim();
+  const date =document.getElementById('ft-date').value.trim();
+  const opp  =(document.getElementById('ft-opp')||{}).value||'';
+  if(!agent||!date||!opp.trim()){ toast('Agent, date and topic are required.'); return; }
+  const btn=document.getElementById('ft-save-btn');
+  if(btn){ btn.disabled=true; btn.textContent='Saving…'; }
+  const agInfo=AGENT_REGISTRY[agent]||{};
+  const data={ agent, date, opp:opp.trim(), topic:opp.trim(),
+    targetDate:(document.getElementById('ft-target')||{}).value||'',
+    status:(document.getElementById('ft-status')||{}).value||'Pending',
+    air:(document.getElementById('ft-air')||{}).value||'',
+    applied:'No', tl:agInfo.tl||CU.team||'', wk:CURRENT_WEEK,
+    createdBy:CU.email||CU.agentName, createdAt:new Date().toISOString().slice(0,10) };
+  if(FB_READY){
+    try{
+      await FSB.collection('px_ft').add(data);
+      document.getElementById('__add-ft-modal').remove();
+      toast('✅ Follow-through logged!');
+      showTab(CU.role,'coverage');
+    }catch(e){ console.error(e); if(btn){btn.disabled=false;btn.textContent='Save Follow-Through';} toast('Error saving. Please try again.'); }
+  } else {
+    DB.ft.push({...data,id:'demo-'+Date.now()});
+    document.getElementById('__add-ft-modal').remove();
+    toast('✅ Follow-through logged (demo)!');
+    showTab(CU.role,'coverage');
+  }
+}
+
+// Saves commitment for a SheetDB session (no acknowledge step needed)
+async function submitSheetCommit(sessionId, uid){
+  const sit  = (document.getElementById('cm-sit-' +sessionId)||{}).value||'';
+  const task = (document.getElementById('cm-task-'+sessionId)||{}).value||'';
+  const act  = (document.getElementById('cm-act-' +sessionId)||{}).value||'';
+  const res  = (document.getElementById('cm-res-' +sessionId)||{}).value||'';
+  if(!sit&&!task&&!act&&!res){ toast('Please fill in at least one commitment field.'); return; }
+  const btn=document.getElementById('cm-submit-'+sessionId);
+  if(btn){ btn.disabled=true; btn.textContent='Saving…'; }
+  const now=new Date().toISOString().slice(0,10);
+  const cmData={ sit, task, act, res, situation:sit, action:act, result:res,
+    agentEmail:CU.email, agentName:CU.agentName, at:now };
+  if(FB_READY){
+    try{
+      await FSB.collection('px_cm').doc(sessionId).set(cmData);
+      DB.cm[sessionId]=cmData;
+      toast('✅ Commitment saved!');
+      showTab('agent','logs');
+    }catch(e){ console.error(e); if(btn){btn.disabled=false;btn.textContent='Save Commitment';} toast('Error saving. Please try again.'); }
+  } else {
+    DB.cm[sessionId]=cmData;
+    toast('✅ Commitment saved (demo)!');
+    showTab('agent','logs');
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   AGENT PROFILE MODAL (TL clicks coverage tile)
+───────────────────────────────────────────────────────────────── */
+function openAgentProfile(name){
+  // Use SheetDB sessions (primary) with Firebase NTE as supplement
+  const sRows=sheetRows.filter(r=>r.agent===name);
+  const ntes=(CU.role==='om'?OM_db.nte:DB.nte).filter(n=>n.agent===name);
+  const agInfo=AGENT_REGISTRY[name]||{};
+  const tenureWks=calcTenureWeeks(agInfo.startDate||null);
+  const tenureCat=getTenureCategory(tenureWks);
+
+  const logHtml=sRows.length
+    ? sRows.map(r=>buildSessionCard(r,{})).join('')
+    : '<p style="font-size:.8rem;color:var(--g400);text-align:center;padding:24px 0;">No coaching sessions on file yet.</p>';
+
+  const nteHtml=ntes.length?ntes.map(n=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--g100);">
+    <span class="np ${nteKey(n.type||n.nteType||'')}">${esc(n.type||n.nteType||'Others')}</span>
+    <span style="font-size:.72rem;color:var(--g500);">${fd(n.date)}</span>
+  </div>`).join('') : '<p style="font-size:.8rem;color:#16a34a;text-align:center;padding:20px 0;">✅ No NTEs on record</p>';
+
+  const existing=document.getElementById('__agent-modal');
+  if(existing) existing.remove();
+  const overlay=document.createElement('div');
+  overlay.id='__agent-modal';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:500;display:flex;align-items:center;justify-content:center;padding:16px;';
+  overlay.innerHTML=`<div style="background:#faf9f8;border-radius:18px;width:100%;max-width:680px;max-height:90vh;overflow-y:auto;box-shadow:0 30px 80px rgba(0,0,0,.4);animation:pop .2s ease;">
+    <div style="background:var(--hgrad);height:56px;border-radius:18px 18px 0 0;"></div>
+    <div style="padding:16px 22px 24px;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;gap:12px;">
+        <div>
+          <div style="font-size:1.2rem;font-weight:700;">${esc(name)}</div>
+          <div style="font-size:.73rem;color:var(--g500);margin-top:3px;">${esc(agInfo.tl||'')} · ${sRows.length} session${sRows.length!==1?'s':''} · ${ntes.length} NTE${ntes.length!==1?'s':''}</div>
+          ${agInfo.startDate?`<div style="margin-top:4px;">${tenureBadgeHtml(agInfo.startDate)}<span style="font-size:.68rem;color:var(--g500);margin-left:6px;">since ${fd(agInfo.startDate)}</span></div>`:''}
+        </div>
+        <button onclick="document.getElementById('__agent-modal').remove()" style="background:none;border:none;font-size:1.6rem;cursor:pointer;color:var(--g400);line-height:1;flex-shrink:0;">×</button>
+      </div>
+      <div id="__pm-tabs" style="display:flex;border-bottom:2px solid var(--g200);margin-bottom:14px;gap:0;">
+        <div onclick="pmTab(0)" style="padding:8px 14px;font-size:.8rem;font-weight:600;cursor:pointer;color:var(--or);border-bottom:3px solid var(--or);margin-bottom:-2px;">📋 Coaching Sessions</div>
+        <div onclick="pmTab(1)" style="padding:8px 14px;font-size:.8rem;font-weight:500;cursor:pointer;color:var(--g500);border-bottom:3px solid transparent;margin-bottom:-2px;">📝 NTEs ${ntes.length?`<span style="background:#fee2e2;color:#b91c1c;border-radius:999px;padding:1px 6px;font-size:.6rem;">${ntes.length}</span>`:''}</div>
+      </div>
+      <div id="__pm-0">${logHtml}</div>
+      <div id="__pm-1" style="display:none;">${nteHtml}</div>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click',e=>{ if(e.target===overlay) overlay.remove(); });
+}
+
+function pmTab(n){
+  [0,1,2].forEach(i=>{ const t=document.getElementById('__pm-'+i); if(t) t.style.display=i===n?'block':'none'; });
+  const tabs=document.getElementById('__pm-tabs');
+  if(tabs) [...tabs.children].forEach((el,i)=>{
+    el.style.color=i===n?'var(--or)':'var(--g500)';
+    el.style.borderBottomColor=i===n?'var(--or)':'transparent';
+    el.style.fontWeight=i===n?'600':'500';
+  });
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   DEMO DATA
+───────────────────────────────────────────────────────────────── */
+function useDemoOM(){
+  OM_db.logs=[
+    {id:'o1',agent:'CJ Garces',tl:'Team Jhay Oglimen',wk:CURRENT_WEEK,date:'2026-07-25',leads:80,conn:14,sales:5,tcr:17.5,csr:35.7,cvr:6.3,acknowledged:true},
+    {id:'o2',agent:'King Martinez',tl:'Team Jhay Oglimen',wk:CURRENT_WEEK,date:'2026-07-25',leads:70,conn:11,sales:4,tcr:15.7,csr:36.4,cvr:5.7,acknowledged:false},
+    {id:'o3',agent:'Jessa Frayna',tl:'Team Jumz Delacruz',wk:CURRENT_WEEK,date:'2026-07-24',leads:65,conn:10,sales:3,tcr:15.4,csr:30.0,cvr:4.6,acknowledged:true},
+    {id:'o4',agent:'Clent Valdez',tl:'Team Jumz Delacruz',wk:CURRENT_WEEK,date:'2026-07-24',leads:72,conn:13,sales:5,tcr:18.1,csr:38.5,cvr:6.9,acknowledged:true},
+    {id:'o5',agent:'Ericka Condecion',tl:'Team Florence Llait',wk:CURRENT_WEEK,date:'2026-07-25',leads:68,conn:12,sales:4,tcr:17.6,csr:33.3,cvr:5.9,acknowledged:false},
+  ];
+  OM_db.nte=[
+    {id:'n1',agent:'King Martinez',tl:'Team Jhay Oglimen',type:'Performance',wk:CURRENT_WEEK,date:'2026-07-20'},
+    {id:'n2',agent:'Jessa Frayna',tl:'Team Jumz Delacruz',type:'Attendance',wk:'WK28',date:'2026-07-15'},
+  ];
+  OM_db.ft=[
+    {id:'f1',agent:'CJ Garces',tl:'Team Jhay Oglimen',opp:'Improve TCR to 20%+',date:'2026-07-10',targetDate:'2026-07-20',status:'Pending'},
+  ];
+  OM_db.cm={};
+  OM_roster={};
+  // Seed from AGENT_REGISTRY — same data as live mode
+  DEFAULT_TLS.forEach(t=>{ OM_roster[t]=getDemoRoster(t); });
+  setBar(100);
+  showTab('om','coverage');
+}
+
+function getDemoRoster(team){
+  // Pull real registry entries for this team, or fallback names
+  const reg = Object.entries(AGENT_REGISTRY).filter(([,v])=>v.tl===team);
+  const agents = reg.length ? reg.map(([name,info])=>({name,...info})) : [
+    {name:'CJ Garces',    tl:team,startDate:'2026-05-26'},
+    {name:'King Martinez',tl:team,startDate:'2025-01-06'},
+    {name:'Ericka Condecion',tl:team,startDate:'2026-03-23'},
+  ];
+  return agents.map((a,i)=>({
+    name:a.name, tl:team, email:'',
+    startDate:a.startDate||null,
+    tenureWeeks:calcTenureWeeks(a.startDate||null),
+    tenure:calcTenure(a.startDate||null),
+    sessions:0, lastSession:null, ntes:0,
+  }));
+}
+function useDemoTL(){
+  rosterAgents=getDemoRoster(CU.team);
+  DB.logs=[
+    {id:'d1',agent:'CJ Garces',tl:CU.team,wk:'WK28',date:'2026-07-25',leads:80,conn:14,sales:5,tcr:17.5,csr:35.7,cvr:6.3,hi:'Great opening technique',opp:'CSR improvement',notes:'Focus on rebuttals.',acknowledged:true,ack_at:'2026-07-26'},
+    {id:'d2',agent:'King Martinez',tl:CU.team,wk:'WK28',date:'2026-07-24',leads:70,conn:11,sales:4,tcr:15.7,csr:36.4,cvr:5.7,notes:'Good energy.',acknowledged:false},
+    {id:'d3',agent:'CJ Garces',tl:CU.team,wk:'WK27',date:'2026-07-17',leads:75,conn:12,sales:4,tcr:16.0,csr:33.3,cvr:5.3,notes:'Prev session.',acknowledged:true,ack_at:'2026-07-18'},
+  ];
+  DB.nte=[{id:'n1',agent:'King Martinez',tl:CU.team,type:'Performance',wk:'WK27',date:'2026-07-20'}];
+  DB.ft=[{id:'f1',agent:'Mario Mapa',tl:CU.team,opp:'Improve TCR above 18%',date:'2026-07-10',targetDate:'2026-07-20',status:'Pending'}];
+  DB.cm={'d1':{sit:'Low CSR rate',task:'Improve rebuttal delivery',act:'Practice 2 new rebuttal scripts daily',res:'Increase CSR to 40%+ by next session',at:'2026-07-26',agentName:'CJ Garces'}};
+  setBar(100);
+  showTab('tl','coverage');
+}
+function useDemoAgent(){
+  const nm=CU.agentName;
+  DB.logs=[
+    {id:'d1',agent:nm,tl:'Team Jhay Oglimen',wk:'WK28',date:'2026-07-25',leads:80,conn:14,sales:5,tcr:17.5,csr:35.7,cvr:6.3,hi:'Great opening technique',opp:'CSR improvement',notes:'Focus on rebuttals.',acknowledged:false},
+    {id:'d2',agent:nm,tl:'Team Jhay Oglimen',wk:'WK27',date:'2026-07-17',leads:75,conn:12,sales:4,tcr:16.0,csr:33.3,cvr:5.3,notes:'Maintain energy.',acknowledged:true,ack_at:'2026-07-18'},
+    {id:'d3',agent:nm,tl:'Team Jhay Oglimen',wk:'WK26',date:'2026-07-10',leads:68,conn:10,sales:3,tcr:14.7,csr:30.0,cvr:4.4,notes:'Needs improvement.',acknowledged:true,ack_at:'2026-07-11'},
+    {id:'d4',agent:nm,tl:'Team Jhay Oglimen',wk:'WK25',date:'2026-07-03',leads:60,conn:9,sales:2,tcr:15.0,csr:22.2,cvr:3.3,notes:'First session.',acknowledged:true,ack_at:'2026-07-04'},
+  ];
+  DB.cm={'d2':{sit:'Low CVR in WK27',task:'Increase CVR',act:'Practice close scripts',res:'CVR above 6%',at:'2026-07-18',agentName:nm}};
+  updatePendingBadge();
+  setBar(100);
+  showTab('agent','perf');
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   HELPERS
+───────────────────────────────────────────────────────────────── */
+function esc(s){ if(!s&&s!==0)return''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fd(d){ if(!d)return'—'; try{ return new Date(d+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }catch(e){return d;} }
+function pct(v){ if(v===''||v===null||v===undefined)return'—'; return parseFloat(v).toFixed(1)+'%'; }
+function initials(n){ return n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(); }
+function nteKey(t){ const m={'Performance':'perf','Attendance':'att','Idle Time':'idle','Adherence':'adh','ZTP':'ztp','Protocol':'oth'}; return m[t]||'oth'; }
+function nteLbl(k){ const m={perf:'Performance',att:'Attendance',idle:'Idle Time',adh:'Adherence',ztp:'ZTP',oth:'Others'}; return m[k]||k; }
+function nteIcon(k){ const m={perf:'⚠️',att:'📅',idle:'💤',adh:'📋',ztp:'🚫',oth:'📌'}; return m[k]||'📌'; }
+function setBar(v){ const b=document.getElementById('loading'); if(b){b.style.width=v+'%'; if(v>=100)setTimeout(()=>b.style.width='0',400);} }
+function toast(msg){ const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('on'); setTimeout(()=>el.classList.remove('on'),3500); }
+</script>
+</body>
+</html>
