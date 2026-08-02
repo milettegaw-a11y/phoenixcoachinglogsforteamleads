@@ -12,14 +12,15 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <style>
 :root{
-  --yellow:#FB923C;--yellow-dk:#F97316;--yellow-lt:#FFF7ED;
+  --yellow:#83B271;--yellow-dk:#5E8A50;--yellow-lt:#E7F0D2;
   --black:#111111;--white:#FFFFFF;
   --g50:#FAFAFA;--g100:#F5F5F5;--g200:#E5E5E5;--g300:#D4D4D4;
   --g400:#A3A3A3;--g500:#737373;--g600:#525252;--g700:#404040;--g800:#262626;
-  --red:#DC2626;--green:#16A34A;--blue:#2563EB;--orange:#EA580C;
+  --red:#DC2626;--green:#16A34A;--blue:#2563EB;--orange:#83B271;
+  --sage:#ABCB89;--cream:#E7F0D2;--mint:#D2EA9B;
   --sb-w:230px;
-  --sb-grad:linear-gradient(160deg,#431407 0%,#7c2d12 45%,#c2410c 100%);
-  --hdr-grad:linear-gradient(135deg,#92400e 0%,#c2410c 100%);
+  --sb-grad:linear-gradient(160deg,#3d6b2c 0%,#5E8A50 55%,#83B271 100%);
+  --hdr-grad:linear-gradient(135deg,#3d6b2c 0%,#83B271 100%);
   --r:10px;--rs:7px;
   --sh:0 1px 3px rgba(0,0,0,.1);--shm:0 4px 14px rgba(0,0,0,.13);--shl:0 10px 40px rgba(0,0,0,.2);
 }
@@ -51,7 +52,7 @@ body{font-family:'Poppins',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sa
 .btn-yellow{background:var(--yellow);color:var(--black);border-color:var(--yellow);}
 .btn-yellow:hover{background:var(--yellow-dk);border-color:var(--yellow-dk);}
 .btn-black{background:var(--hdr-grad);color:var(--white);}
-.btn-black:hover{background:linear-gradient(135deg,#7c2d12,#ea580c);}
+.btn-black:hover{background:linear-gradient(135deg,#3d6b2c,#83B271);}
 .btn-outline{background:var(--white);color:var(--black);border-color:var(--g300);}
 .btn-outline:hover{background:var(--g100);}
 .btn-red{background:var(--red);color:var(--white);}
@@ -66,25 +67,25 @@ body{font-family:'Poppins',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sa
 #app.on{display:flex;}
 
 /* ── SIDEBAR ── */
-#sidebar{width:var(--sb-w);min-height:100vh;background:rgba(8,3,1,.82);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;flex-shrink:0;z-index:50;border-right:1px solid rgba(255,255,255,.08);box-shadow:4px 0 24px rgba(0,0,0,.4);}
-.sb-brand{padding:20px 18px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.12);}
-.sb-logo{width:38px;height:38px;background:rgba(255,255,255,.18);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;backdrop-filter:blur(4px);}
-.sb-title{font-size:1.1rem;font-weight:600;color:var(--white);letter-spacing:-.5px;}
-.sb-sub{font-size:.6rem;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.8px;margin-top:1px;}
-.sb-section-lbl{padding:16px 18px 5px;font-size:.6rem;font-weight:500;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.4);}
-.sb-item{display:flex;align-items:center;gap:10px;padding:10px 18px;font-size:.84rem;font-weight:400;color:rgba(255,255,255,.65);cursor:pointer;border-radius:0;transition:all .15s;border-left:3px solid transparent;margin:1px 0;position:relative;}
-.sb-notif{display:none;position:absolute;right:14px;top:50%;transform:translateY(-50%);background:#f59e0b;color:#1c0a00;font-size:.6rem;font-weight:800;padding:2px 6px;border-radius:999px;line-height:1.4;letter-spacing:.02em;animation:sb-pulse 2s infinite;}
-@keyframes sb-pulse{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,.7);}50%{box-shadow:0 0 0 5px rgba(245,158,11,0);}}
-.sb-item:hover{background:rgba(255,255,255,.12);color:var(--white);}
-.sb-item.active{background:rgba(255,255,255,.1);color:#FCD34D;border-left-color:#FCD34D;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);}
+#sidebar{width:var(--sb-w);min-height:100vh;background:#E7F0D2;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;flex-shrink:0;z-index:50;border-right:2px solid #C4DBA4;box-shadow:4px 0 20px rgba(0,0,0,.12);}
+.sb-brand{padding:20px 18px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(61,107,44,.15);}
+.sb-logo{width:38px;height:38px;background:rgba(131,178,113,.2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;}
+.sb-title{font-size:1.1rem;font-weight:700;color:#2E5220;letter-spacing:-.5px;}
+.sb-sub{font-size:.6rem;color:rgba(46,82,32,.55);text-transform:uppercase;letter-spacing:.8px;margin-top:1px;}
+.sb-section-lbl{padding:16px 18px 5px;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:rgba(46,82,32,.45);}
+.sb-item{display:flex;align-items:center;gap:10px;padding:10px 18px;font-size:.84rem;font-weight:500;color:rgba(46,82,32,.85);cursor:pointer;border-radius:0;transition:all .15s;border-left:3px solid transparent;margin:1px 0;position:relative;}
+.sb-notif{display:none;position:absolute;right:14px;top:50%;transform:translateY(-50%);background:#5E8A50;color:#E7F0D2;font-size:.6rem;font-weight:800;padding:2px 6px;border-radius:999px;line-height:1.4;letter-spacing:.02em;animation:sb-pulse 2s infinite;}
+@keyframes sb-pulse{0%,100%{box-shadow:0 0 0 0 rgba(94,138,80,.55);}50%{box-shadow:0 0 0 5px rgba(94,138,80,0);}}
+.sb-item:hover{background:rgba(171,203,137,.3);color:#2E5220;}
+.sb-item.active{background:#83B271;color:#ffffff;border-left-color:#5E8A50;font-weight:700;box-shadow:none;}
 .sb-item .sb-icon{width:20px;text-align:center;font-size:.95rem;flex-shrink:0;}
-.sb-divider{height:1px;background:rgba(255,255,255,.1);margin:8px 0;}
-.sb-footer{margin-top:auto;padding:14px 18px;border-top:1px solid rgba(255,255,255,.12);}
+.sb-divider{height:1px;background:rgba(46,82,32,.12);margin:8px 0;}
+.sb-footer{margin-top:auto;padding:14px 18px;border-top:1px solid rgba(46,82,32,.12);}
 .sb-user{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
-.sb-user-icon{width:34px;height:34px;background:rgba(255,255,255,.18);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;}
-#hdr-user{font-size:.78rem;font-weight:500;color:rgba(255,255,255,.9);line-height:1.3;}
-.sb-logout{width:100%;padding:8px;background:transparent;color:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.2);border-radius:var(--rs);font-size:.78rem;font-weight:500;cursor:pointer;text-align:center;transition:all .15s;font-family:inherit;}
-.sb-logout:hover{background:rgba(220,38,38,.8);color:var(--white);border-color:rgba(220,38,38,.8);}
+.sb-user-icon{width:34px;height:34px;background:rgba(131,178,113,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;}
+#hdr-user{font-size:.78rem;font-weight:600;color:#2E5220;line-height:1.3;}
+.sb-logout{width:100%;padding:8px;background:transparent;color:rgba(46,82,32,.7);border:1.5px solid rgba(46,82,32,.25);border-radius:var(--rs);font-size:.78rem;font-weight:500;cursor:pointer;text-align:center;transition:all .15s;font-family:inherit;}
+.sb-logout:hover{background:var(--red);color:var(--white);border-color:var(--red);}
 
 /* ── CONTENT ── */
 #content{flex:1;display:flex;flex-direction:column;min-width:0;background:#faf9f8;margin:10px 10px 10px 0;border-radius:16px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.35),0 4px 12px rgba(0,0,0,.2);}
@@ -101,7 +102,7 @@ body{font-family:'Poppins',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sa
 .lc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;padding:4px 0;}
 .log-card{background:var(--white);border:1px solid var(--g200);border-radius:14px;padding:20px;position:relative;cursor:pointer;transition:all .18s;box-shadow:0 2px 10px rgba(0,0,0,.07),0 1px 3px rgba(0,0,0,.04);overflow:hidden;}
 .log-card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--hdr-grad);}
-.log-card:hover{border-color:rgba(194,65,12,.3);box-shadow:0 8px 28px rgba(194,65,12,.14);transform:translateY(-2px);}
+.log-card:hover{border-color:rgba(94,138,80,.3);box-shadow:0 8px 28px rgba(94,138,80,.14);transform:translateY(-2px);}
 .lc-agent{font-size:1.05rem;font-weight:600;color:var(--black);padding-right:70px;padding-left:6px;margin-bottom:4px;}
 .lc-acts{position:absolute;top:12px;right:12px;display:flex;gap:6px;z-index:2;}
 .lc-act-btn{width:28px;height:28px;border-radius:7px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.8rem;transition:all .15s;}
@@ -123,11 +124,11 @@ body{font-family:'Poppins',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sa
 
 /* Status badges */
 .status-done{background:#DCFCE7;color:#15803D;border-radius:999px;padding:3px 10px;font-size:.68rem;font-weight:500;}
-.status-pend{background:#FFF7ED;color:#C2410C;border-radius:999px;padding:3px 10px;font-size:.68rem;font-weight:500;}
+.status-pend{background:#FFF8EE;color:#E8943A;border-radius:999px;padding:3px 10px;font-size:.68rem;font-weight:500;}
 
 /* ── NOTION DETAIL MODAL ── */
 .notion-body{padding:0;}
-.notion-cover{background:linear-gradient(135deg,#7c2d12,#ea580c);height:80px;border-radius:16px 16px 0 0;}
+.notion-cover{background:linear-gradient(135deg,#3d6b2c,#83B271);height:80px;border-radius:16px 16px 0 0;}
 .notion-inner{padding:20px 28px 28px;}
 .notion-agent{font-size:1.6rem;font-weight:600;color:var(--black);margin-bottom:4px;}
 .notion-meta{display:flex;flex-wrap:wrap;gap:16px;margin-bottom:20px;padding:14px 0;border-bottom:2px solid var(--g100);}
@@ -145,14 +146,14 @@ body{font-family:'Poppins',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sa
 .nm-card .k{font-size:.6rem;font-weight:500;text-transform:uppercase;color:var(--g500);margin-top:2px;}
 
 /* ── WEEK BAR ── */
-.week-bar{display:flex;align-items:center;gap:14px;background:var(--hdr-grad);border-radius:var(--r);padding:14px 18px;margin-bottom:18px;flex-wrap:wrap;box-shadow:0 4px 14px rgba(194,65,12,.2);}
+.week-bar{display:flex;align-items:center;gap:14px;background:var(--hdr-grad);border-radius:var(--r);padding:14px 18px;margin-bottom:18px;flex-wrap:wrap;box-shadow:0 4px 14px rgba(94,138,80,.22);}
 .week-bar label{font-size:.8rem;font-weight:600;color:var(--white);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;}
 .week-bar select{padding:7px 11px;border:2px solid rgba(255,255,255,.3);border-radius:6px;font-size:.85rem;font-weight:500;background:rgba(255,255,255,.15);color:var(--white);cursor:pointer;outline:none;}
 
 /* ── STATS ── */
 .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:20px;}
 .stat-card{background:var(--white);border:1px solid var(--g200);border-radius:var(--r);padding:22px 18px 18px;text-align:center;box-shadow:0 2px 12px rgba(0,0,0,.07),0 1px 3px rgba(0,0,0,.04);position:relative;overflow:hidden;transition:transform .15s,box-shadow .15s;}
-.stat-card:hover{transform:translateY(-3px);box-shadow:0 8px 28px rgba(194,65,12,.18);}
+.stat-card:hover{transform:translateY(-3px);box-shadow:0 8px 28px rgba(94,138,80,.18);}
 .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--hdr-grad);}
 .stat-val{font-size:2.4rem;font-weight:600;color:var(--black);line-height:1;margin-bottom:6px;letter-spacing:-1px;}
 .stat-lbl{font-size:.65rem;font-weight:500;text-transform:uppercase;letter-spacing:.7px;color:var(--g500);}
@@ -304,7 +305,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
 .focus-badge{display:inline-block;padding:3px 11px;border-radius:999px;font-size:.72rem;font-weight:500;background:var(--yellow);color:var(--black);}
 .calc-note{padding:7px 14px;font-size:.68rem;color:var(--g400);background:var(--g50);border-top:1px solid var(--g200);font-style:italic;}
 /* ── SETUP / LOADING ── */
-#setup-screen{position:fixed;inset:0;background:linear-gradient(145deg,#431407,#7c2d12);display:flex;align-items:center;justify-content:center;z-index:9999;padding:24px;}
+#setup-screen{position:fixed;inset:0;background:linear-gradient(145deg,#3d6b2c,#83B271);display:flex;align-items:center;justify-content:center;z-index:9999;padding:24px;}
 .setup-card{background:var(--white);border-radius:20px;padding:40px;width:100%;max-width:520px;box-shadow:0 20px 60px rgba(0,0,0,.5);}
 .setup-card h2{font-size:1.3rem;font-weight:600;margin-bottom:6px;}
 .setup-card p{font-size:.85rem;color:var(--g600);margin-bottom:18px;line-height:1.6;}
@@ -317,22 +318,22 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
 /* ── Agent Roster Manager (table style) ── */
 .rm-filter{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
 .rm-search{flex:1;min-width:160px;border:1px solid #e5e7eb;border-radius:8px;padding:8px 12px;font-size:13px;color:#1a1a1a;outline:none;background:#fff;}
-.rm-search:focus{border-color:#f59e0b;box-shadow:0 0 0 2px rgba(245,158,11,.18);}
+.rm-search:focus{border-color:#83B271;box-shadow:0 0 0 2px rgba(131,178,113,.22);}
 .rm-sel{border:1px solid #e5e7eb;border-radius:8px;padding:7px 10px;font-size:13px;color:#374151;background:#fff;outline:none;cursor:pointer;min-width:140px;}
-.rm-sel:focus{border-color:#f59e0b;}
+.rm-sel:focus{border-color:#83B271;}
 .rm-count{background:#f3f4f6;border-radius:20px;padding:3px 11px;font-size:12px;color:#6b7280;font-weight:400;white-space:nowrap;}
 .rm-add-form{background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:14px 16px;margin-bottom:14px;display:none;gap:10px;align-items:flex-end;flex-wrap:wrap;}
 .rm-add-form.show{display:flex;}
 .rm-add-inp{border:1px solid #e5e7eb;border-radius:8px;padding:7px 10px;font-size:13px;color:#1a1a1a;background:#fff;outline:none;box-sizing:border-box;}
-.rm-add-inp:focus{border-color:#f59e0b;}
+.rm-add-inp:focus{border-color:#83B271;}
 .rm-table{width:100%;border-collapse:collapse;font-size:13px;}
-.rm-table thead tr{background:#f59e0b;}
+.rm-table thead tr{background:#83B271;}
 .rm-table thead th{padding:9px 12px;text-align:left;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.6px;color:#1a1a1a;white-space:nowrap;}
 .rm-table tbody tr{border-bottom:1px solid #f3f4f6;transition:background .12s;}
 .rm-table tbody tr:hover{background:#fffbeb;}
 .rm-table td{padding:8px 12px;color:#374151;vertical-align:middle;}
 .rm-table td.rm-num{color:#9ca3af;font-size:12px;width:36px;text-align:center;}
-.rm-edit-btn{background:#f59e0b;color:#1a1a1a;border:none;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:500;cursor:pointer;margin-right:4px;}
+.rm-edit-btn{background:#83B271;color:#ffffff;border:none;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:500;cursor:pointer;margin-right:4px;}
 .rm-edit-btn:hover{background:#d97706;color:#fff;}
 .rm-del-btn{background:#ef4444;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:500;cursor:pointer;}
 .rm-del-btn:hover{background:#dc2626;}
@@ -631,15 +632,15 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
         <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;">
           <div style="background:var(--hdr-grad);border-radius:10px;padding:12px 18px;flex:1;min-width:120px;text-align:center;">
             <div style="font-size:1.5rem;font-weight:900;color:#fff" id="av-stat-c">0</div>
-            <div style="font-size:.72rem;color:#fed7aa;margin-top:2px;text-transform:uppercase;letter-spacing:.5px;">Coaching Logs</div>
+            <div style="font-size:.72rem;color:#E7F0D2;margin-top:2px;text-transform:uppercase;letter-spacing:.5px;">Coaching Logs</div>
           </div>
           <div style="background:var(--hdr-grad);border-radius:10px;padding:12px 18px;flex:1;min-width:120px;text-align:center;">
             <div style="font-size:1.5rem;font-weight:900;color:#fff" id="av-stat-n">0</div>
-            <div style="font-size:.72rem;color:#fed7aa;margin-top:2px;text-transform:uppercase;letter-spacing:.5px;">NTE Notices</div>
+            <div style="font-size:.72rem;color:#E7F0D2;margin-top:2px;text-transform:uppercase;letter-spacing:.5px;">NTE Notices</div>
           </div>
           <div style="background:var(--hdr-grad);border-radius:10px;padding:12px 18px;flex:1;min-width:120px;text-align:center;">
             <div style="font-size:1.5rem;font-weight:900;color:#fff" id="av-stat-f">0</div>
-            <div style="font-size:.72rem;color:#fed7aa;margin-top:2px;text-transform:uppercase;letter-spacing:.5px;">Follow Through</div>
+            <div style="font-size:.72rem;color:#E7F0D2;margin-top:2px;text-transform:uppercase;letter-spacing:.5px;">Follow Through</div>
           </div>
         </div>
       </div>
@@ -723,8 +724,8 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
           <div style="padding:20px;max-width:720px;margin:0 auto;">
 
             <!-- Tier Reference -->
-            <div style="background:#fff7ed;border:1.5px solid #fdba74;border-radius:10px;padding:16px;margin-bottom:20px;">
-              <div style="font-size:.82rem;font-weight:700;color:#c2410c;margin-bottom:10px;letter-spacing:.04em;">📌 CVR% TIER GUIDE</div>
+            <div style="background:#E7F0D2;border:1.5px solid #ABCB89;border-radius:10px;padding:16px;margin-bottom:20px;">
+              <div style="font-size:.82rem;font-weight:700;color:#3D6B58;margin-bottom:10px;letter-spacing:.04em;">📌 CVR% TIER GUIDE</div>
               <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;">
                 <div style="text-align:center;padding:10px 6px;border-radius:8px;background:#dcfce7;border:1px solid #bbf7d0;">
                   <div style="font-size:.72rem;font-weight:700;color:#16A34A;">TIER 1</div>
@@ -738,8 +739,8 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
                   <div style="font-size:.72rem;font-weight:700;color:#ca8a04;">TIER 3</div>
                   <div style="font-size:.78rem;color:#854d0e;margin-top:2px;">2.95%–3.44%</div>
                 </div>
-                <div style="text-align:center;padding:10px 6px;border-radius:8px;background:#ffedd5;border:1px solid #fdba74;">
-                  <div style="font-size:.72rem;font-weight:700;color:#ea580c;">TIER 4</div>
+                <div style="text-align:center;padding:10px 6px;border-radius:8px;background:#E7F0D2;border:1px solid #ABCB89;">
+                  <div style="font-size:.72rem;font-weight:700;color:#3D6B58;">TIER 4</div>
                   <div style="font-size:.78rem;color:#9a3412;margin-top:2px;">2.45%–2.94%</div>
                 </div>
                 <div style="text-align:center;padding:10px 6px;border-radius:8px;background:#fee2e2;border:1px solid #fca5a5;">
@@ -778,19 +779,19 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
             <div id="px-result" style="display:none;background:var(--hdr-grad);border-radius:12px;padding:22px;">
               <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
                 <div style="flex:1;min-width:140px;">
-                  <div style="font-size:.72rem;font-weight:700;color:#fed7aa;letter-spacing:.08em;">YOUR TIER</div>
+                  <div style="font-size:.72rem;font-weight:700;color:#E7F0D2;letter-spacing:.08em;">YOUR TIER</div>
                   <div id="px-tier-lbl" style="font-size:1.5rem;font-weight:900;color:#fff;margin-top:4px;">—</div>
-                  <div id="px-tier-cvr" style="font-size:.78rem;color:#fed7aa;margin-top:2px;">—</div>
+                  <div id="px-tier-cvr" style="font-size:.78rem;color:#E7F0D2;margin-top:2px;">—</div>
                 </div>
                 <div style="flex:1;min-width:120px;">
-                  <div style="font-size:.72rem;font-weight:700;color:#fed7aa;letter-spacing:.08em;">VALID POINTS</div>
+                  <div style="font-size:.72rem;font-weight:700;color:#E7F0D2;letter-spacing:.08em;">VALID POINTS</div>
                   <div id="px-pts-lbl" style="font-size:1.1rem;font-weight:900;color:#fff;margin-top:4px;">—</div>
-                  <div style="font-size:.72rem;color:#fed7aa;margin-top:2px;">WK4 billed at $10/pt (decimals ok)</div>
+                  <div style="font-size:.72rem;color:#E7F0D2;margin-top:2px;">WK4 billed at $10/pt (decimals ok)</div>
                 </div>
                 <div style="flex:1;min-width:160px;background:rgba(255,255,255,.15);border-radius:10px;padding:14px 16px;text-align:center;">
-                  <div style="font-size:.72rem;font-weight:700;color:#fed7aa;letter-spacing:.08em;">INCENTIVE EARNED</div>
+                  <div style="font-size:.72rem;font-weight:700;color:#E7F0D2;letter-spacing:.08em;">INCENTIVE EARNED</div>
                   <div id="px-incentive" style="font-size:2rem;font-weight:900;color:#fff;margin-top:6px;">$0.00</div>
-                  <div id="px-bonus-lbl" style="font-size:.72rem;color:#fed7aa;margin-top:2px;"></div>
+                  <div id="px-bonus-lbl" style="font-size:.72rem;color:#E7F0D2;margin-top:2px;"></div>
                 </div>
               </div>
             </div>
@@ -1761,7 +1762,7 @@ function renderTable(){
       <td class="mc mg">${pct(r.csr)}</td>
       <td class="mc ${parseFloat(r.cvr)>=15?'mg':'mr'}">${pct(r.cvr)}</td>
       <td class="mc ${parseFloat(r.wk2)>=15?'mg':'mr'}">${pct(r.wk2)}</td>
-      <td>${(()=>{const c=DB.cm[r.id];const done=c&&(c.situation||c.sit||c.task||c.action||c.act||c.res);return done?`<span style="background:#16a34a22;color:#4ade80;border:1px solid #16a34a44;border-radius:20px;padding:3px 10px;font-size:.72rem;font-weight:700;">✅ Complete</span>`:`<span style="background:#f59e0b22;color:#fbbf24;border:1px solid #f59e0b44;border-radius:20px;padding:3px 10px;font-size:.72rem;font-weight:700;">⏳ Pending</span>`;})()}</td>
+      <td>${(()=>{const c=DB.cm[r.id];const done=c&&(c.situation||c.sit||c.task||c.action||c.act||c.res);return done?`<span style="background:#16a34a22;color:#4ade80;border:1px solid #16a34a44;border-radius:20px;padding:3px 10px;font-size:.72rem;font-weight:700;">✅ Complete</span>`:`<span style="background:#83B27122;color:#3d6b2c;border:1px solid #83B27144;border-radius:20px;padding:3px 10px;font-size:.72rem;font-weight:700;">⏳ Pending</span>`;})()}</td>
       <td><div style="display:flex;gap:4px;flex-wrap:wrap;">
         <button class="btn btn-yellow btn-sm" onclick="openDetail('${r.id}')">👁 View</button>
         ${CU&&EDIT_ALLOWED.has(CU.email)?`<button class="btn btn-sm" style="background:#2563eb;color:#fff;border:none;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:.75rem;" onclick="editLog('${r.id}')">✏️ Edit</button>`:''}
@@ -2451,7 +2452,7 @@ function renderOMDash(){
   if(CHT.day)CHT.day.destroy();
   CHT.day=new Chart(document.getElementById('ch-day').getContext('2d'),{
     type:'bar',
-    data:{labels:days.map(fd),datasets:[{label:'Entries',data:days.map(d=>dayMap[d]),backgroundColor:'#FB923C',borderColor:'#F97316',borderWidth:2,borderRadius:6}]},
+    data:{labels:days.map(fd),datasets:[{label:'Entries',data:days.map(d=>dayMap[d]),backgroundColor:'#83B271',borderColor:'#5E8A50',borderWidth:2,borderRadius:6}]},
     options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}
   });
 
@@ -2461,7 +2462,7 @@ function renderOMDash(){
   if(CHT.tl)CHT.tl.destroy();
   CHT.tl=new Chart(document.getElementById('ch-tl').getContext('2d'),{
     type:'doughnut',
-    data:{labels:tls,datasets:[{data:tls.map(t=>tlMap[t]),backgroundColor:['#FB923C','#111111','#F97316','#16A34A','#2563EB'],borderWidth:0}]},
+    data:{labels:tls,datasets:[{data:tls.map(t=>tlMap[t]),backgroundColor:['#83B271','#E7F0D2','#ABCB89','#D2EA9B','#3d6b2c'],borderWidth:0}]},
     options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:11}}},
       tooltip:{callbacks:{label:c=>`${c.label}: ${c.raw} (${((c.raw/total)*100).toFixed(1)}%)`}}}}
   });
@@ -2491,7 +2492,7 @@ function renderOMC(){
     const c=DB.cm[r.id]; const done=c&&(c.situation||c.sit||c.task||c.action||c.act||c.res);
     const statusBadge=done
       ?`<span style="background:#16a34a22;color:#4ade80;border:1px solid #16a34a44;border-radius:20px;padding:3px 10px;font-size:.72rem;font-weight:700;">✅ Complete</span>`
-      :`<span style="background:#f59e0b22;color:#fbbf24;border:1px solid #f59e0b44;border-radius:20px;padding:3px 10px;font-size:.72rem;font-weight:700;">⏳ Pending</span>`;
+      :`<span style="background:#83B27122;color:#3d6b2c;border:1px solid #83B27144;border-radius:20px;padding:3px 10px;font-size:.72rem;font-weight:700;">⏳ Pending</span>`;
     const canEdit=CU&&EDIT_ALLOWED.has(CU.email);
     const canDel=CU&&!NO_DELETE.has(CU.email);
     return`<tr>
@@ -2583,14 +2584,14 @@ function renderOMN(){
     const signed=r.signature&&r.signature.trim();
     const statusBadge=signed
       ?`<span style="background:#16a34a22;color:#4ade80;border:1px solid #16a34a44;border-radius:20px;padding:3px 10px;font-size:.72rem;font-weight:700;">✅ Signed</span>`
-      :`<span style="background:#f59e0b22;color:#fbbf24;border:1px solid #f59e0b44;border-radius:20px;padding:3px 10px;font-size:.72rem;font-weight:700;">⏳ Pending</span>`;
+      :`<span style="background:#83B27122;color:#3d6b2c;border:1px solid #83B27144;border-radius:20px;padding:3px 10px;font-size:.72rem;font-weight:700;">⏳ Pending</span>`;
     const agentTL=r.tl||getTLForAgent(r.agent)||'';
     return`<tr>
       <td style="color:var(--g400);font-size:.72rem">${i+1}</td>
       <td>${fd(r.date)}</td>
       <td><span class="nte-b nte-${(r.type||'').toLowerCase().replace(/\s/g,'-')}">${e(r.type)}</span></td>
       <td><button class="agent-btn" onclick="openNTEDetail('${r.id}')" title="Click to sign/view">${e(r.agent)}</button></td>
-      <td>${agentTL?`<span style="background:#fef3c7;color:#92400e;border-radius:20px;padding:2px 9px;font-size:12px;font-weight:600;">${e(agentTL)}</span>`:'<span style="color:var(--g400);font-size:.8rem">—</span>'}</td>
+      <td>${agentTL?`<span style="background:#D2EA9B;color:#2E5220;border-radius:20px;padding:2px 9px;font-size:12px;font-weight:600;">${e(agentTL)}</span>`:'<span style="color:var(--g400);font-size:.8rem">—</span>'}</td>
       <td><span class="t-badge">${e(r.tenure)}</span></td>
       <td style="font-size:.8rem">${r.pts?'Att. Points: '+r.pts:e(r.notes)||'—'}</td>
       <td>${r.link?`<a href="${e(r.link)}" target="_blank" style="color:var(--blue)">🔗 View</a>`:'—'}</td>
@@ -2628,7 +2629,7 @@ function renderOMF(){
       <td style="color:var(--g400);font-size:.72rem">${i+1}</td>
       <td>${fd(r.date)}</td>
       <td><strong>${e(r.agent)}</strong></td>
-      <td>${agentTL?`<span style="background:#fef3c7;color:#92400e;border-radius:20px;padding:2px 9px;font-size:12px;font-weight:600;">${e(agentTL)}</span>`:'<span style="color:var(--g400);font-size:.8rem">—</span>'}</td>
+      <td>${agentTL?`<span style="background:#D2EA9B;color:#2E5220;border-radius:20px;padding:2px 9px;font-size:12px;font-weight:600;">${e(agentTL)}</span>`:'<span style="color:var(--g400);font-size:.8rem">—</span>'}</td>
       <td>${r.air?`<a href="${e(r.air)}" target="_blank" style="color:var(--blue)">🔗 Call</a>`:'—'}</td>
       <td>${e(r.applied)}</td>
       <td style="max-width:200px">${e(r.opp)||'—'}</td>
@@ -2791,7 +2792,7 @@ function renderRosterAgents(){
       <td class="rm-num">${i+1}</td>
       <td><strong>${e(a.name)}</strong></td>
       <td>${a.h||'—'}</td>
-      <td>${a.tl?`<span style="background:#fef3c7;color:#92400e;border-radius:20px;padding:2px 9px;font-size:12px;font-weight:600;">${e(a.tl)}</span>`:'<span style="background:#f3f4f6;color:#6b7280;border-radius:20px;padding:2px 9px;font-size:12px;font-weight:600;">Transition Team</span>'}</td>
+      <td>${a.tl?`<span style="background:#D2EA9B;color:#2E5220;border-radius:20px;padding:2px 9px;font-size:12px;font-weight:600;">${e(a.tl)}</span>`:'<span style="background:#f3f4f6;color:#6b7280;border-radius:20px;padding:2px 9px;font-size:12px;font-weight:600;">Transition Team</span>'}</td>
       <td style="white-space:nowrap;">
         <button class="rm-edit-btn" onclick="rosterEditInline(${i})">✏️ Edit</button>
         <button class="rm-del-btn"  onclick="rosterDelByIdx(${i})">🗑 Delete</button>
@@ -3079,7 +3080,7 @@ function renderAgentView(){
     const hasCM=cm.situation||cm.sit||cm.task||cm.action||cm.act||cm.result||cm.res;
     const status=hasCM
       ?`<span style="background:#16a34a22;color:#4ade80;border:1px solid #16a34a44;border-radius:20px;padding:3px 10px;font-size:.72rem;font-weight:700;">&#x2705; Completed</span>`
-      :`<span style="background:#f59e0b22;color:#fbbf24;border:1px solid #f59e0b44;border-radius:20px;padding:3px 10px;font-size:.72rem;font-weight:700;">&#x23F3; Pending</span>`;
+      :`<span style="background:#83B27122;color:#3d6b2c;border:1px solid #83B27144;border-radius:20px;padding:3px 10px;font-size:.72rem;font-weight:700;">&#x23F3; Pending</span>`;
     return`<tr>
       <td style="color:var(--g400);font-size:.72rem">${i+1}</td>
       <td>${fd(r.date)}</td>
@@ -3235,7 +3236,7 @@ function renderAgentPerf(){
     return;
   }
 
-  makeBar('ap-leads-ch','Leads Touch',logs.map(r=>+r.leads||0),'#F97316');
+  makeBar('ap-leads-ch','Leads Touch',logs.map(r=>+r.leads||0),'#ABCB89');
   makeBar('ap-calls-ch','Calls Made',logs.map(r=>+r.conn||0),'#2563EB');
   makeBar('ap-sales-ch','No. of Sales',logs.map(r=>+r.sales||0),'#16A34A');
 
