@@ -72,7 +72,9 @@ body{font-family:'Poppins',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sa
 .sb-title{font-size:1.1rem;font-weight:600;color:var(--white);letter-spacing:-.5px;}
 .sb-sub{font-size:.6rem;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.8px;margin-top:1px;}
 .sb-section-lbl{padding:16px 18px 5px;font-size:.6rem;font-weight:500;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.4);}
-.sb-item{display:flex;align-items:center;gap:10px;padding:10px 18px;font-size:.84rem;font-weight:400;color:rgba(255,255,255,.65);cursor:pointer;border-radius:0;transition:all .15s;border-left:3px solid transparent;margin:1px 0;}
+.sb-item{display:flex;align-items:center;gap:10px;padding:10px 18px;font-size:.84rem;font-weight:400;color:rgba(255,255,255,.65);cursor:pointer;border-radius:0;transition:all .15s;border-left:3px solid transparent;margin:1px 0;position:relative;}
+.sb-notif{display:none;position:absolute;right:14px;top:50%;transform:translateY(-50%);background:#f59e0b;color:#1c0a00;font-size:.6rem;font-weight:800;padding:2px 6px;border-radius:999px;line-height:1.4;letter-spacing:.02em;animation:sb-pulse 2s infinite;}
+@keyframes sb-pulse{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,.7);}50%{box-shadow:0 0 0 5px rgba(245,158,11,0);}}
 .sb-item:hover{background:rgba(255,255,255,.12);color:var(--white);}
 .sb-item.active{background:rgba(255,255,255,.1);color:#FCD34D;border-left-color:#FCD34D;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);}
 .sb-item .sb-icon{width:20px;text-align:center;font-size:.95rem;flex-shrink:0;}
@@ -421,7 +423,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
     <div id="tl-nav" class="hidden">
       <div class="sb-section-lbl">VIEWS</div>
       <div class="sb-item active" id="tl-nav-dash" onclick="tlShowView('dashboard')"><span class="sb-icon">📊</span><span>Dashboard</span></div>
-      <div class="sb-item" id="tl-nav-logs" onclick="tlShowView('logs')"><span class="sb-icon">📋</span><span>Coaching Logs</span></div>
+      <div class="sb-item" id="tl-nav-logs" onclick="tlShowView('logs')"><span class="sb-icon">📋</span><span>Coaching Logs</span><span id="nav-badge-tl-logs" class="sb-notif" style="display:none"></span></div>
       <div class="sb-divider"></div>
       <div class="sb-section-lbl">ACTIONS</div>
       <div class="sb-item" onclick="openLogModal()"><span class="sb-icon">➕</span><span>New Coaching Log</span></div>
@@ -433,10 +435,11 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
     <!-- Agent nav -->
     <div id="agent-nav" class="hidden">
       <div class="sb-section-lbl">MY RECORDS</div>
-      <div class="sb-item active" data-tab="coaching" onclick="switchAgentTab('coaching')"><span class="sb-icon">📋</span><span>My Coaching</span></div>
+      <div class="sb-item active" data-tab="coaching" onclick="switchAgentTab('coaching')"><span class="sb-icon">📋</span><span>My Coaching</span><span id="nav-badge-coaching" class="sb-notif" style="display:none"></span></div>
       <div class="sb-item" data-tab="nte" onclick="switchAgentTab('nte')"><span class="sb-icon">📝</span><span>My NTE</span></div>
       <div class="sb-item" data-tab="ft" onclick="switchAgentTab('ft')"><span class="sb-icon">🔄</span><span>My Follow Through</span></div>
       <div class="sb-item" data-tab="perf" onclick="switchAgentTab('perf')"><span class="sb-icon">📊</span><span>My Performance</span></div>
+      <div class="sb-item" data-tab="calc" onclick="switchAgentTab('calc')"><span class="sb-icon">🧮</span><span>Phoenix Calculator</span></div>
     </div>
 
     <div class="sb-footer">
@@ -712,6 +715,105 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
           </div>
         </div>
       </div>
+
+      <!-- Phoenix Calculator section -->
+      <div id="av-calc" class="av-section" style="display:none">
+        <div class="tbl-wrap">
+          <div class="tbl-hdr"><h3>🧮 Phoenix Incentive Calculator</h3></div>
+          <div style="padding:20px;max-width:720px;margin:0 auto;">
+
+            <!-- Tier Reference -->
+            <div style="background:#fff7ed;border:1.5px solid #fdba74;border-radius:10px;padding:16px;margin-bottom:20px;">
+              <div style="font-size:.82rem;font-weight:700;color:#c2410c;margin-bottom:10px;letter-spacing:.04em;">📌 CVR% TIER GUIDE</div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;">
+                <div style="text-align:center;padding:10px 6px;border-radius:8px;background:#dcfce7;border:1px solid #bbf7d0;">
+                  <div style="font-size:.72rem;font-weight:700;color:#16A34A;">TIER 1</div>
+                  <div style="font-size:.78rem;color:#166534;margin-top:2px;">CVR ≥ 3.95%</div>
+                </div>
+                <div style="text-align:center;padding:10px 6px;border-radius:8px;background:#dbeafe;border:1px solid #bfdbfe;">
+                  <div style="font-size:.72rem;font-weight:700;color:#2563EB;">TIER 2</div>
+                  <div style="font-size:.78rem;color:#1e40af;margin-top:2px;">3.45%–3.94%</div>
+                </div>
+                <div style="text-align:center;padding:10px 6px;border-radius:8px;background:#fef9c3;border:1px solid #fde047;">
+                  <div style="font-size:.72rem;font-weight:700;color:#ca8a04;">TIER 3</div>
+                  <div style="font-size:.78rem;color:#854d0e;margin-top:2px;">2.95%–3.44%</div>
+                </div>
+                <div style="text-align:center;padding:10px 6px;border-radius:8px;background:#ffedd5;border:1px solid #fdba74;">
+                  <div style="font-size:.72rem;font-weight:700;color:#ea580c;">TIER 4</div>
+                  <div style="font-size:.78rem;color:#9a3412;margin-top:2px;">2.45%–2.94%</div>
+                </div>
+                <div style="text-align:center;padding:10px 6px;border-radius:8px;background:#fee2e2;border:1px solid #fca5a5;">
+                  <div style="font-size:.72rem;font-weight:700;color:#DC2626;">TIER 5</div>
+                  <div style="font-size:.78rem;color:#991b1b;margin-top:2px;">Below 2.45%</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Input Form -->
+            <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px;margin-bottom:20px;">
+              <div style="font-size:.82rem;font-weight:700;color:#374151;margin-bottom:14px;letter-spacing:.04em;">✏️ ENTER YOUR METRICS</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+                <div>
+                  <label style="font-size:.75rem;font-weight:600;color:#6b7280;display:block;margin-bottom:4px;">CVR%</label>
+                  <input id="px-cvr" type="number" step="0.01" min="0" max="100" placeholder="e.g. 4.00"
+                    style="width:100%;padding:9px 11px;border:1.5px solid #d1d5db;border-radius:7px;font-size:.88rem;box-sizing:border-box;"
+                    oninput="calcPhoenix()">
+                </div>
+                <div>
+                  <label style="font-size:.75rem;font-weight:600;color:#6b7280;display:block;margin-bottom:4px;">WK2 + WK3 QA Points</label>
+                  <input id="px-wk23" type="number" step="0.01" min="0" max="25" placeholder="e.g. 5.5"
+                    style="width:100%;padding:9px 11px;border:1.5px solid #d1d5db;border-radius:7px;font-size:.88rem;box-sizing:border-box;"
+                    oninput="calcPhoenix()">
+                </div>
+                <div>
+                  <label style="font-size:.75rem;font-weight:600;color:#6b7280;display:block;margin-bottom:4px;">WK4 QA Points</label>
+                  <input id="px-wk4" type="number" step="0.01" min="0" placeholder="e.g. 1.1"
+                    style="width:100%;padding:9px 11px;border:1.5px solid #d1d5db;border-radius:7px;font-size:.88rem;box-sizing:border-box;"
+                    oninput="calcPhoenix()">
+                </div>
+              </div>
+            </div>
+
+            <!-- Result Panel -->
+            <div id="px-result" style="display:none;background:var(--hdr-grad);border-radius:12px;padding:22px;">
+              <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+                <div style="flex:1;min-width:140px;">
+                  <div style="font-size:.72rem;font-weight:700;color:#fed7aa;letter-spacing:.08em;">YOUR TIER</div>
+                  <div id="px-tier-lbl" style="font-size:1.5rem;font-weight:900;color:#fff;margin-top:4px;">—</div>
+                  <div id="px-tier-cvr" style="font-size:.78rem;color:#fed7aa;margin-top:2px;">—</div>
+                </div>
+                <div style="flex:1;min-width:120px;">
+                  <div style="font-size:.72rem;font-weight:700;color:#fed7aa;letter-spacing:.08em;">VALID POINTS</div>
+                  <div id="px-pts-lbl" style="font-size:1.1rem;font-weight:900;color:#fff;margin-top:4px;">—</div>
+                  <div style="font-size:.72rem;color:#fed7aa;margin-top:2px;">WK4 billed at $10/pt (decimals ok)</div>
+                </div>
+                <div style="flex:1;min-width:160px;background:rgba(255,255,255,.15);border-radius:10px;padding:14px 16px;text-align:center;">
+                  <div style="font-size:.72rem;font-weight:700;color:#fed7aa;letter-spacing:.08em;">INCENTIVE EARNED</div>
+                  <div id="px-incentive" style="font-size:2rem;font-weight:900;color:#fff;margin-top:6px;">$0.00</div>
+                  <div id="px-bonus-lbl" style="font-size:.72rem;color:#fed7aa;margin-top:2px;"></div>
+                </div>
+              </div>
+            </div>
+
+            <div id="px-empty" style="text-align:center;padding:30px;color:#9ca3af;font-style:italic;font-size:.88rem;">
+              Enter your CVR% and lead counts above to see your projected incentive.
+            </div>
+
+            <!-- How it works -->
+            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:20px;">
+              <div style="font-size:.78rem;font-weight:700;color:#374151;margin-bottom:8px;">ℹ️ How Valid Points Are Counted</div>
+              <ul style="margin:0;padding-left:18px;font-size:.78rem;color:#6b7280;line-height:1.7;">
+                <li><strong>WK2 + WK3 Leads</strong> are looked up on the tier incentive table (max 25 points)</li>
+                <li><strong>WK4 Leads</strong> are counted separately at a flat <strong>$10 per valid lead</strong> — not added to the table lookup</li>
+                <li><strong>Total Incentive</strong> = WK2–3 table incentive + (WK4 leads × $10)</li>
+                <li>Your <strong>CVR%</strong> determines your Tier — higher CVR% unlocks higher incentives for WK2–3 leads</li>
+              </ul>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
     </div>
 
   </div><!-- /main -->
@@ -1667,6 +1769,10 @@ function renderTable(){
       </div></td>
     </tr>`;
   }).join('');
+  /* TL Coaching Logs badge — count pending commitments in current filtered set */
+  const tlPending=rows.filter(r=>{const c=DB.cm[r.id]||{};return!(c.situation||c.sit||c.task||c.action||c.act||c.result||c.res);}).length;
+  const tlBadge=document.getElementById('nav-badge-tl-logs');
+  if(tlBadge){tlBadge.textContent=tlPending>9?'9+':tlPending;tlBadge.style.display=tlPending>0?'':'none';}
 }
 
 function clearFilters(){
@@ -2952,10 +3058,10 @@ function onEmailInput(){
 function switchAgentTab(tab){
   document.querySelectorAll('#agent-nav .sb-item').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
   document.querySelectorAll('.av-section').forEach(s=>s.style.display='none');
-  const map={coaching:'av-coaching',nte:'av-nte',ft:'av-ft',perf:'av-perf'};
+  const map={coaching:'av-coaching',nte:'av-nte',ft:'av-ft',perf:'av-perf',calc:'av-calc'};
   const secId=map[tab];
   if(secId){const sec=document.getElementById(secId);if(sec)sec.style.display='';}
-  const titles={coaching:'My Coaching',nte:'My NTE',ft:'My Follow Through',perf:'My Performance'};
+  const titles={coaching:'My Coaching',nte:'My NTE',ft:'My Follow Through',perf:'My Performance',calc:'Phoenix Calculator'};
   const el=document.getElementById('tb-title'); if(el) el.textContent=titles[tab]||'';
   if(tab==='perf') renderAgentPerf();
 }
@@ -2988,6 +3094,11 @@ function renderAgentView(){
       <td><button class="btn btn-yellow btn-sm" onclick="openDetail('${r.id}')">&#x1F441; View</button></td>
     </tr>`;
   }).join(''):`<tr><td colspan="14"><div class="empty-st"><div class="ei">&#x1F4CB;</div><p>No coaching logs yet.</p></div></td></tr>`;
+
+  /* Notification badge — coaching tab */
+  const pendingCM=logs.filter(r=>{const cm=DB.cm[r.id]||{};return!(cm.situation||cm.sit||cm.task||cm.action||cm.act||cm.result||cm.res);}).length;
+  const badge=document.getElementById('nav-badge-coaching');
+  if(badge){badge.textContent=pendingCM>9?'9+':pendingCM;badge.style.display=pendingCM>0?'':'none';}
 
   /* NTE Logs */
   const ntes=DB.nte.filter(r=>r.agent===name);
@@ -3145,6 +3256,79 @@ function renderAgentPerf(){
       options:{responsive:true,plugins:{legend:{display:true,position:'top'}},scales:{x:{grid:{display:false}},y:{beginAtZero:true,grid:{color:'#f3f4f6'}}}}
     });
   }
+}
+
+/* ═══════════════════════════════════════
+   PHOENIX INCENTIVE CALCULATOR
+═══════════════════════════════════════ */
+// Per-point rates by band, indexed by tier.col [0=Tier5 .. 4=Tier1]
+// Bands: [5-10, 11-15, 16-20, 21-25] — applied fractionally, no rounding
+const PX_RATES=[
+  [15.3,22.0,28.8,35.6],  // col 0 = Tier 5 (CVR < 2.45%)
+  [23.7,30.5,37.3,44.1],  // col 1 = Tier 4 (2.45%–2.94%)
+  [35.6,42.4,49.2,55.9],  // col 2 = Tier 3 (2.95%–3.44%)
+  [50.8,57.6,64.4,71.2],  // col 3 = Tier 2 (3.45%–3.94%)
+  [69.5,76.3,83.1,89.8]   // col 4 = Tier 1 (CVR ≥ 3.95%)
+];
+
+function _pxTier(cvr){
+  if(cvr>=3.95)return{num:1,col:4,label:'Tier 1',range:'CVR ≥ 3.95%'};
+  if(cvr>=3.45)return{num:2,col:3,label:'Tier 2',range:'3.45%–3.94%'};
+  if(cvr>=2.95)return{num:3,col:2,label:'Tier 3',range:'2.95%–3.44%'};
+  if(cvr>=2.45)return{num:4,col:1,label:'Tier 4',range:'2.45%–2.94%'};
+  return{num:5,col:0,label:'Tier 5',range:'Below 2.45%'};
+}
+
+// WK2+WK3 incentive using fractional per-point band rates — no rounding
+// Formula: <4 pts = $0; ≥4 pts = (pts−4) × rate, rate changes by band
+// Band 1 (pts 4-10): 6-pt capacity; Bands 2-4 (5-pt each)
+function _pxWk23Incentive(pts,col){
+  if(pts<4)return 0;
+  const r=PX_RATES[col];
+  const p=Math.min(pts,25);
+  const above=p-4;
+  const b1=Math.min(above,6);
+  const b2=Math.min(Math.max(above-6,0),5);
+  const b3=Math.min(Math.max(above-11,0),5);
+  const b4=Math.max(above-16,0);
+  return b1*r[0]+b2*r[1]+b3*r[2]+b4*r[3];
+}
+
+function calcPhoenix(){
+  const cvrVal=document.getElementById('px-cvr');
+  const wk23Val=document.getElementById('px-wk23');
+  const wk4Val=document.getElementById('px-wk4');
+  if(!cvrVal)return;
+  const cvr=parseFloat(cvrVal.value);
+  const wk23=parseFloat(wk23Val.value)||0;
+  const wk4=parseFloat(wk4Val.value)||0;
+  const res=document.getElementById('px-result');
+  const empty=document.getElementById('px-empty');
+  if(isNaN(cvr)||cvrVal.value===''){
+    if(res)res.style.display='none';
+    if(empty)empty.style.display='';
+    return;
+  }
+  const tier=_pxTier(cvr);
+  // WK2+WK3: fractional band-rate formula (capped at 25 pts)
+  const wk23pts=Math.min(Math.max(wk23,0),25);
+  const wk23incentive=_pxWk23Incentive(wk23pts,tier.col);
+  // WK4: flat $10 per QA point (fractional allowed, no rounding)
+  const wk4incentive=wk4*10;
+  const totalIncentive=wk23incentive+wk4incentive;
+  // Update DOM
+  document.getElementById('px-tier-lbl').textContent=tier.label;
+  document.getElementById('px-tier-cvr').textContent=tier.range;
+  const wk23display=wk23pts%1===0?wk23pts.toString():wk23pts.toFixed(2).replace(/\.?0+$/,'');
+  const wk4display=wk4%1===0?wk4.toString():wk4.toFixed(2).replace(/\.?0+$/,'');
+  document.getElementById('px-pts-lbl').textContent=wk23display+' pts (WK2–3) + '+wk4display+' pts (WK4)';
+  document.getElementById('px-incentive').textContent='$'+totalIncentive.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const parts=[];
+  if(wk23incentive>0)parts.push('WK2–3: $'+wk23incentive.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}));
+  if(wk4incentive>0)parts.push('WK4: '+wk4display+' × $10 = $'+wk4incentive.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}));
+  document.getElementById('px-bonus-lbl').textContent=parts.length?parts.join('  +  '):'No incentive yet';
+  if(res)res.style.display='';
+  if(empty)empty.style.display='none';
 }
 
 
