@@ -436,6 +436,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
       <div class="sb-item active" data-tab="coaching" onclick="switchAgentTab('coaching')"><span class="sb-icon">📋</span><span>My Coaching</span></div>
       <div class="sb-item" data-tab="nte" onclick="switchAgentTab('nte')"><span class="sb-icon">📝</span><span>My NTE</span></div>
       <div class="sb-item" data-tab="ft" onclick="switchAgentTab('ft')"><span class="sb-icon">🔄</span><span>My Follow Through</span></div>
+      <div class="sb-item" data-tab="perf" onclick="switchAgentTab('perf')"><span class="sb-icon">📊</span><span>My Performance</span></div>
     </div>
 
     <div class="sb-footer">
@@ -616,26 +617,26 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
     <!-- AGENT VIEW (filtered — own records only) -->
     <div id="v-agent" class="view">
       <!-- Welcome banner -->
-      <div style="background:linear-gradient(135deg,var(--g900),var(--g800));border-radius:14px;padding:20px 24px;margin-bottom:20px;border:1px solid var(--g700);">
+      <div style="background:#fff;border-radius:14px;padding:20px 24px;margin-bottom:20px;border:1px solid #e5e7eb;box-shadow:0 2px 8px rgba(0,0,0,.06);">
         <div style="display:flex;align-items:center;gap:14px;">
-          <div style="width:48px;height:48px;background:var(--yellow);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;">🧑‍💼</div>
+          <div style="width:48px;height:48px;background:var(--hdr-grad);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;">🧑‍💼</div>
           <div>
-            <div style="font-size:1.1rem;font-weight:900;color:var(--white)" id="av-welcome">My Dashboard</div>
-            <div style="font-size:.82rem;color:var(--g400);margin-top:2px;">View your coaching records, NTE notices, and follow-through logs.</div>
+            <div style="font-size:1.1rem;font-weight:900;color:#111111" id="av-welcome">My Dashboard</div>
+            <div style="font-size:.82rem;color:#737373;margin-top:2px;">View your coaching records, NTE notices, and follow-through logs.</div>
           </div>
         </div>
         <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;">
-          <div style="background:var(--g800);border-radius:10px;padding:12px 18px;flex:1;min-width:120px;text-align:center;">
-            <div style="font-size:1.5rem;font-weight:900;color:var(--yellow)" id="av-stat-c">0</div>
-            <div style="font-size:.72rem;color:var(--g400);margin-top:2px;text-transform:uppercase;letter-spacing:.5px;">Coaching Logs</div>
+          <div style="background:var(--hdr-grad);border-radius:10px;padding:12px 18px;flex:1;min-width:120px;text-align:center;">
+            <div style="font-size:1.5rem;font-weight:900;color:#fff" id="av-stat-c">0</div>
+            <div style="font-size:.72rem;color:#fed7aa;margin-top:2px;text-transform:uppercase;letter-spacing:.5px;">Coaching Logs</div>
           </div>
-          <div style="background:var(--g800);border-radius:10px;padding:12px 18px;flex:1;min-width:120px;text-align:center;">
-            <div style="font-size:1.5rem;font-weight:900;color:var(--yellow)" id="av-stat-n">0</div>
-            <div style="font-size:.72rem;color:var(--g400);margin-top:2px;text-transform:uppercase;letter-spacing:.5px;">NTE Notices</div>
+          <div style="background:var(--hdr-grad);border-radius:10px;padding:12px 18px;flex:1;min-width:120px;text-align:center;">
+            <div style="font-size:1.5rem;font-weight:900;color:#fff" id="av-stat-n">0</div>
+            <div style="font-size:.72rem;color:#fed7aa;margin-top:2px;text-transform:uppercase;letter-spacing:.5px;">NTE Notices</div>
           </div>
-          <div style="background:var(--g800);border-radius:10px;padding:12px 18px;flex:1;min-width:120px;text-align:center;">
-            <div style="font-size:1.5rem;font-weight:900;color:var(--yellow)" id="av-stat-f">0</div>
-            <div style="font-size:.72rem;color:var(--g400);margin-top:2px;text-transform:uppercase;letter-spacing:.5px;">Follow Through</div>
+          <div style="background:var(--hdr-grad);border-radius:10px;padding:12px 18px;flex:1;min-width:120px;text-align:center;">
+            <div style="font-size:1.5rem;font-weight:900;color:#fff" id="av-stat-f">0</div>
+            <div style="font-size:.72rem;color:#fed7aa;margin-top:2px;text-transform:uppercase;letter-spacing:.5px;">Follow Through</div>
           </div>
         </div>
       </div>
@@ -683,6 +684,31 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
               </tr></thead>
               <tbody id="av-f-body"></tbody>
             </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- My Performance section -->
+      <div id="av-perf" class="av-section" style="display:none">
+        <div class="tbl-wrap">
+          <div class="tbl-hdr"><h3>My Performance — Last 4 Weeks</h3></div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;padding:18px;">
+            <div style="background:#fff;border-radius:10px;padding:16px;border:1px solid #e5e7eb;">
+              <h4 style="margin:0 0 12px;font-size:.88rem;color:#374151;font-weight:700;">📦 Leads Touch</h4>
+              <canvas id="ap-leads-ch" height="180"></canvas>
+            </div>
+            <div style="background:#fff;border-radius:10px;padding:16px;border:1px solid #e5e7eb;">
+              <h4 style="margin:0 0 12px;font-size:.88rem;color:#374151;font-weight:700;">📞 Calls Made (Connected)</h4>
+              <canvas id="ap-calls-ch" height="180"></canvas>
+            </div>
+            <div style="background:#fff;border-radius:10px;padding:16px;border:1px solid #e5e7eb;">
+              <h4 style="margin:0 0 12px;font-size:.88rem;color:#374151;font-weight:700;">💰 No. of Sales</h4>
+              <canvas id="ap-sales-ch" height="180"></canvas>
+            </div>
+            <div style="background:#fff;border-radius:10px;padding:16px;border:1px solid #e5e7eb;grid-column:1/-1;">
+              <h4 style="margin:0 0 12px;font-size:.88rem;color:#374151;font-weight:700;">📈 TCR% / CSR% / WK2 CVR% — Trend (Last 4 Weeks)</h4>
+              <canvas id="ap-rates-ch" height="160"></canvas>
+            </div>
           </div>
         </div>
       </div>
@@ -764,14 +790,14 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
       <div class="fg2">
         <div class="fg"><label>Date of Coaching <span class="req">★</span></label><input type="date" id="cl-date" onchange="updTenure('cl')"/></div>
         <div class="fg"><label>Agent Name <span class="req">★</span></label>
-          <select id="cl-agent" onchange="updTenure('cl')"><option value="">— Select Agent —</option></select>
+          <select id="cl-agent" onchange="updTenure('cl');render4WeekTrajectory(this.value,document.getElementById('cl-wk').value)"><option value="">— Select Agent —</option></select>
         </div>
         <div class="fg"><label>Agent Tenure (auto)</label><div class="tenure-pill" id="cl-ten">Select agent &amp; date</div></div>
         <div class="fg"><label>Team Lead <span class="req">★</span></label>
           <select id="cl-tl"><option value="">— Select —</option></select>
         </div>
         <div class="fg"><label>WK# of Performance <span class="req">★</span></label>
-          <select id="cl-wk"><option value="">— Select Week —</option></select>
+          <select id="cl-wk" onchange="render4WeekTrajectory(document.getElementById('cl-agent').value,this.value)"><option value="">— Select Week —</option></select>
         </div>
       </div>
 
@@ -784,6 +810,27 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
         <div class="fg"><label>CSR% — Call to Sale</label><div class="auto-calc" id="cl-csr-d">Auto-calculated</div><input type="hidden" id="cl-csr"/></div>
         <div class="fg"><label>CVR% — Conversion Rate</label><div class="auto-calc" id="cl-cvr-d">Auto-calculated</div><input type="hidden" id="cl-cvr"/></div>
         <div class="fg"><label>WK2 CVR% <span class="req">★</span></label><input type="number" id="cl-wk2" min="0" max="100" step="0.1" placeholder="Enter manually"/></div>
+      </div>
+
+      <!-- 4-week trajectory -->
+      <div class="sec-hdr" style="background:#f9fafb;border-top:2px solid #e5e7eb;"><h3 style="color:#374151;">📊 4-Week Trajectory</h3></div>
+      <div id="traj-wrap" style="overflow-x:auto;padding:0 0 8px;">
+        <div id="traj-loading" style="text-align:center;padding:16px;color:#9ca3af;font-style:italic;">Select an agent to view 4-week trajectory.</div>
+        <table id="traj-tbl" style="display:none;min-width:620px;width:100%;border-collapse:collapse;font-size:.82rem;">
+          <thead>
+            <tr>
+              <th style="text-align:left;background:#f3f4f6;color:#374151;font-size:.75rem;padding:8px 10px;border:1px solid #e5e7eb;">Week</th>
+              <th style="background:#f3f4f6;color:#374151;font-size:.75rem;padding:8px 10px;border:1px solid #e5e7eb;text-align:center;">Leads Touch</th>
+              <th style="background:#f3f4f6;color:#374151;font-size:.75rem;padding:8px 10px;border:1px solid #e5e7eb;text-align:center;">Connected Calls</th>
+              <th style="background:#f3f4f6;color:#374151;font-size:.75rem;padding:8px 10px;border:1px solid #e5e7eb;text-align:center;">No. of Sales</th>
+              <th style="background:#f3f4f6;color:#374151;font-size:.75rem;padding:8px 10px;border:1px solid #e5e7eb;text-align:center;">TCR%</th>
+              <th style="background:#f3f4f6;color:#374151;font-size:.75rem;padding:8px 10px;border:1px solid #e5e7eb;text-align:center;">CSR%</th>
+              <th style="background:#f3f4f6;color:#374151;font-size:.75rem;padding:8px 10px;border:1px solid #e5e7eb;text-align:center;">CVR%</th>
+              <th style="background:#f3f4f6;color:#374151;font-size:.75rem;padding:8px 10px;border:1px solid #e5e7eb;text-align:center;">WK2 CVR%</th>
+            </tr>
+          </thead>
+          <tbody id="traj-body"></tbody>
+        </table>
       </div>
 
       <div class="sec-hdr" style="background:var(--g800);"><h3 style="color:var(--yellow);">🎯 Coaching Focus &amp; Target Calculator</h3></div>
@@ -1955,6 +2002,8 @@ function openLogModal(){
   });
 
   editingLogId=null;
+  _trajW1=null;
+  render4WeekTrajectory('','');
   document.querySelector('#m-log .mhdr h2').textContent='📋 Coaching Log — Performance';
   openM('m-log');
 }
@@ -1997,6 +2046,8 @@ function editLog(id){
     if(el)el.checked=(r.focus||[]).includes(['TCR%','CSR%','CVR%','WK2 CVR%'][i]);
   });
   editingLogId=id;
+  _trajW1=null;
+  render4WeekTrajectory(r.agent, r.wk);
   document.querySelector('#m-log .mhdr h2').textContent='✏️ Edit Coaching Log';
   openM('m-log');
 }
@@ -2029,11 +2080,19 @@ function calcMetrics(){
 }
 
 function calcCalc(){
-  const leads  = parseFloat(document.getElementById('cl-leads').value)||0;
-  const conn   = parseFloat(document.getElementById('cl-conn').value)||0;
-  const sales  = parseFloat(document.getElementById('cl-sales').value)||0;
-  const curTCR = leads>0 ? (conn/leads)*100 : 0;
-  const curCSR = conn>0  ? (sales/conn)*100  : 0;
+  // Current column uses Week 1 (most recent past log) when available; falls back to form fields
+  let leads, conn, sales, curTCR, curCSR;
+  if(typeof _trajW1!=='undefined'&&_trajW1&&(_trajW1.leads||_trajW1.conn||_trajW1.sales)){
+    leads=_trajW1.leads; conn=_trajW1.conn; sales=_trajW1.sales;
+    curTCR=_trajW1.tcr||( leads>0?(conn/leads)*100:0 );
+    curCSR=_trajW1.csr||( conn>0?(sales/conn)*100:0 );
+  } else {
+    leads  = parseFloat(document.getElementById('cl-leads').value)||0;
+    conn   = parseFloat(document.getElementById('cl-conn').value)||0;
+    sales  = parseFloat(document.getElementById('cl-sales').value)||0;
+    curTCR = leads>0 ? (conn/leads)*100 : 0;
+    curCSR = conn>0  ? (sales/conn)*100  : 0;
+  }
 
   // — Current column —
   const s=id=>document.getElementById(id);
@@ -2893,10 +2952,12 @@ function onEmailInput(){
 function switchAgentTab(tab){
   document.querySelectorAll('#agent-nav .sb-item').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
   document.querySelectorAll('.av-section').forEach(s=>s.style.display='none');
-  const map={coaching:'av-coaching',nte:'av-nte',ft:'av-ft'};
-  document.getElementById(map[tab]).style.display='';
-  const titles={coaching:'My Coaching',nte:'My NTE',ft:'My Follow Through'};
+  const map={coaching:'av-coaching',nte:'av-nte',ft:'av-ft',perf:'av-perf'};
+  const secId=map[tab];
+  if(secId){const sec=document.getElementById(secId);if(sec)sec.style.display='';}
+  const titles={coaching:'My Coaching',nte:'My NTE',ft:'My Follow Through',perf:'My Performance'};
   const el=document.getElementById('tb-title'); if(el) el.textContent=titles[tab]||'';
+  if(tab==='perf') renderAgentPerf();
 }
 
 function renderAgentView(){
@@ -2959,6 +3020,131 @@ function renderAgentView(){
     <td>${e(r.applied)}</td>
     <td style="max-width:200px;font-size:.82rem">${e(r.opp)||'&#x2014;'}</td>
   </tr>`).join(''):`<tr><td colspan="5"><div class="empty-st"><div class="ei">&#x1F504;</div><p>No follow through logs yet.</p></div></td></tr>`;
+}
+
+/* ═══════════════════════════════════════
+   4-WEEK TRAJECTORY (coaching log modal)
+═══════════════════════════════════════ */
+let _trajW1=null;
+
+function render4WeekTrajectory(agentName, excludeWk){
+  const loading=document.getElementById('traj-loading');
+  const tbl=document.getElementById('traj-tbl');
+  const tbody=document.getElementById('traj-body');
+  if(!loading||!tbl||!tbody)return;
+  if(!agentName){
+    loading.style.display='';
+    loading.textContent='Select an agent to view 4-week trajectory.';
+    tbl.style.display='none';
+    _trajW1=null;
+    return;
+  }
+  // Most recent 4 logs for agent, excluding the week being edited/added
+  const all=[...DB.logs.filter(r=>r.agent===agentName&&(!excludeWk||parseInt(r.wk)!==parseInt(excludeWk)))].sort((a,b)=>b.wk-a.wk).slice(0,4);
+  if(!all.length){
+    loading.style.display='';
+    loading.textContent='No previous coaching logs found for this agent.';
+    tbl.style.display='none';
+    _trajW1=null;
+    calcCalc();
+    return;
+  }
+  loading.style.display='none';
+  tbl.style.display='';
+  const wkLabels=['Week 1 (Most Recent)','Week 2','Week 3','Week 4'];
+  const rows=all.map((r,i)=>{
+    const isW1=i===0;
+    return`<tr style="${isW1?'background:#fff7ed;':''}">
+      <td style="padding:8px 10px;font-size:.82rem;font-weight:${isW1?'700':'500'};color:${isW1?'#c2410c':'#374151'};border:1px solid #e5e7eb;">${wkLabels[i]}<br><span style="font-size:.7rem;font-weight:400;color:#9ca3af;">WK${r.wk}</span></td>
+      <td style="text-align:center;padding:8px 10px;border:1px solid #e5e7eb;">${r.leads||'—'}</td>
+      <td style="text-align:center;padding:8px 10px;border:1px solid #e5e7eb;">${r.conn||'—'}</td>
+      <td style="text-align:center;padding:8px 10px;border:1px solid #e5e7eb;">${r.sales||'—'}</td>
+      <td style="text-align:center;padding:8px 10px;border:1px solid #e5e7eb;">${r.tcr?r.tcr+'%':'—'}</td>
+      <td style="text-align:center;padding:8px 10px;border:1px solid #e5e7eb;">${r.csr?r.csr+'%':'—'}</td>
+      <td style="text-align:center;padding:8px 10px;border:1px solid #e5e7eb;">${r.cvr?r.cvr+'%':'—'}</td>
+      <td style="text-align:center;padding:8px 10px;border:1px solid #e5e7eb;">${r.wk2?r.wk2+'%':'—'}</td>
+    </tr>`;
+  });
+  // Average row
+  function avgOf(arr){const v=arr.filter(x=>x!=null&&x!==''&&!isNaN(+x)&&+x>0);return v.length?v.reduce((s,x)=>s+(+x),0)/v.length:null;}
+  const avgLeads=avgOf(all.map(r=>r.leads));
+  const avgConn =avgOf(all.map(r=>r.conn));
+  const avgSales=avgOf(all.map(r=>r.sales));
+  const avgTCR  =avgOf(all.map(r=>r.tcr));
+  const avgCSR  =avgOf(all.map(r=>r.csr));
+  const avgCVR  =avgOf(all.map(r=>r.cvr));
+  const avgWk2  =avgOf(all.map(r=>r.wk2));
+  const fmtN=v=>v!=null?Math.round(v):'—';
+  const fmtP=v=>v!=null?v.toFixed(1)+'%':'—';
+  const avgRow=`<tr style="background:#f0fdf4;font-weight:700;border-top:2px solid #bbf7d0;">
+    <td style="padding:8px 10px;font-size:.82rem;color:#166534;border:1px solid #e5e7eb;">📊 Average</td>
+    <td style="text-align:center;padding:8px 10px;border:1px solid #e5e7eb;">${fmtN(avgLeads)}</td>
+    <td style="text-align:center;padding:8px 10px;border:1px solid #e5e7eb;">${fmtN(avgConn)}</td>
+    <td style="text-align:center;padding:8px 10px;border:1px solid #e5e7eb;">${fmtN(avgSales)}</td>
+    <td style="text-align:center;padding:8px 10px;border:1px solid #e5e7eb;">${fmtP(avgTCR)}</td>
+    <td style="text-align:center;padding:8px 10px;border:1px solid #e5e7eb;">${fmtP(avgCSR)}</td>
+    <td style="text-align:center;padding:8px 10px;border:1px solid #e5e7eb;">${fmtP(avgCVR)}</td>
+    <td style="text-align:center;padding:8px 10px;border:1px solid #e5e7eb;">${fmtP(avgWk2)}</td>
+  </tr>`;
+  tbody.innerHTML=rows.join('')+avgRow;
+  // Seed calculator with Week 1 (most recent) data
+  const w1=all[0];
+  _trajW1={leads:+w1.leads||0,conn:+w1.conn||0,sales:+w1.sales||0,tcr:+w1.tcr||0,csr:+w1.csr||0};
+  calcCalc();
+}
+
+/* ═══════════════════════════════════════
+   MY PERFORMANCE CHARTS (agent view)
+═══════════════════════════════════════ */
+function renderAgentPerf(){
+  if(!CU||!CU.isAgentView)return;
+  const name=CU.agentName;
+  const logs=[...DB.logs.filter(r=>r.agent===name)].sort((a,b)=>b.wk-a.wk).slice(0,4).reverse();
+
+  function makeBar(canvasId,lbl,data,color){
+    const c=document.getElementById(canvasId);
+    if(!c)return;
+    if(c._chartInst){c._chartInst.destroy();c._chartInst=null;}
+    if(!logs.length){return;}
+    c._chartInst=new Chart(c,{
+      type:'bar',
+      data:{
+        labels:logs.map(r=>'WK'+r.wk),
+        datasets:[{label:lbl,data,backgroundColor:color+'bb',borderColor:color,borderWidth:2,borderRadius:6}]
+      },
+      options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{beginAtZero:true,grid:{color:'#f3f4f6'}}}}
+    });
+  }
+
+  if(!logs.length){
+    ['ap-leads-ch','ap-calls-ch','ap-sales-ch','ap-rates-ch'].forEach(id=>{
+      const c=document.getElementById(id);
+      if(c&&c._chartInst){c._chartInst.destroy();c._chartInst=null;}
+    });
+    return;
+  }
+
+  makeBar('ap-leads-ch','Leads Touch',logs.map(r=>+r.leads||0),'#F97316');
+  makeBar('ap-calls-ch','Calls Made',logs.map(r=>+r.conn||0),'#2563EB');
+  makeBar('ap-sales-ch','No. of Sales',logs.map(r=>+r.sales||0),'#16A34A');
+
+  // Line chart: TCR%, CSR%, WK2 CVR%
+  const rc=document.getElementById('ap-rates-ch');
+  if(rc){
+    if(rc._chartInst){rc._chartInst.destroy();rc._chartInst=null;}
+    rc._chartInst=new Chart(rc,{
+      type:'line',
+      data:{
+        labels:logs.map(r=>'WK'+r.wk),
+        datasets:[
+          {label:'TCR%',data:logs.map(r=>+r.tcr||0),borderColor:'#2563EB',backgroundColor:'rgba(37,99,235,.1)',tension:.35,pointRadius:5,pointBackgroundColor:'#2563EB',fill:false},
+          {label:'CSR%',data:logs.map(r=>+r.csr||0),borderColor:'#16A34A',backgroundColor:'rgba(22,163,74,.1)',tension:.35,pointRadius:5,pointBackgroundColor:'#16A34A',fill:false},
+          {label:'WK2 CVR%',data:logs.map(r=>+r.wk2||0),borderColor:'#DC2626',backgroundColor:'rgba(220,38,38,.1)',tension:.35,pointRadius:5,pointBackgroundColor:'#DC2626',fill:false}
+        ]
+      },
+      options:{responsive:true,plugins:{legend:{display:true,position:'top'}},scales:{x:{grid:{display:false}},y:{beginAtZero:true,grid:{color:'#f3f4f6'}}}}
+    });
+  }
 }
 
 
