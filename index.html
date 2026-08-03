@@ -416,16 +416,11 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
     <h1 class="login-title">PHOENIX</h1>
     <p class="login-sub">Coaching Log Management System</p>
     <div id="lerr" class="login-err"></div>
-    <button class="btn-google" id="google-signin-btn" onclick="doGoogleLogin()">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20" height="20">
-        <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
-        <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
-        <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
-        <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
-      </svg>
-      Sign in with Google
-    </button>
-    <p style="font-size:.72rem;color:var(--g400);margin-top:14px;line-height:1.5">Use your <strong>@homeaglow.com</strong> Google account</p>
+    <div class="fg">
+      <label>Email Address</label>
+      <input type="text" id="l-email" placeholder="yourname@email.com" autocomplete="off" oninput="onEmailInput()" onchange="onEmailInput()" onblur="onEmailInput()"/>
+    </div>
+    <button class="btn-login" onclick="doLogin()">Access System →</button>
   </div>
 </div>
 
@@ -1816,44 +1811,17 @@ function setupListeners(){
 ═══════════════════════════════════════ */
 let CU=null;
 
-/* ─── GOOGLE SIGN-IN ─────────────────────────────────────────────────────── */
-async function doGoogleLogin(){
-  if(!FB_READY) tryInitFirebase();
+function doLogin(){
+  const email=document.getElementById('l-email').value.trim().toLowerCase();
   const err=document.getElementById('lerr');
-  err.style.display='none';
-  if(!FB_READY){
-    err.textContent='⚠️ Unable to connect to Firebase. Check your internet connection.';
+  if(!email){
+    err.textContent='⚠️ Please enter your email address.';
     err.style.display='block';
     return;
   }
-  const btn=document.getElementById('google-signin-btn');
-  if(btn){btn.disabled=true;btn.textContent='Signing in…';}
-  try {
-    const provider=new firebase.auth.GoogleAuthProvider();
-    provider.setCustomParameters({hd:'homeaglow.com'});
-    const result=await firebase.auth().signInWithPopup(provider);
-    const email=result.user.email.toLowerCase();
-    handleLogin(email);
-  } catch(ex){
-    if(btn){btn.disabled=false;btn.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20" height="20"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/></svg> Sign in with Google`;}
-    if(ex.code==='auth/popup-closed-by-user'||ex.code==='auth/cancelled-popup-request') return;
-    console.error('Google sign-in error:',ex);
-    err.textContent='⚠️ Sign-in failed: '+(ex.message||'Please try again.');
-    err.style.display='block';
-  }
-}
 
-function handleLogin(email){
-  const err=document.getElementById('lerr');
-  if(!email||!email.includes('homeaglow')){
-    err.textContent='⚠️ Only @homeaglow.com accounts are allowed.';
-    err.style.display='block';
-    // Sign out the non-homeaglow account
-    if(FSAUTH) FSAUTH.signOut().catch(()=>{});
-    const btn=document.getElementById('google-signin-btn');
-    if(btn){btn.disabled=false;btn.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20" height="20"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/></svg> Sign in with Google`;}
-    return;
-  }
+  // ── Retry Firebase if SDK loaded after initial page parse ──
+  if(!FB_READY) tryInitFirebase();
 
   // ── OM ──
   if(email===OM){
@@ -1920,12 +1888,13 @@ function doLogout(){
   document.getElementById('login-page').style.display='flex';
   document.getElementById('app').classList.remove('on');
   document.getElementById('lerr').style.display='none';
+  document.getElementById('l-email').value='';
   document.getElementById('hdr-user').textContent='';
-  // Sign out from Google / Firebase Auth
-  if(FSAUTH) FSAUTH.signOut().catch(()=>{});
 }
 
-// Enter-key handler removed — login is now Google Sign-In button only
+document.addEventListener('keydown',ev=>{
+  if(ev.key==='Enter'&&document.getElementById('login-page').style.display!=='none')doLogin();
+});
 
 /* ═══════════════════════════════════════
    VIEW
@@ -2971,10 +2940,12 @@ async function saveLog(){
   const cvr=document.getElementById('cl-cvr').value;
   if(!tcr||!csr||!cvr){toast('⚠️ Enter Leads Touch, Connect & Sales to auto-calculate metrics.');return;}
 
+  const _agentName=document.getElementById('cl-agent').value;
   const entry={
     id:editingLogId||uid(),
     date:document.getElementById('cl-date').value,
-    agent:document.getElementById('cl-agent').value,
+    agent:_agentName,
+    agentEmail:agentEmailByName(_agentName),   // ← store for email delivery
     tl:document.getElementById('cl-tl').value,
     wk:parseInt(document.getElementById('cl-wk').value),
     leads:document.getElementById('cl-leads').value,
@@ -3124,60 +3095,125 @@ function openCommit(id){
   curId=id;openM('m-commit');
 }
 
+/* ── Reverse-lookup: agent name → email ───────────────────────────────── */
+function agentEmailByName(name){
+  if(!name) return '';
+  const n=name.toLowerCase().trim();
+  for(const [em,nm] of Object.entries(EMAIL_TO_AGENT)){
+    if(nm.toLowerCase()===n) return em;
+  }
+  return '';
+}
+
 async function saveCommit(){
-  if(!curId)return;
+  if(!curId) return;
+  const logEntry=DB.logs.find(l=>l.id===curId);
+
+  // Resolve the agent's email:
+  // 1. If the agent is logged in themselves → use their own email
+  // 2. Otherwise reverse-lookup from EMAIL_TO_AGENT by agent name
+  // 3. Fall back to whatever is already stored on the commitment record
+  const existingCm=DB.cm[curId]||{};
+  const agentEmail=
+    (CU?.isAgentView ? CU.email : '') ||
+    agentEmailByName(logEntry?.agent||'') ||
+    existingCm.agentEmail || '';
+
   const cmData={
-    situation:document.getElementById('c-sit').value,
-    task:document.getElementById('c-task').value,
-    action:document.getElementById('c-act').value,
-    result:document.getElementById('c-res').value,
-    tl:document.getElementById('c-tl').value,
-    at:new Date().toISOString(),
-    agentEmail: CU?.email||'',
+    situation  : document.getElementById('c-sit').value,
+    task       : document.getElementById('c-task').value,
+    action     : document.getElementById('c-act').value,
+    result     : document.getElementById('c-res').value,
+    tl         : document.getElementById('c-tl').value,
+    at         : new Date().toISOString(),
+    agentEmail,
   };
   const ok=await fsWrite('px_cm',curId,cmData);
-  if(!ok)return;
-  // Re-sync coaching log row so commitment columns + agent email updated in sheet
-  const logEntry=DB.logs.find(l=>l.id===curId);
+  if(!ok) return;
   if(logEntry) syncToSheet('coaching','upsert',curId, sheetRowCoaching(logEntry, cmData));
-  closeM('m-commit');renderCommit(curId);toast('✅ Commitment saved!');
-  // Auto-send email copy to the agent
+  closeM('m-commit');
+  renderCommit(curId);
+  toast('✅ Commitment saved!');
   sendCommitmentEmail(cmData, logEntry);
 }
 
-/* ── Auto-email commitment copy ───────────────────────────────────────────
-   Requires EmailJS setup — fill EMAILJS_PUBLIC_KEY / SERVICE_ID / TEMPLATE_ID
-   above.  Template variables available: {{to_email}}, {{agent_name}},
-   {{week}}, {{date}}, {{tl_name}}, {{situation}}, {{task}}, {{action}},
-   {{result}}, {{submitted_at}}
+/* ── Send commitment email ────────────────────────────────────────────────
+   • If EmailJS is configured → sends automatically, no user action needed
+   • Otherwise → opens a pre-filled mailto: in the agent's/TL's email client
+     (one click to Send — works with zero setup)
    ─────────────────────────────────────────────────────────────────────── */
 async function sendCommitmentEmail(cmData, logEntry){
-  // Skip if EmailJS not configured
-  if(!EMAILJS_PUBLIC_KEY||EMAILJS_PUBLIC_KEY.startsWith('YOUR_')) return;
-  // Determine recipient — use Google-authenticated agent email
-  const toEmail=cmData.agentEmail||CU?.email||'';
-  if(!toEmail) return;
-  const agentName=logEntry?.agent||CU?.agentName||toEmail.split('@')[0];
-  const templateParams={
-    to_email    : toEmail,
-    agent_name  : agentName,
-    week        : logEntry?.wk  ? 'WK'+logEntry.wk : '—',
-    date        : logEntry?.date ? fd(logEntry.date) : '—',
-    tl_name     : cmData.tl     || logEntry?.tl || '—',
-    situation   : cmData.situation || '—',
-    task        : cmData.task      || '—',
-    action      : cmData.action    || '—',
-    result      : cmData.result    || '—',
-    submitted_at: new Date().toLocaleString('en-US',{timeZone:'America/Chicago'}),
-  };
-  try {
-    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams);
-    toast('📧 Email copy sent to '+toEmail);
-  } catch(ex){
-    console.error('EmailJS send failed:',ex);
-    // Non-blocking — commitment is already saved, just warn
-    toast('⚠️ Commitment saved but email could not be sent.');
+  const toEmail   = cmData.agentEmail || '';
+  const agentName = logEntry?.agent || CU?.agentName || (toEmail.split('@')[0]);
+  const week      = logEntry?.wk  ? 'WK'+logEntry.wk : '—';
+  const date      = logEntry?.date ? fd(logEntry.date) : '—';
+  const tlName    = cmData.tl || logEntry?.tl || '—';
+  const submittedAt = new Date().toLocaleString('en-US',{timeZone:'America/Chicago'});
+
+  if(!toEmail){
+    toast('⚠️ No email address found for this agent. Commitment is saved.');
+    return;
   }
+
+  // ── Path A: EmailJS (automatic, no user action) ──────────────────────
+  if(EMAILJS_PUBLIC_KEY && !EMAILJS_PUBLIC_KEY.startsWith('YOUR_')){
+    try{
+      await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID,{
+        to_email    : toEmail,
+        agent_name  : agentName,
+        week, date, tl_name: tlName,
+        situation   : cmData.situation || '—',
+        task        : cmData.task      || '—',
+        action      : cmData.action    || '—',
+        result      : cmData.result    || '—',
+        submitted_at: submittedAt,
+      });
+      toast('📧 Email copy sent to '+toEmail);
+    }catch(ex){
+      console.error('EmailJS send failed:',ex);
+      toast('⚠️ Commitment saved — email could not be sent automatically.');
+      openMailto(toEmail,agentName,week,date,tlName,cmData,submittedAt);
+    }
+    return;
+  }
+
+  // ── Path B: mailto: fallback (works immediately, one-click send) ──────
+  openMailto(toEmail,agentName,week,date,tlName,cmData,submittedAt);
+}
+
+function openMailto(toEmail,agentName,week,date,tlName,cmData,submittedAt){
+  const subject=`Your Phoenix Coaching Commitment — ${week}`;
+  const body=[
+    `Hi ${agentName},`,
+    '',
+    `Here is a copy of your coaching commitment:`,
+    '',
+    `Date: ${date}  |  ${week}`,
+    `Team Lead: ${tlName}`,
+    '',
+    `S — Situation:`,
+    cmData.situation||'—',
+    '',
+    `T — Task:`,
+    cmData.task||'—',
+    '',
+    `A — Action:`,
+    cmData.action||'—',
+    '',
+    `R — Result:`,
+    cmData.result||'—',
+    '',
+    `Submitted: ${submittedAt}`,
+    '',
+    '— Phoenix Coaching System',
+  ].join('\n');
+  const a=document.createElement('a');
+  a.href=`mailto:${encodeURIComponent(toEmail)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  a.style.display='none';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>document.body.removeChild(a),200);
+  toast('📧 Email draft opened for '+toEmail+' — click Send in your email client.');
 }
 
 /* ═══════════════════════════════════════
