@@ -470,6 +470,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
       <div class="sb-item agent-hide" onclick="openFTModal()"><span class="sb-icon">🔁</span><span>New Follow Through</span></div>
       <div class="sb-item agent-hide" onclick="openNTEModal()"><span class="sb-icon">📋</span><span>New NTE</span></div>
       <div class="sb-item agent-hide" id="admin-roster-btn" style="display:none" onclick="openRosterMgr()"><span class="sb-icon">⚙️</span><span>Manage Roster</span></div>
+      <div class="sb-item agent-hide" id="admin-pw-btn" style="display:none" data-tab="pwreset" onclick="switchOM('pwreset')"><span class="sb-icon">🔑</span><span>Reset Passwords</span></div>
     </div>
 
     <!-- TL nav -->
@@ -786,6 +787,19 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
     <div id="v-om-attendance" class="view">
       <div id="om-att-content">
         <!-- Rendered by renderOMAttendance() -->
+      </div>
+    </div>
+
+    <!-- RESET PASSWORDS VIEW (OM only) -->
+    <div id="v-om-pwreset" class="view">
+      <div style="background:#fff;border-radius:14px;padding:24px 28px;border:1px solid #e5e7eb;box-shadow:0 2px 8px rgba(0,0,0,.06);max-width:640px;">
+        <div style="font-size:1rem;font-weight:700;margin-bottom:4px;">🔑 Reset Agent Passwords</div>
+        <div style="font-size:.82rem;color:#6b7280;margin-bottom:20px;">Resetting removes the stored password. The agent will be asked to create a new one on their next login.</div>
+        <input id="pw-reset-search" type="text" placeholder="Search by name or email…" oninput="filterPwResetList()"
+          style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:.88rem;margin-bottom:16px;box-sizing:border-box;"/>
+        <div id="pw-reset-list" style="display:flex;flex-direction:column;gap:8px;">
+          <div style="color:#9ca3af;font-size:.85rem;">Loading…</div>
+        </div>
       </div>
     </div>
 
@@ -1979,6 +1993,7 @@ function finishLogin(email){
       document.getElementById('tb-title').textContent='Coaching Logs';
       if(FB_READY){ setupListeners(); } else { console.warn('OM: Firebase unavailable.'); }
       document.getElementById('admin-roster-btn').style.display='';
+      document.getElementById('admin-pw-btn').style.display='';
       document.getElementById('om-nav').classList.remove('hidden');
       showView('v-om-dash'); switchOM('dash');
     }catch(omErr){
@@ -2021,6 +2036,7 @@ function doLogout(){
   _unsubs.forEach(u=>u()); _unsubs=[];
   DB={logs:[],ft:[],nte:[],cm:{}};
   document.getElementById('admin-roster-btn').style.display='none';
+  document.getElementById('admin-pw-btn').style.display='none';
   document.getElementById('agent-nav').classList.add('hidden');
   document.getElementById('om-nav').classList.add('hidden');
   document.getElementById('tl-nav').classList.add('hidden');
@@ -2056,10 +2072,11 @@ function showView(id){
 
 function switchOM(tab){
   document.querySelectorAll('#om-nav .sb-item').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
-  const titles={dash:'Coaching Dashboard',coaching:'Coaching Logs',nte:'NTE Logs',ft:'Follow Through',attendance:'Attendance Points'};
+  const titles={dash:'Coaching Dashboard',coaching:'Coaching Logs',nte:'NTE Logs',ft:'Follow Through',attendance:'Attendance Points',pwreset:'Reset Passwords'};
   const el=document.getElementById('tb-title'); if(el) el.textContent=titles[tab]||'';
-  const map={dash:'v-om-dash',coaching:'v-om-c',nte:'v-om-n',ft:'v-om-f',attendance:'v-om-attendance'};
+  const map={dash:'v-om-dash',coaching:'v-om-c',nte:'v-om-n',ft:'v-om-f',attendance:'v-om-attendance',pwreset:'v-om-pwreset'};
   showView(map[tab]);
+  if(tab==='pwreset') loadPwResetView();
   populateAllFilters();
   if(tab==='dash')renderOMDash();
   if(tab==='coaching')renderOMC();
@@ -3714,6 +3731,74 @@ function toast(msg){
    ROSTER MANAGER (Admin only)
 ═══════════════════════════════════════ */
 /* ─── Roster Manager ─────────────────────────── */
+/* ══════════════════════════════════════════════════════════════════════
+   RESET PASSWORDS VIEW
+══════════════════════════════════════════════════════════════════════ */
+let _pwResetUsers=[];   // [{email, createdAt}] loaded from px_users
+
+async function loadPwResetView(){
+  const list=document.getElementById('pw-reset-list');
+  list.innerHTML='<div style="color:#9ca3af;font-size:.85rem;">Loading…</div>';
+  try{
+    const snap=await FSB.collection('px_users').get();
+    _pwResetUsers=[];
+    snap.forEach(doc=>{
+      _pwResetUsers.push({email:doc.id, createdAt:doc.data().createdAt||''});
+    });
+    // Sort alphabetically by email
+    _pwResetUsers.sort((a,b)=>a.email.localeCompare(b.email));
+    renderPwResetList(_pwResetUsers);
+  }catch(ex){
+    console.error('loadPwResetView:',ex);
+    list.innerHTML='<div style="color:#ef4444;font-size:.85rem;">⚠️ Could not load users. Please try again.</div>';
+  }
+}
+
+function filterPwResetList(){
+  const q=document.getElementById('pw-reset-search').value.toLowerCase().trim();
+  const filtered=q
+    ? _pwResetUsers.filter(u=>u.email.toLowerCase().includes(q)||(EMAIL_TO_AGENT[u.email]||'').toLowerCase().includes(q))
+    : _pwResetUsers;
+  renderPwResetList(filtered);
+}
+
+function renderPwResetList(users){
+  const list=document.getElementById('pw-reset-list');
+  if(!users.length){
+    list.innerHTML='<div style="color:#9ca3af;font-size:.85rem;">No users found.</div>';
+    return;
+  }
+  list.innerHTML=users.map(u=>{
+    const name=EMAIL_TO_AGENT[u.email]||TL_TEAM_MAP[u.email]||(u.email===OM?'Operations Manager':u.email.split('@')[0]);
+    const since=u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;gap:12px;">
+      <div>
+        <div style="font-weight:600;font-size:.9rem;color:#111">${name}</div>
+        <div style="font-size:.77rem;color:#6b7280;">${u.email} · Password set ${since}</div>
+      </div>
+      <button onclick="confirmResetPw('${u.email}','${name}')"
+        style="padding:6px 14px;background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;border-radius:7px;font-size:.8rem;font-weight:600;cursor:pointer;white-space:nowrap;">
+        Reset
+      </button>
+    </div>`;
+  }).join('');
+}
+
+async function confirmResetPw(email, name){
+  if(!confirm(`Reset password for ${name}?\n\nThey will be asked to create a new password on their next login.`)) return;
+  try{
+    await FSB.collection('px_users').doc(email).delete();
+    toast(`✅ Password reset for ${name}. They can set a new one on next login.`);
+    // Remove from local list and re-render
+    _pwResetUsers=_pwResetUsers.filter(u=>u.email!==email);
+    filterPwResetList();
+  }catch(ex){
+    console.error('confirmResetPw:',ex);
+    toast('⚠️ Reset failed. Please try again.');
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════ */
 let _rosterFiltered=[];
 
 function openRosterMgr(){
