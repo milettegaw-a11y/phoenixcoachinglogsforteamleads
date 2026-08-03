@@ -1976,7 +1976,7 @@ async function doEmailContinue(){
   }
 
   // Validate email is a recognised user
-  const isOM=email===OM, isTL=!!TL_TEAM_MAP[email], isAgent=!!EMAIL_TO_AGENT[email];
+  const isOM=email===OM, isTL=!!TL_TEAM_MAP[email], isAgent=AGENTS_VIEW.has(email);
   if(!isOM&&!isTL&&!isAgent){
     err.textContent='⚠️ Email not recognised. Contact your Team Lead.';
     err.style.display='block';
@@ -1995,7 +1995,6 @@ async function doEmailContinue(){
     document.getElementById('l-pw2').value='';
 
     if(_loginIsNew){
-      // First-time setup
       document.getElementById('ls2-hint').textContent='First time logging in. Create a password to secure your account.';
       document.getElementById('l-pw-lbl').textContent='Create a Password';
       document.getElementById('l-pw2-wrap').style.display='';
@@ -2179,13 +2178,13 @@ function switchOM(tab){
   const el=document.getElementById('tb-title'); if(el) el.textContent=titles[tab]||'';
   const map={dash:'v-om-dash',coaching:'v-om-c',nte:'v-om-n',ft:'v-om-f',attendance:'v-om-attendance',pwreset:'v-om-pwreset'};
   showView(map[tab]);
-  if(tab==='pwreset') loadPwResetView();
   populateAllFilters();
   if(tab==='dash')renderOMDash();
   if(tab==='coaching')renderOMC();
   if(tab==='nte')renderOMN();
   if(tab==='ft')renderOMF();
   if(tab==='attendance')renderOMAttendance();
+  if(tab==='pwreset')loadPwResetView();
 }
 
 /* ═══════════════════════════════════════
