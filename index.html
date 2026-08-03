@@ -416,11 +416,30 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
     <h1 class="login-title">PHOENIX</h1>
     <p class="login-sub">Coaching Log Management System</p>
     <div id="lerr" class="login-err"></div>
-    <div class="fg">
-      <label>Email Address</label>
-      <input type="text" id="l-email" placeholder="yourname@email.com" autocomplete="off" oninput="onEmailInput()" onchange="onEmailInput()" onblur="onEmailInput()"/>
+
+    <!-- Step 1 — Email -->
+    <div id="ls1">
+      <div class="fg">
+        <label>Email Address</label>
+        <input type="text" id="l-email" placeholder="yourname@email.com" autocomplete="email"/>
+      </div>
+      <button class="btn-login" onclick="doEmailContinue()">Continue →</button>
     </div>
-    <button class="btn-login" onclick="doLogin()">Access System →</button>
+
+    <!-- Step 2 — Password (existing) or Set password (new) -->
+    <div id="ls2" style="display:none">
+      <p id="ls2-hint" style="font-size:.85rem;color:#888;margin-bottom:14px;text-align:left"></p>
+      <div class="fg">
+        <label id="l-pw-lbl">Password</label>
+        <input type="password" id="l-pw" placeholder="Enter your password" autocomplete="current-password"/>
+      </div>
+      <div class="fg" id="l-pw2-wrap" style="display:none">
+        <label>Confirm Password</label>
+        <input type="password" id="l-pw2" placeholder="Confirm your password" autocomplete="new-password"/>
+      </div>
+      <button class="btn-login" id="l-pw-btn" onclick="doPasswordSubmit()">Sign In →</button>
+      <button onclick="backToEmail()" style="background:none;border:none;color:#888;font-size:.8rem;cursor:pointer;margin-top:10px;display:block;width:100%;text-align:center">← Use a different email</button>
+    </div>
   </div>
 </div>
 
@@ -1811,28 +1830,154 @@ function setupListeners(){
 ═══════════════════════════════════════ */
 let CU=null;
 
-function doLogin(){
+/* ── Two-step login state ─────────────────────────────────────────────── */
+let _loginEmail='';
+let _loginIsNew=false;
+
+/* Hash a password with SHA-256 (no plaintext stored anywhere) */
+async function hashPassword(pw){
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(pw));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+/* Step 1 — validate email, check if password exists */
+async function doEmailContinue(){
   const email=document.getElementById('l-email').value.trim().toLowerCase();
   const err=document.getElementById('lerr');
+  err.style.display='none';
+
   if(!email){
     err.textContent='⚠️ Please enter your email address.';
     err.style.display='block';
     return;
   }
-
-  // ── Retry Firebase if SDK loaded after initial page parse ──
   if(!FB_READY) tryInitFirebase();
+  if(!FB_READY){
+    err.textContent='⚠️ Unable to connect. Check your internet and refresh.';
+    err.style.display='block';
+    return;
+  }
+
+  // Validate email is a recognised user
+  const isOM=email===OM, isTL=!!TL_TEAM_MAP[email], isAgent=!!EMAIL_TO_AGENT[email];
+  if(!isOM&&!isTL&&!isAgent){
+    err.textContent='⚠️ Email not recognised. Contact your Team Lead.';
+    err.style.display='block';
+    return;
+  }
+
+  _loginEmail=email;
+
+  // Check Firestore for an existing password hash
+  try{
+    const doc=await FSB.collection('px_users').doc(email).get();
+    const hasPassword=doc.exists&&doc.data()?.hash;
+    _loginIsNew=!hasPassword;
+
+    document.getElementById('l-pw').value='';
+    document.getElementById('l-pw2').value='';
+
+    if(_loginIsNew){
+      // First-time setup
+      document.getElementById('ls2-hint').textContent='First time logging in. Create a password to secure your account.';
+      document.getElementById('l-pw-lbl').textContent='Create a Password';
+      document.getElementById('l-pw2-wrap').style.display='';
+      document.getElementById('l-pw-btn').textContent='Set Password & Sign In →';
+    } else {
+      document.getElementById('ls2-hint').textContent='Signing in as '+email;
+      document.getElementById('l-pw-lbl').textContent='Password';
+      document.getElementById('l-pw2-wrap').style.display='none';
+      document.getElementById('l-pw-btn').textContent='Sign In →';
+    }
+
+    document.getElementById('ls1').style.display='none';
+    document.getElementById('ls2').style.display='';
+    document.getElementById('l-pw').focus();
+  }catch(ex){
+    console.error('px_users lookup:',ex);
+    err.textContent='⚠️ Connection error. Please try again.';
+    err.style.display='block';
+  }
+}
+
+/* Back to email step */
+function backToEmail(){
+  _loginEmail='';
+  document.getElementById('ls1').style.display='';
+  document.getElementById('ls2').style.display='none';
+  document.getElementById('lerr').style.display='none';
+  document.getElementById('l-email').focus();
+}
+
+/* Step 2 — verify or create password, then route into app */
+async function doPasswordSubmit(){
+  const pw=document.getElementById('l-pw').value;
+  const err=document.getElementById('lerr');
+  err.style.display='none';
+
+  if(!pw){
+    err.textContent='⚠️ Please enter your password.';
+    err.style.display='block';
+    return;
+  }
+
+  if(_loginIsNew){
+    // New user: validate and save password
+    const pw2=document.getElementById('l-pw2').value;
+    if(pw.length<6){
+      err.textContent='⚠️ Password must be at least 6 characters.';
+      err.style.display='block';
+      return;
+    }
+    if(pw!==pw2){
+      err.textContent='⚠️ Passwords do not match. Please try again.';
+      err.style.display='block';
+      return;
+    }
+    try{
+      const hash=await hashPassword(pw);
+      await FSB.collection('px_users').doc(_loginEmail).set({hash,createdAt:new Date().toISOString()});
+      finishLogin(_loginEmail);
+    }catch(ex){
+      console.error('Password save:',ex);
+      err.textContent='⚠️ Could not save password. Please try again.';
+      err.style.display='block';
+    }
+  } else {
+    // Existing user: verify password
+    try{
+      const hash=await hashPassword(pw);
+      const doc=await FSB.collection('px_users').doc(_loginEmail).get();
+      if(doc.exists&&doc.data()?.hash===hash){
+        finishLogin(_loginEmail);
+      } else {
+        err.textContent='⚠️ Incorrect password. Please try again.';
+        err.style.display='block';
+        document.getElementById('l-pw').value='';
+        document.getElementById('l-pw').focus();
+      }
+    }catch(ex){
+      console.error('Password verify:',ex);
+      err.textContent='⚠️ Connection error. Please try again.';
+      err.style.display='block';
+    }
+  }
+}
+
+/* Route into the app after successful authentication */
+function finishLogin(email){
+  const err=document.getElementById('lerr');
+  err.style.display='none';
 
   // ── OM ──
   if(email===OM){
     try{
-      err.style.display='none';
       CU={email,role:'Operations Manager',isOM:true};
       document.getElementById('login-page').style.display='none';
       document.getElementById('app').classList.add('on');
       document.getElementById('hdr-user').textContent='Operations Manager';
       document.getElementById('tb-title').textContent='Coaching Logs';
-      if(FB_READY){ setupListeners(); } else { console.warn('OM: Firebase unavailable, showing empty data.'); }
+      if(FB_READY){ setupListeners(); } else { console.warn('OM: Firebase unavailable.'); }
       document.getElementById('admin-roster-btn').style.display='';
       document.getElementById('om-nav').classList.remove('hidden');
       showView('v-om-dash'); switchOM('dash');
@@ -1844,12 +1989,9 @@ function doLogin(){
     return;
   }
 
-  if(!FB_READY){err.textContent='⚠️ Unable to connect to Firebase. Check your internet connection and refresh the page.';err.style.display='block';return;}
-
-  // ── TEAM LEAD (email in TL_TEAM_MAP) ──
+  // ── TEAM LEAD ──
   const tlTeam=TL_TEAM_MAP[email];
   if(tlTeam){
-    err.style.display='none';
     CU={email,role:tlTeam,isOM:false};
     document.getElementById('login-page').style.display='none';
     document.getElementById('app').classList.add('on');
@@ -1861,9 +2003,8 @@ function doLogin(){
     return;
   }
 
-  // ── AGENT (everyone else with a homeaglow email) ──
+  // ── AGENT ──
   const agentName=EMAIL_TO_AGENT[email]||email.split('@')[0];
-  err.style.display='none';
   CU={email,role:agentName,isOM:false,isAgentView:true,agentName};
   document.getElementById('login-page').style.display='none';
   document.getElementById('app').classList.add('on');
@@ -1884,16 +2025,25 @@ function doLogout(){
   document.getElementById('om-nav').classList.add('hidden');
   document.getElementById('tl-nav').classList.add('hidden');
   document.querySelectorAll('.agent-hide').forEach(el=>el.style.display='');
-  CU=null;
+  CU=null; _loginEmail='';
+  // Reset login to step 1
+  document.getElementById('ls1').style.display='';
+  document.getElementById('ls2').style.display='none';
+  document.getElementById('l-email').value='';
+  document.getElementById('l-pw').value='';
+  document.getElementById('lerr').style.display='none';
   document.getElementById('login-page').style.display='flex';
   document.getElementById('app').classList.remove('on');
-  document.getElementById('lerr').style.display='none';
-  document.getElementById('l-email').value='';
   document.getElementById('hdr-user').textContent='';
 }
 
 document.addEventListener('keydown',ev=>{
-  if(ev.key==='Enter'&&document.getElementById('login-page').style.display!=='none')doLogin();
+  if(ev.key!=='Enter') return;
+  const lp=document.getElementById('login-page');
+  if(!lp||lp.style.display==='none') return;
+  // Fire whichever step is visible
+  if(document.getElementById('ls2').style.display!=='none') doPasswordSubmit();
+  else doEmailContinue();
 });
 
 /* ═══════════════════════════════════════
