@@ -1839,6 +1839,11 @@ const EMAIL_TO_AGENT={
   'roxannehila@homeaglowsalestwo.com':'Roxanne Hila',
   'lancedabu@homeaglowsales.com':'Lance Dabu',
   'edinrivas@homeaglowsales.com':'Edin Rivas',
+  'cherylsayon@homeaglowsalesone.com':'Cheryl Sayon',
+  'darlynacuriza@homeaglowsalestwo.com':'Darlyn Acuriza',
+  'emmanuelmaturana@homeaglowsalestwo.com':'Emmanuel Maturana',
+  'krismayes@homeaglowsalestwo.com':'Kris Mayes',
+  'joenellas@homeaglowsales.com':'Joenel Las',
 };
 const EDIT_ALLOWED=new Set([
   'reyoglimen@homeaglowsales.com',
@@ -3392,7 +3397,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 function avCalcInit(){
   // Pull from agent's most recent coaching log
   if(!CU||!CU.isAgentView) return;
-  const myLogs=(DB.logs||[]).filter(l=>l.agent===CU.name).sort((a,b)=>b.date.localeCompare(a.date));
+  const myLogs=(DB.logs||[]).filter(l=>l.agent===CU.agentName).sort((a,b)=>b.date.localeCompare(a.date));
   const r=myLogs[0]||{};
   const leads=parseFloat(r.leads)||0;
   const conn=parseFloat(r.conn)||0;
@@ -3412,7 +3417,7 @@ function avCalcInit(){
 
 function avCalcCalc(){
   if(!CU||!CU.isAgentView) return;
-  const myLogs=(DB.logs||[]).filter(l=>l.agent===CU.name).sort((a,b)=>b.date.localeCompare(a.date));
+  const myLogs=(DB.logs||[]).filter(l=>l.agent===CU.agentName).sort((a,b)=>b.date.localeCompare(a.date));
   const r=myLogs[0]||{};
   const leads=parseFloat(r.leads)||0;
   const conn=parseFloat(r.conn)||0;
