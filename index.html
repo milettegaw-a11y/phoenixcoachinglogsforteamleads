@@ -1847,10 +1847,21 @@ const EDIT_ALLOWED=new Set([
   'dopearbundang@homeaglowsalestwo.com',
   'jerseydeguzman@homeaglowsalesone.com',
   'milettegaw@homeaglowsales.com',
+  'genevievepalec@homeaglowsalesone.com',
+  'renilouyutuc@homeaglowsalestwo.com',
+  'maureenulao@homeaglowsalesone.com',
 ]);
 
 // Maps each TL email → their team name (must match exactly what's stored in coaching logs)
+const ATL_EMAILS=new Set([
+  'genevievepalec@homeaglowsalesone.com',
+  'renilouyutuc@homeaglowsalestwo.com',
+  'maureenulao@homeaglowsalesone.com',
+]);
 const TL_TEAM_MAP={
+  'genevievepalec@homeaglowsalesone.com': 'Asst. TL – Genevieve',
+  'renilouyutuc@homeaglowsalestwo.com':   'Asst. TL – Renilou',
+  'maureenulao@homeaglowsalesone.com':    'Asst. TL – Maureen',
   'reyoglimen@homeaglowsales.com':       'Team Jhay Oglimen',
   'jumardelacruz@homeaglowsales.com':    'Team Jumz Delacruz',
   'florencellait@homeaglowsales.com':    'Team Florence Llait',
@@ -1858,7 +1869,7 @@ const TL_TEAM_MAP={
   'jerseydeguzman@homeaglowsalesone.com':'Team Jersey Deguzman',
 };
 // Returns the logged-in TL's team, or '' if OM/admin (sees all)
-function myTeam(){ return (CU&&!CU.isOM&&TL_TEAM_MAP[CU.email])||''; }
+function myTeam(){ return (CU&&!CU.isOM&&!ATL_EMAILS.has(CU.email)&&TL_TEAM_MAP[CU.email])||''; }
 
 /* ─── FIREBASE CONFIG ───────────────────────────────────────────────────────
    Replace each REPLACE_ME_... value with your actual Firebase project keys.
