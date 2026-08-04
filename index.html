@@ -3326,18 +3326,22 @@ function calcMetrics(){
 }
 
 function calcCalc(){
-  // Current column uses Week 1 (most recent past log) when available; falls back to form fields
+  // Current column always uses the form fields (the log being entered/edited)
   let leads, conn, sales, curTCR, curCSR;
-  if(typeof _trajW1!=='undefined'&&_trajW1&&(_trajW1.leads||_trajW1.conn||_trajW1.sales)){
+  const fLeads = parseFloat(document.getElementById('cl-leads').value)||0;
+  const fConn  = parseFloat(document.getElementById('cl-conn').value)||0;
+  const fSales = parseFloat(document.getElementById('cl-sales').value)||0;
+  if(fLeads||fConn||fSales){
+    leads=fLeads; conn=fConn; sales=fSales;
+    curTCR = leads>0?(conn/leads)*100:0;
+    curCSR = conn>0?(sales/conn)*100:0;
+  } else if(typeof _trajW1!=='undefined'&&_trajW1&&(_trajW1.leads||_trajW1.conn||_trajW1.sales)){
+    // Fallback to most recent past log only when form is empty
     leads=_trajW1.leads; conn=_trajW1.conn; sales=_trajW1.sales;
     curTCR=_trajW1.tcr||( leads>0?(conn/leads)*100:0 );
     curCSR=_trajW1.csr||( conn>0?(sales/conn)*100:0 );
   } else {
-    leads  = parseFloat(document.getElementById('cl-leads').value)||0;
-    conn   = parseFloat(document.getElementById('cl-conn').value)||0;
-    sales  = parseFloat(document.getElementById('cl-sales').value)||0;
-    curTCR = leads>0 ? (conn/leads)*100 : 0;
-    curCSR = conn>0  ? (sales/conn)*100  : 0;
+    leads=0; conn=0; sales=0; curTCR=0; curCSR=0;
   }
 
   // — Current column —
