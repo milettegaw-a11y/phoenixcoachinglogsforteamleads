@@ -272,7 +272,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
 ::-webkit-scrollbar{width:5px;height:5px;}::-webkit-scrollbar-track{background:rgba(0,0,0,.15);}::-webkit-scrollbar-thumb{background:var(--yellow);border-radius:3px;}
 @media(max-width:768px){
   #sidebar{width:60px;}
-  .sb-title,.sb-sub,.sb-section-lbl,.sb-item span:not(.sb-icon),.sb-footer .sb-user div,.sb-logout{display:none;}
+  .sb-title,.sb-sub,.sb-section-lbl,.sb-item span:not(.sb-icon),.sb-footer .sb-user div,.sb-logout,.sg-bubble-lbl{display:none;}
   .sb-brand{padding:14px;justify-content:center;}
   .sb-item{padding:12px;justify-content:center;}
   .sb-footer{padding:10px;align-items:center;}
@@ -595,6 +595,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
       <div class="sb-item agent-hide" onclick="openNTEModal()"><span class="sb-icon">📋</span><span>New NTE</span></div>
       <div class="sb-item agent-hide" id="admin-roster-btn" style="display:none" onclick="openRosterMgr()"><span class="sb-icon">⚙️</span><span>Manage Roster</span></div>
       <div class="sb-item agent-hide" id="admin-pw-btn" style="display:none" data-tab="pwreset" onclick="switchOM('pwreset')"><span class="sb-icon">🔑</span><span>Reset Passwords</span></div>
+      <div class="sb-item agent-hide" data-tab="suggestions" onclick="switchOM('suggestions')"><span class="sb-icon">💡</span><span>Suggestions &amp; Reports</span></div>
     </div>
 
     <!-- TL nav -->
@@ -627,6 +628,13 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
     </div>
 
     <div class="sb-footer">
+      <!-- Suggestion bubble — agent view only -->
+      <div id="sg-bubble-wrap" style="display:none;margin-bottom:10px;">
+        <button onclick="openSuggestModal()" title="Suggestions &amp; Issue Reports" style="width:100%;display:flex;align-items:center;gap:8px;background:rgba(131,178,113,.15);border:1.5px solid rgba(46,82,32,.2);border-radius:99px;padding:7px 14px;cursor:pointer;font-family:inherit;font-size:.78rem;font-weight:600;color:#2E5220;transition:background .15s;" onmouseover="this.style.background='rgba(131,178,113,.3)'" onmouseout="this.style.background='rgba(131,178,113,.15)'">
+          <span style="font-size:1.1rem;">💡</span>
+          <span class="sg-bubble-lbl">Suggest / Report</span>
+        </button>
+      </div>
       <div class="sb-user">
         <div class="sb-user-icon">👤</div>
         <div>
@@ -928,6 +936,32 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
           <div style="color:#9ca3af;font-size:.85rem;">Loading…</div>
         </div>
       </div>
+    </div>
+
+    <!-- SUGGESTIONS & REPORTS VIEW (OM only) -->
+    <div id="v-om-suggestions" class="view">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+        <div>
+          <div style="font-size:1rem;font-weight:700;color:#111827;">💡 Suggestions &amp; Issue Reports</div>
+          <div style="font-size:.78rem;color:#6b7280;">All submissions from agents — sorted newest first</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <select id="sg-om-filter-type" onchange="renderOMSuggestions()" style="padding:7px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:.82rem;">
+            <option value="">All Types</option>
+            <option>Suggestion</option>
+            <option>Bug / Issue</option>
+            <option>Question</option>
+            <option>Other</option>
+          </select>
+          <select id="sg-om-filter-status" onchange="renderOMSuggestions()" style="padding:7px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:.82rem;">
+            <option value="">All Status</option>
+            <option>Open</option>
+            <option>Reviewed</option>
+            <option>Done</option>
+          </select>
+        </div>
+      </div>
+      <div id="sg-om-list" style="font-size:.85rem;color:#9ca3af;font-style:italic;">Loading…</div>
     </div>
 
     <!-- AGENT VIEW (filtered — own records only) -->
@@ -1237,6 +1271,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
 
       </div><!-- /av-attendance -->
 
+
   </div><!-- /main -->
 
 
@@ -1349,6 +1384,54 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
       <div id="d-commit" class="hidden"></div>
     </div>
     <div class="mfooter"><button class="btn btn-outline" onclick="closeM('m-detail')">Close</button></div>
+  </div>
+</div>
+
+<!-- SUGGESTIONS / REPORT ISSUE MODAL -->
+<div class="overlay" id="m-suggest">
+  <div class="modal" style="max-width:520px;">
+    <div class="mhdr">
+      <div><h2>💡 Suggestions &amp; Issue Reports</h2><div class="mhdr-sub">Your feedback helps improve the team</div></div>
+      <button class="mclose" onclick="closeM('m-suggest')">✕</button>
+    </div>
+    <div class="mbody">
+      <p style="margin:0 0 16px;font-size:.82rem;color:#6b7280;">Have an idea or spotted an issue? Share it here — only your TL and OM can see your name.</p>
+
+      <!-- Type -->
+      <div style="margin-bottom:14px;">
+        <label style="display:block;font-size:.75rem;font-weight:600;color:#374151;margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em;">Type</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <label style="display:flex;align-items:center;gap:5px;font-size:.82rem;cursor:pointer;"><input type="radio" name="sg-type" value="Suggestion" checked> 💡 Suggestion</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:.82rem;cursor:pointer;"><input type="radio" name="sg-type" value="Bug / Issue"> 🐛 Bug / Issue</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:.82rem;cursor:pointer;"><input type="radio" name="sg-type" value="Question"> ❓ Question</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:.82rem;cursor:pointer;"><input type="radio" name="sg-type" value="Other"> 📌 Other</label>
+        </div>
+      </div>
+
+      <!-- Subject -->
+      <div style="margin-bottom:14px;">
+        <label style="display:block;font-size:.75rem;font-weight:600;color:#374151;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em;">Subject <span style="color:#ef4444;">*</span></label>
+        <input id="sg-subject" type="text" maxlength="120" placeholder="Brief title of your suggestion or issue…" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:.85rem;box-sizing:border-box;font-family:inherit;">
+      </div>
+
+      <!-- Details -->
+      <div style="margin-bottom:16px;">
+        <label style="display:block;font-size:.75rem;font-weight:600;color:#374151;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em;">Details <span style="color:#ef4444;">*</span></label>
+        <textarea id="sg-body" rows="5" maxlength="2000" placeholder="Describe in detail. For bugs, mention what happened and what you expected…" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:.85rem;resize:vertical;box-sizing:border-box;font-family:inherit;"></textarea>
+        <div id="sg-char" style="text-align:right;font-size:.7rem;color:#9ca3af;margin-top:2px;">0 / 2000</div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
+        <button onclick="submitSuggestion()" style="background:#16a34a;color:#fff;border:none;border-radius:8px;padding:10px 22px;font-size:.85rem;font-weight:600;cursor:pointer;font-family:inherit;">Submit</button>
+        <span id="sg-status" style="font-size:.8rem;color:#16a34a;display:none;"></span>
+      </div>
+
+      <!-- Past submissions -->
+      <div style="border-top:1px solid #e5e7eb;padding-top:16px;">
+        <div style="font-size:.75rem;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">My Past Submissions</div>
+        <div id="sg-history" style="font-size:.82rem;color:#9ca3af;font-style:italic;max-height:240px;overflow-y:auto;">Loading…</div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -2370,9 +2453,9 @@ function showView(id){
 
 function switchOM(tab){
   document.querySelectorAll('#om-nav .sb-item').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
-  const titles={dash:'Coaching Dashboard',coaching:'Coaching Logs',nte:'NTE Logs',ft:'Follow Through',attendance:'Attendance Points',pwreset:'Reset Passwords',kb:'Knowledge Base'};
+  const titles={dash:'Coaching Dashboard',coaching:'Coaching Logs',nte:'NTE Logs',ft:'Follow Through',attendance:'Attendance Points',pwreset:'Reset Passwords',kb:'Knowledge Base',suggestions:'Suggestions & Reports'};
   const el=document.getElementById('tb-title'); if(el) el.textContent=titles[tab]||'';
-  const map={dash:'v-om-dash',coaching:'v-om-c',nte:'v-om-n',ft:'v-om-f',attendance:'v-om-attendance',pwreset:'v-om-pwreset',kb:'v-kb'};
+  const map={dash:'v-om-dash',coaching:'v-om-c',nte:'v-om-n',ft:'v-om-f',attendance:'v-om-attendance',pwreset:'v-om-pwreset',kb:'v-kb',suggestions:'v-om-suggestions'};
   showView(map[tab]||'v-om-dash');
   populateAllFilters();
   if(tab==='dash')renderOMDash();
@@ -2382,6 +2465,7 @@ function switchOM(tab){
   if(tab==='attendance')renderOMAttendance();
   if(tab==='pwreset')loadPwResetView();
   if(tab==='kb')renderAll();
+  if(tab==='suggestions')renderOMSuggestions();
 }
 
 /* ═══════════════════════════════════════
@@ -3470,6 +3554,135 @@ function avCalcCalc(){
 
 function req(id,lbl){const el=document.getElementById(id);if(!el||!el.value.trim()){toast('⚠️ "'+lbl+'" is required.');return false;}return true;}
 
+/* ── SUGGESTIONS / REPORT ISSUE ── */
+function openSuggestModal(){
+  openM('m-suggest');
+  renderSuggestionHistory();
+  // wire char counter each time (safe to re-add; deduplicated via flag)
+  const body=document.getElementById('sg-body');
+  const cnt=document.getElementById('sg-char');
+  if(body&&cnt&&!body._sgWired){
+    body._sgWired=true;
+    body.addEventListener('input',()=>cnt.textContent=body.value.length+' / 2000');
+  }
+}
+
+async function submitSuggestion(){
+  if(!CU||!CU.isAgentView) return;
+  const subject=(document.getElementById('sg-subject').value||'').trim();
+  const body=(document.getElementById('sg-body').value||'').trim();
+  if(!subject){toast('⚠️ Please enter a subject.');return;}
+  if(!body){toast('⚠️ Please enter some details.');return;}
+  const typeEl=document.querySelector('input[name="sg-type"]:checked');
+  const type=typeEl?typeEl.value:'Suggestion';
+  const status=document.getElementById('sg-status');
+  status.style.display='none';
+  try{
+    await FSB.collection('px_suggestions').add({
+      agent: CU.agentName,
+      email: CU.email,
+      type, subject, body,
+      at: new Date().toISOString(),
+      status: 'Open'
+    });
+    document.getElementById('sg-subject').value='';
+    document.getElementById('sg-body').value='';
+    document.getElementById('sg-char').textContent='0 / 2000';
+    if(typeEl) document.querySelector('input[name="sg-type"][value="Suggestion"]').checked=true;
+    status.textContent='✅ Submitted! Thank you.';
+    status.style.display='';
+    setTimeout(()=>status.style.display='none',4000);
+    renderSuggestionHistory();
+  } catch(e){
+    toast('⚠️ Could not submit. Please try again.');
+    console.error('suggestion submit:',e);
+  }
+}
+
+function renderOMSuggestions(){
+  if(!CU||!CU.isOM) return;
+  const box=document.getElementById('sg-om-list');
+  if(!box) return;
+  box.innerHTML='<span style="color:#9ca3af;font-style:italic;">Loading…</span>';
+  const filterType=(document.getElementById('sg-om-filter-type')||{}).value||'';
+  const filterStatus=(document.getElementById('sg-om-filter-status')||{}).value||'';
+  const typeColor={Suggestion:'#16a34a','Bug / Issue':'#dc2626',Question:'#2563eb',Other:'#7c3aed'};
+  const statusColor={'Open':'#f59e0b','Reviewed':'#2563eb','Done':'#16a34a'};
+  FSB.collection('px_suggestions').limit(200).get()
+    .then(snap=>{
+      if(snap.empty){box.innerHTML='<span style="color:#9ca3af;font-style:italic;">No submissions yet.</span>';return;}
+      let docs=snap.docs.map(d=>({id:d.id,...d.data()}))
+        .sort((a,b)=>(b.at||'').localeCompare(a.at||''));
+      if(filterType) docs=docs.filter(r=>r.type===filterType);
+      if(filterStatus) docs=docs.filter(r=>(r.status||'Open')===filterStatus);
+      if(!docs.length){box.innerHTML='<span style="color:#9ca3af;font-style:italic;">No matching submissions.</span>';return;}
+      box.innerHTML=docs.map(r=>{
+        const tc=typeColor[r.type]||'#374151';
+        const sc=statusColor[r.status||'Open']||'#9ca3af';
+        const dt=r.at?r.at.substring(0,16).replace('T',' '):'';
+        return`<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px 18px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+          <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+            <span style="background:${tc}18;color:${tc};font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:99px;white-space:nowrap;">${r.type||'—'}</span>
+            <select onchange="updateSuggestionStatus('${r.id}',this.value)" style="background:${sc}18;color:${sc};border:1px solid ${sc}44;font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:99px;cursor:pointer;font-family:inherit;appearance:none;-webkit-appearance:none;">
+              <option value="Open" ${(r.status||'Open')==='Open'?'selected':''}>● Open</option>
+              <option value="Reviewed" ${r.status==='Reviewed'?'selected':''}>● Reviewed</option>
+              <option value="Done" ${r.status==='Done'?'selected':''}>● Done</option>
+            </select>
+            <span style="font-size:.7rem;color:#9ca3af;margin-left:auto;white-space:nowrap;">${dt}</span>
+          </div>
+          <div style="font-weight:700;font-size:.9rem;color:#111827;margin-bottom:6px;">${r.subject||'(no subject)'}</div>
+          <div style="font-size:.82rem;color:#4b5563;white-space:pre-wrap;margin-bottom:10px;">${r.body||''}</div>
+          <div style="display:flex;gap:16px;flex-wrap:wrap;padding-top:8px;border-top:1px solid #f3f4f6;font-size:.75rem;">
+            <span style="color:#374151;"><strong>Agent:</strong> ${r.agent||'—'}</span>
+            <span style="color:#6b7280;"><strong>User ID:</strong> ${r.email||'—'}</span>
+          </div>
+        </div>`;
+      }).join('');
+    })
+    .catch(e=>{box.innerHTML='<span style="color:#9ca3af;font-style:italic;">Could not load submissions.</span>';console.error(e);});
+}
+
+async function updateSuggestionStatus(id, status){
+  try{
+    await FSB.collection('px_suggestions').doc(id).update({status});
+  } catch(e){
+    toast('⚠️ Could not update status.');
+    console.error(e);
+  }
+}
+
+function renderSuggestionHistory(){
+  if(!CU||!CU.isAgentView) return;
+  const box=document.getElementById('sg-history');
+  if(!box) return;
+  FSB.collection('px_suggestions')
+    .where('email','==',CU.email)
+    .limit(20)
+    .get()
+    .then(snap=>{
+      if(snap.empty){box.innerHTML='<em>No submissions yet.</em>';return;}
+      const docs=[...snap.docs].sort((a,b)=>(b.data().at||'').localeCompare(a.data().at||''));
+      const typeColor={Suggestion:'#16a34a','Bug / Issue':'#dc2626',Question:'#2563eb',Other:'#7c3aed'};
+      const statusColor={'Open':'#f59e0b','Reviewed':'#2563eb','Done':'#16a34a'};
+      box.innerHTML=docs.map(d=>{
+        const r=d.data();
+        const tc=typeColor[r.type]||'#374151';
+        const sc=statusColor[r.status]||'#9ca3af';
+        const dt=r.at?r.at.substring(0,10):'';
+        return`<div style="border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px;margin-bottom:10px;background:#fff;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
+            <span style="background:${tc}22;color:${tc};font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:99px;">${r.type}</span>
+            <span style="background:${sc}22;color:${sc};font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:99px;">${r.status||'Open'}</span>
+            <span style="font-size:.7rem;color:#9ca3af;margin-left:auto;">${dt}</span>
+          </div>
+          <div style="font-weight:600;font-size:.84rem;color:#111827;margin-bottom:4px;">${r.subject}</div>
+          <div style="font-size:.8rem;color:#6b7280;white-space:pre-wrap;">${r.body}</div>
+        </div>`;
+      }).join('');
+    })
+    .catch(()=>{box.innerHTML='<em>Could not load history.</em>';});
+}
+
 async function saveLog(){
   if(!req('cl-date','Date of Coaching'))return;
   if(!req('cl-agent','Agent Name'))return;
@@ -4539,6 +4752,9 @@ function switchAgentTab(tab){
 
 function renderAgentView(){
   if(!CU||!CU.isAgentView) return;
+  // Show the suggestion bubble for agents
+  const bubble=document.getElementById('sg-bubble-wrap');
+  if(bubble) bubble.style.display='';
   const name=CU.agentName;
 
   /* Coaching Logs */
