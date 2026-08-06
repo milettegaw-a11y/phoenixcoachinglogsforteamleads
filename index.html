@@ -90,6 +90,11 @@ body{font-family:'Poppins',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sa
 .sb-item:hover{background:rgba(171,203,137,.3);color:#2E5220;}
 .sb-item.active{background:var(--yellow);color:#ffffff;border-left-color:var(--yellow-dk);font-weight:700;box-shadow:none;}
 .sb-item .sb-icon{width:20px;text-align:center;font-size:.95rem;flex-shrink:0;}
+.sb-arrow{margin-left:auto;font-size:.75rem;transition:transform .22s;color:rgba(46,82,32,.4);flex-shrink:0;}
+.sb-arrow.open{transform:rotate(90deg);}
+.sb-sub-item{display:none;align-items:center;gap:10px;padding:7px 18px 7px 48px;font-size:.79rem;font-weight:500;cursor:pointer;transition:all .15s;border-left:3px solid transparent;color:rgba(46,82,32,.72);background:rgba(0,0,0,.025);}
+.sb-sub-item:hover{background:rgba(171,203,137,.25);color:#2E5220;}
+.sb-sub-item.open{display:flex;}
 .sb-divider{height:1px;background:rgba(46,82,32,.12);margin:8px 0;}
 .sb-footer{margin-top:auto;padding:14px 18px;border-top:1px solid rgba(46,82,32,.12);}
 .sb-user{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
@@ -121,6 +126,7 @@ body{font-family:'Poppins',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sa
 html[data-theme="ocean"]{--yellow:#5ba3d4;--yellow-dk:#2b7fbc;--yellow-lt:#d0ecf9;--sb-grad:linear-gradient(160deg,#1d5c8a 0%,#2b7fbc 55%,#5ba3d4 100%);--hdr-grad:linear-gradient(135deg,#1d5c8a 0%,#5ba3d4 100%);--sb-bg:#d0ecf9;--sb-border:#92c8e8;--sb-dark:#1a4e78;--content-bg:#dff2ff;--topbar-bg:#bce1f7;--topbar-title:#1a4e78;}
 html[data-theme="ocean"] .sb-item{color:rgba(26,78,120,.85);}
 html[data-theme="ocean"] .sb-item:hover{background:rgba(91,163,212,.22);color:#1a4e78;}
+html[data-theme="ocean"] .sb-sub-item{color:rgba(26,78,120,.72);}html[data-theme="ocean"] .sb-sub-item:hover{background:rgba(91,163,212,.18);color:#1a4e78;}
 html[data-theme="ocean"] .sb-title{color:#1a4e78;}
 html[data-theme="ocean"] .sb-section-lbl{color:rgba(26,78,120,.45);}
 html[data-theme="ocean"] .sb-logout{color:rgba(26,78,120,.7);border-color:rgba(26,78,120,.25);}
@@ -130,6 +136,7 @@ html[data-theme="ocean"] #topbar{box-shadow:0 2px 0 rgba(43,127,188,.45),0 4px 1
 html[data-theme="sunset"]{--yellow:#e8a258;--yellow-dk:#c45d1a;--yellow-lt:#fdebd0;--sb-grad:linear-gradient(160deg,#8b3a0a 0%,#c45d1a 55%,#e8a258 100%);--hdr-grad:linear-gradient(135deg,#8b3a0a 0%,#e8a258 100%);--sb-bg:#fdebd0;--sb-border:#f4c08a;--sb-dark:#7c2d12;--content-bg:#fef0da;--topbar-bg:#fce0be;--topbar-title:#7c2d12;}
 html[data-theme="sunset"] .sb-item{color:rgba(124,45,18,.85);}
 html[data-theme="sunset"] .sb-item:hover{background:rgba(232,162,88,.22);color:#7c2d12;}
+html[data-theme="sunset"] .sb-sub-item{color:rgba(124,45,18,.72);}html[data-theme="sunset"] .sb-sub-item:hover{background:rgba(232,162,88,.18);color:#7c2d12;}
 html[data-theme="sunset"] .sb-title{color:#7c2d12;}
 html[data-theme="sunset"] .sb-section-lbl{color:rgba(124,45,18,.45);}
 html[data-theme="sunset"] .sb-logout{color:rgba(124,45,18,.7);border-color:rgba(124,45,18,.25);}
@@ -139,6 +146,7 @@ html[data-theme="sunset"] #topbar{box-shadow:0 2px 0 rgba(196,93,26,.45),0 4px 1
 html[data-theme="lavender"]{--yellow:#a98fd4;--yellow-dk:#7c5fb0;--yellow-lt:#e8dff7;--sb-grad:linear-gradient(160deg,#5b3d8f 0%,#7c5fb0 55%,#a98fd4 100%);--hdr-grad:linear-gradient(135deg,#5b3d8f 0%,#a98fd4 100%);--sb-bg:#e8dff7;--sb-border:#c5ade8;--sb-dark:#4a2d7a;--content-bg:#ede6fa;--topbar-bg:#dfd3f5;--topbar-title:#4a2d7a;}
 html[data-theme="lavender"] .sb-item{color:rgba(74,45,122,.85);}
 html[data-theme="lavender"] .sb-item:hover{background:rgba(169,143,212,.22);color:#4a2d7a;}
+html[data-theme="lavender"] .sb-sub-item{color:rgba(74,45,122,.72);}html[data-theme="lavender"] .sb-sub-item:hover{background:rgba(169,143,212,.18);color:#4a2d7a;}
 html[data-theme="lavender"] .sb-title{color:#4a2d7a;}
 html[data-theme="lavender"] .sb-section-lbl{color:rgba(74,45,122,.45);}
 html[data-theme="lavender"] .sb-logout{color:rgba(74,45,122,.7);border-color:rgba(74,45,122,.25);}
@@ -148,6 +156,7 @@ html[data-theme="lavender"] #topbar{box-shadow:0 2px 0 rgba(124,95,176,.45),0 4p
 html[data-theme="slate"]{--yellow:#6b7280;--yellow-dk:#4b5563;--yellow-lt:#e5e7eb;--sb-grad:linear-gradient(160deg,#374151 0%,#4b5563 55%,#6b7280 100%);--hdr-grad:linear-gradient(135deg,#374151 0%,#6b7280 100%);--sb-bg:#e5e7eb;--sb-border:#9ca3af;--sb-dark:#1f2937;--content-bg:#eaecf0;--topbar-bg:#d1d5db;--topbar-title:#1f2937;}
 html[data-theme="slate"] .sb-item{color:rgba(31,41,55,.85);}
 html[data-theme="slate"] .sb-item:hover{background:rgba(107,114,128,.22);color:#1f2937;}
+html[data-theme="slate"] .sb-sub-item{color:rgba(31,41,55,.72);}html[data-theme="slate"] .sb-sub-item:hover{background:rgba(107,114,128,.18);color:#1f2937;}
 html[data-theme="slate"] .sb-title{color:#1f2937;}
 html[data-theme="slate"] .sb-section-lbl{color:rgba(31,41,55,.45);}
 html[data-theme="slate"] .sb-logout{color:rgba(31,41,55,.7);border-color:rgba(31,41,55,.25);}
@@ -157,6 +166,7 @@ html[data-theme="slate"] #topbar{box-shadow:0 2px 0 rgba(75,85,99,.45),0 4px 16p
 html[data-theme="rose"]{--yellow:#e06898;--yellow-dk:#bf3060;--yellow-lt:#fce7ef;--sb-grad:linear-gradient(160deg,#8b2042 0%,#bf3060 55%,#e06898 100%);--hdr-grad:linear-gradient(135deg,#8b2042 0%,#e06898 100%);--sb-bg:#fce7ef;--sb-border:#f4a8c4;--sb-dark:#7a1232;--content-bg:#fde8f1;--topbar-bg:#fcd5e6;--topbar-title:#7a1232;}
 html[data-theme="rose"] .sb-item{color:rgba(122,18,50,.85);}
 html[data-theme="rose"] .sb-item:hover{background:rgba(224,104,152,.22);color:#7a1232;}
+html[data-theme="rose"] .sb-sub-item{color:rgba(122,18,50,.72);}html[data-theme="rose"] .sb-sub-item:hover{background:rgba(224,104,152,.18);color:#7a1232;}
 html[data-theme="rose"] .sb-title{color:#7a1232;}
 html[data-theme="rose"] .sb-section-lbl{color:rgba(122,18,50,.45);}
 html[data-theme="rose"] .sb-logout{color:rgba(122,18,50,.7);border-color:rgba(122,18,50,.25);}
@@ -672,9 +682,12 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
     <div id="om-nav" class="hidden">
       <div class="sb-section-lbl">VIEWS</div>
       <div class="sb-item active" data-tab="dash" onclick="switchOM('dash')"><span class="sb-icon">📊</span><span>Coaching Dashboard</span></div>
-      <div class="sb-item" data-tab="coaching" onclick="switchOM('coaching')"><span class="sb-icon">📋</span><span>Coaching Logs</span></div>
-      <div class="sb-item" data-tab="nte" onclick="switchOM('nte')"><span class="sb-icon">📝</span><span>NTE Logs</span></div>
-      <div class="sb-item" data-tab="ft" onclick="switchOM('ft')"><span class="sb-icon">🔄</span><span>Follow Through</span></div>
+      <div class="sb-item" data-tab="coaching" onclick="switchOM('coaching');toggleSbSub('om-sub-coaching')"><span class="sb-icon">📋</span><span>Coaching Logs</span><span class="sb-arrow" id="om-arr-coaching">›</span></div>
+      <div class="sb-sub-item agent-hide" id="om-sub-coaching" onclick="openLogModal()"><span class="sb-icon">➕</span><span>New Coaching Log</span></div>
+      <div class="sb-item" data-tab="nte" onclick="switchOM('nte');toggleSbSub('om-sub-nte')"><span class="sb-icon">📝</span><span>NTE Logs</span><span class="sb-arrow" id="om-arr-nte">›</span></div>
+      <div class="sb-sub-item agent-hide" id="om-sub-nte" onclick="openNTEModal()"><span class="sb-icon">📋</span><span>New NTE</span></div>
+      <div class="sb-item" data-tab="ft" onclick="switchOM('ft');toggleSbSub('om-sub-ft')"><span class="sb-icon">🔄</span><span>Follow Through</span><span class="sb-arrow" id="om-arr-ft">›</span></div>
+      <div class="sb-sub-item agent-hide" id="om-sub-ft" onclick="openFTModal()"><span class="sb-icon">🔁</span><span>New Follow Through</span></div>
       <div class="sb-item" data-tab="attendance" onclick="switchOM('attendance')"><span class="sb-icon">🗓️</span><span>Attendance Points</span><span id="nav-badge-om-att" class="sb-notif" style="display:none"></span></div>
       <div class="sb-item" data-tab="kb" onclick="switchOM('kb')"><span class="sb-icon">📖</span><span>Knowledge Base</span></div>
       <div class="sb-item" data-tab="calendar" onclick="switchOM('calendar')"><span class="sb-icon">📅</span><span>Calendar</span></div>
@@ -682,9 +695,6 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
       <div class="sb-item agent-hide" data-tab="leads" onclick="switchOM('leads')"><span class="sb-icon">📞</span><span>Lead Follow-Ups</span><span id="nav-badge-om-leads" class="sb-notif" style="display:none"></span></div>
       <div class="sb-divider"></div>
       <div class="sb-section-lbl agent-hide">ACTIONS</div>
-      <div class="sb-item agent-hide" onclick="openLogModal()"><span class="sb-icon">➕</span><span>New Coaching Log</span></div>
-      <div class="sb-item agent-hide" onclick="openFTModal()"><span class="sb-icon">🔁</span><span>New Follow Through</span></div>
-      <div class="sb-item agent-hide" onclick="openNTEModal()"><span class="sb-icon">📋</span><span>New NTE</span></div>
       <div class="sb-item agent-hide" id="admin-roster-btn" style="display:none" onclick="openRosterMgr()"><span class="sb-icon">⚙️</span><span>Manage Roster</span></div>
       <div class="sb-item agent-hide" id="admin-pw-btn" style="display:none" data-tab="pwreset" onclick="switchOM('pwreset')"><span class="sb-icon">🔑</span><span>Reset Passwords</span></div>
       <div class="sb-item agent-hide" data-tab="suggestions" onclick="switchOM('suggestions')"><span class="sb-icon">💡</span><span>Suggestions &amp; Reports</span></div>
@@ -694,7 +704,10 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
     <div id="tl-nav" class="hidden">
       <div class="sb-section-lbl">VIEWS</div>
       <div class="sb-item active" id="tl-nav-dash" onclick="tlShowView('dashboard')"><span class="sb-icon">📊</span><span>Dashboard</span></div>
-      <div class="sb-item" id="tl-nav-logs" onclick="tlShowView('logs')"><span class="sb-icon">📋</span><span>Coaching Logs</span><span id="nav-badge-tl-logs" class="sb-notif" style="display:none"></span></div>
+      <div class="sb-item" id="tl-nav-logs" onclick="tlShowView('logs');toggleSbSub('tl-sub-coaching')"><span class="sb-icon">📋</span><span>Coaching Logs</span><span id="nav-badge-tl-logs" class="sb-notif" style="display:none"></span><span class="sb-arrow" id="tl-arr-coaching">›</span></div>
+      <div class="sb-sub-item" id="tl-sub-coaching" onclick="openLogModal()"><span class="sb-icon">➕</span><span>New Coaching Log</span></div>
+      <div class="sb-item" id="tl-nav-ft" onclick="toggleSbSub('tl-sub-ft')"><span class="sb-icon">🔄</span><span>Follow Through</span><span class="sb-arrow" id="tl-arr-ft">›</span></div>
+      <div class="sb-sub-item" id="tl-sub-ft" onclick="openFTModal()"><span class="sb-icon">🔁</span><span>New Follow Through</span></div>
       <div class="sb-item" id="tl-nav-attendance" onclick="tlShowView('attendance')"><span class="sb-icon">🗓️</span><span>Attendance Points</span><span id="nav-badge-tl-att" class="sb-notif" style="display:none"></span></div>
       <div class="sb-item" id="tl-nav-kb" onclick="tlShowView('kb')"><span class="sb-icon">📖</span><span>Knowledge Base</span></div>
       <div class="sb-item" id="tl-nav-calendar" onclick="tlShowView('calendar')"><span class="sb-icon">📅</span><span>Calendar</span></div>
@@ -702,9 +715,6 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
       <div class="sb-item" id="tl-nav-leads" onclick="tlShowView('leads')"><span class="sb-icon">📞</span><span>Lead Follow-Ups</span><span id="nav-badge-tl-leads" class="sb-notif" style="display:none"></span></div>
       <div class="sb-divider"></div>
       <div class="sb-section-lbl">ACTIONS</div>
-      <div class="sb-item" onclick="openLogModal()"><span class="sb-icon">➕</span><span>New Coaching Log</span></div>
-      <div class="sb-item" onclick="openFTModal()"><span class="sb-icon">🔁</span><span>New Follow Through</span></div>
-      <div class="sb-item" onclick="openNTEModal()"><span class="sb-icon">📝</span><span>New NTE</span></div>
       <div class="sb-item" onclick="openRosterMgr()"><span class="sb-icon">⚙️</span><span>Manage Roster</span></div>
     </div>
 
@@ -3421,6 +3431,22 @@ document.addEventListener('keydown',ev=>{
 function showView(id){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+}
+
+function toggleSbSub(id){
+  const sub=document.getElementById(id);
+  if(!sub) return;
+  const isOpen=sub.classList.contains('open');
+  // close all open sub-items first
+  document.querySelectorAll('.sb-sub-item.open').forEach(el=>el.classList.remove('open'));
+  document.querySelectorAll('.sb-arrow.open').forEach(el=>el.classList.remove('open'));
+  // if it wasn't open, open it now
+  if(!isOpen){
+    sub.classList.add('open');
+    const arrId=id.replace('om-sub-','om-arr-').replace('tl-sub-','tl-arr-');
+    const arr=document.getElementById(arrId);
+    if(arr) arr.classList.add('open');
+  }
 }
 
 function switchOM(tab){
