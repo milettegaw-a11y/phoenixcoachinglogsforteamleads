@@ -2813,16 +2813,15 @@ const LEAD_STATUS_BG={pending:'#fef3c7',contacted:'#dbeafe',sold:'#dcfce7',not_i
 function subscribeLeads(){
   if(_leadUnsub){_leadUnsub();_leadUnsub=null;}
   if(!FSB)return;
-  let q=FSB.collection('px_leads').orderBy('createdAt','desc');
-  // Agent: only own leads
+  // Build where clause first, then sort client-side to avoid composite index requirement
+  let q=FSB.collection('px_leads');
   if(CU&&CU.isAgentView) q=q.where('agentEmail','==',CU.email);
-  // TL (not ATL, not OM): only their team
   else if(CU&&!CU.isOM&&TL_TEAM_MAP&&TL_TEAM_MAP[CU.email]){
     q=q.where('agentTeam','==',TL_TEAM_MAP[CU.email]);
   }
-  // ATL and OM: see all (no extra where clause)
   _leadUnsub=q.onSnapshot(snap=>{
-    _leadItems=snap.docs.map(d=>({id:d.id,...d.data()}));
+    _leadItems=snap.docs.map(d=>({id:d.id,...d.data()}))
+      .sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
     renderLeads();
     updateLeadBadge();
   });
@@ -2962,6 +2961,10 @@ function renderLeads(){
           </div>
           <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex-shrink:0;">
             ${hubspotBtn}
+            <div style="display:flex;gap:5px;">
+              <button onclick="openLeadModal('${l.id}')" style="padding:5px 10px;border:1.5px solid var(--g300);border-radius:6px;background:#fff;font-size:.72rem;cursor:pointer;font-family:inherit;">✏️ Edit</button>
+              <button onclick="deleteLead('${l.id}')" style="padding:5px 10px;border:1.5px solid #fca5a5;border-radius:6px;background:#fff;color:#ef4444;font-size:.72rem;cursor:pointer;font-family:inherit;">🗑 Delete</button>
+            </div>
             <div style="font-size:.62rem;color:var(--g400);">Added ${(l.createdAt||'').slice(0,10)}</div>
           </div>
         </div>
@@ -5747,7 +5750,7 @@ function switchAgentTab(tab){
   const map={coaching:'av-coaching',nte:'av-nte',ft:'av-ft',perf:'av-perf',calc:'av-calc',attendance:'av-attendance',leads:'av-leads',kb:'__kb__'};
   const secId=map[tab];
   if(secId==='__kb__'){showView('v-kb');renderAll();}else{showView('v-agent');if(secId){const sec=document.getElementById(secId);if(sec)sec.style.display='';}}
-  if(tab==='leads')renderLeads();
+  if(tab==='leads'){if(!_leadUnsub)subscribeLeads();else renderLeads();}
   const titles={coaching:'My Coaching',nte:'My NTE',ft:'My Follow Through',perf:'My Performance',calc:'Phoenix Calculator',attendance:'My Attendance',leads:'Lead Follow-Up',kb:'Knowledge Base'};
   const el=document.getElementById('tb-title'); if(el) el.textContent=titles[tab]||'';
   if(tab==='perf') renderAgentPerf();
