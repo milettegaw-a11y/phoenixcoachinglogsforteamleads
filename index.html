@@ -580,6 +580,27 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
 .kb-fav-empty .ei{font-size:2.5rem;margin-bottom:10px;}
 .kb-fav-empty p{font-size:.85rem;margin-bottom:4px;}
 .kb-fav-empty span{font-size:.75rem;color:var(--g300);}
+
+/* ── CALENDAR ── */
+.cal-cell{min-height:80px;padding:6px 7px;border-right:1px solid #f0f0f0;border-bottom:1px solid #f0f0f0;position:relative;font-size:.75rem;}
+.cal-cell.other-month{background:#fafafa;color:#bbb;}
+.cal-cell.today{background:var(--yellow-lt);}
+.cal-day-num{font-weight:700;font-size:.78rem;color:var(--g700);margin-bottom:3px;}
+.cal-cell.today .cal-day-num{color:var(--yellow-dk);}
+.cal-ev-chip{display:block;padding:2px 6px;border-radius:4px;font-size:.65rem;font-weight:600;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;}
+.cal-ev-holiday{background:#fee2e2;color:#b91c1c;}
+.cal-ev-team{background:var(--yellow-lt);color:var(--yellow-dk);}
+.cal-hdr-cell{padding:7px 4px;text-align:center;font-size:.72rem;}
+/* ── ACTION ITEMS ── */
+.ai-card{background:#fff;border-radius:10px;padding:13px 14px;box-shadow:var(--sh);border-left:3px solid var(--g300);}
+.ai-card.pri-high{border-left-color:#ef4444;}
+.ai-card.pri-medium{border-left-color:#f59e0b;}
+.ai-card.pri-low{border-left-color:#22c55e;}
+.ai-card-title{font-size:.83rem;font-weight:700;color:var(--g800);margin-bottom:5px;word-break:break-word;}
+.ai-card-meta{font-size:.68rem;color:var(--g500);margin-bottom:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.ai-card-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+.ai-status-btn{border:1.5px solid var(--g300);border-radius:6px;padding:4px 9px;font-size:.7rem;font-weight:600;cursor:pointer;background:#fff;font-family:inherit;transition:all .12s;}
+.ai-status-btn:hover{background:var(--yellow-lt);border-color:var(--yellow-dk);}
 </style>
 </head>
 <body>
@@ -656,6 +677,9 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
       <div class="sb-item" data-tab="ft" onclick="switchOM('ft')"><span class="sb-icon">🔄</span><span>Follow Through</span></div>
       <div class="sb-item" data-tab="attendance" onclick="switchOM('attendance')"><span class="sb-icon">🗓️</span><span>Attendance Points</span><span id="nav-badge-om-att" class="sb-notif" style="display:none"></span></div>
       <div class="sb-item" data-tab="kb" onclick="switchOM('kb')"><span class="sb-icon">📖</span><span>Knowledge Base</span></div>
+      <div class="sb-item" data-tab="calendar" onclick="switchOM('calendar')"><span class="sb-icon">📅</span><span>Calendar</span></div>
+      <div class="sb-item" data-tab="actions" onclick="switchOM('actions')"><span class="sb-icon">⚡</span><span>Action Items</span><span id="nav-badge-actions" class="sb-notif" style="display:none"></span></div>
+      <div class="sb-item agent-hide" data-tab="leads" onclick="switchOM('leads')"><span class="sb-icon">📞</span><span>Lead Follow-Ups</span><span id="nav-badge-om-leads" class="sb-notif" style="display:none"></span></div>
       <div class="sb-divider"></div>
       <div class="sb-section-lbl agent-hide">ACTIONS</div>
       <div class="sb-item agent-hide" onclick="openLogModal()"><span class="sb-icon">➕</span><span>New Coaching Log</span></div>
@@ -673,6 +697,9 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
       <div class="sb-item" id="tl-nav-logs" onclick="tlShowView('logs')"><span class="sb-icon">📋</span><span>Coaching Logs</span><span id="nav-badge-tl-logs" class="sb-notif" style="display:none"></span></div>
       <div class="sb-item" id="tl-nav-attendance" onclick="tlShowView('attendance')"><span class="sb-icon">🗓️</span><span>Attendance Points</span><span id="nav-badge-tl-att" class="sb-notif" style="display:none"></span></div>
       <div class="sb-item" id="tl-nav-kb" onclick="tlShowView('kb')"><span class="sb-icon">📖</span><span>Knowledge Base</span></div>
+      <div class="sb-item" id="tl-nav-calendar" onclick="tlShowView('calendar')"><span class="sb-icon">📅</span><span>Calendar</span></div>
+      <div class="sb-item" id="tl-nav-actions" onclick="tlShowView('actions')"><span class="sb-icon">⚡</span><span>Action Items</span><span id="nav-badge-tl-actions" class="sb-notif" style="display:none"></span></div>
+      <div class="sb-item" id="tl-nav-leads" onclick="tlShowView('leads')"><span class="sb-icon">📞</span><span>Lead Follow-Ups</span><span id="nav-badge-tl-leads" class="sb-notif" style="display:none"></span></div>
       <div class="sb-divider"></div>
       <div class="sb-section-lbl">ACTIONS</div>
       <div class="sb-item" onclick="openLogModal()"><span class="sb-icon">➕</span><span>New Coaching Log</span></div>
@@ -691,6 +718,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
       <div class="sb-item" data-tab="calc" onclick="switchAgentTab('calc')"><span class="sb-icon">🧮</span><span>Phoenix Calculator</span></div>
       <div class="sb-divider"></div>
       <div class="sb-item" data-tab="attendance" onclick="switchAgentTab('attendance')"><span class="sb-icon">📅</span><span>My Attendance</span><span id="nav-badge-att" class="sb-notif" style="display:none"></span></div>
+      <div class="sb-item" data-tab="leads" onclick="switchAgentTab('leads')"><span class="sb-icon">📞</span><span>Lead Follow-Up</span><span id="nav-badge-leads" class="sb-notif" style="display:none"></span></div>
       <div class="sb-item" data-tab="kb" onclick="switchAgentTab('kb')"><span class="sb-icon">📖</span><span>Knowledge Base</span></div>
       <div class="sb-divider"></div>
     </div>
@@ -1378,11 +1406,254 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
 
       </div><!-- /av-attendance -->
 
+      <!-- ── LEAD FOLLOW-UP ── -->
+      <div id="av-leads" class="av-section" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+          <div>
+            <div style="font-size:1rem;font-weight:700;color:var(--g800);">📞 Lead Follow-Up</div>
+            <div style="font-size:.74rem;color:var(--g500);margin-top:2px;">Track leads you need to follow up with</div>
+          </div>
+          <button onclick="openLeadModal()" style="background:var(--yellow-dk);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:.83rem;font-weight:700;cursor:pointer;">+ Add Lead</button>
+        </div>
+        <!-- Filter bar -->
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center;">
+          <select id="lead-filter-status" onchange="renderLeads()" style="padding:6px 10px;border:1.5px solid var(--g300);border-radius:7px;font-size:.78rem;font-family:inherit;">
+            <option value="all">All Leads</option>
+            <option value="pending">⏳ Pending</option>
+            <option value="contacted">📞 Contacted</option>
+            <option value="sold">✅ Sold</option>
+            <option value="not_interested">❌ Not Interested</option>
+          </select>
+          <input id="lead-search" type="text" placeholder="🔍 Search leads…" oninput="renderLeads()" style="padding:6px 10px;border:1.5px solid var(--g300);border-radius:7px;font-size:.78rem;font-family:inherit;min-width:180px;">
+          <span id="lead-count" style="font-size:.72rem;color:var(--g500);margin-left:4px;"></span>
+        </div>
+        <!-- Lead cards -->
+        <div id="lead-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+      </div><!-- /av-leads -->
 
   </div><!-- /main -->
 
 
 
+
+<!-- CALENDAR VIEW -->
+<div id="v-cal" class="view">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px;">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button onclick="calPrev()" style="background:var(--yellow-dk);color:#fff;border:none;border-radius:8px;padding:6px 14px;cursor:pointer;font-size:1rem;font-weight:700;">&#x2039;</button>
+      <h2 id="cal-month-label" style="margin:0;font-size:1.1rem;font-weight:700;color:var(--g800);min-width:170px;text-align:center;"></h2>
+      <button onclick="calNext()" style="background:var(--yellow-dk);color:#fff;border:none;border-radius:8px;padding:6px 14px;cursor:pointer;font-size:1rem;font-weight:700;">&#x203a;</button>
+    </div>
+    <button id="cal-add-btn" onclick="openAddEvent()" style="background:var(--yellow-dk);color:#fff;border:none;border-radius:8px;padding:8px 18px;font-size:.85rem;font-weight:700;cursor:pointer;display:none;">+ Add Event</button>
+  </div>
+  <!-- Calendar grid -->
+  <div style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:var(--shm);">
+    <div id="cal-header-row" style="display:grid;grid-template-columns:repeat(7,1fr);background:var(--yellow-dk);color:#fff;font-size:.72rem;font-weight:700;text-align:center;"></div>
+    <div id="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);"></div>
+  </div>
+  <!-- Legend -->
+  <div style="margin-top:12px;display:flex;gap:16px;flex-wrap:wrap;font-size:.72rem;font-weight:600;color:var(--g600);">
+    <span><span style="display:inline-block;width:10px;height:10px;background:#ef4444;border-radius:3px;margin-right:4px;"></span>Holiday</span>
+    <span><span style="display:inline-block;width:10px;height:10px;background:var(--yellow-dk);border-radius:3px;margin-right:4px;"></span>Team Event</span>
+  </div>
+  <!-- TO-DO LIST -->
+  <div id="cal-todo-wrap" style="margin-top:22px;display:none;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div style="font-size:.9rem;font-weight:700;color:var(--g800);">&#x2705; My To-Do List</div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span id="todo-count" style="font-size:.72rem;color:var(--g500);"></span>
+        <button onclick="todoShowAdd()" style="background:var(--yellow-dk);color:#fff;border:none;border-radius:7px;padding:5px 13px;font-size:.78rem;font-weight:700;cursor:pointer;">+ Add Task</button>
+      </div>
+    </div>
+    <!-- Add task row (hidden by default) -->
+    <div id="todo-add-row" style="display:none;background:#fff;border-radius:9px;padding:10px 12px;margin-bottom:10px;box-shadow:var(--sh);flex-wrap:wrap;gap:8px;align-items:center;">
+      <input id="todo-new-text" type="text" placeholder="Task description&#x2026;" style="flex:1;min-width:160px;padding:7px 10px;border:1.5px solid var(--g300);border-radius:7px;font-size:.83rem;font-family:inherit;" onkeydown="if(event.key==='Enter')todoAdd()">
+      <select id="todo-new-priority" style="padding:7px 10px;border:1.5px solid var(--g300);border-radius:7px;font-size:.83rem;font-family:inherit;">
+        <option value="medium">&#x1F7E1; Medium</option>
+        <option value="high">&#x1F534; High</option>
+        <option value="low">&#x1F7E2; Low</option>
+      </select>
+      <button onclick="todoAdd()" style="background:var(--yellow-dk);color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:.83rem;font-weight:700;cursor:pointer;">Add</button>
+      <button onclick="todoHideAdd()" style="background:transparent;color:var(--g500);border:1px solid var(--g300);border-radius:7px;padding:7px 12px;font-size:.83rem;cursor:pointer;">Cancel</button>
+    </div>
+    <!-- Task list -->
+    <div id="todo-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+  </div>
+</div>
+
+<!-- TL/OM LEAD FOLLOW-UP VIEW -->
+<div id="v-leads-tl" class="view">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+    <div>
+      <div style="font-size:1rem;font-weight:700;color:var(--g800);">📞 Lead Follow-Ups</div>
+      <div style="font-size:.74rem;color:var(--g500);margin-top:2px;" id="tl-leads-subtitle">Your team's lead follow-up tracker</div>
+    </div>
+  </div>
+  <!-- Overdue alert banner -->
+  <div id="tl-leads-overdue-banner" style="display:none;background:#fee2e2;border:1.5px solid #fca5a5;border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:.83rem;font-weight:600;color:#b91c1c;"></div>
+  <!-- Filters -->
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center;">
+    <select id="tl-lead-filter-agent" onchange="renderLeads()" style="padding:6px 10px;border:1.5px solid var(--g300);border-radius:7px;font-size:.78rem;font-family:inherit;">
+      <option value="all">All Agents</option>
+    </select>
+    <select id="tl-lead-filter-status" onchange="renderLeads()" style="padding:6px 10px;border:1.5px solid var(--g300);border-radius:7px;font-size:.78rem;font-family:inherit;">
+      <option value="all">All Statuses</option>
+      <option value="pending">⏳ Pending</option>
+      <option value="contacted">📞 Contacted</option>
+      <option value="sold">✅ Sold</option>
+      <option value="not_interested">❌ Not Interested</option>
+    </select>
+    <label style="display:flex;align-items:center;gap:5px;font-size:.78rem;color:var(--g700);cursor:pointer;">
+      <input type="checkbox" id="tl-lead-overdue-only" onchange="renderLeads()" style="accent-color:var(--yellow-dk);"> Overdue only
+    </label>
+    <input id="tl-lead-search" type="text" placeholder="🔍 Search…" oninput="renderLeads()" style="padding:6px 10px;border:1.5px solid var(--g300);border-radius:7px;font-size:.78rem;font-family:inherit;min-width:160px;">
+    <span id="tl-lead-count" style="font-size:.72rem;color:var(--g500);"></span>
+  </div>
+  <!-- Lead list -->
+  <div id="tl-lead-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+</div>
+
+<!-- ADD EVENT MODAL -->
+<div id="cal-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9000;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:14px;padding:28px 26px;width:360px;max-width:95vw;box-shadow:var(--shl);">
+    <div style="font-size:1rem;font-weight:700;color:var(--g800);margin-bottom:18px;">&#x1F4C5; Add Event</div>
+    <div style="margin-bottom:12px;">
+      <label style="font-size:.75rem;font-weight:700;color:var(--g600);display:block;margin-bottom:4px;">Event Title</label>
+      <input id="cal-ev-title" type="text" placeholder="e.g. Team Meeting" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid var(--g300);border-radius:8px;font-size:.88rem;font-family:inherit;">
+    </div>
+    <div style="margin-bottom:12px;">
+      <label style="font-size:.75rem;font-weight:700;color:var(--g600);display:block;margin-bottom:4px;">Date</label>
+      <input id="cal-ev-date" type="date" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid var(--g300);border-radius:8px;font-size:.88rem;font-family:inherit;">
+    </div>
+    <div style="margin-bottom:18px;">
+      <label style="font-size:.75rem;font-weight:700;color:var(--g600);display:block;margin-bottom:4px;">Notes (optional)</label>
+      <textarea id="cal-ev-notes" rows="2" placeholder="Any details..." style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid var(--g300);border-radius:8px;font-size:.88rem;font-family:inherit;resize:vertical;"></textarea>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button onclick="closeAddEvent()" style="padding:8px 18px;border:1.5px solid var(--g300);border-radius:8px;background:#fff;font-family:inherit;font-size:.85rem;cursor:pointer;">Cancel</button>
+      <button onclick="saveCalEvent()" style="padding:8px 18px;background:var(--yellow-dk);color:#fff;border:none;border-radius:8px;font-family:inherit;font-size:.85rem;font-weight:700;cursor:pointer;">Save Event</button>
+    </div>
+  </div>
+</div>
+
+<!-- ACTION ITEMS VIEW -->
+<div id="v-actions" class="view">
+  <!-- Header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px;">
+    <div>
+      <div style="font-size:1.05rem;font-weight:700;color:var(--g800);">&#x26A1; Action Items</div>
+      <div style="font-size:.75rem;color:var(--g500);margin-top:2px;">Track tasks assigned to your team</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+      <!-- Filter tabs -->
+      <select id="ai-filter-status" onchange="renderActionItems()" style="padding:6px 10px;border:1.5px solid var(--g300);border-radius:7px;font-size:.8rem;font-family:inherit;">
+        <option value="all">All Statuses</option>
+        <option value="not_started">Not Started</option>
+        <option value="in_progress">In Progress</option>
+        <option value="done">Done</option>
+      </select>
+      <select id="ai-filter-assignee" onchange="renderActionItems()" style="padding:6px 10px;border:1.5px solid var(--g300);border-radius:7px;font-size:.8rem;font-family:inherit;">
+        <option value="all">All Assignees</option>
+      </select>
+      <button id="ai-add-btn" onclick="openAIModal()" style="background:var(--yellow-dk);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:.83rem;font-weight:700;cursor:pointer;display:none;">+ Assign Action Item</button>
+    </div>
+  </div>
+  <!-- Board columns -->
+  <div id="ai-board" style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-items:start;">
+    <div>
+      <div style="font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--g500);margin-bottom:8px;padding:6px 10px;background:var(--g200);border-radius:7px;">&#x1F532; Not Started</div>
+      <div id="ai-col-not_started" style="display:flex;flex-direction:column;gap:8px;min-height:60px;"></div>
+    </div>
+    <div>
+      <div style="font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#1d4ed8;margin-bottom:8px;padding:6px 10px;background:#dbeafe;border-radius:7px;">&#x1F504; In Progress</div>
+      <div id="ai-col-in_progress" style="display:flex;flex-direction:column;gap:8px;min-height:60px;"></div>
+    </div>
+    <div>
+      <div style="font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#15803d;margin-bottom:8px;padding:6px 10px;background:#dcfce7;border-radius:7px;">&#x2705; Done</div>
+      <div id="ai-col-done" style="display:flex;flex-direction:column;gap:8px;min-height:60px;"></div>
+    </div>
+  </div>
+  <!-- Empty state -->
+  <div id="ai-empty" style="display:none;text-align:center;padding:40px;color:var(--g400);font-size:.88rem;">No action items yet.</div>
+</div>
+
+<!-- ADD ACTION ITEM MODAL -->
+<div id="ai-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9100;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:14px;padding:28px 26px;width:420px;max-width:95vw;box-shadow:var(--shl);max-height:90vh;overflow-y:auto;">
+    <div style="font-size:1rem;font-weight:700;color:var(--g800);margin-bottom:18px;">&#x26A1; Assign Action Item</div>
+    <div style="margin-bottom:12px;">
+      <label style="font-size:.75rem;font-weight:700;color:var(--g600);display:block;margin-bottom:4px;">Title *</label>
+      <input id="ai-title" type="text" placeholder="What needs to be done?" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid var(--g300);border-radius:8px;font-size:.88rem;font-family:inherit;">
+    </div>
+    <div style="margin-bottom:12px;">
+      <label style="font-size:.75rem;font-weight:700;color:var(--g600);display:block;margin-bottom:4px;">Assign To *</label>
+      <select id="ai-assignee" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid var(--g300);border-radius:8px;font-size:.88rem;font-family:inherit;">
+        <option value="">&#x2014; Select TL / ATL &#x2014;</option>
+      </select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+      <div>
+        <label style="font-size:.75rem;font-weight:700;color:var(--g600);display:block;margin-bottom:4px;">Priority</label>
+        <select id="ai-priority" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid var(--g300);border-radius:8px;font-size:.88rem;font-family:inherit;">
+          <option value="high">&#x1F534; High</option>
+          <option value="medium" selected>&#x1F7E1; Medium</option>
+          <option value="low">&#x1F7E2; Low</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:.75rem;font-weight:700;color:var(--g600);display:block;margin-bottom:4px;">Due Date</label>
+        <input id="ai-due" type="date" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid var(--g300);border-radius:8px;font-size:.88rem;font-family:inherit;">
+      </div>
+    </div>
+    <div style="margin-bottom:18px;">
+      <label style="font-size:.75rem;font-weight:700;color:var(--g600);display:block;margin-bottom:4px;">Notes</label>
+      <textarea id="ai-notes" rows="3" placeholder="Context, links, instructions&#x2026;" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid var(--g300);border-radius:8px;font-size:.88rem;font-family:inherit;resize:vertical;"></textarea>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button onclick="closeAIModal()" style="padding:8px 18px;border:1.5px solid var(--g300);border-radius:8px;background:#fff;font-family:inherit;font-size:.85rem;cursor:pointer;">Cancel</button>
+      <button onclick="saveActionItem()" style="padding:8px 18px;background:var(--yellow-dk);color:#fff;border:none;border-radius:8px;font-family:inherit;font-size:.85rem;font-weight:700;cursor:pointer;">Assign Item</button>
+    </div>
+  </div>
+</div>
+
+<!-- LEAD FOLLOW-UP MODAL -->
+<div id="lead-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9200;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:14px;padding:28px 26px;width:440px;max-width:95vw;box-shadow:var(--shl);max-height:90vh;overflow-y:auto;">
+    <div style="font-size:1rem;font-weight:700;color:var(--g800);margin-bottom:18px;" id="lead-modal-title">📞 Add Lead</div>
+    <input type="hidden" id="lead-edit-id">
+    <div style="margin-bottom:12px;">
+      <label style="font-size:.75rem;font-weight:700;color:var(--g600);display:block;margin-bottom:4px;">Lead Name *</label>
+      <input id="lead-name" type="text" placeholder="e.g. John Smith" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid var(--g300);border-radius:8px;font-size:.88rem;font-family:inherit;">
+    </div>
+    <div style="margin-bottom:12px;">
+      <label style="font-size:.75rem;font-weight:700;color:var(--g600);display:block;margin-bottom:4px;">HubSpot Link</label>
+      <input id="lead-url" type="url" placeholder="https://app.hubspot.com/contacts/…" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid var(--g300);border-radius:8px;font-size:.88rem;font-family:inherit;">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+      <div>
+        <label style="font-size:.75rem;font-weight:700;color:var(--g600);display:block;margin-bottom:4px;">Status</label>
+        <select id="lead-status" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid var(--g300);border-radius:8px;font-size:.88rem;font-family:inherit;">
+          <option value="pending">⏳ Pending</option>
+          <option value="contacted">📞 Contacted</option>
+          <option value="sold">✅ Sold</option>
+          <option value="not_interested">❌ Not Interested</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:.75rem;font-weight:700;color:var(--g600);display:block;margin-bottom:4px;">Follow-Up Date</label>
+        <input id="lead-followup" type="date" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid var(--g300);border-radius:8px;font-size:.88rem;font-family:inherit;">
+      </div>
+    </div>
+    <div style="margin-bottom:18px;">
+      <label style="font-size:.75rem;font-weight:700;color:var(--g600);display:block;margin-bottom:4px;">Notes / What We Discussed</label>
+      <textarea id="lead-notes" rows="4" placeholder="What did you discuss? Any objections? Next steps?…" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid var(--g300);border-radius:8px;font-size:.88rem;font-family:inherit;resize:vertical;"></textarea>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button onclick="closeLeadModal()" style="padding:8px 18px;border:1.5px solid var(--g300);border-radius:8px;background:#fff;font-family:inherit;font-size:.85rem;cursor:pointer;">Cancel</button>
+      <button onclick="saveLead()" style="padding:8px 18px;background:var(--yellow-dk);color:#fff;border:none;border-radius:8px;font-family:inherit;font-size:.85rem;font-weight:700;cursor:pointer;">Save Lead</button>
+    </div>
+  </div>
+</div>
 
 <!-- ════════════════════════════════════════
      KNOWLEDGE BASE VIEW (all roles)
@@ -2480,7 +2751,7 @@ function finishLogin(email){
       document.getElementById('app').classList.add('on');
       document.getElementById('hdr-user').textContent='Operations Manager';
       document.getElementById('tb-title').textContent='Coaching Logs';
-      if(FB_READY){ setupListeners(); } else { console.warn('OM: Firebase unavailable.'); }
+      if(FB_READY){ setupListeners(); subscribeActionItems(); subscribeLeads(); } else { console.warn('OM: Firebase unavailable.'); }
       document.getElementById('admin-roster-btn').style.display='';
       document.getElementById('admin-pw-btn').style.display='';
       document.getElementById('om-nav').classList.remove('hidden');
@@ -2503,6 +2774,8 @@ function finishLogin(email){
     document.getElementById('tb-title').textContent='Dashboard';
     document.getElementById('tl-nav').classList.remove('hidden');
     setupListeners();
+    subscribeActionItems();
+    subscribeLeads();
     showView('v-tl'); initDash();
     return;
   }
@@ -2518,7 +2791,211 @@ function finishLogin(email){
   document.getElementById('agent-nav').classList.remove('hidden');
   document.getElementById('av-welcome').textContent='Welcome, '+agentName+' 👋';
   setupListeners();
+  subscribeLeads();
   showView('v-agent');
+}
+
+/* ── LEAD FOLLOW-UP ── */
+const LEAD_STATUS_LABEL={pending:'⏳ Pending',contacted:'📞 Contacted',sold:'✅ Sold',not_interested:'❌ Not Interested'};
+const LEAD_STATUS_COLOR={pending:'#f59e0b',contacted:'#2563eb',sold:'#16a34a',not_interested:'#6b7280'};
+const LEAD_STATUS_BG={pending:'#fef3c7',contacted:'#dbeafe',sold:'#dcfce7',not_interested:'#f3f4f6'};
+
+function subscribeLeads(){
+  if(_leadUnsub){_leadUnsub();_leadUnsub=null;}
+  if(!FSB)return;
+  let q=FSB.collection('px_leads').orderBy('createdAt','desc');
+  // Agent: only own leads
+  if(CU&&CU.isAgentView) q=q.where('agentEmail','==',CU.email);
+  // TL (not ATL, not OM): only their team
+  else if(CU&&!CU.isOM&&TL_TEAM_MAP&&TL_TEAM_MAP[CU.email]){
+    q=q.where('agentTeam','==',TL_TEAM_MAP[CU.email]);
+  }
+  // ATL and OM: see all (no extra where clause)
+  _leadUnsub=q.onSnapshot(snap=>{
+    _leadItems=snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderLeads();
+    updateLeadBadge();
+  });
+}
+
+function openLeadModal(id){
+  const modal=document.getElementById('lead-modal');
+  if(!modal)return;
+  const titleEl=document.getElementById('lead-modal-title');
+  const editId=document.getElementById('lead-edit-id');
+  if(id){
+    const lead=_leadItems.find(l=>l.id===id);
+    if(!lead)return;
+    editId.value=id;
+    if(titleEl)titleEl.textContent='✏️ Edit Lead';
+    document.getElementById('lead-name').value=lead.name||'';
+    document.getElementById('lead-url').value=lead.url||'';
+    document.getElementById('lead-status').value=lead.status||'pending';
+    document.getElementById('lead-followup').value=lead.followup||'';
+    document.getElementById('lead-notes').value=lead.notes||'';
+  } else {
+    editId.value='';
+    if(titleEl)titleEl.textContent='📞 Add Lead';
+    document.getElementById('lead-name').value='';
+    document.getElementById('lead-url').value='';
+    document.getElementById('lead-status').value='pending';
+    document.getElementById('lead-notes').value='';
+    const today=new Date();
+    document.getElementById('lead-followup').value=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  }
+  modal.style.display='flex';
+  setTimeout(()=>document.getElementById('lead-name').focus(),80);
+}
+function closeLeadModal(){ const m=document.getElementById('lead-modal'); if(m)m.style.display='none'; }
+
+async function saveLead(){
+  const name=(document.getElementById('lead-name').value||'').trim();
+  if(!name){alert('Lead name is required.');return;}
+  const url=(document.getElementById('lead-url').value||'').trim();
+  const status=document.getElementById('lead-status').value||'pending';
+  const followup=document.getElementById('lead-followup').value||'';
+  const notes=(document.getElementById('lead-notes').value||'').trim();
+  const editId=document.getElementById('lead-edit-id').value;
+  const now=new Date().toISOString();
+  const agentTeam=(CU&&CU.isAgentView)?(AGENTS.find(a=>a.name===CU.agentName)?.tl||''):'';
+  const agentName=(CU&&CU.isAgentView)?CU.agentName:(CU?CU.email:'');
+  if(editId){
+    await FSB.collection('px_leads').doc(editId).update({name,url,status,followup,notes,updatedAt:now});
+  } else {
+    await FSB.collection('px_leads').add({
+      name,url,status,followup,notes,
+      agentEmail:CU?CU.email:'',
+      agentName,
+      agentTeam,
+      createdAt:now,updatedAt:now
+    });
+  }
+  closeLeadModal();
+}
+
+async function deleteLead(id){
+  if(!confirm('Remove this lead?'))return;
+  await FSB.collection('px_leads').doc(id).delete();
+}
+
+function updateLeadBadge(){
+  const today=new Date(); today.setHours(0,0,0,0);
+  let count=0;
+  if(CU&&CU.isAgentView){
+    count=_leadItems.filter(l=>l.status==='pending'||l.status==='contacted').length;
+  } else {
+    count=_leadItems.filter(l=>l.followup&&l.status!=='sold'&&l.status!=='not_interested'&&new Date(l.followup)<today).length;
+  }
+  ['nav-badge-leads','nav-badge-tl-leads','nav-badge-om-leads'].forEach(id=>{
+    const b=document.getElementById(id);
+    if(b){b.style.display=count>0?'inline-flex':'none';b.textContent=count;}
+  });
+}
+
+function renderLeads(){
+  const today=new Date(); today.setHours(0,0,0,0);
+  const isTLView=CU&&!CU.isAgentView; // TL, ATL, OM all use the TL view
+
+  if(isTLView){
+    // ── TL / OM VIEW ──
+    const agentFilter=(document.getElementById('tl-lead-filter-agent')?.value)||'all';
+    const statusFilter=(document.getElementById('tl-lead-filter-status')?.value)||'all';
+    const overdueOnly=document.getElementById('tl-lead-overdue-only')?.checked||false;
+    const search=((document.getElementById('tl-lead-search')?.value)||'').toLowerCase();
+
+    // Populate agent dropdown
+    const agentSel=document.getElementById('tl-lead-filter-agent');
+    if(agentSel){
+      const currentAgentVal=agentSel.value;
+      const agentNames=[...new Set(_leadItems.map(l=>l.agentName||l.agentEmail).filter(Boolean))].sort();
+      agentSel.innerHTML='<option value="all">All Agents</option>'+agentNames.map(n=>`<option value="${n}"${n===currentAgentVal?' selected':''}>${n}</option>`).join('');
+    }
+
+    let arr=[..._leadItems];
+    if(agentFilter!=='all') arr=arr.filter(l=>(l.agentName||l.agentEmail)===agentFilter);
+    if(statusFilter!=='all') arr=arr.filter(l=>l.status===statusFilter);
+    if(overdueOnly) arr=arr.filter(l=>l.followup&&l.status!=='sold'&&l.status!=='not_interested'&&new Date(l.followup)<today);
+    if(search) arr=arr.filter(l=>(l.name||'').toLowerCase().includes(search)||(l.agentName||'').toLowerCase().includes(search)||(l.notes||'').toLowerCase().includes(search));
+
+    // Overdue banner
+    const overdue=_leadItems.filter(l=>l.followup&&l.status!=='sold'&&l.status!=='not_interested'&&new Date(l.followup)<today);
+    const banner=document.getElementById('tl-leads-overdue-banner');
+    if(banner){
+      if(overdue.length>0){
+        banner.style.display='block';
+        const names=[...new Set(overdue.map(l=>l.agentName||l.agentEmail))].join(', ');
+        banner.textContent=`⚠️ ${overdue.length} overdue follow-up${overdue.length>1?'s':''} — ${names}`;
+      } else { banner.style.display='none'; }
+    }
+
+    const countEl=document.getElementById('tl-lead-count');
+    if(countEl) countEl.textContent=`${arr.length} lead${arr.length!==1?'s':''}`;
+
+    const list=document.getElementById('tl-lead-list');
+    if(!list)return;
+    if(arr.length===0){list.innerHTML='<div style="text-align:center;padding:32px;color:var(--g400);font-size:.85rem;">No leads match your filters.</div>';return;}
+
+    list.innerHTML=arr.map(l=>{
+      const isOverdue=l.followup&&l.status!=='sold'&&l.status!=='not_interested'&&new Date(l.followup)<today;
+      const followupStr=l.followup?`<span style="color:${isOverdue?'#ef4444':'var(--g500)'};font-weight:${isOverdue?'700':'400'};">${isOverdue?'⚠️ Overdue · ':' Follow-up '}${l.followup}</span>`:'';
+      const hubspotBtn=l.url?`<a href="${l.url}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;padding:5px 11px;background:#ff7a59;color:#fff;border-radius:6px;font-size:.72rem;font-weight:700;text-decoration:none;">🔗 HubSpot</a>`:'';
+      return `<div style="background:#fff;border-radius:11px;padding:15px 16px;box-shadow:var(--sh);border-left:4px solid ${LEAD_STATUS_COLOR[l.status]||'#ccc'}${isOverdue?';outline:2px solid #fca5a5;outline-offset:1px':''};">
+        <div style="display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:160px;">
+            <div style="font-size:.75rem;font-weight:700;color:var(--yellow-dk);margin-bottom:2px;">👤 ${l.agentName||l.agentEmail}</div>
+            <div style="font-size:.88rem;font-weight:700;color:var(--g800);margin-bottom:4px;">${l.name}</div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px;">
+              <span style="font-size:.7rem;font-weight:700;padding:3px 9px;border-radius:99px;background:${LEAD_STATUS_BG[l.status]};color:${LEAD_STATUS_COLOR[l.status]};">${LEAD_STATUS_LABEL[l.status]||l.status}</span>
+              <span style="font-size:.7rem;color:var(--g500);">${followupStr}</span>
+            </div>
+            ${l.notes?`<div style="font-size:.78rem;color:var(--g700);background:var(--g100);border-radius:7px;padding:8px 10px;white-space:pre-wrap;word-break:break-word;line-height:1.45;">${l.notes}</div>`:''}
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex-shrink:0;">
+            ${hubspotBtn}
+            <div style="font-size:.62rem;color:var(--g400);">Added ${(l.createdAt||'').slice(0,10)}</div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+  } else {
+    // ── AGENT VIEW (existing logic) ──
+    const list=document.getElementById('lead-list');
+    const countEl=document.getElementById('lead-count');
+    if(!list)return;
+    const statusFilter=(document.getElementById('lead-filter-status')?.value)||'all';
+    const search=((document.getElementById('lead-search')?.value)||'').toLowerCase();
+    let arr=[..._leadItems];
+    if(statusFilter!=='all') arr=arr.filter(l=>l.status===statusFilter);
+    if(search) arr=arr.filter(l=>(l.name||'').toLowerCase().includes(search)||(l.notes||'').toLowerCase().includes(search));
+    if(countEl) countEl.textContent=`${arr.length} lead${arr.length!==1?'s':''}`;
+    if(arr.length===0){list.innerHTML='<div style="text-align:center;padding:32px;color:var(--g400);font-size:.85rem;">No leads yet. Click <strong>+ Add Lead</strong> to get started.</div>';return;}
+    list.innerHTML=arr.map(l=>{
+      const isOverdue=l.followup&&l.status!=='sold'&&l.status!=='not_interested'&&new Date(l.followup)<today;
+      const followupStr=l.followup?`<span style="color:${isOverdue?'#ef4444':'var(--g500)'};font-weight:${isOverdue?'700':'400'};">${isOverdue?'⚠️ Overdue · ':' Follow-up '}${l.followup}</span>`:'';
+      const hubspotBtn=l.url?`<a href="${l.url}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;padding:5px 11px;background:#ff7a59;color:#fff;border-radius:6px;font-size:.72rem;font-weight:700;text-decoration:none;">🔗 HubSpot</a>`:'';
+      return `<div style="background:#fff;border-radius:11px;padding:15px 16px;box-shadow:var(--sh);border-left:4px solid ${LEAD_STATUS_COLOR[l.status]||'#ccc'};">
+        <div style="display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:160px;">
+            <div style="font-size:.88rem;font-weight:700;color:var(--g800);margin-bottom:4px;">${l.name}</div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px;">
+              <span style="font-size:.7rem;font-weight:700;padding:3px 9px;border-radius:99px;background:${LEAD_STATUS_BG[l.status]};color:${LEAD_STATUS_COLOR[l.status]};">${LEAD_STATUS_LABEL[l.status]||l.status}</span>
+              <span style="font-size:.7rem;color:var(--g500);">${followupStr}</span>
+            </div>
+            ${l.notes?`<div style="font-size:.78rem;color:var(--g700);background:var(--g100);border-radius:7px;padding:8px 10px;white-space:pre-wrap;word-break:break-word;line-height:1.45;">${l.notes}</div>`:''}
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex-shrink:0;">
+            ${hubspotBtn}
+            <div style="display:flex;gap:5px;">
+              <button onclick="openLeadModal('${l.id}')" style="padding:5px 10px;border:1.5px solid var(--g300);border-radius:6px;background:#fff;font-size:.72rem;cursor:pointer;font-family:inherit;">✏️ Edit</button>
+              <button onclick="deleteLead('${l.id}')" style="padding:5px 10px;border:1.5px solid #fca5a5;border-radius:6px;background:#fff;color:#ef4444;font-size:.72rem;cursor:pointer;font-family:inherit;">🗑</button>
+            </div>
+            <div style="font-size:.62rem;color:var(--g400);">Added ${(l.createdAt||'').slice(0,10)}</div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
 }
 
 /* ── SETTINGS PANEL ── */
@@ -2559,8 +3036,357 @@ function loadPreferences(){
 }
 loadPreferences();
 
+/* ── CALENDAR ── */
+const US_HOLIDAYS = (()=>{
+  const h=[];
+  const years=[2026,2027,2028,2029,2030,2031,2032,2033,2034,2035,2036,2037,2038,2039,2040];
+  const fixed=[
+    [1,1,'🎆 New Year\'s Day'],
+    [6,19,'✊ Juneteenth'],
+    [7,4,'🎆 Independence Day'],
+    [11,11,'🎖️ Veterans Day'],
+    [12,25,'🎄 Christmas Day'],
+    [12,31,'🎆 New Year\'s Eve'],
+  ];
+  function nthDay(y,m,wd,n){
+    let d=new Date(y,m-1,1);
+    let count=0;
+    while(d.getMonth()===m-1){
+      if(d.getDay()===wd){count++;if(count===n)return d.getDate();}
+      d.setDate(d.getDate()+1);
+    }
+  }
+  function lastDay(y,m,wd){
+    let d=new Date(y,m,0);
+    while(d.getDay()!==wd) d.setDate(d.getDate()-1);
+    return d.getDate();
+  }
+  years.forEach(y=>{
+    fixed.forEach(([mo,da,name])=>{
+      h.push({date:`${y}-${String(mo).padStart(2,'0')}-${String(da).padStart(2,'0')}`,title:name,type:'holiday'});
+    });
+    h.push({date:`${y}-01-${String(nthDay(y,1,1,3)).padStart(2,'0')}`,title:"✊ MLK Day",type:'holiday'});
+    h.push({date:`${y}-02-${String(nthDay(y,2,1,3)).padStart(2,'0')}`,title:"🏛️ Presidents Day",type:'holiday'});
+    h.push({date:`${y}-05-${String(lastDay(y,5,1)).padStart(2,'0')}`,title:"🎖️ Memorial Day",type:'holiday'});
+    h.push({date:`${y}-09-${String(nthDay(y,9,1,1)).padStart(2,'0')}`,title:"👷 Labor Day",type:'holiday'});
+    h.push({date:`${y}-10-${String(nthDay(y,10,1,2)).padStart(2,'0')}`,title:"⚓ Columbus Day",type:'holiday'});
+    h.push({date:`${y}-11-${String(nthDay(y,11,4,4)).padStart(2,'0')}`,title:"🦃 Thanksgiving",type:'holiday'});
+    const thx=nthDay(y,11,4,4);
+    h.push({date:`${y}-11-${String(thx+1).padStart(2,'0')}`,title:"🛍️ Black Friday",type:'holiday'});
+    h.push({date:`${y}-12-24`,title:"🎄 Christmas Eve",type:'holiday'});
+    h.push({date:`${y}-10-31`,title:"🎃 Halloween",type:'holiday'});
+    h.push({date:`${y}-02-14`,title:"❤️ Valentine's Day",type:'holiday'});
+    (function(){
+      const a=y%19,b=Math.floor(y/100),c=y%100;
+      const d2=Math.floor(b/4),e2=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3);
+      const h2=(19*a+b-d2-g+15)%30,i=Math.floor(c/4),k=c%4;
+      const l=(32+2*e2+2*i-h2-k)%7;
+      const m2=Math.floor((a+11*h2+22*l)/451);
+      const month=Math.floor((h2+l-7*m2+114)/31);
+      const day=((h2+l-7*m2+114)%31)+1;
+      h.push({date:`${y}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`,title:"🐣 Easter",type:'holiday'});
+    })();
+    h.push({date:`${y}-05-${String(nthDay(y,5,0,2)).padStart(2,'0')}`,title:"💐 Mother's Day",type:'holiday'});
+    h.push({date:`${y}-06-${String(nthDay(y,6,0,3)).padStart(2,'0')}`,title:"👔 Father's Day",type:'holiday'});
+  });
+  return h;
+})();
+
+let calYear=new Date().getFullYear();
+let calMonth=new Date().getMonth();
+
+function calGetEvents(){
+  const stored=JSON.parse(localStorage.getItem('px-cal-events')||'[]');
+  return [...US_HOLIDAYS,...stored];
+}
+function calSaveUserEvents(events){
+  localStorage.setItem('px-cal-events',JSON.stringify(events));
+}
+function calUserEvents(){
+  return JSON.parse(localStorage.getItem('px-cal-events')||'[]');
+}
+
+function renderCalendar(){
+  const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const label=document.getElementById('cal-month-label');
+  if(label) label.textContent=months[calMonth]+' '+calYear;
+
+  const hdr=document.getElementById('cal-header-row');
+  if(hdr){hdr.innerHTML='';days.forEach(d=>{hdr.innerHTML+=`<div class="cal-hdr-cell">${d}</div>`;});}
+
+  const grid=document.getElementById('cal-grid');
+  if(!grid)return;
+  grid.innerHTML='';
+
+  const firstDay=new Date(calYear,calMonth,1).getDay();
+  const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
+  const daysInPrev=new Date(calYear,calMonth,0).getDate();
+  const today=new Date();
+  const todayStr=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  const allEvents=calGetEvents();
+
+  const totalCells=Math.ceil((firstDay+daysInMonth)/7)*7;
+  for(let i=0;i<totalCells;i++){
+    let dayNum,mo,yr,isOther=false;
+    if(i<firstDay){dayNum=daysInPrev-(firstDay-1-i);mo=calMonth===0?12:calMonth;yr=calMonth===0?calYear-1:calYear;isOther=true;}
+    else if(i>=firstDay+daysInMonth){dayNum=i-firstDay-daysInMonth+1;mo=calMonth===11?1:calMonth+2;yr=calMonth===11?calYear+1:calYear;isOther=true;}
+    else{dayNum=i-firstDay+1;mo=calMonth+1;yr=calYear;}
+    const dateStr=`${yr}-${String(mo).padStart(2,'0')}-${String(dayNum).padStart(2,'0')}`;
+    const isToday=dateStr===todayStr;
+    const dayEvents=allEvents.filter(ev=>ev.date===dateStr);
+    let chips='';
+    dayEvents.forEach(ev=>{
+      const cls=ev.type==='holiday'?'cal-ev-holiday':'cal-ev-team';
+      chips+=`<span class="cal-ev-chip ${cls}" title="${ev.title}">${ev.title}</span>`;
+    });
+    grid.innerHTML+=`<div class="cal-cell${isOther?' other-month':''}${isToday?' today':''}"><div class="cal-day-num">${dayNum}</div>${chips}</div>`;
+  }
+
+  const addBtn=document.getElementById('cal-add-btn');
+  if(addBtn){
+    const canAdd=CU&&(CU.isOM||(!CU.isAgentView&&TL_TEAM_MAP&&TL_TEAM_MAP[CU.email]));
+    addBtn.style.display=canAdd?'inline-flex':'none';
+  }
+  renderTodoList();
+}
+
+function calPrev(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}
+function calNext(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCalendar();}
+
+function openAddEvent(){
+  const modal=document.getElementById('cal-modal');
+  if(modal){
+    modal.style.display='flex';
+    document.getElementById('cal-ev-title').value='';
+    document.getElementById('cal-ev-notes').value='';
+    const today=new Date();
+    document.getElementById('cal-ev-date').value=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  }
+}
+function closeAddEvent(){
+  const modal=document.getElementById('cal-modal');
+  if(modal) modal.style.display='none';
+}
+function saveCalEvent(){
+  const title=document.getElementById('cal-ev-title').value.trim();
+  const date=document.getElementById('cal-ev-date').value;
+  const notes=document.getElementById('cal-ev-notes').value.trim();
+  if(!title||!date){alert('Please enter a title and date.');return;}
+  const events=calUserEvents();
+  events.push({date,title,notes,type:'team',addedBy:(CU?CU.email||'':'')});
+  calSaveUserEvents(events);
+  closeAddEvent();
+  renderCalendar();
+}
+
+/* ── TO-DO LIST ── */
+function todoKey(){ return 'px-todo-'+(CU?CU.email:'guest'); }
+function todoLoad(){ return JSON.parse(localStorage.getItem(todoKey())||'[]'); }
+function todoSave(arr){ localStorage.setItem(todoKey(),JSON.stringify(arr)); }
+function todoShowAdd(){ const r=document.getElementById('todo-add-row'); if(r){r.style.display='flex';document.getElementById('todo-new-text').focus();} }
+function todoHideAdd(){ const r=document.getElementById('todo-add-row'); if(r)r.style.display='none'; }
+function todoAdd(){
+  const txt=(document.getElementById('todo-new-text').value||'').trim();
+  if(!txt)return;
+  const pri=document.getElementById('todo-new-priority').value||'medium';
+  const arr=todoLoad();
+  arr.unshift({id:Date.now().toString(),text:txt,priority:pri,done:false,createdAt:new Date().toISOString()});
+  todoSave(arr); todoHideAdd(); renderTodoList();
+}
+function todoToggle(id){
+  const arr=todoLoad().map(t=>t.id===id?{...t,done:!t.done,doneAt:!t.done?new Date().toISOString():null}:t);
+  todoSave(arr); renderTodoList();
+}
+function todoDelete(id){
+  todoSave(todoLoad().filter(t=>t.id!==id)); renderTodoList();
+}
+function renderTodoList(){
+  const wrap=document.getElementById('cal-todo-wrap');
+  if(!wrap)return;
+  const isLeader=CU&&(CU.isOM||ATL_EMAILS.has(CU.email)||TL_TEAM_MAP[CU.email]);
+  wrap.style.display=isLeader?'block':'none';
+  if(!isLeader)return;
+  const arr=todoLoad();
+  const pending=arr.filter(t=>!t.done), done=arr.filter(t=>t.done);
+  const count=document.getElementById('todo-count');
+  if(count) count.textContent=`${pending.length} pending · ${done.length} done`;
+  const priIcon={high:'&#x1F534;',medium:'&#x1F7E1;',low:'&#x1F7E2;'};
+  const list=document.getElementById('todo-list');
+  if(!list)return;
+  const rows=[...pending,...done].map(t=>`
+    <div style="display:flex;align-items:center;gap:10px;background:#fff;border-radius:9px;padding:10px 13px;box-shadow:var(--sh);opacity:${t.done?'0.55':'1'};">
+      <input type="checkbox" ${t.done?'checked':''} onchange="todoToggle('${t.id}')" style="width:17px;height:17px;cursor:pointer;accent-color:var(--yellow-dk);">
+      <span style="flex:1;font-size:.83rem;color:var(--g800);text-decoration:${t.done?'line-through':'none'};word-break:break-word;">${t.text}</span>
+      <span style="font-size:.72rem;">${priIcon[t.priority]||'&#x1F7E1;'}</span>
+      ${t.done?'<span style="font-size:.65rem;color:var(--g400);">&#x2713; Done</span>':''}
+      <button onclick="todoDelete('${t.id}')" style="background:transparent;border:none;cursor:pointer;color:var(--g400);font-size:.85rem;padding:2px 4px;" title="Delete">&#x1F5D1;</button>
+    </div>`).join('');
+  list.innerHTML=rows||'<div style="text-align:center;color:var(--g400);font-size:.82rem;padding:14px;">No tasks yet. Click + Add Task to get started.</div>';
+}
+
+/* ── LEADS (Firestore) ── */
+let _leadItems=[];
+let _leadUnsub=null;
+
+/* ── ACTION ITEMS ── */
+let _aiUnsub=null;
+let _aiItems=[];
+
+function aiIsLeader(){ return CU&&(CU.isOM||ATL_EMAILS.has(CU.email)||TL_TEAM_MAP[CU.email]); }
+function aiCanAssign(){ return CU&&CU.isOM; }
+
+function aiPopulateAssignees(){
+  const sel=document.getElementById('ai-assignee');
+  if(!sel)return;
+  sel.innerHTML='<option value="">&#x2014; Select TL / ATL &#x2014;</option>';
+  // TLs
+  Object.entries(TL_TEAM_MAP||{}).forEach(([email])=>{
+    const name=email.split('@')[0];
+    sel.innerHTML+=`<option value="${email}">${name} (TL)</option>`;
+  });
+  // ATLs
+  (ATL_EMAILS||new Set()).forEach(email=>{
+    const name=email.split('@')[0];
+    sel.innerHTML+=`<option value="${email}">${name} (ATL)</option>`;
+  });
+}
+
+function aiPopulateFilterAssignees(){
+  const sel=document.getElementById('ai-filter-assignee');
+  if(!sel)return;
+  const current=sel.value;
+  sel.innerHTML='<option value="all">All Assignees</option>';
+  const seen=new Set();
+  _aiItems.forEach(item=>{
+    if(!seen.has(item.assignedTo)){
+      seen.add(item.assignedTo);
+      sel.innerHTML+=`<option value="${item.assignedTo}">${item.assignedToName||item.assignedTo}</option>`;
+    }
+  });
+  if([...sel.options].some(o=>o.value===current)) sel.value=current;
+}
+
+function subscribeActionItems(){
+  if(_aiUnsub){ _aiUnsub(); _aiUnsub=null; }
+  if(!FSB||!aiIsLeader())return;
+  let q=FSB.collection('px_action_items').orderBy('createdAt','desc');
+  // Non-OM only see their own
+  if(!CU.isOM) q=q.where('assignedTo','==',CU.email);
+  _aiUnsub=q.onSnapshot(snap=>{
+    _aiItems=snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderActionItems();
+    // Badge: count not_started + in_progress assigned to me
+    const myOpen=_aiItems.filter(i=>i.assignedTo===CU.email&&i.status!=='done').length;
+    ['nav-badge-actions','nav-badge-tl-actions'].forEach(id=>{
+      const b=document.getElementById(id);
+      if(b){b.style.display=myOpen>0?'inline-flex':'none';b.textContent=myOpen;}
+    });
+  });
+}
+
+function renderActionItems(){
+  if(!aiIsLeader())return;
+  const statusFilter=document.getElementById('ai-filter-status')?.value||'all';
+  const assigneeFilter=document.getElementById('ai-filter-assignee')?.value||'all';
+  const priIcon={high:'&#x1F534;',medium:'&#x1F7E1;',low:'&#x1F7E2;'};
+
+  // Show/hide add button
+  const addBtn=document.getElementById('ai-add-btn');
+  if(addBtn) addBtn.style.display=aiCanAssign()?'inline-flex':'none';
+
+  aiPopulateFilterAssignees();
+
+  let items=_aiItems;
+  if(statusFilter!=='all') items=items.filter(i=>i.status===statusFilter);
+  if(assigneeFilter!=='all') items=items.filter(i=>i.assignedTo===assigneeFilter);
+
+  const cols={'not_started':[],'in_progress':[],'done':[]};
+  items.forEach(item=>{ if(cols[item.status]) cols[item.status].push(item); });
+
+  const empty=document.getElementById('ai-empty');
+  const board=document.getElementById('ai-board');
+  if(items.length===0&&statusFilter==='all'&&assigneeFilter==='all'){
+    if(empty)empty.style.display='block';
+    if(board)board.style.display='none';
+    return;
+  }
+  if(empty)empty.style.display='none';
+  if(board)board.style.display='grid';
+
+  ['not_started','in_progress','done'].forEach(status=>{
+    const col=document.getElementById('ai-col-'+status);
+    if(!col)return;
+    if(cols[status].length===0){col.innerHTML='<div style="color:var(--g300);font-size:.75rem;text-align:center;padding:12px;">Empty</div>';return;}
+    col.innerHTML=cols[status].map(item=>{
+      const isOverdue=item.dueDate&&item.status!=='done'&&new Date(item.dueDate)<new Date();
+      const dueStr=item.dueDate?`<span style="color:${isOverdue?'#ef4444':'var(--g500)'};">${isOverdue?'&#x26A0;&#xFE0F; ':''} Due ${item.dueDate}</span>`:'';
+      const canEdit=CU.isOM||item.assignedTo===CU.email;
+      const statusBtns=canEdit&&item.status!=='done'?`
+        ${item.status==='not_started'?`<button class="ai-status-btn" onclick="aiSetStatus('${item.id}','in_progress')">&#x25B6; Start</button>`:''}
+        ${item.status==='in_progress'?`<button class="ai-status-btn" style="background:#dcfce7;border-color:#22c55e;color:#15803d;" onclick="aiSetStatus('${item.id}','done')">&#x2705; Mark Done</button>`:''}
+      `:'';
+      const deleteBtn=CU.isOM?`<button onclick="aiDelete('${item.id}')" style="margin-left:auto;background:transparent;border:none;cursor:pointer;color:var(--g400);font-size:.8rem;" title="Delete">&#x1F5D1;</button>`:'';
+      return `<div class="ai-card pri-${item.priority}">
+        <div class="ai-card-title">${item.title}</div>
+        <div class="ai-card-meta">
+          <span>&#x1F464; ${item.assignedToName||item.assignedTo}</span>
+          <span>${priIcon[item.priority]||''} ${item.priority}</span>
+          ${dueStr}
+        </div>
+        ${item.notes?`<div style="font-size:.73rem;color:var(--g600);background:var(--g100);border-radius:6px;padding:5px 8px;margin-bottom:6px;">${item.notes}</div>`:''}
+        <div class="ai-card-actions">${statusBtns}${deleteBtn}</div>
+        <div style="font-size:.62rem;color:var(--g400);margin-top:6px;">By ${item.assignedByName||item.assignedBy}</div>
+      </div>`;
+    }).join('');
+  });
+}
+
+function openAIModal(){
+  if(!aiCanAssign())return;
+  aiPopulateAssignees();
+  document.getElementById('ai-title').value='';
+  document.getElementById('ai-notes').value='';
+  document.getElementById('ai-priority').value='medium';
+  document.getElementById('ai-assignee').value='';
+  const today=new Date();
+  document.getElementById('ai-due').value=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  const modal=document.getElementById('ai-modal');
+  if(modal)modal.style.display='flex';
+}
+function closeAIModal(){ const m=document.getElementById('ai-modal'); if(m)m.style.display='none'; }
+
+async function saveActionItem(){
+  const title=(document.getElementById('ai-title').value||'').trim();
+  const assignedTo=document.getElementById('ai-assignee').value;
+  const priority=document.getElementById('ai-priority').value;
+  const dueDate=document.getElementById('ai-due').value;
+  const notes=(document.getElementById('ai-notes').value||'').trim();
+  if(!title||!assignedTo){alert('Title and assignee are required.');return;}
+  const assignedToName=assignedTo.split('@')[0];
+  const now=new Date().toISOString();
+  await FSB.collection('px_action_items').add({
+    title,assignedTo,assignedToName,priority,dueDate,notes,status:'not_started',
+    assignedBy:CU.email,assignedByName:CU.role||CU.email.split('@')[0],
+    createdAt:now,updatedAt:now
+  });
+  closeAIModal();
+}
+
+async function aiSetStatus(id,status){
+  await FSB.collection('px_action_items').doc(id).update({status,updatedAt:new Date().toISOString()});
+}
+async function aiDelete(id){
+  if(!confirm('Delete this action item?'))return;
+  await FSB.collection('px_action_items').doc(id).delete();
+}
+
 function doLogout(){
   _unsubs.forEach(u=>u()); _unsubs=[];
+  if(_aiUnsub){ _aiUnsub(); _aiUnsub=null; }
+  if(_leadUnsub){_leadUnsub();_leadUnsub=null;}
+  _aiItems=[];
+  _leadItems=[];
   DB={logs:[],ft:[],nte:[],cm:{}};
   document.getElementById('admin-roster-btn').style.display='none';
   document.getElementById('admin-pw-btn').style.display='none';
@@ -2599,9 +3425,9 @@ function showView(id){
 
 function switchOM(tab){
   document.querySelectorAll('#om-nav .sb-item').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
-  const titles={dash:'Coaching Dashboard',coaching:'Coaching Logs',nte:'NTE Logs',ft:'Follow Through',attendance:'Attendance Points',pwreset:'Reset Passwords',kb:'Knowledge Base',suggestions:'Suggestions & Reports'};
+  const titles={dash:'Coaching Dashboard',coaching:'Coaching Logs',nte:'NTE Logs',ft:'Follow Through',attendance:'Attendance Points',pwreset:'Reset Passwords',kb:'Knowledge Base',suggestions:'Suggestions & Reports',calendar:'Team Calendar',actions:'Action Items',leads:'Lead Follow-Ups'};
   const el=document.getElementById('tb-title'); if(el) el.textContent=titles[tab]||'';
-  const map={dash:'v-om-dash',coaching:'v-om-c',nte:'v-om-n',ft:'v-om-f',attendance:'v-om-attendance',pwreset:'v-om-pwreset',kb:'v-kb',suggestions:'v-om-suggestions'};
+  const map={dash:'v-om-dash',coaching:'v-om-c',nte:'v-om-n',ft:'v-om-f',attendance:'v-om-attendance',pwreset:'v-om-pwreset',kb:'v-kb',suggestions:'v-om-suggestions',calendar:'v-cal',actions:'v-actions',leads:'v-leads-tl'};
   showView(map[tab]||'v-om-dash');
   populateAllFilters();
   if(tab==='dash')renderOMDash();
@@ -2612,6 +3438,9 @@ function switchOM(tab){
   if(tab==='pwreset')loadPwResetView();
   if(tab==='kb')renderAll();
   if(tab==='suggestions')renderOMSuggestions();
+  if(tab==='calendar')renderCalendar();
+  if(tab==='actions'){subscribeActionItems();renderActionItems();}
+  if(tab==='leads'){subscribeLeads();renderLeads();}
 }
 
 /* ═══════════════════════════════════════
@@ -3158,15 +3987,18 @@ function clearFilters(){
 
 // Switch TL nav views (Dashboard / Coaching Logs / Attendance Points)
 function tlShowView(tab){
-  const viewMap={dashboard:'v-tl',logs:'v-tl-logs',attendance:'v-tl-attendance',kb:'v-kb'};
+  const viewMap={dashboard:'v-tl',logs:'v-tl-logs',attendance:'v-tl-attendance',kb:'v-kb',calendar:'v-cal',actions:'v-actions',leads:'v-leads-tl'};
   showView(viewMap[tab]||'v-tl');
-  ['dash','logs','attendance','kb'].forEach(t=>{
+  ['dash','logs','attendance','kb','calendar','actions','leads'].forEach(t=>{
     const el=document.getElementById('tl-nav-'+t);
     if(el) el.classList.toggle('active',t===tab||(t==='dash'&&tab==='dashboard'));
   });
   if(tab==='logs') renderTable();
   if(tab==='attendance') renderTLAttendance();
   if(tab==='kb') renderAll();
+  if(tab==='calendar') renderCalendar();
+  if(tab==='actions'){subscribeActionItems();renderActionItems();}
+  if(tab==='leads'){subscribeLeads();renderLeads();}
 }
 
 // Rebuild agent dropdown for coaching logs view
@@ -4886,10 +5718,11 @@ function onEmailInput(){
 function switchAgentTab(tab){
   document.querySelectorAll('#agent-nav .sb-item').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
   document.querySelectorAll('.av-section').forEach(s=>s.style.display='none');
-  const map={coaching:'av-coaching',nte:'av-nte',ft:'av-ft',perf:'av-perf',calc:'av-calc',attendance:'av-attendance',kb:'__kb__'};
+  const map={coaching:'av-coaching',nte:'av-nte',ft:'av-ft',perf:'av-perf',calc:'av-calc',attendance:'av-attendance',leads:'av-leads',kb:'__kb__'};
   const secId=map[tab];
   if(secId==='__kb__'){showView('v-kb');renderAll();}else{showView('v-agent');if(secId){const sec=document.getElementById(secId);if(sec)sec.style.display='';}}
-  const titles={coaching:'My Coaching',nte:'My NTE',ft:'My Follow Through',perf:'My Performance',calc:'Phoenix Calculator',attendance:'My Attendance',kb:'Knowledge Base'};
+  if(tab==='leads')renderLeads();
+  const titles={coaching:'My Coaching',nte:'My NTE',ft:'My Follow Through',perf:'My Performance',calc:'Phoenix Calculator',attendance:'My Attendance',leads:'Lead Follow-Up',kb:'Knowledge Base'};
   const el=document.getElementById('tb-title'); if(el) el.textContent=titles[tab]||'';
   if(tab==='perf') renderAgentPerf();
   if(tab==='calc') avCalcInit();
