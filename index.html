@@ -3472,11 +3472,18 @@ function aiPopulateFilterAssignees(){
 function subscribeActionItems(){
   if(_aiUnsub){ _aiUnsub(); _aiUnsub=null; }
   if(!FSB||!aiIsLeader())return;
-  let q=FSB.collection('px_action_items').orderBy('createdAt','desc');
-  // Non-OM only see their own
-  if(!CU.isOM) q=q.where('assignedTo','==',CU.email);
+  // OM: server-side orderBy is fine (no where clause, no composite index needed)
+  // TL/ATL: where('assignedTo') + orderBy('createdAt') requires a composite index
+  //         → skip server orderBy and sort in JS instead
+  let q;
+  if(CU.isOM){
+    q=FSB.collection('px_action_items').orderBy('createdAt','desc');
+  } else {
+    q=FSB.collection('px_action_items').where('assignedTo','==',CU.email);
+  }
   _aiUnsub=q.onSnapshot(snap=>{
-    _aiItems=snap.docs.map(d=>({id:d.id,...d.data()}));
+    _aiItems=snap.docs.map(d=>({id:d.id,...d.data()}))
+      .sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0));
     renderActionItems();
     // Badge: count not_started + in_progress assigned to me
     const myOpen=_aiItems.filter(i=>i.assignedTo===CU.email&&i.status!=='done').length;
