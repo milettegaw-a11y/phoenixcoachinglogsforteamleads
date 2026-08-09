@@ -1989,52 +1989,128 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
       <span>📁 Documents</span>
       <button class="mclose" onclick="closeM('m-docs')">✕</button>
     </div>
-    <div class="mbody" style="padding:20px;">
+    <div class="mbody" style="padding:16px 20px 20px;">
 
-      <!-- ADHERENCE CATEGORY -->
-      <div style="margin-bottom:24px;">
-        <div style="font-size:.72rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--g500);border-bottom:1.5px solid var(--g200);padding-bottom:6px;margin-bottom:12px;">📋 Adherence</div>
+      <!-- ADHERENCE DRAWER -->
+      <details open style="margin-bottom:8px;border:1.5px solid var(--g200);border-radius:10px;overflow:hidden;">
+        <summary style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;background:var(--g100);cursor:pointer;user-select:none;font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--g700);list-style:none;-webkit-appearance:none;">
+          <span>📋 Adherence</span>
+          <span style="font-size:.7rem;color:var(--g400);transition:transform .2s;" class="doc-chev">▼</span>
+        </summary>
+        <div style="padding:12px;display:flex;flex-direction:column;gap:8px;">
 
-        <p style="font-size:.75rem;color:var(--g500);margin-bottom:10px;">⚠️ Template documents — make a copy before editing</p>
+          <a href="https://docs.google.com/document/d/1yzFrW5HjC4lCdPyzMoYoyxX0X_rcte8amE4WkQpkqrU/edit?tab=t.0" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--g200);border-radius:8px;text-decoration:none;color:inherit;background:#fff;">
+            <span style="font-size:1.1rem;">📄</span>
+            <div style="flex:1;">
+              <div style="font-size:.82rem;font-weight:500;">First Warning — Adherence Policy</div>
+              <div style="font-size:.72rem;color:var(--g500);">Make a copy · Google Doc</div>
+            </div>
+            <span style="font-size:.7rem;background:#fef3c7;color:#92400e;padding:2px 7px;border-radius:4px;font-weight:600;">COPY</span>
+          </a>
 
-        <a href="https://docs.google.com/document/d/1yzFrW5HjC4lCdPyzMoYoyxX0X_rcte8amE4WkQpkqrU/edit?tab=t.0" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--g200);border-radius:8px;margin-bottom:8px;text-decoration:none;color:inherit;background:#fff;">
-          <span style="font-size:1.1rem;">📄</span>
-          <div style="flex:1;">
-            <div style="font-size:.82rem;font-weight:500;">First Warning — Adherence Policy</div>
-            <div style="font-size:.72rem;color:var(--g500);">Make a copy · Google Doc</div>
-          </div>
-          <span style="font-size:.7rem;background:#fef3c7;color:#92400e;padding:2px 7px;border-radius:4px;font-weight:500;">COPY</span>
-        </a>
+          <a href="https://docs.google.com/document/d/1eCeaX0CVLax1Xb7CNcyLyFpZMdXfv6Jmwuytt74Ja0Q/edit?tab=t.0" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--g200);border-radius:8px;text-decoration:none;color:inherit;background:#fff;">
+            <span style="font-size:1.1rem;">📄</span>
+            <div style="flex:1;">
+              <div style="font-size:.82rem;font-weight:500;">Final Written Warning — Adherence Policy</div>
+              <div style="font-size:.72rem;color:var(--g500);">Make a copy · Google Doc</div>
+            </div>
+            <span style="font-size:.7rem;background:#fef3c7;color:#92400e;padding:2px 7px;border-radius:4px;font-weight:600;">COPY</span>
+          </a>
 
-        <a href="https://docs.google.com/document/d/1eCeaX0CVLax1Xb7CNcyLyFpZMdXfv6Jmwuytt74Ja0Q/edit?tab=t.0" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--g200);border-radius:8px;margin-bottom:8px;text-decoration:none;color:inherit;background:#fff;">
-          <span style="font-size:1.1rem;">📄</span>
-          <div style="flex:1;">
-            <div style="font-size:.82rem;font-weight:500;">Final Written Warning — Adherence Policy</div>
-            <div style="font-size:.72rem;color:var(--g500);">Make a copy · Google Doc</div>
-          </div>
-          <span style="font-size:.7rem;background:#fef3c7;color:#92400e;padding:2px 7px;border-radius:4px;font-weight:500;">COPY</span>
-        </a>
+          <a href="https://docs.google.com/document/d/1jOD2EdcBD5XorbgrUx19ZGe4IahiqJYE9x5NP7YnS9Q/edit?tab=t.0" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--g200);border-radius:8px;text-decoration:none;color:inherit;background:#fff;">
+            <span style="font-size:1.1rem;">📄</span>
+            <div style="flex:1;">
+              <div style="font-size:.82rem;font-weight:500;">NTE — Adherence Policy</div>
+              <div style="font-size:.72rem;color:var(--g500);">Make a copy · Google Doc</div>
+            </div>
+            <span style="font-size:.7rem;background:#fef3c7;color:#92400e;padding:2px 7px;border-radius:4px;font-weight:600;">COPY</span>
+          </a>
 
-        <a href="https://docs.google.com/document/d/1jOD2EdcBD5XorbgrUx19ZGe4IahiqJYE9x5NP7YnS9Q/edit?tab=t.0" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--g200);border-radius:8px;margin-bottom:8px;text-decoration:none;color:inherit;background:#fff;">
-          <span style="font-size:1.1rem;">📄</span>
-          <div style="flex:1;">
-            <div style="font-size:.82rem;font-weight:500;">NTE — Adherence Policy</div>
-            <div style="font-size:.72rem;color:var(--g500);">Make a copy · Google Doc</div>
-          </div>
-          <span style="font-size:.7rem;background:#fef3c7;color:#92400e;padding:2px 7px;border-radius:4px;font-weight:500;">COPY</span>
-        </a>
+          <a href="https://docs.google.com/document/d/1jyPxLUlaqhAf4YIHjtImV75daAfs94Z38eS65oXnrCE/edit?tab=t.0" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--g200);border-radius:8px;text-decoration:none;color:inherit;background:#fff;">
+            <span style="font-size:1.1rem;">📄</span>
+            <div style="flex:1;">
+              <div style="font-size:.82rem;font-weight:500;">Contract Termination — Adherence Policy</div>
+              <div style="font-size:.72rem;color:var(--g500);">Make a copy · Google Doc</div>
+            </div>
+            <span style="font-size:.7rem;background:#fef3c7;color:#92400e;padding:2px 7px;border-radius:4px;font-weight:600;">COPY</span>
+          </a>
 
-        <p style="font-size:.75rem;color:var(--g500);margin:14px 0 8px;">📌 Reference</p>
+          <a href="https://docs.google.com/document/d/1x1ox02PYdkAAH7Xjzl3oWANQpcjf2iIsyP8XDswNWfI/edit?tab=t.0" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--g200);border-radius:8px;text-decoration:none;color:inherit;background:#fff;">
+            <span style="font-size:1.1rem;">📖</span>
+            <div style="flex:1;">
+              <div style="font-size:.82rem;font-weight:500;">Adherence Policy</div>
+              <div style="font-size:.72rem;color:var(--g500);">Reference document · Google Doc</div>
+            </div>
+            <span style="font-size:.7rem;background:#e0e7ff;color:#3730a3;padding:2px 7px;border-radius:4px;font-weight:600;">REF</span>
+          </a>
 
-        <a href="https://docs.google.com/document/d/1x1ox02PYdkAAH7Xjzl3oWANQpcjf2iIsyP8XDswNWfI/edit?tab=t.0" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--g200);border-radius:8px;text-decoration:none;color:inherit;background:#fff;">
-          <span style="font-size:1.1rem;">📖</span>
-          <div style="flex:1;">
-            <div style="font-size:.82rem;font-weight:500;">Adherence Policy</div>
-            <div style="font-size:.72rem;color:var(--g500);">Reference document · Google Doc</div>
-          </div>
-          <span style="font-size:.7rem;background:#e0e7ff;color:#3730a3;padding:2px 7px;border-radius:4px;font-weight:500;">REF</span>
-        </a>
-      </div>
+        </div>
+      </details>
+
+      <!-- ATTENDANCE DRAWER -->
+      <details style="margin-bottom:8px;border:1.5px solid var(--g200);border-radius:10px;overflow:hidden;">
+        <summary style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;background:var(--g100);cursor:pointer;user-select:none;font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--g700);list-style:none;-webkit-appearance:none;">
+          <span>📅 Attendance</span>
+          <span style="font-size:.7rem;color:var(--g400);" class="doc-chev">▼</span>
+        </summary>
+        <div style="padding:12px;display:flex;flex-direction:column;gap:8px;">
+
+          <a href="https://docs.google.com/document/d/1fKaQQxztnlj9E1ESZJLM9_SlUa2ehruC7yAoHBr0ISk/edit?tab=t.0" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--g200);border-radius:8px;text-decoration:none;color:inherit;background:#fff;">
+            <span style="font-size:1.1rem;">📄</span>
+            <div style="flex:1;">
+              <div style="font-size:.82rem;font-weight:500;">1st Warning Attendance NTE 2.0</div>
+              <div style="font-size:.72rem;color:var(--g500);">Make a copy · Google Doc</div>
+            </div>
+            <span style="font-size:.7rem;background:#fef3c7;color:#92400e;padding:2px 7px;border-radius:4px;font-weight:600;">COPY</span>
+          </a>
+
+          <a href="https://docs.google.com/document/d/1vw2WfdQo4amzQWUf4d6nDlDGxmaZ9hZLjnt4hcw4u6w/edit?tab=t.0" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--g200);border-radius:8px;text-decoration:none;color:inherit;background:#fff;">
+            <span style="font-size:1.1rem;">📄</span>
+            <div style="flex:1;">
+              <div style="font-size:.82rem;font-weight:500;">2nd Warning Attendance NTE and NOD 2.0</div>
+              <div style="font-size:.72rem;color:var(--g500);">Make a copy · Google Doc</div>
+            </div>
+            <span style="font-size:.7rem;background:#fef3c7;color:#92400e;padding:2px 7px;border-radius:4px;font-weight:600;">COPY</span>
+          </a>
+
+          <a href="https://docs.google.com/document/d/1hGWZPa73cYjUvOBjC_LZ-14j87wngCOOnR6wQlDyhxo/edit?tab=t.0" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--g200);border-radius:8px;text-decoration:none;color:inherit;background:#fff;">
+            <span style="font-size:1.1rem;">📄</span>
+            <div style="flex:1;">
+              <div style="font-size:.82rem;font-weight:500;">Final Warning Attendance NOD 2.0 Suspension</div>
+              <div style="font-size:.72rem;color:var(--g500);">Make a copy · Google Doc</div>
+            </div>
+            <span style="font-size:.7rem;background:#fef3c7;color:#92400e;padding:2px 7px;border-radius:4px;font-weight:600;">COPY</span>
+          </a>
+
+          <a href="https://docs.google.com/document/d/1unzlD8_D87-qgq-g4hC73ixJBkFdGFN3UOZxZZbyUBQ/edit?tab=t.0" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--g200);border-radius:8px;text-decoration:none;color:inherit;background:#fff;">
+            <span style="font-size:1.1rem;">📄</span>
+            <div style="flex:1;">
+              <div style="font-size:.82rem;font-weight:500;">Final Termination Notice for Attendance 2.0</div>
+              <div style="font-size:.72rem;color:var(--g500);">Make a copy · Google Doc</div>
+            </div>
+            <span style="font-size:.7rem;background:#fef3c7;color:#92400e;padding:2px 7px;border-radius:4px;font-weight:600;">COPY</span>
+          </a>
+
+          <a href="https://docs.google.com/document/d/1jtBhj19RyvH2Fixc7uh2qU4qYwQ4IueOpgedfIQ792c/edit?tab=t.0" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--g200);border-radius:8px;text-decoration:none;color:inherit;background:#fff;">
+            <span style="font-size:1.1rem;">📄</span>
+            <div style="flex:1;">
+              <div style="font-size:.82rem;font-weight:500;">Attendance Termination NTE 2.0</div>
+              <div style="font-size:.72rem;color:var(--g500);">Make a copy · Google Doc</div>
+            </div>
+            <span style="font-size:.7rem;background:#fef3c7;color:#92400e;padding:2px 7px;border-radius:4px;font-weight:600;">COPY</span>
+          </a>
+
+          <a href="https://docs.google.com/presentation/d/1a0ZWcW27x_juGxnMX_HOPQfUc_m5WXc7cAJsHM0BKWA/edit?slide=id.p6#slide=id.p6" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--g200);border-radius:8px;text-decoration:none;color:inherit;background:#fff;">
+            <span style="font-size:1.1rem;">📊</span>
+            <div style="flex:1;">
+              <div style="font-size:.82rem;font-weight:500;">Attendance Penalty Points</div>
+              <div style="font-size:.72rem;color:var(--g500);">Reference slide · Google Slides</div>
+            </div>
+            <span style="font-size:.7rem;background:#e0e7ff;color:#3730a3;padding:2px 7px;border-radius:4px;font-weight:600;">REF</span>
+          </a>
+
+        </div>
+      </details>
       <!-- ADD MORE CATEGORIES HERE -->
 
     </div>
