@@ -680,21 +680,26 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
 
     <!-- OM nav -->
     <div id="om-nav" class="hidden">
-      <div class="sb-section-lbl">VIEWS</div>
+      <div class="sb-section-lbl">PERFORMANCE</div>
       <div class="sb-item active" data-tab="dash" onclick="switchOM('dash')"><span class="sb-icon">📊</span><span>Coaching Dashboard</span></div>
       <div class="sb-item" data-tab="coaching" onclick="switchOM('coaching');toggleSbSub('om-sub-coaching')"><span class="sb-icon">📋</span><span>Coaching Logs</span><span class="sb-arrow" id="om-arr-coaching">›</span></div>
       <div class="sb-sub-item agent-hide" id="om-sub-coaching" onclick="openLogModal()"><span class="sb-icon">➕</span><span>New Coaching Log</span></div>
       <div class="sb-item" data-tab="nte" onclick="switchOM('nte');toggleSbSub('om-sub-nte')"><span class="sb-icon">📝</span><span>NTE Logs</span><span class="sb-arrow" id="om-arr-nte">›</span></div>
       <div class="sb-sub-item agent-hide" id="om-sub-nte" onclick="openNTEModal()"><span class="sb-icon">📋</span><span>New NTE</span></div>
+      <div class="sb-item" data-tab="attendance" onclick="switchOM('attendance')"><span class="sb-icon">🗓️</span><span>Attendance Points</span><span id="nav-badge-om-att" class="sb-notif" style="display:none"></span></div>
+      <div class="sb-divider"></div>
+      <div class="sb-section-lbl">FOLLOW-UP</div>
       <div class="sb-item" data-tab="ft" onclick="switchOM('ft');toggleSbSub('om-sub-ft')"><span class="sb-icon">🔄</span><span>Follow Through</span><span class="sb-arrow" id="om-arr-ft">›</span></div>
       <div class="sb-sub-item agent-hide" id="om-sub-ft" onclick="openFTModal()"><span class="sb-icon">🔁</span><span>New Follow Through</span></div>
-      <div class="sb-item" data-tab="attendance" onclick="switchOM('attendance')"><span class="sb-icon">🗓️</span><span>Attendance Points</span><span id="nav-badge-om-att" class="sb-notif" style="display:none"></span></div>
-      <div class="sb-item" data-tab="kb" onclick="switchOM('kb')"><span class="sb-icon">📖</span><span>Knowledge Base</span></div>
-      <div class="sb-item" data-tab="calendar" onclick="switchOM('calendar')"><span class="sb-icon">📅</span><span>Calendar</span></div>
       <div class="sb-item" data-tab="actions" onclick="switchOM('actions')"><span class="sb-icon">⚡</span><span>Action Items</span><span id="nav-badge-actions" class="sb-notif" style="display:none"></span></div>
       <div class="sb-item agent-hide" data-tab="leads" onclick="switchOM('leads')"><span class="sb-icon">📞</span><span>Lead Follow-Ups</span><span id="nav-badge-om-leads" class="sb-notif" style="display:none"></span></div>
       <div class="sb-divider"></div>
-      <div class="sb-section-lbl agent-hide">ACTIONS</div>
+      <div class="sb-section-lbl">RESOURCES</div>
+      <div class="sb-item agent-hide" onclick="openDocsModal()"><span class="sb-icon">📁</span><span>Documents</span></div>
+      <div class="sb-item" data-tab="kb" onclick="switchOM('kb')"><span class="sb-icon">📖</span><span>Knowledge Base</span></div>
+      <div class="sb-item" data-tab="calendar" onclick="switchOM('calendar')"><span class="sb-icon">📅</span><span>Calendar</span></div>
+      <div class="sb-divider"></div>
+      <div class="sb-section-lbl agent-hide">ADMIN</div>
       <div class="sb-item agent-hide" id="admin-roster-btn" style="display:none" onclick="openRosterMgr()"><span class="sb-icon">⚙️</span><span>Manage Roster</span></div>
       <div class="sb-item agent-hide" id="admin-pw-btn" style="display:none" data-tab="pwreset" onclick="switchOM('pwreset')"><span class="sb-icon">🔑</span><span>Reset Passwords</span></div>
       <div class="sb-item agent-hide" data-tab="suggestions" onclick="switchOM('suggestions')"><span class="sb-icon">💡</span><span>Suggestions &amp; Reports</span></div>
@@ -702,19 +707,24 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
 
     <!-- TL nav -->
     <div id="tl-nav" class="hidden">
-      <div class="sb-section-lbl">VIEWS</div>
+      <div class="sb-section-lbl">PERFORMANCE</div>
       <div class="sb-item active" id="tl-nav-dash" onclick="tlShowView('dashboard')"><span class="sb-icon">📊</span><span>Dashboard</span></div>
       <div class="sb-item" id="tl-nav-logs" onclick="tlShowView('logs');toggleSbSub('tl-sub-coaching')"><span class="sb-icon">📋</span><span>Coaching Logs</span><span id="nav-badge-tl-logs" class="sb-notif" style="display:none"></span><span class="sb-arrow" id="tl-arr-coaching">›</span></div>
       <div class="sb-sub-item" id="tl-sub-coaching" onclick="openLogModal()"><span class="sb-icon">➕</span><span>New Coaching Log</span></div>
+      <div class="sb-item" id="tl-nav-attendance" onclick="tlShowView('attendance')"><span class="sb-icon">🗓️</span><span>Attendance Points</span><span id="nav-badge-tl-att" class="sb-notif" style="display:none"></span></div>
+      <div class="sb-divider"></div>
+      <div class="sb-section-lbl">FOLLOW-UP</div>
       <div class="sb-item" id="tl-nav-ft" onclick="toggleSbSub('tl-sub-ft')"><span class="sb-icon">🔄</span><span>Follow Through</span><span class="sb-arrow" id="tl-arr-ft">›</span></div>
       <div class="sb-sub-item" id="tl-sub-ft" onclick="openFTModal()"><span class="sb-icon">🔁</span><span>New Follow Through</span></div>
-      <div class="sb-item" id="tl-nav-attendance" onclick="tlShowView('attendance')"><span class="sb-icon">🗓️</span><span>Attendance Points</span><span id="nav-badge-tl-att" class="sb-notif" style="display:none"></span></div>
-      <div class="sb-item" id="tl-nav-kb" onclick="tlShowView('kb')"><span class="sb-icon">📖</span><span>Knowledge Base</span></div>
-      <div class="sb-item" id="tl-nav-calendar" onclick="tlShowView('calendar')"><span class="sb-icon">📅</span><span>Calendar</span></div>
       <div class="sb-item" id="tl-nav-actions" onclick="tlShowView('actions')"><span class="sb-icon">⚡</span><span>Action Items</span><span id="nav-badge-tl-actions" class="sb-notif" style="display:none"></span></div>
       <div class="sb-item" id="tl-nav-leads" onclick="tlShowView('leads')"><span class="sb-icon">📞</span><span>Lead Follow-Ups</span><span id="nav-badge-tl-leads" class="sb-notif" style="display:none"></span></div>
       <div class="sb-divider"></div>
-      <div class="sb-section-lbl">ACTIONS</div>
+      <div class="sb-section-lbl">RESOURCES</div>
+      <div class="sb-item" onclick="openDocsModal()"><span class="sb-icon">📁</span><span>Documents</span></div>
+      <div class="sb-item" id="tl-nav-kb" onclick="tlShowView('kb')"><span class="sb-icon">📖</span><span>Knowledge Base</span></div>
+      <div class="sb-item" id="tl-nav-calendar" onclick="tlShowView('calendar')"><span class="sb-icon">📅</span><span>Calendar</span></div>
+      <div class="sb-divider"></div>
+      <div class="sb-section-lbl">ADMIN</div>
       <div class="sb-item" onclick="openRosterMgr()"><span class="sb-icon">⚙️</span><span>Manage Roster</span></div>
     </div>
 
@@ -1972,6 +1982,65 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
   </div>
 </div>
 
+<!-- DOCUMENTS -->
+<div class="overlay" id="m-docs">
+  <div class="modal" style="max-width:480px;width:95%;">
+    <div class="mhdr">
+      <span>📁 Documents</span>
+      <button class="mclose" onclick="closeM('m-docs')">✕</button>
+    </div>
+    <div class="mbody" style="padding:20px;">
+
+      <!-- ADHERENCE CATEGORY -->
+      <div style="margin-bottom:24px;">
+        <div style="font-size:.72rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--g500);border-bottom:1.5px solid var(--g200);padding-bottom:6px;margin-bottom:12px;">📋 Adherence</div>
+
+        <p style="font-size:.75rem;color:var(--g500);margin-bottom:10px;">⚠️ Template documents — make a copy before editing</p>
+
+        <a href="https://docs.google.com/document/d/1yzFrW5HjC4lCdPyzMoYoyxX0X_rcte8amE4WkQpkqrU/edit?tab=t.0" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--g200);border-radius:8px;margin-bottom:8px;text-decoration:none;color:inherit;background:#fff;">
+          <span style="font-size:1.1rem;">📄</span>
+          <div style="flex:1;">
+            <div style="font-size:.82rem;font-weight:500;">First Warning — Adherence Policy</div>
+            <div style="font-size:.72rem;color:var(--g500);">Make a copy · Google Doc</div>
+          </div>
+          <span style="font-size:.7rem;background:#fef3c7;color:#92400e;padding:2px 7px;border-radius:4px;font-weight:500;">COPY</span>
+        </a>
+
+        <a href="https://docs.google.com/document/d/1eCeaX0CVLax1Xb7CNcyLyFpZMdXfv6Jmwuytt74Ja0Q/edit?tab=t.0" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--g200);border-radius:8px;margin-bottom:8px;text-decoration:none;color:inherit;background:#fff;">
+          <span style="font-size:1.1rem;">📄</span>
+          <div style="flex:1;">
+            <div style="font-size:.82rem;font-weight:500;">Final Written Warning — Adherence Policy</div>
+            <div style="font-size:.72rem;color:var(--g500);">Make a copy · Google Doc</div>
+          </div>
+          <span style="font-size:.7rem;background:#fef3c7;color:#92400e;padding:2px 7px;border-radius:4px;font-weight:500;">COPY</span>
+        </a>
+
+        <a href="https://docs.google.com/document/d/1jOD2EdcBD5XorbgrUx19ZGe4IahiqJYE9x5NP7YnS9Q/edit?tab=t.0" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--g200);border-radius:8px;margin-bottom:8px;text-decoration:none;color:inherit;background:#fff;">
+          <span style="font-size:1.1rem;">📄</span>
+          <div style="flex:1;">
+            <div style="font-size:.82rem;font-weight:500;">NTE — Adherence Policy</div>
+            <div style="font-size:.72rem;color:var(--g500);">Make a copy · Google Doc</div>
+          </div>
+          <span style="font-size:.7rem;background:#fef3c7;color:#92400e;padding:2px 7px;border-radius:4px;font-weight:500;">COPY</span>
+        </a>
+
+        <p style="font-size:.75rem;color:var(--g500);margin:14px 0 8px;">📌 Reference</p>
+
+        <a href="https://docs.google.com/document/d/1x1ox02PYdkAAH7Xjzl3oWANQpcjf2iIsyP8XDswNWfI/edit?tab=t.0" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--g200);border-radius:8px;text-decoration:none;color:inherit;background:#fff;">
+          <span style="font-size:1.1rem;">📖</span>
+          <div style="flex:1;">
+            <div style="font-size:.82rem;font-weight:500;">Adherence Policy</div>
+            <div style="font-size:.72rem;color:var(--g500);">Reference document · Google Doc</div>
+          </div>
+          <span style="font-size:.7rem;background:#e0e7ff;color:#3730a3;padding:2px 7px;border-radius:4px;font-weight:500;">REF</span>
+        </a>
+      </div>
+      <!-- ADD MORE CATEGORIES HERE -->
+
+    </div>
+  </div>
+</div>
+
 <!-- FOLLOW THROUGH -->
 <div class="overlay" id="m-ft">
   <div class="modal modal-sm">
@@ -2558,7 +2627,22 @@ function setupListeners(){
   const u1=FSB.collection('px_logs').orderBy('at','desc').onSnapshot(snap=>{
     DB.logs=snap.docs.map(d=>({...d.data(),id:d.id}));
     setLoading(60);
-    if(CU){ CU.isOM ? renderOMC() : CU.isAgentView ? renderAgentView() : renderDash(); }
+    if(CU){
+      if(CU.isOM){ renderOMC(); }
+      else if(CU.isAgentView){ renderAgentView(); }
+      else{
+        // Sync week selectors to most recent week with data
+        const usedWks=[...new Set(DB.logs.map(l=>l.wk).filter(Boolean))].map(Number).sort((a,b)=>b-a);
+        const latestWk=usedWks[0];
+        if(latestWk){
+          const wsSel=document.getElementById('wk-sel');
+          const wlSel=document.getElementById('wk-sel-logs');
+          if(wsSel && (!wsSel.value || wsSel.value==='550' || !usedWks.includes(Number(wsSel.value)))) wsSel.value=latestWk;
+          if(wlSel && (!wlSel.value || wlSel.value==='550' || !usedWks.includes(Number(wlSel.value)))) wlSel.value=latestWk;
+        }
+        renderDash();
+      }
+    }
   },err=>console.error('logs:',err));
 
   const u2=FSB.collection('px_ft').orderBy('at','desc').onSnapshot(snap=>{
@@ -2600,6 +2684,19 @@ function setupListeners(){
       rosterTLS=docs.tls.list;
     } else {
       rosterTLS=[...DEFAULT_TLS];
+    }
+    // Merge dynamic TL access map
+    if(docs.tl_access?.map){
+      Object.entries(docs.tl_access.map).forEach(([em,team])=>{
+        TL_TEAM_MAP[em]=team;
+      });
+    }
+    // Merge dynamic agent access map
+    if(docs.agent_access?.map){
+      Object.entries(docs.agent_access.map).forEach(([em,name])=>{
+        AGENTS_VIEW.add(em);
+        EMAIL_TO_AGENT[em]=name;
+      });
     }
     // Re-render roster modal if open
     renderRosterAgents();renderRosterTLs();
@@ -2646,6 +2743,20 @@ async function doEmailContinue(){
   }
 
   // Validate email is a recognised user
+  // First do a live Firestore fetch to catch dynamically-added users
+  try{
+    const [tlDoc,agDoc]=await Promise.all([
+      FSB.collection('px_roster').doc('tl_access').get(),
+      FSB.collection('px_roster').doc('agent_access').get()
+    ]);
+    if(tlDoc.exists&&tlDoc.data()?.map){
+      Object.entries(tlDoc.data().map).forEach(([em,team])=>{ TL_TEAM_MAP[em]=team; });
+    }
+    if(agDoc.exists&&agDoc.data()?.map){
+      Object.entries(agDoc.data().map).forEach(([em,name])=>{ AGENTS_VIEW.add(em); EMAIL_TO_AGENT[em]=name; });
+    }
+  }catch(e){ console.warn('Access fetch failed, using cached maps:',e); }
+
   const isOM=email===OM, isTL=!!TL_TEAM_MAP[email], isAgent=AGENTS_VIEW.has(email);
   if(!isOM&&!isTL&&!isAgent){
     err.textContent='⚠️ Email not recognised. Contact your Team Lead.';
@@ -3480,14 +3591,14 @@ function switchOM(tab){
 function initDash(){
   const ws=document.getElementById('wk-sel');
   ws.innerHTML=WEEKS.map(w=>`<option value="${w}">WK${w}</option>`).join('');
-  const used=[...new Set(DB.logs.map(l=>l.wk))].sort((a,b)=>a-b);
+  // Use the latest (highest) week that has data; fall back to 550
+  const used=[...new Set(DB.logs.map(l=>l.wk).filter(Boolean))].map(Number).sort((a,b)=>b-a);
   ws.value=used[0]||550;
 
   // Populate the Coaching Logs view week selector
   const wkLogs=document.getElementById('wk-sel-logs');
   if(wkLogs){
     wkLogs.innerHTML=WEEKS.map(w=>`<option value="${w}">WK${w}</option>`).join('');
-    const used=[...new Set(DB.logs.map(l=>l.wk))].sort((a,b)=>a-b);
     wkLogs.value=used[0]||550;
   }
 
@@ -4832,6 +4943,13 @@ async function delLog(id){
 }
 
 /* ═══════════════════════════════════════
+   DOCUMENTS
+═══════════════════════════════════════ */
+function openDocsModal(){
+  openM('m-docs');
+}
+
+/* ═══════════════════════════════════════
    FOLLOW THROUGH
 ═══════════════════════════════════════ */
 function openFTModal(){
@@ -5622,24 +5740,36 @@ async function rosterSaveInline(idx){
 }
 
 async function rosterAddAgent(){
-  const nameEl=document.getElementById('rm-new-name');
-  const hireEl=document.getElementById('rm-new-hire');
-  const tlEl  =document.getElementById('rm-new-tl');
-  const name  =(nameEl?.value||'').trim();
-  const hire  =hireEl?.value||new Date().toISOString().slice(0,10);
-  const tl    =tlEl?.value||'';
+  const nameEl =document.getElementById('rm-new-name');
+  const emailEl=document.getElementById('rm-new-email');
+  const hireEl =document.getElementById('rm-new-hire');
+  const tlEl   =document.getElementById('rm-new-tl');
+  const name   =(nameEl?.value||'').trim();
+  const agentEmail=(emailEl?.value||'').trim().toLowerCase();
+  const hire   =hireEl?.value||new Date().toISOString().slice(0,10);
+  const tl     =tlEl?.value||'';
   if(!name){toast('⚠️ Enter an agent name.');return;}
+  if(!agentEmail||!agentEmail.includes('@')){toast('⚠️ Enter a valid agent email.');return;}
   if(rosterAgents.find(a=>a.name.toLowerCase()===name.toLowerCase())){toast('⚠️ Agent already exists.');return;}
   const newList=[...rosterAgents.map(a=>a.name),name];
   const hireMap={},tlMap={};
   rosterAgents.forEach(a=>{hireMap[a.name]=a.h;tlMap[a.name]=a.tl||'';});
   hireMap[name]=hire; tlMap[name]=tl;
   await fsWrite('px_roster','agents',{list:newList,hire:hireMap,teamLead:tlMap});
-  if(nameEl)nameEl.value='';
-  if(hireEl)hireEl.value='';
-  if(tlEl)  tlEl.value='';
+  // Grant login access: store email→name in agent_access
+  const curAccess=(await FSB.collection('px_roster').doc('agent_access').get()).data()||{};
+  const curMap=curAccess.map||{};
+  curMap[agentEmail]=name;
+  await fsWrite('px_roster','agent_access',{map:curMap});
+  // Update live set immediately
+  AGENTS_VIEW.add(agentEmail);
+  EMAIL_TO_AGENT[agentEmail]=name;
+  if(nameEl) nameEl.value='';
+  if(emailEl)emailEl.value='';
+  if(hireEl) hireEl.value='';
+  if(tlEl)   tlEl.value='';
   toggleRosterAddForm();
-  toast('✅ Agent added!');
+  toast('✅ Agent added! They can now log in with their email.');
 }
 
 function rosterDelByIdx(idx){
@@ -5670,14 +5800,25 @@ function renderRosterTLs(){
 }
 
 async function rosterAddTL(){
-  const nameEl=document.getElementById('roster-tl-name');
-  const name=(nameEl?.value||'').trim();
+  const nameEl =document.getElementById('roster-tl-name');
+  const emailEl=document.getElementById('roster-tl-email');
+  const name   =(nameEl?.value||'').trim();
+  const tlEmail=(emailEl?.value||'').trim().toLowerCase();
   if(!name){toast('⚠️ Enter a team lead name.');return;}
+  if(!tlEmail||!tlEmail.includes('@')){toast('⚠️ Enter a valid team lead email.');return;}
   if(rosterTLS.includes(name)){toast('⚠️ Team lead already exists.');return;}
   const newList=[...rosterTLS,name];
   await fsWrite('px_roster','tls',{list:newList});
-  if(nameEl)nameEl.value='';
-  toast('✅ Team lead added!');
+  // Grant login access: store email→team name in tl_access
+  const curAccess=(await FSB.collection('px_roster').doc('tl_access').get()).data()||{};
+  const curMap=curAccess.map||{};
+  curMap[tlEmail]=name;
+  await fsWrite('px_roster','tl_access',{map:curMap});
+  // Update live map immediately
+  TL_TEAM_MAP[tlEmail]=name;
+  if(nameEl) nameEl.value='';
+  if(emailEl)emailEl.value='';
+  toast('✅ Team lead added! They can now log in with their email.');
 }
 
 async function rosterRemoveTL(name){
@@ -7191,7 +7332,11 @@ renderAll();
       <div class="rm-add-form" id="rm-add-form">
         <div style="flex:1;min-width:160px;">
           <label style="font-size:11px;color:#6b7280;font-weight:700;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Agent Name</label>
-          <input class="rm-add-inp" id="rm-new-name" placeholder="Full name" style="width:100%;" onkeydown="if(event.key==='Enter')rosterAddAgent()" />
+          <input class="rm-add-inp" id="rm-new-name" placeholder="Full name" style="width:100%;" />
+        </div>
+        <div style="flex:1;min-width:190px;">
+          <label style="font-size:11px;color:#6b7280;font-weight:700;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Login Email</label>
+          <input class="rm-add-inp" id="rm-new-email" type="email" placeholder="agent@example.com" style="width:100%;" />
         </div>
         <div>
           <label style="font-size:11px;color:#6b7280;font-weight:700;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Start Date</label>
@@ -7231,8 +7376,9 @@ renderAll();
           </summary>
           <div style="margin-top:12px;">
             <div class="rm-tl-list" id="roster-tl-list"></div>
-            <div class="roster-add-row" style="margin-top:8px;">
-              <input class="roster-add-inp rm-add-inp" id="roster-tl-name" placeholder="e.g. Team Jane Doe" style="flex:1;" onkeydown="if(event.key==='Enter')rosterAddTL()" />
+            <div class="roster-add-row" style="margin-top:8px;flex-wrap:wrap;gap:8px;">
+              <input class="roster-add-inp rm-add-inp" id="roster-tl-name" placeholder="Team name (e.g. Team Jane Doe)" style="flex:1;min-width:160px;" />
+              <input class="roster-add-inp rm-add-inp" id="roster-tl-email" type="email" placeholder="TL login email" style="flex:1;min-width:180px;" />
               <button class="btn btn-yellow btn-sm" onclick="rosterAddTL()">+ Add TL</button>
             </div>
           </div>
