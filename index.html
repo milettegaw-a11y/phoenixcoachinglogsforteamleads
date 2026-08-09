@@ -12,6 +12,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{
   --yellow:#83B271;--yellow-dk:#5E8A50;--yellow-lt:#E7F0D2;
@@ -703,6 +704,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
       <div class="sb-item agent-hide" id="admin-roster-btn" style="display:none" onclick="openRosterMgr()"><span class="sb-icon">⚙️</span><span>Manage Roster</span></div>
       <div class="sb-item agent-hide" id="admin-pw-btn" style="display:none" data-tab="pwreset" onclick="switchOM('pwreset')"><span class="sb-icon">🔑</span><span>Reset Passwords</span></div>
       <div class="sb-item agent-hide" data-tab="suggestions" onclick="switchOM('suggestions')"><span class="sb-icon">💡</span><span>Suggestions &amp; Reports</span></div>
+      <div class="sb-item agent-hide" id="admin-onboard-btn" data-tab="onboard" onclick="switchOM('onboard')"><span class="sb-icon">👥</span><span>Onboarding / Offboarding</span></div>
     </div>
 
     <!-- TL nav -->
@@ -726,6 +728,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
       <div class="sb-divider"></div>
       <div class="sb-section-lbl">ADMIN</div>
       <div class="sb-item" onclick="openRosterMgr()"><span class="sb-icon">⚙️</span><span>Manage Roster</span></div>
+      <div class="sb-item" id="tl-nav-onboard" onclick="tlShowView('onboard')"><span class="sb-icon">👥</span><span>Onboarding / Offboarding</span></div>
     </div>
 
     <!-- Agent nav -->
@@ -1597,6 +1600,27 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
   <div id="ai-empty" style="display:none;text-align:center;padding:40px;color:var(--g400);font-size:.88rem;">No action items yet.</div>
 </div>
 
+<!-- ONBOARDING / OFFBOARDING VIEW -->
+<div id="v-onboard" class="view">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px;">
+    <div>
+      <div style="font-size:1.05rem;font-weight:700;color:var(--g800);">👥 Onboarding / Offboarding</div>
+      <div style="font-size:.75rem;color:var(--g500);margin-top:2px;">Track agent onboarding and offboarding logs</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+      <select id="ob-filter-type" onchange="renderOnboardDash()" style="padding:6px 10px;border:1.5px solid var(--g300);border-radius:7px;font-size:.8rem;font-family:inherit;">
+        <option value="all">All Types</option>
+        <option value="onboarding">Onboarding</option>
+        <option value="offboarding">Offboarding</option>
+      </select>
+      <button onclick="exportOnboardExcel()" style="padding:7px 14px;border:1.5px solid var(--g300);border-radius:8px;background:#fff;font-family:inherit;font-size:.82rem;font-weight:600;cursor:pointer;color:var(--g700);">⬇ Export Excel</button>
+      <button onclick="openOnboardModal()" style="background:var(--yellow-dk);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:.83rem;font-weight:700;cursor:pointer;">+ New Entry</button>
+    </div>
+  </div>
+  <div id="ob-cards" style="display:flex;flex-direction:column;gap:10px;"></div>
+  <div id="ob-empty" style="display:none;text-align:center;padding:40px;color:var(--g400);font-size:.88rem;">No entries yet. Click "+ New Entry" to add one.</div>
+</div>
+
 <!-- ADD ACTION ITEM MODAL -->
 <div id="ai-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9100;align-items:center;justify-content:center;">
   <div style="background:#fff;border-radius:14px;padding:28px 26px;width:420px;max-width:95vw;box-shadow:var(--shl);max-height:90vh;overflow-y:auto;">
@@ -2197,6 +2221,138 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
       </details>
       <!-- ADD MORE CATEGORIES HERE -->
 
+    </div>
+  </div>
+</div>
+
+<!-- ONBOARDING / OFFBOARDING MODAL -->
+<div class="overlay" id="m-onboard">
+  <div class="modal" style="max-width:520px;width:95%;">
+    <div class="mhdr">
+      <div><h2>👥 Onboarding / Offboarding</h2><div class="mhdr-sub">All ★ fields are required</div></div>
+      <button class="mclose" onclick="closeM('m-onboard')">✕</button>
+    </div>
+    <div class="mbody" style="padding:18px 22px 22px;">
+      <!-- Type -->
+      <div style="margin-bottom:14px;">
+        <label style="font-size:.75rem;font-weight:700;color:var(--g600);display:block;margin-bottom:5px;">Type ★</label>
+        <select id="ob-type" onchange="obToggleType()" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid var(--g300);border-radius:8px;font-size:.88rem;font-family:inherit;">
+          <option value="">— Select Type —</option>
+          <option value="onboarding">🟢 Onboarding</option>
+          <option value="offboarding">🔴 Offboarding</option>
+        </select>
+      </div>
+
+      <!-- ── OFFBOARDING FIELDS ── -->
+      <div id="ob-offboard-section" style="display:none;">
+        <div style="margin-bottom:12px;">
+          <label style="font-size:.75rem;font-weight:700;color:var(--g600);display:block;margin-bottom:5px;">Name of Agent ★</label>
+          <select id="ob-off-agent" onchange="obAutoPopulate()" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid var(--g300);border-radius:8px;font-size:.88rem;font-family:inherit;">
+            <option value="">— Select Agent —</option>
+          </select>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+          <div>
+            <label style="font-size:.75rem;font-weight:700;color:var(--g600);display:block;margin-bottom:5px;">Hire Date</label>
+            <input id="ob-off-hire" type="date" disabled style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid var(--g300);border-radius:8px;font-size:.88rem;background:var(--g100);font-family:inherit;">
+          </div>
+          <div>
+            <label style="font-size:.75rem;font-weight:700;color:var(--g600);display:block;margin-bottom:5px;">Tenure</label>
+            <input id="ob-off-tenure" type="text" disabled placeholder="Auto-calculated" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid var(--g300);border-radius:8px;font-size:.88rem;background:var(--g100);font-family:inherit;">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+          <div>
+            <label style="font-size:.75rem;font-weight:700;color:var(--g600);display:block;margin-bottom:5px;">Date of Offboarding ★</label>
+            <input id="ob-off-date" type="date" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid var(--g300);border-radius:8px;font-size:.88rem;font-family:inherit;">
+          </div>
+          <div>
+            <label style="font-size:.75rem;font-weight:700;color:var(--g600);display:block;margin-bottom:5px;">WK# ★</label>
+            <select id="ob-off-wk" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid var(--g300);border-radius:8px;font-size:.88rem;font-family:inherit;">
+              <option value="">— Select —</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-bottom:14px;">
+          <label style="font-size:.75rem;font-weight:700;color:var(--g600);display:block;margin-bottom:5px;">Reason ★</label>
+          <select id="ob-off-reason" onchange="obToggleReason()" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid var(--g300);border-radius:8px;font-size:.88rem;font-family:inherit;">
+            <option value="">— Select Reason —</option>
+            <option value="Performance">Performance</option>
+            <option value="ZTP">ZTP</option>
+            <option value="NCNS">NCNS</option>
+            <option value="Attendance">Attendance</option>
+            <option value="Others">Others</option>
+          </select>
+          <div id="ob-off-reason-other" style="display:none;margin-top:8px;">
+            <input id="ob-off-reason-specify" type="text" placeholder="Please specify…" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid var(--g300);border-radius:8px;font-size:.88rem;font-family:inherit;">
+          </div>
+        </div>
+        <div style="background:var(--g100);border-radius:10px;padding:14px;margin-bottom:4px;">
+          <div style="font-size:.72rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--g500);margin-bottom:10px;">Offboarding Checklist</div>
+          <div style="display:flex;flex-direction:column;gap:9px;">
+            <label style="display:flex;align-items:center;gap:10px;font-size:.86rem;cursor:pointer;"><input type="checkbox" id="ob-off-aircall" style="width:15px;height:15px;"> Aircall Deactivation</label>
+            <label style="display:flex;align-items:center;gap:10px;font-size:.86rem;cursor:pointer;"><input type="checkbox" id="ob-off-slack" style="width:15px;height:15px;"> Posted on Slack Directory</label>
+            <label style="display:flex;align-items:center;gap:10px;font-size:.86rem;cursor:pointer;"><input type="checkbox" id="ob-off-zeroch" style="width:15px;height:15px;"> Turned Off Request at 0 Sales Channel</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── ONBOARDING FIELDS ── -->
+      <div id="ob-onboard-section" style="display:none;">
+        <div style="margin-bottom:12px;">
+          <label style="font-size:.75rem;font-weight:700;color:var(--g600);display:block;margin-bottom:5px;">Name of Agent ★</label>
+          <input id="ob-on-agent" type="text" placeholder="Agent full name" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid var(--g300);border-radius:8px;font-size:.88rem;font-family:inherit;">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+          <div>
+            <label style="font-size:.75rem;font-weight:700;color:var(--g600);display:block;margin-bottom:5px;">Date of Hire ★</label>
+            <input id="ob-on-hire" type="date" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid var(--g300);border-radius:8px;font-size:.88rem;font-family:inherit;">
+          </div>
+          <div>
+            <label style="font-size:.75rem;font-weight:700;color:var(--g600);display:block;margin-bottom:5px;">Onboarding Date ★</label>
+            <input id="ob-on-date" type="date" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid var(--g300);border-radius:8px;font-size:.88rem;font-family:inherit;">
+          </div>
+        </div>
+        <div style="margin-bottom:14px;">
+          <label style="font-size:.75rem;font-weight:700;color:var(--g600);display:block;margin-bottom:5px;">WK# ★</label>
+          <select id="ob-on-wk" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid var(--g300);border-radius:8px;font-size:.88rem;font-family:inherit;">
+            <option value="">— Select —</option>
+          </select>
+        </div>
+        <div style="margin-bottom:14px;">
+          <label style="font-size:.75rem;font-weight:700;color:var(--g600);display:block;margin-bottom:6px;">Onboarding Discussion</label>
+          <div style="display:flex;gap:14px;">
+            <label style="display:flex;align-items:center;gap:7px;font-size:.86rem;cursor:pointer;"><input type="radio" name="ob-on-disc" value="yes" onchange="obToggleDisc()"> Yes</label>
+            <label style="display:flex;align-items:center;gap:7px;font-size:.86rem;cursor:pointer;"><input type="radio" name="ob-on-disc" value="no" onchange="obToggleDisc()"> No</label>
+          </div>
+        </div>
+        <div id="ob-on-disc-topics" style="display:none;background:var(--g100);border-radius:10px;padding:14px;margin-bottom:14px;">
+          <div style="font-size:.72rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--g500);margin-bottom:10px;">Topics Covered</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;">
+            <label style="display:flex;align-items:center;gap:8px;font-size:.84rem;cursor:pointer;"><input type="checkbox" id="ob-disc-att" style="width:14px;height:14px;"> Attendance points policy</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:.84rem;cursor:pointer;"><input type="checkbox" id="ob-disc-onb" style="width:14px;height:14px;"> Onboarding</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:.84rem;cursor:pointer;"><input type="checkbox" id="ob-disc-ztp" style="width:14px;height:14px;"> ZTP</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:.84rem;cursor:pointer;"><input type="checkbox" id="ob-disc-pay" style="width:14px;height:14px;"> Phoenix pay</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:.84rem;cursor:pointer;"><input type="checkbox" id="ob-disc-hsf" style="width:14px;height:14px;"> Hubspot filter</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:.84rem;cursor:pointer;"><input type="checkbox" id="ob-disc-hst" style="width:14px;height:14px;"> Hubspot Tags</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:.84rem;cursor:pointer;"><input type="checkbox" id="ob-disc-cad" style="width:14px;height:14px;"> Cadence</label>
+          </div>
+        </div>
+        <div style="background:var(--g100);border-radius:10px;padding:14px;margin-bottom:4px;">
+          <div style="font-size:.72rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--g500);margin-bottom:10px;">Onboarding Checklist</div>
+          <div style="display:flex;flex-direction:column;gap:9px;">
+            <label style="display:flex;align-items:center;gap:10px;font-size:.86rem;cursor:pointer;"><input type="checkbox" id="ob-on-ch" style="width:15px;height:15px;"> Added to All Channels</label>
+            <label style="display:flex;align-items:center;gap:10px;font-size:.86rem;cursor:pointer;"><input type="checkbox" id="ob-on-dir" style="width:15px;height:15px;"> Posted to Directory Channel</label>
+            <label style="display:flex;align-items:center;gap:10px;font-size:.86rem;cursor:pointer;"><input type="checkbox" id="ob-on-hs" style="width:15px;height:15px;"> Added to Hubspot</label>
+            <label style="display:flex;align-items:center;gap:10px;font-size:.86rem;cursor:pointer;"><input type="checkbox" id="ob-on-omhs" style="width:15px;height:15px;"> Requested to OM to Add in Hubspot Team</label>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;">
+        <button onclick="closeM('m-onboard')" style="padding:9px 20px;border:1.5px solid var(--g300);border-radius:8px;background:#fff;font-family:inherit;font-size:.85rem;cursor:pointer;">Cancel</button>
+        <button onclick="saveOnboardLog()" style="padding:9px 20px;background:var(--yellow-dk);color:#fff;border:none;border-radius:8px;font-family:inherit;font-size:.85rem;font-weight:700;cursor:pointer;">Save Entry</button>
+      </div>
     </div>
   </div>
 </div>
@@ -3678,8 +3834,10 @@ function doLogout(){
   _unsubs.forEach(u=>u()); _unsubs=[];
   if(_aiUnsub){ _aiUnsub(); _aiUnsub=null; }
   if(_leadUnsub){_leadUnsub();_leadUnsub=null;}
+  if(_obUnsub){_obUnsub();_obUnsub=null;}
   _aiItems=[];
   _leadItems=[];
+  _obLogs=[];
   DB={logs:[],ft:[],nte:[],cm:{}};
   document.getElementById('admin-roster-btn').style.display='none';
   document.getElementById('admin-pw-btn').style.display='none';
@@ -3734,9 +3892,9 @@ function toggleSbSub(id){
 
 function switchOM(tab){
   document.querySelectorAll('#om-nav .sb-item').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
-  const titles={dash:'Coaching Dashboard',coaching:'Coaching Logs',nte:'NTE Logs',ft:'Follow Through',attendance:'Attendance Points',pwreset:'Reset Passwords',kb:'Knowledge Base',suggestions:'Suggestions & Reports',calendar:'Team Calendar',actions:'Action Items',leads:'Lead Follow-Ups'};
+  const titles={dash:'Coaching Dashboard',coaching:'Coaching Logs',nte:'NTE Logs',ft:'Follow Through',attendance:'Attendance Points',pwreset:'Reset Passwords',kb:'Knowledge Base',suggestions:'Suggestions & Reports',calendar:'Team Calendar',actions:'Action Items',leads:'Lead Follow-Ups',onboard:'Onboarding / Offboarding'};
   const el=document.getElementById('tb-title'); if(el) el.textContent=titles[tab]||'';
-  const map={dash:'v-om-dash',coaching:'v-om-c',nte:'v-om-n',ft:'v-om-f',attendance:'v-om-attendance',pwreset:'v-om-pwreset',kb:'v-kb',suggestions:'v-om-suggestions',calendar:'v-cal',actions:'v-actions',leads:'v-leads-tl'};
+  const map={dash:'v-om-dash',coaching:'v-om-c',nte:'v-om-n',ft:'v-om-f',attendance:'v-om-attendance',pwreset:'v-om-pwreset',kb:'v-kb',suggestions:'v-om-suggestions',calendar:'v-cal',actions:'v-actions',leads:'v-leads-tl',onboard:'v-onboard'};
   showView(map[tab]||'v-om-dash');
   populateAllFilters();
   if(tab==='dash')renderOMDash();
@@ -3750,6 +3908,7 @@ function switchOM(tab){
   if(tab==='calendar')renderCalendar();
   if(tab==='actions'){subscribeActionItems();renderActionItems();}
   if(tab==='leads'){subscribeLeads();renderLeads();}
+  if(tab==='onboard'){subscribeOnboard();renderOnboardDash();}
 }
 
 /* ═══════════════════════════════════════
@@ -4296,9 +4455,9 @@ function clearFilters(){
 
 // Switch TL nav views (Dashboard / Coaching Logs / Attendance Points)
 function tlShowView(tab){
-  const viewMap={dashboard:'v-tl',logs:'v-tl-logs',attendance:'v-tl-attendance',kb:'v-kb',calendar:'v-cal',actions:'v-actions',leads:'v-leads-tl'};
+  const viewMap={dashboard:'v-tl',logs:'v-tl-logs',attendance:'v-tl-attendance',kb:'v-kb',calendar:'v-cal',actions:'v-actions',leads:'v-leads-tl',onboard:'v-onboard'};
   showView(viewMap[tab]||'v-tl');
-  ['dash','logs','attendance','kb','calendar','actions','leads'].forEach(t=>{
+  ['dash','logs','attendance','kb','calendar','actions','leads','onboard'].forEach(t=>{
     const el=document.getElementById('tl-nav-'+t);
     if(el) el.classList.toggle('active',t===tab||(t==='dash'&&tab==='dashboard'));
   });
@@ -4308,6 +4467,242 @@ function tlShowView(tab){
   if(tab==='calendar') renderCalendar();
   if(tab==='actions'){subscribeActionItems();renderActionItems();}
   if(tab==='leads'){subscribeLeads();renderLeads();}
+  if(tab==='onboard'){subscribeOnboard();renderOnboardDash();}
+}
+
+/* ═══════════════════════════════════════
+   ONBOARDING / OFFBOARDING
+═══════════════════════════════════════ */
+let _obLogs=[];
+let _obUnsub=null;
+
+function openOnboardModal(){
+  // Reset all fields
+  ['ob-type','ob-off-agent','ob-off-date','ob-off-wk','ob-off-reason','ob-off-reason-specify','ob-on-agent','ob-on-hire','ob-on-date','ob-on-wk'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){el.tagName==='SELECT'?el.value='':el.value='';}
+  });
+  document.getElementById('ob-off-hire').value='';
+  document.getElementById('ob-off-tenure').value='';
+  ['ob-off-aircall','ob-off-slack','ob-off-zeroch','ob-on-ch','ob-on-dir','ob-on-hs','ob-on-omhs',
+   'ob-disc-att','ob-disc-onb','ob-disc-ztp','ob-disc-pay','ob-disc-hsf','ob-disc-hst','ob-disc-cad'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.checked=false;
+  });
+  document.querySelectorAll('input[name="ob-on-disc"]').forEach(r=>r.checked=false);
+  document.getElementById('ob-offboard-section').style.display='none';
+  document.getElementById('ob-onboard-section').style.display='none';
+  document.getElementById('ob-off-reason-other').style.display='none';
+  document.getElementById('ob-on-disc-topics').style.display='none';
+  // Populate agent dropdown for offboarding from roster
+  const sel=document.getElementById('ob-off-agent');
+  sel.innerHTML='<option value="">— Select Agent —</option>'+
+    rosterAgents.map(a=>`<option value="${e(a.name)}" data-hire="${e(a.h||'')}">${e(a.name)}</option>`).join('');
+  // Populate WK dropdowns
+  ['ob-off-wk','ob-on-wk'].forEach(id=>{
+    const wkEl=document.getElementById(id);
+    if(wkEl) wkEl.innerHTML='<option value="">— Select —</option>'+WEEKS.map(w=>`<option value="${w}">WK${w}</option>`).join('');
+  });
+  openM('m-onboard');
+}
+
+function obToggleType(){
+  const t=document.getElementById('ob-type').value;
+  document.getElementById('ob-offboard-section').style.display=t==='offboarding'?'block':'none';
+  document.getElementById('ob-onboard-section').style.display=t==='onboarding'?'block':'none';
+}
+
+function obAutoPopulate(){
+  const sel=document.getElementById('ob-off-agent');
+  const opt=sel.options[sel.selectedIndex];
+  const hire=opt?.getAttribute('data-hire')||'';
+  document.getElementById('ob-off-hire').value=hire;
+  if(hire){
+    const hireD=new Date(hire);
+    const now=new Date();
+    let months=(now.getFullYear()-hireD.getFullYear())*12+(now.getMonth()-hireD.getMonth());
+    if(months<0)months=0;
+    const yrs=Math.floor(months/12);
+    const mos=months%12;
+    document.getElementById('ob-off-tenure').value=(yrs>0?`${yrs}y `:'')+(mos>0?`${mos}mo`:'< 1mo');
+  } else {
+    document.getElementById('ob-off-tenure').value='';
+  }
+}
+
+function obToggleReason(){
+  const v=document.getElementById('ob-off-reason').value;
+  document.getElementById('ob-off-reason-other').style.display=v==='Others'?'block':'none';
+}
+
+function obToggleDisc(){
+  const v=document.querySelector('input[name="ob-on-disc"]:checked')?.value;
+  document.getElementById('ob-on-disc-topics').style.display=v==='yes'?'grid':'none';
+}
+
+async function saveOnboardLog(){
+  const type=document.getElementById('ob-type').value;
+  if(!type){toast('⚠️ Please select a type.');return;}
+  const now=new Date().toISOString();
+  let data={type,createdAt:now,createdBy:CU.email};
+  if(type==='offboarding'){
+    const agent=document.getElementById('ob-off-agent').value;
+    const offDate=document.getElementById('ob-off-date').value;
+    const wk=document.getElementById('ob-off-wk').value;
+    const reason=document.getElementById('ob-off-reason').value;
+    if(!agent){toast('⚠️ Select an agent.');return;}
+    if(!offDate){toast('⚠️ Enter date of offboarding.');return;}
+    if(!wk){toast('⚠️ Select a WK#.');return;}
+    if(!reason){toast('⚠️ Select a reason.');return;}
+    const reasonFinal=reason==='Others'
+      ?(document.getElementById('ob-off-reason-specify').value.trim()||'Others')
+      :reason;
+    Object.assign(data,{
+      agent,
+      hireDate:document.getElementById('ob-off-hire').value,
+      tenure:document.getElementById('ob-off-tenure').value,
+      offDate,wk,reason:reasonFinal,
+      aircall:document.getElementById('ob-off-aircall').checked,
+      slackDir:document.getElementById('ob-off-slack').checked,
+      zeroCh:document.getElementById('ob-off-zeroch').checked
+    });
+  } else {
+    const agent=document.getElementById('ob-on-agent').value.trim();
+    const hire=document.getElementById('ob-on-hire').value;
+    const onDate=document.getElementById('ob-on-date').value;
+    const wk=document.getElementById('ob-on-wk').value;
+    if(!agent){toast('⚠️ Enter agent name.');return;}
+    if(!hire){toast('⚠️ Enter date of hire.');return;}
+    if(!onDate){toast('⚠️ Enter onboarding date.');return;}
+    if(!wk){toast('⚠️ Select a WK#.');return;}
+    const disc=document.querySelector('input[name="ob-on-disc"]:checked')?.value||'no';
+    const topics=disc==='yes'?[
+      document.getElementById('ob-disc-att').checked&&'Attendance points policy',
+      document.getElementById('ob-disc-onb').checked&&'Onboarding',
+      document.getElementById('ob-disc-ztp').checked&&'ZTP',
+      document.getElementById('ob-disc-pay').checked&&'Phoenix pay',
+      document.getElementById('ob-disc-hsf').checked&&'Hubspot filter',
+      document.getElementById('ob-disc-hst').checked&&'Hubspot Tags',
+      document.getElementById('ob-disc-cad').checked&&'Cadence'
+    ].filter(Boolean):[];
+    Object.assign(data,{
+      agent,hireDate:hire,onDate,wk,disc,topics,
+      addedChannels:document.getElementById('ob-on-ch').checked,
+      postedDir:document.getElementById('ob-on-dir').checked,
+      addedHs:document.getElementById('ob-on-hs').checked,
+      reqOmHs:document.getElementById('ob-on-omhs').checked
+    });
+  }
+  try{
+    await FSB.collection('px_onboard_logs').add(data);
+    closeM('m-onboard');
+    toast('✅ Entry saved.');
+    renderOnboardDash();
+  }catch(err){toast('❌ Error saving. Try again.');console.error(err);}
+}
+
+function subscribeOnboard(){
+  if(_obUnsub){_obUnsub();_obUnsub=null;}
+  if(!FSB)return;
+  // OM sees all logs; TLs see only entries they created
+  const isOM=CU&&CU.isOM;
+  const query=isOM
+    ? FSB.collection('px_onboard_logs')
+    : FSB.collection('px_onboard_logs').where('createdBy','==',CU.email);
+  // No orderBy to avoid composite index; sort in JS
+  _obUnsub=query.onSnapshot(snap=>{
+    _obLogs=snap.docs.map(d=>({id:d.id,...d.data()}))
+      .sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0));
+    renderOnboardDash();
+  },err=>console.error('ob snapshot err',err));
+}
+
+function renderOnboardDash(){
+  const filter=(document.getElementById('ob-filter-type')||{}).value||'all';
+  const logs=filter==='all'?_obLogs:_obLogs.filter(l=>l.type===filter);
+  const wrap=document.getElementById('ob-cards');
+  const empty=document.getElementById('ob-empty');
+  if(!wrap)return;
+  if(!logs.length){wrap.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  wrap.innerHTML=logs.map(l=>{
+    const isOn=l.type==='onboarding';
+    const color=isOn?'#16a34a':'#dc2626';
+    const bg=isOn?'#f0fdf4':'#fff5f5';
+    const border=isOn?'#86efac':'#fca5a5';
+    const badge=isOn?'🟢 Onboarding':'🔴 Offboarding';
+    const dt=isOn?l.onDate:l.offDate;
+    const dtLabel=isOn?'Onboarding Date':'Offboarding Date';
+    let rows='';
+    if(isOn){
+      rows+=`<div style="font-size:.82rem;color:var(--g600);margin-bottom:3px;">📅 Hire Date: <b>${e(l.hireDate||'—')}</b></div>`;
+      rows+=`<div style="font-size:.82rem;color:var(--g600);margin-bottom:3px;">📅 ${dtLabel}: <b>${e(dt||'—')}</b></div>`;
+      rows+=`<div style="font-size:.82rem;color:var(--g600);margin-bottom:3px;">📋 WK#: <b>${e(l.wk||'—')}</b></div>`;
+      if(l.disc==='yes'&&l.topics?.length) rows+=`<div style="font-size:.82rem;color:var(--g600);margin-bottom:3px;">💬 Discussion: <b>${e(l.topics.join(', '))}</b></div>`;
+      const checks=[l.addedChannels&&'Added to All Channels',l.postedDir&&'Posted to Directory',l.addedHs&&'Added to Hubspot',l.reqOmHs&&'Requested OM Hubspot Team'].filter(Boolean);
+      if(checks.length) rows+=`<div style="font-size:.82rem;color:var(--g600);margin-top:4px;">✅ ${e(checks.join(' · '))}</div>`;
+    } else {
+      rows+=`<div style="font-size:.82rem;color:var(--g600);margin-bottom:3px;">📅 Hire Date: <b>${e(l.hireDate||'—')}</b> · Tenure: <b>${e(l.tenure||'—')}</b></div>`;
+      rows+=`<div style="font-size:.82rem;color:var(--g600);margin-bottom:3px;">📅 ${dtLabel}: <b>${e(dt||'—')}</b></div>`;
+      rows+=`<div style="font-size:.82rem;color:var(--g600);margin-bottom:3px;">📋 WK#: <b>${e(l.wk||'—')}</b> · Reason: <b>${e(l.reason||'—')}</b></div>`;
+      const checks=[l.aircall&&'Aircall Deactivated',l.slackDir&&'Slack Dir Posted',l.zeroCh&&'0 Sales Ch Off'].filter(Boolean);
+      if(checks.length) rows+=`<div style="font-size:.82rem;color:var(--g600);margin-top:4px;">✅ ${e(checks.join(' · '))}</div>`;
+    }
+    const createdStr=l.createdAt?new Date(l.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'';
+    return `<div style="background:${bg};border:1.5px solid ${border};border-radius:12px;padding:14px 16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;flex-wrap:wrap;">
+        <div style="font-size:.95rem;font-weight:700;color:var(--g800);">${e(l.agent||'')}</div>
+        <span style="font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:999px;background:${isOn?'#dcfce7':'#fee2e2'};color:${color};">${badge}</span>
+      </div>
+      ${rows}
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;gap:8px;flex-wrap:wrap;">
+        <div style="font-size:.72rem;color:var(--g400);">Logged ${createdStr}${(CU&&CU.isOM&&l.createdBy)?` · <b>${e(l.createdBy)}</b>`:''}</div>
+        <button onclick="deleteOnboardLog('${l.id}')" style="font-size:.72rem;padding:3px 10px;border-radius:6px;border:1px solid #fca5a5;background:#fff5f5;color:#dc2626;cursor:pointer;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fff5f5'">🗑 Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function exportOnboardExcel(){
+  if(!window.XLSX){toast('⚠️ SheetJS not loaded. Please refresh.');return;}
+  if(!_obLogs.length){toast('⚠️ No entries to export.');return;}
+  const rows=_obLogs.map(l=>({
+    'Type':l.type==='onboarding'?'Onboarding':'Offboarding',
+    'Agent':l.agent||'',
+    'Hire Date':l.hireDate||'',
+    'Tenure':l.tenure||'',
+    'Offboarding Date':l.offDate||'',
+    'Onboarding Date':l.onDate||'',
+    'WK#':l.wk||'',
+    'Reason':l.reason||'',
+    'Aircall Deactivated':l.aircall?'Yes':'No',
+    'Posted Slack Directory':l.slackDir?'Yes':'No',
+    'Turned Off 0 Sales Channel':l.zeroCh?'Yes':'No',
+    'Onboarding Discussion':l.disc==='yes'?'Yes':l.disc==='no'?'No':'',
+    'Discussion Topics':(l.topics||[]).join(', '),
+    'Added to All Channels':l.addedChannels?'Yes':'No',
+    'Posted to Directory Channel':l.postedDir?'Yes':'No',
+    'Added to Hubspot':l.addedHs?'Yes':'No',
+    'Requested OM Hubspot Team':l.reqOmHs?'Yes':'No',
+    'Created At':l.createdAt?new Date(l.createdAt).toLocaleString():'',
+    'Created By':l.createdBy||''
+  }));
+  const ws=XLSX.utils.json_to_sheet(rows);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,'Logs',ws);
+  XLSX.writeFile(wb,`onboard_offboard_${new Date().toISOString().slice(0,10)}.xlsx`);
+  toast('✅ Excel exported.');
+}
+
+async function deleteOnboardLog(id){
+  if(!id)return;
+  if(!confirm('Delete this entry? This cannot be undone.'))return;
+  try{
+    await FSB.collection('px_onboard_logs').doc(id).delete();
+    toast('🗑 Entry deleted.');
+  }catch(err){
+    console.error('delete ob log',err);
+    toast('⚠️ Could not delete entry.');
+  }
 }
 
 // Rebuild agent dropdown for coaching logs view
