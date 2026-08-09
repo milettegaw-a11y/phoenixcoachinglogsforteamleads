@@ -1831,31 +1831,33 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
       <button class="mclose" onclick="closeM('m-log')">✕</button>
     </div>
     <div class="mbody">
+      <!-- Draft restore banner -->
+      <div id="log-draft-banner" style="display:none;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:#eff6ff;border:1.5px solid #93c5fd;border-radius:9px;padding:10px 14px;margin-bottom:14px;font-size:.82rem;color:#1e40af;"></div>
       <div class="sec-hdr"><h3>Session Information</h3></div>
       <div class="fg2">
-        <div class="fg"><label>Date of Coaching <span class="req">★</span></label><input type="date" id="cl-date" onchange="updTenure('cl')"/></div>
+        <div class="fg"><label>Date of Coaching <span class="req">★</span></label><input type="date" id="cl-date" onchange="updTenure('cl');saveDraftLog()"/></div>
         <div class="fg"><label>Agent Name <span class="req">★</span></label>
-          <select id="cl-agent" onchange="updTenure('cl');render4WeekTrajectory(this.value,document.getElementById('cl-wk').value)"><option value="">— Select Agent —</option></select>
+          <select id="cl-agent" onchange="updTenure('cl');render4WeekTrajectory(this.value,document.getElementById('cl-wk').value);saveDraftLog()"><option value="">— Select Agent —</option></select>
         </div>
         <div class="fg"><label>Agent Tenure (auto)</label><div class="tenure-pill" id="cl-ten">Select agent &amp; date</div></div>
         <div class="fg"><label>Team Lead <span class="req">★</span></label>
-          <select id="cl-tl"><option value="">— Select —</option></select>
+          <select id="cl-tl" onchange="saveDraftLog()"><option value="">— Select —</option></select>
         </div>
         <div class="fg"><label>WK# of Performance <span class="req">★</span></label>
-          <select id="cl-wk" onchange="render4WeekTrajectory(document.getElementById('cl-agent').value,this.value)"><option value="">— Select Week —</option></select>
+          <select id="cl-wk" onchange="render4WeekTrajectory(document.getElementById('cl-agent').value,this.value);saveDraftLog()"><option value="">— Select Week —</option></select>
           <div style="font-size:.72rem;color:var(--g500);margin-top:5px;">📌 Enter the week number of the agent's performance being coached.</div>
         </div>
       </div>
 
       <div class="sec-hdr"><h3>Performance Metrics</h3></div>
       <div class="fg3">
-        <div class="fg"><label>Leads Touch <span class="req">★</span></label><input type="number" id="cl-leads" min="0" oninput="calcMetrics()"/></div>
-        <div class="fg"><label># of Connect <span class="req">★</span></label><input type="number" id="cl-conn" min="0" oninput="calcMetrics()"/></div>
-        <div class="fg"><label># of Sale <span class="req">★</span></label><input type="number" id="cl-sales" min="0" oninput="calcMetrics()"/></div>
+        <div class="fg"><label>Leads Touch <span class="req">★</span></label><input type="number" id="cl-leads" min="0" oninput="calcMetrics();saveDraftLog()"/></div>
+        <div class="fg"><label># of Connect <span class="req">★</span></label><input type="number" id="cl-conn" min="0" oninput="calcMetrics();saveDraftLog()"/></div>
+        <div class="fg"><label># of Sale <span class="req">★</span></label><input type="number" id="cl-sales" min="0" oninput="calcMetrics();saveDraftLog()"/></div>
         <div class="fg"><label>TCR% — Touch to Connect</label><div class="auto-calc" id="cl-tcr-d">Auto-calculated</div><input type="hidden" id="cl-tcr"/></div>
         <div class="fg"><label>CSR% — Call to Sale</label><div class="auto-calc" id="cl-csr-d">Auto-calculated</div><input type="hidden" id="cl-csr"/></div>
         <div class="fg"><label>CVR% — Conversion Rate</label><div class="auto-calc" id="cl-cvr-d">Auto-calculated</div><input type="hidden" id="cl-cvr"/></div>
-        <div class="fg"><label>WK2 CVR% <span class="req">★</span></label><input type="number" id="cl-wk2" min="0" max="100" step="0.1" placeholder="Enter manually"/></div>
+        <div class="fg"><label>WK2 CVR% <span class="req">★</span></label><input type="number" id="cl-wk2" min="0" max="100" step="0.1" placeholder="Enter manually" oninput="saveDraftLog()"/></div>
       </div>
 
       <!-- 4-week trajectory -->
@@ -1884,10 +1886,10 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
         <!-- Focus checkboxes -->
         <div class="focus-row">
           <span class="focus-lbl">Focus On:</span>
-          <label class="focus-chk"><input type="checkbox" id="fc-tcr" style="accent-color:#2563EB"> TCR%</label>
-          <label class="focus-chk"><input type="checkbox" id="fc-csr" style="accent-color:#16A34A"> CSR%</label>
-          <label class="focus-chk"><input type="checkbox" id="fc-cvr" style="accent-color:var(--orange)"> CVR%</label>
-          <label class="focus-chk"><input type="checkbox" id="fc-wk2" style="accent-color:var(--red)"> WK2 CVR%</label>
+          <label class="focus-chk"><input type="checkbox" id="fc-tcr" style="accent-color:#2563EB" onchange="saveDraftLog()"> TCR%</label>
+          <label class="focus-chk"><input type="checkbox" id="fc-csr" style="accent-color:#16A34A" onchange="saveDraftLog()"> CSR%</label>
+          <label class="focus-chk"><input type="checkbox" id="fc-cvr" style="accent-color:var(--orange)" onchange="saveDraftLog()"> CVR%</label>
+          <label class="focus-chk"><input type="checkbox" id="fc-wk2" style="accent-color:var(--red)" onchange="saveDraftLog()"> WK2 CVR%</label>
         </div>
         <!-- Calculator table -->
         <div class="calc-wrap">
@@ -1949,7 +1951,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
       <div class="sec-hdr"><h3>Coaching Notes</h3></div>
       <div class="fg2">
         <div class="fg"><label>NTE Type (if applicable)</label>
-          <select id="cl-nte-type">
+          <select id="cl-nte-type" onchange="saveDraftLog()">
             <option value="">None</option>
             <option>Performance</option>
             <option>Attendance</option>
@@ -1957,10 +1959,10 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
             <option>Adherence</option>
           </select>
         </div>
-        <div class="fg"><label>NTE Link</label><input type="url" id="cl-nte-link" placeholder="https://…"/></div>
-        <div class="fg"><label>Aircall Link</label><input type="url" id="cl-air" placeholder="https://phone.aircall.io/…"/></div>
-        <div class="fg full"><label>Highlights ✨</label><textarea id="cl-hi" placeholder="What the agent did well…"></textarea></div>
-        <div class="fg full"><label>Agent Opportunities 🎯</label><textarea id="cl-opp" placeholder="Areas for growth and improvement…"></textarea></div>
+        <div class="fg"><label>NTE Link</label><input type="url" id="cl-nte-link" placeholder="https://…" oninput="saveDraftLog()"/></div>
+        <div class="fg"><label>Aircall Link</label><input type="url" id="cl-air" placeholder="https://phone.aircall.io/…" oninput="saveDraftLog()"/></div>
+        <div class="fg full"><label>Highlights ✨</label><textarea id="cl-hi" placeholder="What the agent did well…" oninput="saveDraftLog()"></textarea></div>
+        <div class="fg full"><label>Agent Opportunities 🎯</label><textarea id="cl-opp" placeholder="Areas for growth and improvement…" oninput="saveDraftLog()"></textarea></div>
       </div>
     </div>
     <div class="mfooter">
@@ -4311,6 +4313,69 @@ function switchDTab(t){
 /* ═══════════════════════════════════════
    COACHING LOG FORM
 ═══════════════════════════════════════ */
+const LOG_DRAFT_KEY='px_log_draft';
+
+function saveDraftLog(){
+  if(editingLogId) return; // don't draft-save when editing existing
+  const draft={
+    date:document.getElementById('cl-date')?.value||'',
+    agent:document.getElementById('cl-agent')?.value||'',
+    tl:document.getElementById('cl-tl')?.value||'',
+    wk:document.getElementById('cl-wk')?.value||'',
+    leads:document.getElementById('cl-leads')?.value||'',
+    conn:document.getElementById('cl-conn')?.value||'',
+    sales:document.getElementById('cl-sales')?.value||'',
+    wk2:document.getElementById('cl-wk2')?.value||'',
+    nteType:document.getElementById('cl-nte-type')?.value||'',
+    nteLink:document.getElementById('cl-nte-link')?.value||'',
+    air:document.getElementById('cl-air')?.value||'',
+    hi:document.getElementById('cl-hi')?.value||'',
+    opp:document.getElementById('cl-opp')?.value||'',
+    fctcr:document.getElementById('fc-tcr')?.checked||false,
+    fccsr:document.getElementById('fc-csr')?.checked||false,
+    fccvr:document.getElementById('fc-cvr')?.checked||false,
+    fcwk2:document.getElementById('fc-wk2')?.checked||false,
+    savedAt:new Date().toISOString()
+  };
+  // Only save if something meaningful was entered
+  if(draft.agent||draft.date||draft.leads||draft.hi||draft.opp)
+    localStorage.setItem(LOG_DRAFT_KEY,JSON.stringify(draft));
+}
+
+function clearDraftLog(){
+  localStorage.removeItem(LOG_DRAFT_KEY);
+  const banner=document.getElementById('log-draft-banner');
+  if(banner) banner.style.display='none';
+}
+
+function restoreDraftLog(draft){
+  fillAgents(['cl-agent']);
+  fillTLs(['cl-tl']);
+  fillWeeks(['cl-wk']);
+  if(draft.date) document.getElementById('cl-date').value=draft.date;
+  if(draft.agent) document.getElementById('cl-agent').value=draft.agent;
+  if(draft.tl) document.getElementById('cl-tl').value=draft.tl;
+  if(draft.wk) document.getElementById('cl-wk').value=draft.wk;
+  if(draft.leads) document.getElementById('cl-leads').value=draft.leads;
+  if(draft.conn) document.getElementById('cl-conn').value=draft.conn;
+  if(draft.sales) document.getElementById('cl-sales').value=draft.sales;
+  if(draft.wk2) document.getElementById('cl-wk2').value=draft.wk2;
+  if(draft.nteType) document.getElementById('cl-nte-type').value=draft.nteType;
+  if(draft.nteLink) document.getElementById('cl-nte-link').value=draft.nteLink;
+  if(draft.air) document.getElementById('cl-air').value=draft.air;
+  if(draft.hi) document.getElementById('cl-hi').value=draft.hi;
+  if(draft.opp) document.getElementById('cl-opp').value=draft.opp;
+  document.getElementById('fc-tcr').checked=draft.fctcr||false;
+  document.getElementById('fc-csr').checked=draft.fccsr||false;
+  document.getElementById('fc-cvr').checked=draft.fccvr||false;
+  document.getElementById('fc-wk2').checked=draft.fcwk2||false;
+  updTenure('cl');
+  calcMetrics();
+  if(draft.agent&&draft.wk) render4WeekTrajectory(draft.agent,draft.wk);
+  const banner=document.getElementById('log-draft-banner');
+  if(banner) banner.style.display='none';
+}
+
 function openLogModal(){
   fillAgents(['cl-agent']);
   fillTLs(['cl-tl']);
@@ -4342,6 +4407,23 @@ function openLogModal(){
   _trajW1=null;
   render4WeekTrajectory('','');
   document.querySelector('#m-log .mhdr h2').textContent='📋 Coaching Log — Performance';
+
+  // Check for saved draft
+  const banner=document.getElementById('log-draft-banner');
+  const raw=localStorage.getItem(LOG_DRAFT_KEY);
+  if(raw&&banner){
+    try{
+      const draft=JSON.parse(raw);
+      const when=draft.savedAt?new Date(draft.savedAt).toLocaleString():'recently';
+      banner.innerHTML=`<span>📝 You have an unsaved draft from ${when} — <strong>${draft.agent||'agent not selected'}</strong>.</span>
+        <div style="display:flex;gap:8px;flex-shrink:0;">
+          <button onclick="restoreDraftLog(${JSON.stringify(draft).replace(/"/g,'&quot;')})" style="padding:4px 12px;border-radius:6px;background:#2563eb;color:#fff;border:none;cursor:pointer;font-size:.78rem;font-weight:700;">↩ Restore Draft</button>
+          <button onclick="clearDraftLog()" style="padding:4px 12px;border-radius:6px;background:transparent;color:#ef4444;border:1.5px solid #fca5a5;cursor:pointer;font-size:.78rem;">Discard</button>
+        </div>`;
+      banner.style.display='flex';
+    } catch(e){ clearDraftLog(); }
+  } else if(banner){ banner.style.display='none'; }
+
   openM('m-log');
 }
 
@@ -4736,6 +4818,7 @@ async function saveLog(){
   syncToSheet('coaching','upsert',entry.id, sheetRowCoaching(entry, DB.cm[entry.id]||null));
   const wasEdit=!!editingLogId;
   editingLogId=null;
+  clearDraftLog();
   closeM('m-log');
   toast(wasEdit?'✅ Coaching log updated!':'✅ Coaching log saved!');
   document.getElementById('wk-sel').value=entry.wk;
