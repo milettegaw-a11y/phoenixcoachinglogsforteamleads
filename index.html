@@ -4603,13 +4603,9 @@ async function saveOnboardLog(){
 function subscribeOnboard(){
   if(_obUnsub){_obUnsub();_obUnsub=null;}
   if(!FSB)return;
-  // OM sees all logs; TLs see only entries they created
-  const isOM=CU&&CU.isOM;
-  const query=isOM
-    ? FSB.collection('px_onboard_logs')
-    : FSB.collection('px_onboard_logs').where('createdBy','==',CU.email);
-  // No orderBy to avoid composite index; sort in JS
-  _obUnsub=query.onSnapshot(snap=>{
+  // Always fetch full collection; role-based filtering happens in renderOnboardDash
+  // (avoids composite index issues and matches pattern used throughout this app)
+  _obUnsub=FSB.collection('px_onboard_logs').onSnapshot(snap=>{
     _obLogs=snap.docs.map(d=>({id:d.id,...d.data()}))
       .sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0));
     renderOnboardDash();
