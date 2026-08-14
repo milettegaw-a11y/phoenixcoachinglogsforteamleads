@@ -688,6 +688,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
       <div class="sb-item" data-tab="nte" onclick="switchOM('nte');toggleSbSub('om-sub-nte')"><span class="sb-icon">📝</span><span>NTE Logs</span><span class="sb-arrow" id="om-arr-nte">›</span></div>
       <div class="sb-sub-item agent-hide" id="om-sub-nte" onclick="openNTEModal()"><span class="sb-icon">📋</span><span>New NTE</span></div>
       <div class="sb-item" data-tab="attendance" onclick="switchOM('attendance')"><span class="sb-icon">🗓️</span><span>Attendance Points</span><span id="nav-badge-om-att" class="sb-notif" style="display:none"></span></div>
+      <div class="sb-item" data-tab="ranking" onclick="switchOM('ranking')"><span class="sb-icon">🏆</span><span>Agent Ranking</span></div>
       <div class="sb-divider"></div>
       <div class="sb-section-lbl">FOLLOW-UP</div>
       <div class="sb-item" data-tab="ft" onclick="switchOM('ft');toggleSbSub('om-sub-ft')"><span class="sb-icon">🔄</span><span>Follow Through</span><span class="sb-arrow" id="om-arr-ft">›</span></div>
@@ -716,6 +717,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
       <div class="sb-item" id="tl-nav-nte" onclick="tlShowView('nte');toggleSbSub('tl-sub-nte')"><span class="sb-icon">📝</span><span>NTE Logs</span><span class="sb-arrow" id="tl-arr-nte">›</span></div>
       <div class="sb-sub-item" id="tl-sub-nte" onclick="openNTEModal()"><span class="sb-icon">📋</span><span>New NTE</span></div>
       <div class="sb-item" id="tl-nav-attendance" onclick="tlShowView('attendance')"><span class="sb-icon">🗓️</span><span>Attendance Points</span><span id="nav-badge-tl-att" class="sb-notif" style="display:none"></span></div>
+      <div class="sb-item" id="tl-nav-ranking" onclick="tlShowView('ranking')"><span class="sb-icon">🏆</span><span>Agent Ranking</span></div>
       <div class="sb-divider"></div>
       <div class="sb-section-lbl">FOLLOW-UP</div>
       <div class="sb-item" id="tl-nav-ft" onclick="toggleSbSub('tl-sub-ft')"><span class="sb-icon">🔄</span><span>Follow Through</span><span class="sb-arrow" id="tl-arr-ft">›</span></div>
@@ -1621,6 +1623,37 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
   </div>
   <div id="ob-cards" style="display:flex;flex-direction:column;gap:10px;"></div>
   <div id="ob-empty" style="display:none;text-align:center;padding:40px;color:var(--g400);font-size:.88rem;">No entries yet. Click "+ New Entry" to add one.</div>
+</div>
+
+<!-- AGENT RANKING VIEW -->
+<div id="v-ranking" class="view">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px;">
+    <div>
+      <div style="font-size:1.1rem;font-weight:700;color:var(--g800);">🏆 Agent Ranking <span style="font-size:.78rem;font-weight:500;color:var(--g400);margin-left:6px;">WK553</span></div>
+      <div style="font-size:.75rem;color:var(--g400);margin-top:2px;">Rankings re-sort dynamically based on the selected key metric</div>
+    </div>
+    <select id="rank-tl-filter" onchange="renderRanking()" style="padding:7px 12px;border:1.5px solid var(--g300);border-radius:8px;font-size:.82rem;font-family:inherit;background:#fff;">
+      <option value="all">All Teams</option>
+      <option value="Jhay">Jhay</option>
+      <option value="Jumar">Jumar</option>
+      <option value="Florence">Florence</option>
+      <option value="Jersey">Jersey</option>
+    </select>
+  </div>
+  <!-- Metric selector -->
+  <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+    <button id="rank-btn-tcr" onclick="setRankMetric('tcr')" style="padding:8px 22px;border-radius:8px;border:2px solid var(--yellow);background:var(--yellow);color:var(--black);font-weight:700;font-size:.85rem;cursor:pointer;font-family:inherit;transition:all .15s;">TCR%</button>
+    <button id="rank-btn-csr" onclick="setRankMetric('csr')" style="padding:8px 22px;border-radius:8px;border:2px solid var(--g300);background:#fff;color:var(--g600);font-weight:600;font-size:.85rem;cursor:pointer;font-family:inherit;transition:all .15s;">CSR%</button>
+    <button id="rank-btn-cured" onclick="setRankMetric('cured')" style="padding:8px 22px;border-radius:8px;border:2px solid var(--g300);background:#fff;color:var(--g600);font-weight:600;font-size:.85rem;cursor:pointer;font-family:inherit;transition:all .15s;">CURED CV%</button>
+  </div>
+  <!-- Legend -->
+  <div style="display:flex;gap:14px;margin-bottom:16px;flex-wrap:wrap;">
+    <span style="font-size:.72rem;color:var(--g500);display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#16A34A;display:inline-block;"></span>High</span>
+    <span style="font-size:.72rem;color:var(--g500);display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#D97706;display:inline-block;"></span>Mid</span>
+    <span style="font-size:.72rem;color:var(--g500);display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#DC2626;display:inline-block;"></span>Low</span>
+    <span style="font-size:.72rem;color:var(--g400);margin-left:4px;">TCR ≥13%/10–13%/&lt;10% · CSR ≥10%/5–10%/&lt;5% · CURED ≥4%/2–4%/&lt;2%</span>
+  </div>
+  <div id="rank-cards" style="display:flex;flex-direction:column;gap:9px;"></div>
 </div>
 
 <!-- ADD ACTION ITEM MODAL -->
@@ -3894,9 +3927,9 @@ function toggleSbSub(id){
 
 function switchOM(tab){
   document.querySelectorAll('#om-nav .sb-item').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
-  const titles={dash:'Coaching Dashboard',coaching:'Coaching Logs',nte:'NTE Logs',ft:'Follow Through',attendance:'Attendance Points',pwreset:'Reset Passwords',kb:'Knowledge Base',suggestions:'Suggestions & Reports',calendar:'Team Calendar',actions:'Action Items',leads:'Lead Follow-Ups',onboard:'Onboarding / Offboarding'};
+  const titles={dash:'Coaching Dashboard',coaching:'Coaching Logs',nte:'NTE Logs',ft:'Follow Through',attendance:'Attendance Points',ranking:'Agent Ranking',pwreset:'Reset Passwords',kb:'Knowledge Base',suggestions:'Suggestions & Reports',calendar:'Team Calendar',actions:'Action Items',leads:'Lead Follow-Ups',onboard:'Onboarding / Offboarding'};
   const el=document.getElementById('tb-title'); if(el) el.textContent=titles[tab]||'';
-  const map={dash:'v-om-dash',coaching:'v-om-c',nte:'v-om-n',ft:'v-om-f',attendance:'v-om-attendance',pwreset:'v-om-pwreset',kb:'v-kb',suggestions:'v-om-suggestions',calendar:'v-cal',actions:'v-actions',leads:'v-leads-tl',onboard:'v-onboard'};
+  const map={dash:'v-om-dash',coaching:'v-om-c',nte:'v-om-n',ft:'v-om-f',attendance:'v-om-attendance',ranking:'v-ranking',pwreset:'v-om-pwreset',kb:'v-kb',suggestions:'v-om-suggestions',calendar:'v-cal',actions:'v-actions',leads:'v-leads-tl',onboard:'v-onboard'};
   showView(map[tab]||'v-om-dash');
   populateAllFilters();
   if(tab==='dash')renderOMDash();
@@ -3904,6 +3937,7 @@ function switchOM(tab){
   if(tab==='nte')renderOMN();
   if(tab==='ft')renderOMF();
   if(tab==='attendance')renderOMAttendance();
+  if(tab==='ranking')renderRanking();
   if(tab==='pwreset')loadPwResetView();
   if(tab==='kb')renderAll();
   if(tab==='suggestions')renderOMSuggestions();
@@ -4457,15 +4491,16 @@ function clearFilters(){
 
 // Switch TL nav views (Dashboard / Coaching Logs / Attendance Points)
 function tlShowView(tab){
-  const viewMap={dashboard:'v-tl',logs:'v-tl-logs',nte:'v-om-n',attendance:'v-tl-attendance',kb:'v-kb',calendar:'v-cal',actions:'v-actions',leads:'v-leads-tl',onboard:'v-onboard'};
+  const viewMap={dashboard:'v-tl',logs:'v-tl-logs',nte:'v-om-n',attendance:'v-tl-attendance',ranking:'v-ranking',kb:'v-kb',calendar:'v-cal',actions:'v-actions',leads:'v-leads-tl',onboard:'v-onboard'};
   showView(viewMap[tab]||'v-tl');
-  ['dash','logs','nte','attendance','kb','calendar','actions','leads','onboard'].forEach(t=>{
+  ['dash','logs','nte','attendance','ranking','kb','calendar','actions','leads','onboard'].forEach(t=>{
     const el=document.getElementById('tl-nav-'+t);
     if(el) el.classList.toggle('active',t===tab||(t==='dash'&&tab==='dashboard'));
   });
   if(tab==='logs') renderTable();
   if(tab==='nte') renderOMN();
   if(tab==='attendance') renderTLAttendance();
+  if(tab==='ranking') renderRanking();
   if(tab==='kb') renderAll();
   if(tab==='calendar') renderCalendar();
   if(tab==='actions'){subscribeActionItems();renderActionItems();}
@@ -4702,6 +4737,121 @@ async function deleteOnboardLog(id){
     console.error('delete ob log',err);
     toast('⚠️ Could not delete entry.');
   }
+}
+
+/* ═══════════════════════════════════════
+   AGENT RANKING (WK553)
+═══════════════════════════════════════ */
+const RANKING_DATA=[
+  {name:'King Martinez',tl:'Jhay',leads:722,connect:112,sale:6,tcr:15.51,csr:5.36,cured:0.00},
+  {name:'Alim Sinha',tl:'Jumar',leads:414,connect:60,sale:8,tcr:14.49,csr:13.33,cured:6.50},
+  {name:'Jardene Petines',tl:'Jumar',leads:1140,connect:158,sale:11,tcr:13.86,csr:6.96,cured:3.10},
+  {name:'Melcah Paras',tl:'Florence',leads:562,connect:77,sale:3,tcr:13.70,csr:3.90,cured:1.00},
+  {name:'Edin Rivas',tl:'Jersey',leads:758,connect:103,sale:10,tcr:13.59,csr:9.71,cured:4.20},
+  {name:'Mario Fuentes Mapa',tl:'Jhay',leads:950,connect:129,sale:8,tcr:13.58,csr:6.20,cured:4.20},
+  {name:'Jessa Frayna',tl:'Jumar',leads:1463,connect:193,sale:15,tcr:13.19,csr:7.77,cured:3.90},
+  {name:'Jomar Kilme',tl:'Florence',leads:696,connect:91,sale:5,tcr:13.07,csr:5.49,cured:3.30},
+  {name:'Amer Husein Ismael',tl:'Jhay',leads:608,connect:79,sale:4,tcr:12.99,csr:5.06,cured:2.50},
+  {name:'CJ Garces',tl:'Jumar',leads:821,connect:98,sale:4,tcr:11.94,csr:4.08,cured:3.30},
+  {name:'Shimonni Soria Pigaredo',tl:'Jhay',leads:754,connect:84,sale:6,tcr:11.14,csr:7.14,cured:0.00},
+  {name:'Dioreza Tomilloso',tl:'Florence',leads:688,connect:73,sale:2,tcr:10.61,csr:2.74,cured:1.30},
+  {name:'Jhayren Villanueva',tl:'Jersey',leads:750,connect:79,sale:1,tcr:10.53,csr:1.27,cured:0.00},
+  {name:'Jennylyn Balagtas',tl:'Florence',leads:637,connect:67,sale:3,tcr:10.52,csr:4.48,cured:1.50},
+  {name:'Cindy Balazuela',tl:'Florence',leads:582,connect:61,sale:0,tcr:10.48,csr:0.00,cured:1.70},
+  {name:'Mariefe Claire Villanueva',tl:'Jhay',leads:813,connect:85,sale:10,tcr:10.46,csr:11.76,cured:4.70},
+  {name:'Ericka Jane Condecion',tl:'Jhay',leads:649,connect:65,sale:5,tcr:10.02,csr:7.69,cured:2.60},
+  {name:'Roxanne Hila',tl:'Jersey',leads:814,connect:81,sale:6,tcr:9.95,csr:7.41,cured:2.20},
+  {name:'Neal Jason Mirasol',tl:'Jersey',leads:870,connect:83,sale:4,tcr:9.54,csr:4.82,cured:1.80},
+  {name:'Bienyl Salvador',tl:'Jersey',leads:839,connect:80,sale:2,tcr:9.54,csr:2.50,cured:0.70},
+  {name:'Joan Libongcogon',tl:'Jhay',leads:755,connect:70,sale:8,tcr:9.27,csr:11.43,cured:4.00},
+  {name:'Clent Valdez',tl:'Jumar',leads:667,connect:59,sale:4,tcr:8.85,csr:6.78,cured:1.30},
+  {name:'Chester Allan Banluta',tl:'Florence',leads:784,connect:69,sale:3,tcr:8.80,csr:4.35,cured:3.40},
+  {name:'Angelika Gonzales',tl:'Jumar',leads:1268,connect:105,sale:4,tcr:8.28,csr:3.81,cured:0.00},
+  {name:'Leslie Ann Toledo Logan',tl:'Jersey',leads:975,connect:78,sale:5,tcr:8.00,csr:6.41,cured:3.50},
+  {name:'Angelo Miranda',tl:'Jumar',leads:735,connect:58,sale:0,tcr:7.89,csr:0.00,cured:0.00},
+  {name:'Renato Bisquera Jr',tl:'Jumar',leads:683,connect:50,sale:2,tcr:7.32,csr:4.00,cured:2.40},
+  {name:'Lester John Mamaril',tl:'Jumar',leads:774,connect:49,sale:1,tcr:6.33,csr:2.04,cured:0.00},
+];
+
+let _rankMetric='tcr';
+
+function setRankMetric(m){
+  _rankMetric=m;
+  ['tcr','csr','cured'].forEach(k=>{
+    const btn=document.getElementById('rank-btn-'+k);
+    if(!btn)return;
+    const active=k===m;
+    btn.style.background=active?'var(--yellow)':'#fff';
+    btn.style.borderColor=active?'var(--yellow)':'var(--g300)';
+    btn.style.color=active?'var(--black)':'var(--g600)';
+    btn.style.fontWeight=active?'700':'600';
+  });
+  renderRanking();
+}
+
+function _rankMetricColor(metric,value){
+  if(metric==='tcr'){
+    if(value>=13)return{bg:'#dcfce7',color:'#15803D'};
+    if(value>=10)return{bg:'#fef3c7',color:'#B45309'};
+    return{bg:'#fee2e2',color:'#DC2626'};
+  }
+  if(metric==='csr'){
+    if(value>=10)return{bg:'#dcfce7',color:'#15803D'};
+    if(value>=5) return{bg:'#fef3c7',color:'#B45309'};
+    return{bg:'#fee2e2',color:'#DC2626'};
+  }
+  // cured
+  if(value>=4)return{bg:'#dcfce7',color:'#15803D'};
+  if(value>=2)return{bg:'#fef3c7',color:'#B45309'};
+  return{bg:'#fee2e2',color:'#DC2626'};
+}
+
+function _rankTLColor(tl){
+  const map={Jhay:{bg:'#dbeafe',color:'#1d4ed8'},Jumar:{bg:'#f3e8ff',color:'#7c3aed'},Florence:{bg:'#fce7f3',color:'#be185d'},Jersey:{bg:'#ccfbf1',color:'#0f766e'}};
+  return map[tl]||{bg:'#f3f4f6',color:'#374151'};
+}
+
+function renderRanking(){
+  const metric=_rankMetric;
+  const tlF=(document.getElementById('rank-tl-filter')||{}).value||'all';
+  // Sort ALL agents by selected metric descending; this defines global rank
+  const globalSorted=[...RANKING_DATA].sort((a,b)=>b[metric]-a[metric]);
+  globalSorted.forEach((a,i)=>{a._rank=i+1;});
+  const display=tlF==='all'?globalSorted:globalSorted.filter(a=>a.tl===tlF);
+  const wrap=document.getElementById('rank-cards');
+  if(!wrap)return;
+  if(!display.length){wrap.innerHTML='<div style="text-align:center;padding:40px;color:var(--g400);font-size:.88rem;">No agents found for this filter.</div>';return;}
+  const medals=['🥇','🥈','🥉'];
+  wrap.innerHTML=display.map(a=>{
+    const rank=a._rank;
+    const tclr=_rankTLColor(a.tl);
+    const isGold=rank===1,isSilver=rank===2,isBronze=rank===3;
+    const cardBg=isGold?'linear-gradient(135deg,#fffbeb,#fef3c7)':isSilver?'linear-gradient(135deg,#f9fafb,#f1f5f9)':isBronze?'linear-gradient(135deg,#fff8f0,#fdecd8)':'#fff';
+    const cardBorder=isGold?'#F59E0B':isSilver?'#94a3b8':isBronze?'#D97706':'#e5e7eb';
+    const medalStr=rank<=3?medals[rank-1]:`<span style="font-size:.88rem;font-weight:700;color:var(--g400);min-width:28px;display:inline-block;text-align:center;">#${rank}</span>`;
+    // Metric color boxes
+    const mKeys=['tcr','csr','cured'];
+    const mLabels={tcr:'TCR%',csr:'CSR%',cured:'CURED CV%'};
+    const boxes=mKeys.map(k=>{
+      const clr=_rankMetricColor(k,a[k]);
+      const isActive=k===metric;
+      return `<div style="text-align:center;padding:5px 11px;border-radius:8px;background:${isActive?clr.bg:'#f9fafb'};border:1.5px solid ${isActive?clr.color+'44':'#e5e7eb'};min-width:64px;">
+        <div style="font-size:.6rem;font-weight:700;color:${isActive?clr.color:'var(--g400)'};text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;">${mLabels[k]}</div>
+        <div style="font-size:.9rem;font-weight:700;color:${isActive?clr.color:'var(--g700)'};">${a[k].toFixed(2)}%</div>
+      </div>`;
+    }).join('');
+    return `<div style="background:${cardBg};border:${rank<=3?'2px':'1.5px'} solid ${cardBorder};border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;box-shadow:${isGold?'0 4px 14px rgba(245,158,11,.12)':'0 1px 3px rgba(0,0,0,.06)'};">
+      <div style="font-size:${rank<=3?'1.7':'1.1'}rem;line-height:1;min-width:34px;text-align:center;">${medalStr}</div>
+      <div style="flex:1;min-width:140px;">
+        <div style="font-size:.95rem;font-weight:700;color:var(--g800);">${e(a.name)}</div>
+        <div style="margin-top:4px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+          <span style="font-size:.7rem;font-weight:700;padding:2px 9px;border-radius:999px;background:${tclr.bg};color:${tclr.color};">${e(a.tl)}</span>
+          <span style="font-size:.7rem;color:var(--g400);">${a.leads.toLocaleString()} leads · ${a.connect} connects · ${a.sale} sales</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end;">${boxes}</div>
+    </div>`;
+  }).join('');
 }
 
 // Rebuild agent dropdown for coaching logs view
