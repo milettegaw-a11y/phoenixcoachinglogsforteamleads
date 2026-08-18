@@ -612,6 +612,22 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
 .ai-card-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
 .ai-status-btn{border:1.5px solid var(--g300);border-radius:6px;padding:4px 9px;font-size:.7rem;font-weight:600;cursor:pointer;background:#fff;font-family:inherit;transition:all .12s;}
 .ai-status-btn:hover{background:var(--yellow-lt);border-color:var(--yellow-dk);}
+.coach-helper{grid-column:1/-1;border:1.5px solid #b8d6aa;border-radius:12px;background:linear-gradient(135deg,#f7fbf4,#eef7e8);padding:16px;margin:2px 0 14px;}
+.coach-helper-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px;}
+.coach-helper-title{font-size:.9rem;font-weight:800;color:var(--sb-dark);}
+.coach-helper-sub{font-size:.72rem;color:var(--g500);margin-top:2px;line-height:1.45;}
+.coach-helper textarea{min-height:130px;background:#fff;}
+.coach-helper-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:9px;}
+.coach-file{font-size:.75rem;max-width:230px;}
+.coach-results{display:none;margin-top:14px;border-top:1px solid #cee0c5;padding-top:14px;}
+.coach-results.on{display:block;}
+.coach-result-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.coach-result{background:#fff;border:1px solid #dce8d6;border-radius:9px;padding:11px;}
+.coach-result.full{grid-column:1/-1;}
+.coach-result-lbl{font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--yellow-dk);margin-bottom:5px;}
+.coach-result-body{font-size:.79rem;color:var(--g700);line-height:1.55;white-space:pre-wrap;}
+.coach-privacy{font-size:.68rem;color:var(--g500);margin-top:8px;}
+@media(max-width:700px){.coach-result-grid{grid-template-columns:1fr}.coach-result.full{grid-column:auto}}
 </style>
 </head>
 <body>
@@ -2030,8 +2046,30 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
         </div>
         <div class="fg"><label>NTE Link</label><input type="url" id="cl-nte-link" placeholder="https://…" oninput="saveDraftLog()"/></div>
         <div class="fg"><label>Aircall Link</label><input type="url" id="cl-air" placeholder="https://phone.aircall.io/…" oninput="saveDraftLog()"/></div>
+        <div class="coach-helper">
+          <div class="coach-helper-head">
+            <div><div class="coach-helper-title">🧭 Sales Coaching Helper</div><div class="coach-helper-sub">Paste or upload a speaker-labeled call transcript to identify why the sale did not close. Runs entirely in this browser—no AI API or API key.</div></div>
+          </div>
+          <div class="fg" style="margin-bottom:0;"><label>Call Transcript</label><textarea id="cl-transcript" placeholder="Agent: …&#10;Customer: …" aria-label="Call transcript for coaching analysis"></textarea></div>
+          <div class="coach-helper-actions">
+            <input class="coach-file" id="cl-transcript-file" type="file" accept=".txt,.md,.csv,text/plain,text/markdown,text/csv" onchange="loadCoachTranscript(this)"/>
+            <button type="button" class="btn btn-black btn-sm" onclick="analyzeCoachTranscript()">✨ Find Agent Opportunities</button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="clearCoachHelper()">Clear</button>
+          </div>
+          <div class="coach-privacy">The transcript is analyzed locally and is not saved with the coaching log. Review and edit all generated feedback before saving.</div>
+          <div class="coach-results" id="cl-coach-results">
+            <div class="coach-result-grid">
+              <div class="coach-result full"><div class="coach-result-lbl">Why the sale did not close</div><div class="coach-result-body" id="ch-why"></div></div>
+              <div class="coach-result"><div class="coach-result-lbl">Discovery</div><div class="coach-result-body" id="ch-discovery"></div></div>
+              <div class="coach-result"><div class="coach-result-lbl">Objection handling</div><div class="coach-result-body" id="ch-objection"></div></div>
+              <div class="coach-result full"><div class="coach-result-lbl">Suggested script</div><div class="coach-result-body" id="ch-script"></div></div>
+            </div>
+            <div class="coach-helper-actions"><button type="button" class="btn btn-green btn-sm" onclick="applyCoachFeedback()">✓ Add to Coaching Notes</button></div>
+          </div>
+        </div>
         <div class="fg full"><label>Highlights ✨</label><textarea id="cl-hi" placeholder="What the agent did well…" oninput="saveDraftLog()"></textarea></div>
         <div class="fg full"><label>Agent Opportunities 🎯</label><textarea id="cl-opp" placeholder="Areas for growth and improvement…" oninput="saveDraftLog()"></textarea></div>
+        <div class="fg full"><label>Recommended Coaching Script 💬</label><textarea id="cl-script" placeholder="A stronger talk track the agent can practice…" oninput="saveDraftLog()"></textarea></div>
       </div>
     </div>
     <div class="mfooter">
@@ -5093,6 +5131,7 @@ function openDetail(id){
   document.getElementById('d-notes').innerHTML=`
     ${r.hi?`<div class="sec-hdr"><h3>✨ Highlights</h3></div><div class="txt-block">${e(r.hi)}</div>`:''}
     ${r.opp?`<div class="sec-hdr"><h3>🎯 Agent Opportunities</h3></div><div class="txt-block">${e(r.opp)}</div>`:''}
+    ${r.coachScript?`<div class="sec-hdr"><h3>💬 Recommended Coaching Script</h3></div><div class="txt-block">${e(r.coachScript)}</div>`:''}
     <div style="margin-top:18px">
       <button class="btn btn-yellow btn-full" onclick="openCommit('${id}')">⭐ View / Add Agent Commitment (STAR)</button>
     </div>
@@ -5136,6 +5175,75 @@ function switchDTab(t){
    COACHING LOG FORM
 ═══════════════════════════════════════ */
 const LOG_DRAFT_KEY='px_log_draft';
+let coachHelperReview=null;
+
+async function loadCoachTranscript(input){
+  const file=input&&input.files&&input.files[0];
+  if(!file)return;
+  if(file.size>1000000){toast('⚠️ Transcript must be smaller than 1 MB.');input.value='';return;}
+  try{
+    document.getElementById('cl-transcript').value=await file.text();
+    toast('✅ Transcript loaded. Click Find Agent Opportunities.');
+  }catch(err){toast('⚠️ Could not read this file. Use TXT, MD, or CSV.');}
+}
+
+function coachLines(text,who){
+  const re=who==='agent'?/^(agent|rep|representative|sales|advisor)\s*:/i:/^(customer|client|lead|prospect)\s*:/i;
+  return text.split(/\n+/).map(x=>x.trim()).filter(x=>re.test(x));
+}
+
+function analyzeCoachTranscript(){
+  const text=(document.getElementById('cl-transcript').value||'').trim();
+  if(text.length<80){toast('⚠️ Add a longer speaker-labeled transcript first.');return;}
+  const agents=coachLines(text,'agent');
+  const customers=coachLines(text,'customer');
+  if(!agents.length||!customers.length){toast('⚠️ Use speaker labels such as Agent: and Customer: for the best review.');}
+  const questions=agents.filter(x=>x.includes('?')||/\b(what|how|when|why|which|may i ask|could you tell|tell me)\b/i.test(x));
+  const discovery=questions.filter(x=>/(clean|home|bed|bath|frequency|schedule|currently|before|reason|need|priority|important|change|looking|help|concern|holding|prevent)/i.test(x));
+  const objections=customers.filter(x=>/(not interested|too expensive|price|cost|busy|think about|already have|not now|later|commit|membership|cancel|need to ask|spouse|partner|don't need|do not call|stop calling)/i.test(x));
+  const ack=agents.some(x=>/(understand|totally|of course|fair|hear you|makes sense|appreciate)/i.test(x));
+  const clarify=questions.some(x=>/(concern|holding|prevent|what changed|which part|what makes|may i ask why|tell me more)/i.test(x));
+  const close=agents.some(x=>/(book|schedule|reserve|move forward|set.*up|which day|what date|next step)/i.test(x));
+  const dnc=customers.some(x=>/(do not call|don't call|stop calling|take me off)/i.test(x));
+  let why,opp,objectionReview,script;
+  if(dnc){
+    why='The customer gave a firm request to stop contact. This is not a recoverable sales objection; the correct outcome is to end the sales conversation and honor the request.';
+    opp='Opportunity: Recognize firm refusals immediately and avoid any further sales attempt.';
+    objectionReview='Firm refusal / Do Not Call detected. The agent should acknowledge it and stop selling.';
+    script='“Understood. I’ll honor your request. Thank you for your time, and I apologize for the inconvenience.”';
+  }else{
+    const gap=!discovery.length?'insufficient discovery':objections.length&&!clarify?'an objection that was answered before the real concern was clarified':!close?'no clear transition from the conversation to a next step':'the customer’s remaining concern was not fully resolved';
+    why='Most likely reason: '+gap+'. '+(objections.length?'The customer raised: “'+objections[0].replace(/^(customer|client|lead|prospect)\s*:\s*/i,'')+'”':'The customer’s main barrier was not clearly uncovered in the transcript.');
+    opp=!discovery.length?'Opportunity: Ask questions that uncover the current cleaning situation, urgency, pain point, and decision barrier before presenting an offer.':objections.length&&!clarify?'Opportunity: Acknowledge the objection, then ask one focused question to identify the real barrier before responding.':!close?'Opportunity: After confirming the concern is resolved, ask for a specific and reasonable next step.':'Opportunity: Connect the value directly to the customer’s own words and confirm resolution before closing.';
+    objectionReview=objections.length?((ack?'Acknowledged. ':'No clear acknowledgment detected. ')+(clarify?'A clarifying question was detected. ':'No strong clarifying question was detected. ')+(close?'A closing attempt was detected.':'No clear closing attempt was detected.')):'No explicit objection was detected. The agent needed stronger discovery to uncover what prevented the decision.';
+    script='“I understand. '+(objections.length?'It sounds like '+objections[0].replace(/^(customer|client|lead|prospect)\s*:\s*/i,'').replace(/[.!?]+$/,'').toLowerCase()+' is the main concern. ':'I want to make sure I understand what is holding you back. ')+'May I ask what part matters most to you right now—timing, service fit, or overall cost? [Listen.] Based on what you shared, the most relevant benefit is [connect only the value that solves their concern]. Does that address it, or is there anything else holding you back? [Listen.] If that works for you, let’s look at the next step that best fits your schedule.”';
+  }
+  const discoveryReview=(discovery.length?'Discovery questions detected:\n• '+discovery.slice(0,4).map(x=>x.replace(/^(agent|rep|representative|sales|advisor)\s*:\s*/i,'')).join('\n• '):'No meaningful discovery questions detected.')+'\n\nQuestions to add:\n• What changed since you first considered cleaning help?\n• What is the biggest cleaning challenge you want solved now?\n• What is preventing you from moving forward today?';
+  coachHelperReview={why,opp,discovery:discoveryReview,objection:objectionReview,script};
+  document.getElementById('ch-why').textContent=why;
+  document.getElementById('ch-discovery').textContent=discoveryReview;
+  document.getElementById('ch-objection').textContent=objectionReview;
+  document.getElementById('ch-script').textContent=script;
+  document.getElementById('cl-coach-results').classList.add('on');
+}
+
+function applyCoachFeedback(){
+  if(!coachHelperReview){toast('⚠️ Analyze a transcript first.');return;}
+  const opp=document.getElementById('cl-opp');
+  const script=document.getElementById('cl-script');
+  const generated=[coachHelperReview.why,coachHelperReview.opp,'Discovery review:\n'+coachHelperReview.discovery,'Objection review:\n'+coachHelperReview.objection].join('\n\n');
+  opp.value=opp.value.trim()?opp.value.trim()+'\n\n'+generated:generated;
+  script.value=coachHelperReview.script;
+  saveDraftLog();
+  toast('✅ Coaching feedback added. Review and edit before saving.');
+}
+
+function clearCoachHelper(){
+  document.getElementById('cl-transcript').value='';
+  document.getElementById('cl-transcript-file').value='';
+  document.getElementById('cl-coach-results').classList.remove('on');
+  coachHelperReview=null;
+}
 
 function saveDraftLog(){
   if(editingLogId) return; // don't draft-save when editing existing
@@ -5153,6 +5261,7 @@ function saveDraftLog(){
     air:document.getElementById('cl-air')?.value||'',
     hi:document.getElementById('cl-hi')?.value||'',
     opp:document.getElementById('cl-opp')?.value||'',
+    coachScript:document.getElementById('cl-script')?.value||'',
     fctcr:document.getElementById('fc-tcr')?.checked||false,
     fccsr:document.getElementById('fc-csr')?.checked||false,
     fccvr:document.getElementById('fc-cvr')?.checked||false,
@@ -5187,6 +5296,7 @@ function restoreDraftLog(draft){
   if(draft.air) document.getElementById('cl-air').value=draft.air;
   if(draft.hi) document.getElementById('cl-hi').value=draft.hi;
   if(draft.opp) document.getElementById('cl-opp').value=draft.opp;
+  if(draft.coachScript) document.getElementById('cl-script').value=draft.coachScript;
   document.getElementById('fc-tcr').checked=draft.fctcr||false;
   document.getElementById('fc-csr').checked=draft.fccsr||false;
   document.getElementById('fc-cvr').checked=draft.fccvr||false;
@@ -5202,7 +5312,8 @@ function openLogModal(){
   fillAgents(['cl-agent']);
   fillTLs(['cl-tl']);
   fillWeeks(['cl-wk']);
-  ['cl-date','cl-leads','cl-conn','cl-sales','cl-wk2','cl-nte-link','cl-air','cl-hi','cl-opp'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['cl-date','cl-leads','cl-conn','cl-sales','cl-wk2','cl-nte-link','cl-air','cl-hi','cl-opp','cl-script'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  clearCoachHelper();
   document.getElementById('cl-agent').value='';
   document.getElementById('cl-tl').value='';
   document.getElementById('cl-wk').value='';
@@ -5254,6 +5365,7 @@ let editingLogId=null;
 function editLog(id){
   const r=DB.logs.find(l=>l.id===id);
   if(!r)return;
+  clearCoachHelper();
   fillAgents(['cl-agent']);
   fillTLs(['cl-tl']);
   fillWeeks(['cl-wk']);
@@ -5271,6 +5383,7 @@ function editLog(id){
   document.getElementById('cl-air').value=r.aircall||'';
   document.getElementById('cl-hi').value=r.hi||'';
   document.getElementById('cl-opp').value=r.opp||'';
+  document.getElementById('cl-script').value=r.coachScript||'';
   const notesEl=document.getElementById('cl-notes');if(notesEl)notesEl.value=r.notes||'';
   // Restore calculated metrics display
   ['cl-tcr','cl-csr','cl-cvr'].forEach(id=>{
@@ -5626,6 +5739,7 @@ async function saveLog(){
     aircall:document.getElementById('cl-air').value,
     hi:document.getElementById('cl-hi').value,
     opp:document.getElementById('cl-opp').value,
+    coachScript:document.getElementById('cl-script').value,
     // Coaching focus & calculator
     focus:['TCR%','CSR%','CVR%','WK2 CVR%'].filter((_,i)=>
       [document.getElementById('fc-tcr'),document.getElementById('fc-csr'),
