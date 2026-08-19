@@ -2852,7 +2852,7 @@ const SHEETS_URL = 'https://sheetdb.io/api/v1/hxgegag6py2q0';
 
 async function syncToSheet(type, action, id, row){
   if(!SHEETS_URL) return;
-  const sheetName = {coaching:'Coaching Logs', nte:'NTE Logs', ft:'Follow Through'}[type];
+  const sheetName = {coaching:'Coaching Logs', nte:'NTE Logs', ft:'Follow Through', onboard:'Onboarding Logs'}[type];
   if(!sheetName) return;
   try{
     if(action==='upsert'){
@@ -2862,22 +2862,31 @@ async function syncToSheet(type, action, id, row){
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({data:row})
       });
-      const pData = await pRes.json();
+      let pData={};
+      try{ pData=await pRes.json(); }catch(_){}
+      if(pData.error) throw new Error('PATCH: '+pData.error);
       // If no row was updated, create a new one
       if(!pData.updated || parseInt(pData.updated)===0){
-        await fetch(SHEETS_URL,{
+        const postRes = await fetch(SHEETS_URL,{
           method:'POST',
           headers:{'Content-Type':'application/json'},
           body:JSON.stringify({data:[row], sheet:sheetName})
         });
+        let postData={};
+        try{ postData=await postRes.json(); }catch(_){}
+        if(postData.error) throw new Error('POST: '+postData.error);
+        if(!postRes.ok) throw new Error('POST failed ('+postRes.status+'): '+JSON.stringify(postData));
       }
     } else if(action==='delete'){
-      await fetch(`${SHEETS_URL}/ID/${encodeURIComponent(id)}?sheet=${encodeURIComponent(sheetName)}`,{
+      const dRes = await fetch(`${SHEETS_URL}/ID/${encodeURIComponent(id)}?sheet=${encodeURIComponent(sheetName)}`,{
         method:'DELETE',
         headers:{'Content-Type':'application/json'}
       });
+      let dData={};
+      try{ dData=await dRes.json(); }catch(_){}
+      if(dData.error) throw new Error('DELETE: '+dData.error);
     }
-  } catch(e){ console.warn('Sheet sync skipped:', e.message); }
+  } catch(e){ console.warn('Sheet sync failed:', e.message); toast('⚠️ Sheet sync failed: '+e.message); }
 }
 
 function sheetRowCoaching(entry, cm){
@@ -2945,6 +2954,31 @@ function sheetRowFT(entry){
     'Applied Coaching': entry.applied||'',
     'Opportunity':      entry.opp||'',
     'Logged At':        entry.at||new Date().toISOString()
+  };
+}
+function sheetRowOnboard(entry){
+  const isOn=entry.type==='onboarding';
+  return {
+    'ID':                     entry.id,
+    'Type':                   isOn?'Onboarding':'Offboarding',
+    'Agent':                  entry.agent||'',
+    'Hire Date':              entry.hireDate||'',
+    'Tenure':                 entry.tenure||'',
+    'Onboarding Date':        entry.onDate||'',
+    'Offboarding Date':       entry.offDate||'',
+    'WK#':                    entry.wk||'',
+    'Reason':                 entry.reason||'',
+    'Aircall Deactivated':    entry.aircall?'Yes':'No',
+    'Posted Slack Directory': entry.slackDir?'Yes':'No',
+    'Turned Off 0 Sales Ch':  entry.zeroCh?'Yes':'No',
+    'Onboarding Discussion':  entry.disc==='yes'?'Yes':'No',
+    'Discussion Topics':      (entry.topics||[]).join(', '),
+    'Added to Channels':      entry.addedChannels?'Yes':'No',
+    'Posted to Directory':    entry.postedDir?'Yes':'No',
+    'Added to Hubspot':       entry.addedHs?'Yes':'No',
+    'Requested OM Hubspot':   entry.reqOmHs?'Yes':'No',
+    'Created By':             entry.createdBy||'',
+    'Created At':             entry.createdAt||''
   };
 }
 function e(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
@@ -4662,7 +4696,8 @@ async function saveOnboardLog(){
     });
   }
   try{
-    await FSB.collection('px_onboard_logs').add(data);
+    const docRef=await FSB.collection('px_onboard_logs').add(data);
+    syncToSheet('onboard','upsert',docRef.id,sheetRowOnboard({...data,id:docRef.id}));
     closeM('m-onboard');
     toast('✅ Entry saved.');
     renderOnboardDash();
@@ -4763,6 +4798,7 @@ async function deleteOnboardLog(id){
   if(!confirm('Delete this entry? This cannot be undone.'))return;
   try{
     await FSB.collection('px_onboard_logs').doc(id).delete();
+    syncToSheet('onboard','delete',id,{});
     toast('🗑 Entry deleted.');
   }catch(err){
     console.error('delete ob log',err);
