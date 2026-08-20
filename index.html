@@ -32,6 +32,7 @@
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Poppins',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--sb-grad);background-attachment:fixed;color:var(--black);min-height:100vh;}
+
 /* ── LOGIN ── */
 #login-page{min-height:100vh;background:var(--sb-grad);background-attachment:fixed;display:flex;align-items:center;justify-content:center;padding:24px;}
 .login-card{background:var(--white);border-radius:20px;padding:48px 40px;width:100%;max-width:440px;box-shadow:0 20px 60px rgba(0,0,0,.35);text-align:center;position:relative;overflow:hidden;}
@@ -40,6 +41,7 @@ body{font-family:'Poppins',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sa
 .login-title{font-size:1.6rem;font-weight:600;letter-spacing:-.5px;color:var(--black);margin-bottom:2px;}
 .login-sub{font-size:.82rem;color:var(--g500);margin-bottom:28px;text-transform:uppercase;letter-spacing:1px;}
 .login-err{background:#FEE2E2;color:var(--red);padding:10px 14px;border-radius:var(--rs);font-size:.82rem;margin-bottom:14px;display:none;text-align:left;}
+
 /* ── FORM ELEMENTS ── */
 .fg{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;text-align:left;}
 .fg label{font-size:.75rem;font-weight:500;text-transform:uppercase;letter-spacing:.5px;color:var(--g700);}
@@ -50,6 +52,7 @@ body{font-family:'Poppins',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sa
 .req{color:var(--red);}
 .auto-calc{background:var(--yellow-lt);border:2px solid var(--yellow);border-radius:var(--rs);padding:9px 12px;font-size:.875rem;font-weight:500;color:var(--black);min-height:42px;display:flex;align-items:center;}
 .tenure-pill{background:var(--yellow);border-radius:var(--rs);padding:9px 12px;font-size:.9rem;font-weight:600;color:var(--black);text-align:center;min-height:42px;display:flex;align-items:center;justify-content:center;}
+
 /* ── BUTTONS ── */
 .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:var(--rs);font-size:.875rem;font-weight:500;cursor:pointer;border:2px solid transparent;transition:all .15s;font-family:inherit;line-height:1;}
 .btn-yellow{background:var(--yellow);color:var(--black);border-color:var(--yellow);}
@@ -70,9 +73,11 @@ body{font-family:'Poppins',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sa
 .btn-google:hover{background:#f8f9fa;box-shadow:0 2px 6px rgba(0,0,0,.15);}
 .btn-google:active{background:#e8eaed;}
 .btn-google svg{flex-shrink:0;}
+
 /* ── APP SHELL ── */
 #app{display:none;flex-direction:row;min-height:100vh;}
 #app.on{display:flex;}
+
 /* ── SIDEBAR ── */
 #sidebar{width:var(--sb-w);min-height:100vh;background:var(--sb-bg);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;flex-shrink:0;z-index:50;border-right:2px solid var(--sb-border);box-shadow:4px 0 20px rgba(0,0,0,.12);}
 .sb-brand{padding:20px 18px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(61,107,44,.15);}
@@ -98,6 +103,7 @@ body{font-family:'Poppins',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sa
 #hdr-user{font-size:.78rem;font-weight:600;color:var(--sb-dark);line-height:1.3;}
 .sb-logout{width:100%;padding:8px;background:transparent;color:rgba(46,82,32,.7);border:1.5px solid rgba(46,82,32,.25);border-radius:var(--rs);font-size:.78rem;font-weight:500;cursor:pointer;text-align:center;transition:all .15s;font-family:inherit;}
 .sb-logout:hover{background:var(--red);color:var(--white);border-color:var(--red);}
+
 /* ── SETTINGS PANEL ── */
 .px-settings-btn{width:100%;padding:7px 12px;background:rgba(0,0,0,.04);border:1.5px solid var(--sb-border);border-radius:8px;cursor:pointer;font-family:inherit;font-size:.74rem;font-weight:600;color:var(--sb-dark);text-align:left;transition:all .15s;display:flex;align-items:center;gap:7px;margin-bottom:8px;}
 .px-settings-btn:hover{background:var(--yellow-lt);}
@@ -116,6 +122,7 @@ body{font-family:'Poppins',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sa
 .px-swatch{width:26px;height:26px;border-radius:7px;border:2.5px solid transparent;cursor:pointer;transition:all .13s;padding:0;outline:none;flex-shrink:0;}
 .px-swatch:hover{transform:scale(1.13);}
 .px-swatch.active{box-shadow:0 0 0 2.5px rgba(0,0,0,.5);}
+
 /* ══ COLOR THEMES ══ */
 html[data-theme="ocean"]{--yellow:#5ba3d4;--yellow-dk:#2b7fbc;--yellow-lt:#d0ecf9;--sb-grad:linear-gradient(160deg,#1d5c8a 0%,#2b7fbc 55%,#5ba3d4 100%);--hdr-grad:linear-gradient(135deg,#1d5c8a 0%,#5ba3d4 100%);--sb-bg:#d0ecf9;--sb-border:#92c8e8;--sb-dark:#1a4e78;--content-bg:#dff2ff;--topbar-bg:#bce1f7;--topbar-title:#1a4e78;}
 html[data-theme="ocean"] .sb-item{color:rgba(26,78,120,.85);}
@@ -126,6 +133,7 @@ html[data-theme="ocean"] .sb-section-lbl{color:rgba(26,78,120,.45);}
 html[data-theme="ocean"] .sb-logout{color:rgba(26,78,120,.7);border-color:rgba(26,78,120,.25);}
 html[data-theme="ocean"] .sb-notif{background:#2b7fbc;color:#d0ecf9;}
 html[data-theme="ocean"] #topbar{box-shadow:0 2px 0 rgba(43,127,188,.45),0 4px 16px rgba(0,0,0,.1);}
+
 html[data-theme="sunset"]{--yellow:#e8a258;--yellow-dk:#c45d1a;--yellow-lt:#fdebd0;--sb-grad:linear-gradient(160deg,#8b3a0a 0%,#c45d1a 55%,#e8a258 100%);--hdr-grad:linear-gradient(135deg,#8b3a0a 0%,#e8a258 100%);--sb-bg:#fdebd0;--sb-border:#f4c08a;--sb-dark:#7c2d12;--content-bg:#fef0da;--topbar-bg:#fce0be;--topbar-title:#7c2d12;}
 html[data-theme="sunset"] .sb-item{color:rgba(124,45,18,.85);}
 html[data-theme="sunset"] .sb-item:hover{background:rgba(232,162,88,.22);color:#7c2d12;}
@@ -135,6 +143,7 @@ html[data-theme="sunset"] .sb-section-lbl{color:rgba(124,45,18,.45);}
 html[data-theme="sunset"] .sb-logout{color:rgba(124,45,18,.7);border-color:rgba(124,45,18,.25);}
 html[data-theme="sunset"] .sb-notif{background:#c45d1a;color:#fdebd0;}
 html[data-theme="sunset"] #topbar{box-shadow:0 2px 0 rgba(196,93,26,.45),0 4px 16px rgba(0,0,0,.1);}
+
 html[data-theme="lavender"]{--yellow:#a98fd4;--yellow-dk:#7c5fb0;--yellow-lt:#e8dff7;--sb-grad:linear-gradient(160deg,#5b3d8f 0%,#7c5fb0 55%,#a98fd4 100%);--hdr-grad:linear-gradient(135deg,#5b3d8f 0%,#a98fd4 100%);--sb-bg:#e8dff7;--sb-border:#c5ade8;--sb-dark:#4a2d7a;--content-bg:#ede6fa;--topbar-bg:#dfd3f5;--topbar-title:#4a2d7a;}
 html[data-theme="lavender"] .sb-item{color:rgba(74,45,122,.85);}
 html[data-theme="lavender"] .sb-item:hover{background:rgba(169,143,212,.22);color:#4a2d7a;}
@@ -144,6 +153,7 @@ html[data-theme="lavender"] .sb-section-lbl{color:rgba(74,45,122,.45);}
 html[data-theme="lavender"] .sb-logout{color:rgba(74,45,122,.7);border-color:rgba(74,45,122,.25);}
 html[data-theme="lavender"] .sb-notif{background:#7c5fb0;color:#e8dff7;}
 html[data-theme="lavender"] #topbar{box-shadow:0 2px 0 rgba(124,95,176,.45),0 4px 16px rgba(0,0,0,.1);}
+
 html[data-theme="slate"]{--yellow:#6b7280;--yellow-dk:#4b5563;--yellow-lt:#e5e7eb;--sb-grad:linear-gradient(160deg,#374151 0%,#4b5563 55%,#6b7280 100%);--hdr-grad:linear-gradient(135deg,#374151 0%,#6b7280 100%);--sb-bg:#e5e7eb;--sb-border:#9ca3af;--sb-dark:#1f2937;--content-bg:#eaecf0;--topbar-bg:#d1d5db;--topbar-title:#1f2937;}
 html[data-theme="slate"] .sb-item{color:rgba(31,41,55,.85);}
 html[data-theme="slate"] .sb-item:hover{background:rgba(107,114,128,.22);color:#1f2937;}
@@ -153,6 +163,7 @@ html[data-theme="slate"] .sb-section-lbl{color:rgba(31,41,55,.45);}
 html[data-theme="slate"] .sb-logout{color:rgba(31,41,55,.7);border-color:rgba(31,41,55,.25);}
 html[data-theme="slate"] .sb-notif{background:#4b5563;color:#e5e7eb;}
 html[data-theme="slate"] #topbar{box-shadow:0 2px 0 rgba(75,85,99,.45),0 4px 16px rgba(0,0,0,.1);}
+
 html[data-theme="rose"]{--yellow:#e06898;--yellow-dk:#bf3060;--yellow-lt:#fce7ef;--sb-grad:linear-gradient(160deg,#8b2042 0%,#bf3060 55%,#e06898 100%);--hdr-grad:linear-gradient(135deg,#8b2042 0%,#e06898 100%);--sb-bg:#fce7ef;--sb-border:#f4a8c4;--sb-dark:#7a1232;--content-bg:#fde8f1;--topbar-bg:#fcd5e6;--topbar-title:#7a1232;}
 html[data-theme="rose"] .sb-item{color:rgba(122,18,50,.85);}
 html[data-theme="rose"] .sb-item:hover{background:rgba(224,104,152,.22);color:#7a1232;}
@@ -162,14 +173,18 @@ html[data-theme="rose"] .sb-section-lbl{color:rgba(122,18,50,.45);}
 html[data-theme="rose"] .sb-logout{color:rgba(122,18,50,.7);border-color:rgba(122,18,50,.25);}
 html[data-theme="rose"] .sb-notif{background:#bf3060;color:#fce7ef;}
 html[data-theme="rose"] #topbar{box-shadow:0 2px 0 rgba(191,48,96,.45),0 4px 16px rgba(0,0,0,.1);}
+
 /* ── CONTENT ── */
 #content{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--content-bg);margin:10px 10px 10px 0;border-radius:16px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.35),0 4px 12px rgba(0,0,0,.2);}
+
 /* ── TOP BAR ── */
 #topbar{background:var(--topbar-bg);padding:14px 24px;border-bottom:none;box-shadow:0 2px 0 rgba(94,138,80,.45),0 4px 16px rgba(0,0,0,.1);display:flex;align-items:center;justify-content:space-between;gap:14px;border-radius:16px 16px 0 0;}
 .tb-title{font-size:1rem;font-weight:600;color:var(--topbar-title);}
 .tb-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+
 /* ── MAIN ── */
 #main{flex:1;padding:22px;background:transparent;}
+
 /* ── LOG CARDS GRID ── */
 .lc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;padding:4px 0;}
 .log-card{background:var(--white);border:1px solid var(--g200);border-radius:14px;padding:20px;position:relative;cursor:pointer;transition:all .18s;box-shadow:0 2px 10px rgba(0,0,0,.07),0 1px 3px rgba(0,0,0,.04);overflow:hidden;}
@@ -193,9 +208,11 @@ html[data-theme="rose"] #topbar{box-shadow:0 2px 0 rgba(191,48,96,.45),0 4px 16p
 .lc-metrics{display:flex;gap:8px;}
 .lc-metric{font-size:.68rem;color:var(--g500);font-weight:400;}
 .lc-metric strong{color:var(--black);}
+
 /* Status badges */
 .status-done{background:#DCFCE7;color:#15803D;border-radius:999px;padding:3px 10px;font-size:.68rem;font-weight:500;}
 .status-pend{background:#FFF8EE;color:#E8943A;border-radius:999px;padding:3px 10px;font-size:.68rem;font-weight:500;}
+
 /* ── NOTION DETAIL MODAL ── */
 .notion-body{padding:0;}
 .notion-cover{background:linear-gradient(135deg,#3d6b2c,#83B271);height:80px;border-radius:16px 16px 0 0;}
@@ -214,10 +231,12 @@ html[data-theme="rose"] #topbar{box-shadow:0 2px 0 rgba(191,48,96,.45),0 4px 16p
 .nm-card{background:var(--yellow-lt);border:2px solid var(--yellow);border-radius:var(--rs);padding:12px;text-align:center;}
 .nm-card .v{font-size:1.4rem;font-weight:600;color:var(--black);}
 .nm-card .k{font-size:.6rem;font-weight:500;text-transform:uppercase;color:var(--g500);margin-top:2px;}
+
 /* ── WEEK BAR ── */
 .week-bar{display:flex;align-items:center;gap:14px;background:var(--hdr-grad);border-radius:var(--r);padding:14px 18px;margin-bottom:18px;flex-wrap:wrap;box-shadow:0 4px 14px rgba(94,138,80,.22);}
 .week-bar label{font-size:.8rem;font-weight:600;color:var(--white);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;}
 .week-bar select{padding:7px 11px;border:2px solid rgba(255,255,255,.3);border-radius:6px;font-size:.85rem;font-weight:500;background:rgba(255,255,255,.15);color:var(--white);cursor:pointer;outline:none;}
+
 /* ── STATS ── */
 .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:20px;}
 .stat-card{background:var(--white);border:1px solid var(--g200);border-radius:var(--r);padding:22px 18px 18px;text-align:center;box-shadow:0 2px 12px rgba(0,0,0,.07),0 1px 3px rgba(0,0,0,.04);position:relative;overflow:hidden;transition:transform .15s,box-shadow .15s;}
@@ -225,12 +244,14 @@ html[data-theme="rose"] #topbar{box-shadow:0 2px 0 rgba(191,48,96,.45),0 4px 16p
 .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--hdr-grad);}
 .stat-val{font-size:2.4rem;font-weight:600;color:var(--black);line-height:1;margin-bottom:6px;letter-spacing:-1px;}
 .stat-lbl{font-size:.65rem;font-weight:500;text-transform:uppercase;letter-spacing:.7px;color:var(--g500);}
+
 /* ── FILTERS ── */
 .filter-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;align-items:center;}
 .f-select{padding:9px 13px;border:2px solid var(--g200);border-radius:var(--rs);font-size:.85rem;font-weight:400;background:var(--white);color:var(--black);cursor:pointer;outline:none;min-width:170px;}
 .f-select:focus{border-color:var(--yellow);}
 .f-search{flex:1;min-width:200px;padding:9px 13px;border:2px solid var(--g200);border-radius:var(--rs);font-size:.85rem;outline:none;font-family:inherit;}
 .f-search:focus{border-color:var(--yellow);}
+
 /* ── TABLE ── */
 .tbl-wrap{background:var(--white);border-radius:var(--r);border:1px solid var(--g200);overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.07),0 1px 3px rgba(0,0,0,.04);}
 .tbl-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:var(--hdr-grad);color:var(--white);}
@@ -253,6 +274,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
 .empty-st{text-align:center;padding:56px 24px;color:var(--g400);}
 .empty-st .ei{font-size:3rem;margin-bottom:12px;}
 .empty-st p{font-size:.88rem;}
+
 /* ── MODALS ── */
 .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:300;align-items:center;justify-content:center;padding:16px;}
 .overlay.open{display:flex;}
@@ -267,13 +289,16 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
 .mclose:hover{color:var(--white);}
 .mbody{padding:22px;}
 .mfooter{padding:14px 22px;border-top:1px solid var(--g200);display:flex;justify-content:flex-end;gap:10px;}
+
 /* ── FORM GRID ── */
 .fg2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
 .fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
 @media(max-width:560px){.fg2,.fg3{grid-template-columns:1fr;}}
+
 /* ── SECTION HDR ── */
 .sec-hdr{background:var(--yellow);padding:8px 14px;border-radius:var(--rs);margin:14px 0 12px;}
 .sec-hdr h3{font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--black);}
+
 /* ── DETAIL ── */
 .d-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px;}
 @media(max-width:560px){.d-grid{grid-template-columns:repeat(2,1fr);}}
@@ -285,6 +310,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
 .ii .ik{font-size:.65rem;font-weight:500;text-transform:uppercase;color:var(--g400);}
 .ii .iv{font-size:.875rem;font-weight:500;color:var(--black);}
 .txt-block{background:var(--g50);border-left:4px solid var(--yellow);border-radius:0 var(--rs) var(--rs) 0;padding:12px 15px;font-size:.875rem;line-height:1.65;color:var(--black);white-space:pre-wrap;margin-bottom:12px;}
+
 /* NTE badges */
 .nte-b{display:inline-block;padding:2px 9px;border-radius:999px;font-size:.7rem;font-weight:500;text-transform:uppercase;}
 .nte-performance{background:#FEE2E2;color:var(--red);}
@@ -294,25 +320,30 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
 .nte-ztp{background:#FCE7F3;color:#9D174D;}
 .nte-protocol{background:#E0E7FF;color:#3730A3;}
 .nte-others{background:var(--g200);color:var(--g700);}
+
 /* ── MODAL TABS ── */
 .m-tabs{display:flex;border-bottom:2px solid var(--g200);margin-bottom:18px;}
 .m-tab{padding:9px 17px;font-size:.82rem;font-weight:500;cursor:pointer;color:var(--g500);border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .15s;}
 .m-tab.active{color:var(--black);border-bottom-color:var(--yellow);}
 .m-tab:hover{color:var(--black);}
+
 /* ── STAR ── */
 .star-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
 @media(max-width:560px){.star-grid{grid-template-columns:1fr;}}
 .star-box{background:var(--g50);border:2px solid var(--g200);border-radius:var(--rs);padding:14px;}
 .star-lbl{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--g500);margin-bottom:8px;display:flex;align-items:center;gap:8px;}
 .star-init{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;background:var(--yellow);border-radius:50%;font-size:.9rem;font-weight:600;color:var(--black);}
+
 /* ── CHART ── */
 .chart-card{background:var(--white);border:1px solid var(--g200);border-radius:var(--r);padding:18px;margin-bottom:18px;box-shadow:0 2px 12px rgba(0,0,0,.07),0 1px 3px rgba(0,0,0,.04);}
 .chart-card h4{font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--g600);margin-bottom:14px;padding-bottom:9px;border-bottom:2px solid var(--yellow-dk);}
 .chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px;}
 @media(max-width:700px){.chart-grid{grid-template-columns:1fr;}}
+
 /* ── TOAST ── */
 #toast{position:fixed;bottom:22px;right:22px;background:var(--hdr-grad);color:var(--white);padding:11px 18px;border-radius:var(--rs);font-size:.85rem;font-weight:500;box-shadow:var(--shl);transform:translateY(80px);opacity:0;transition:all .25s;z-index:9999;border-left:4px solid var(--yellow);}
 #toast.on{transform:translateY(0);opacity:1;}
+
 /* misc */
 .hidden{display:none!important;}
 .view{display:none;}
@@ -331,6 +362,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
   .stats-grid{grid-template-columns:repeat(2,1fr);}
   .lc-grid{grid-template-columns:1fr;}
 }
+
 /* ── COACHING CALCULATOR ── */
 .calc-section{background:var(--white);border:2px solid var(--g200);border-radius:var(--r);overflow:hidden;margin-bottom:14px;}
 .calc-wrap{overflow-x:auto;}
@@ -368,6 +400,8 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
 .setup-step strong{display:block;font-size:.78rem;text-transform:uppercase;letter-spacing:.5px;color:var(--g500);margin-bottom:4px;}
 .setup-code{font-family:monospace;background:var(--g200);padding:2px 6px;border-radius:4px;font-size:.8rem;}
 #loading-bar{position:fixed;top:0;left:0;height:3px;background:var(--yellow);width:0%;transition:width .3s;z-index:9999;}
+
+
 /* ── Agent Roster Manager (table style) ── */
 .rm-filter{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
 .rm-search{flex:1;min-width:160px;border:1px solid #e5e7eb;border-radius:8px;padding:8px 12px;font-size:13px;color:#1a1a1a;outline:none;background:#fff;}
@@ -400,6 +434,8 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
 /* legacy selectors kept for safety */
 .roster-add-row{display:flex;gap:8px;}
 .roster-add-inp{flex:1;background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;color:#1a1a1a;font-size:13px;}
+
+
 /* ── NTE Signature Pad ── */
 .sig-wrap{background:var(--g900);border-radius:12px;padding:20px;margin-top:16px;}
 .sig-wrap h4{color:var(--yellow);margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:.5px;}
@@ -407,6 +443,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
 .sig-actions{display:flex;gap:8px;margin-top:10px;align-items:center;}
 .sig-done-badge{background:#16a34a22;color:#4ade80;border:1px solid #16a34a44;border-radius:20px;padding:4px 14px;font-size:.8rem;font-weight:500;}
 .sig-img-preview{border-radius:8px;border:1px solid var(--g700);max-width:300px;margin-top:8px;}
+
 /* ── ATTENDANCE ── */
 .att-subtab{padding:10px 22px;font-size:.84rem;font-weight:600;font-family:inherit;border:none;background:transparent;color:var(--g500);cursor:pointer;border-bottom:3px solid transparent;transition:all .15s;}
 .att-subtab.active{color:var(--yellow-dk);border-bottom-color:var(--yellow);}
@@ -430,6 +467,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
 .att-appeal-btn{background:transparent;color:var(--blue);border:1.5px solid var(--blue);border-radius:6px;padding:4px 10px;font-size:.72rem;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;}
 .att-appeal-btn:hover{background:var(--blue);color:#fff;}
 .att-appeal-btn.done{background:#16a34a22;color:#15803D;border-color:#16a34a44;cursor:default;}
+
 /* ════════════════════════════════════════
    KNOWLEDGE BASE STYLES
 ════════════════════════════════════════ */
@@ -440,6 +478,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
   --r:12px;--rs:8px;
 }
 .kb-wrap{max-width:960px;margin:0 auto;padding:20px 16px 60px;}
+
 /* ── HEADER ── */
 .kb-hdr{background:var(--hdr);border-radius:16px;padding:28px 32px;margin-bottom:20px;color:#fff;position:relative;overflow:hidden;}
 .kb-hdr::before{content:'📖';position:absolute;right:24px;top:50%;transform:translateY(-50%);font-size:4rem;opacity:.15;}
@@ -449,6 +488,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
 .kb-stat{background:rgba(255,255,255,.15);border-radius:8px;padding:8px 14px;text-align:center;}
 .kb-stat-n{font-size:1.1rem;font-weight:700;}
 .kb-stat-l{font-size:.68rem;opacity:.8;margin-top:1px;}
+
 /* ── SEARCH ── */
 .kb-search-row{display:flex;gap:10px;margin-bottom:16px;}
 .kb-search-wrap{position:relative;flex:1;}
@@ -457,15 +497,18 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
 .kb-si{position:absolute;left:16px;top:50%;transform:translateY(-50%);font-size:1.05rem;}
 .kb-clear{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:.85rem;color:var(--g400);display:none;padding:2px 4px;}
 .kb-lang-badge{display:inline-flex;align-items:center;gap:5px;background:var(--green-lt);color:var(--green-dk);border-radius:999px;padding:4px 12px;font-size:.7rem;font-weight:600;white-space:nowrap;}
+
 /* ── CATEGORY TABS ── */
 .kb-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px;}
 .kb-tab{padding:7px 14px;border-radius:999px;font-size:.75rem;font-weight:500;cursor:pointer;border:2px solid var(--g200);background:#fff;color:var(--g500);transition:all .15s;white-space:nowrap;}
 .kb-tab:hover{border-color:var(--green);color:var(--green-dk);}
 .kb-tab.active{background:var(--green);border-color:var(--green);color:#fff;font-weight:600;}
+
 /* ── SECTION HEADER ── */
 .kb-section{margin-bottom:6px;}
 .kb-sec-title{display:flex;align-items:center;gap:10px;padding:6px 2px 10px;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--g500);}
 .kb-sec-title::after{content:'';flex:1;height:1px;background:var(--g200);}
+
 /* ── ACCORDION ITEM ── */
 .kb-item{background:#fff;border:1.5px solid var(--g200);border-radius:var(--r);margin-bottom:8px;overflow:hidden;transition:border-color .15s,box-shadow .15s;}
 .kb-item:hover{border-color:var(--g300);box-shadow:var(--shadow);}
@@ -479,6 +522,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
 .kb-qtag{background:var(--g100);color:var(--g500);border-radius:4px;padding:2px 7px;font-size:.62rem;}
 .kb-arrow{font-size:.7rem;color:var(--g300);margin-top:3px;transition:transform .2s;flex-shrink:0;}
 .kb-item.open .kb-arrow{transform:rotate(180deg);color:var(--green);}
+
 /* ── ANSWER ── */
 .kb-ans{display:none;border-top:1.5px solid var(--g100);}
 .kb-item.open .kb-ans{display:block;}
@@ -491,13 +535,16 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
 .kb-ans-body p:last-child{margin-bottom:0;}
 .kb-ans-body ul{padding-left:20px;margin:6px 0;}
 .kb-ans-body li{margin-bottom:4px;}
+
 /* ── SPIEL BOX ── */
 .spiel{background:var(--green-xlt);border:1.5px solid var(--green-lt);border-left:4px solid var(--green);border-radius:var(--rs);padding:14px 16px;margin:10px 0;}
 .spiel-lbl{font-size:.63rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--green-dk);margin-bottom:7px;}
 .spiel p{font-size:.83rem;font-style:italic;color:var(--g700);line-height:1.75;}
+
 /* ── AGENT NOTE ── */
 .agent-note{background:#FFFBEB;border:1.5px solid #FDE68A;border-left:4px solid #F59E0B;border-radius:var(--rs);padding:11px 14px;margin:10px 0;font-size:.78rem;color:#92400E;}
 .agent-note strong{display:block;font-size:.63rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;color:#B45309;}
+
 /* ── TABLE ── */
 .kb-table{width:100%;border-collapse:collapse;font-size:.8rem;margin:10px 0;}
 .kb-table th{background:var(--green-lt);padding:9px 12px;text-align:left;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--green-dk);}
@@ -508,12 +555,14 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
 .badge-y{background:#DCFCE7;color:#15803D;}
 .badge-n{background:#FEE2E2;color:#DC2626;}
 .badge-d{background:#FEF9C3;color:#854D0E;}
+
 /* ── STEP BOX ── */
 .steps{counter-reset:step;}
 .step{display:flex;gap:12px;margin-bottom:10px;}
 .step-n{background:var(--green);color:#fff;border-radius:50%;width:24px;height:24px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;}
 .step-body{flex:1;font-size:.83rem;color:var(--g700);line-height:1.7;}
 .step-body strong{color:var(--g900);}
+
 /* ── CATEGORY COLOR DOTS ── */
 .cat-time{border-left:4px solid #3B82F6;}
 .cat-included{border-left:4px solid #10B981;}
@@ -524,13 +573,16 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
 .cat-cleaners{border-left:4px solid #14B8A6;}
 .cat-support{border-left:4px solid #F97316;}
 .cat-spiel{border-left:4px solid var(--green);}
+
 /* ── EMPTY STATE ── */
 .kb-empty{text-align:center;padding:60px 24px;color:var(--g400);}
 .kb-empty .ei{font-size:3rem;margin-bottom:12px;}
 .kb-empty p{font-size:.85rem;}
 .kb-empty span{font-size:.78rem;color:var(--g300);}
+
 /* ── RESULT COUNT ── */
 .kb-count{font-size:.75rem;color:var(--g400);padding:0 2px 12px;}
+
 /* ── FAVORITES ── */
 .kb-star{background:none;border:none;cursor:pointer;font-size:1.05rem;padding:0 2px 0 8px;line-height:1;color:var(--g200);transition:color .15s,transform .15s;flex-shrink:0;margin-top:2px;}
 .kb-star:hover{color:#F59E0B;transform:scale(1.25);}
@@ -539,6 +591,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
 .kb-fav-empty .ei{font-size:2.5rem;margin-bottom:10px;}
 .kb-fav-empty p{font-size:.85rem;margin-bottom:4px;}
 .kb-fav-empty span{font-size:.75rem;color:var(--g300);}
+
 /* ── CALENDAR ── */
 .cal-cell{min-height:80px;padding:6px 7px;border-right:1px solid #f0f0f0;border-bottom:1px solid #f0f0f0;position:relative;font-size:.75rem;}
 .cal-cell.other-month{background:#fafafa;color:#bbb;}
@@ -562,8 +615,10 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
 </style>
 </head>
 <body>
+
 <!-- LOADING BAR -->
 <div id="loading-bar"></div>
+
 <!-- FIREBASE SETUP SCREEN (shown if config not filled in) -->
 <div id="setup-screen" style="display:none;">
   <div class="setup-card">
@@ -577,12 +632,14 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
     <p style="margin-top:16px;font-size:.78rem;color:var(--g400);">After setup, all coaching logs entered by any TL will instantly appear for all other users on any device.</p>
   </div>
 </div>
+
 <!-- ═══════════════ LOGIN ═══════════════ -->
 <div id="login-page">
   <div class="login-card">
     <h1 class="login-title">PHOENIX</h1>
     <p class="login-sub">Coaching Log Management System</p>
     <div id="lerr" class="login-err"></div>
+
     <!-- Step 1 — Email -->
     <div id="ls1">
       <div class="fg">
@@ -591,6 +648,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
       </div>
       <button class="btn-login" onclick="doEmailContinue()">Continue →</button>
     </div>
+
     <!-- Step 2 — Password (existing) or Set password (new) -->
     <div id="ls2" style="display:none">
       <p id="ls2-hint" style="font-size:.85rem;color:#888;margin-bottom:14px;text-align:left"></p>
@@ -607,8 +665,10 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
     </div>
   </div>
 </div>
+
 <!-- ═══════════════ APP ═══════════════ -->
 <div id="app">
+
   <!-- ── SIDEBAR ── -->
   <nav id="sidebar">
     <div class="sb-brand">
@@ -618,6 +678,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
         <div class="sb-sub">Coaching Log</div>
       </div>
     </div>
+
     <!-- OM nav -->
     <div id="om-nav" class="hidden">
       <div class="sb-section-lbl">PERFORMANCE</div>
@@ -646,6 +707,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
       <div class="sb-item agent-hide" data-tab="suggestions" onclick="switchOM('suggestions')"><span class="sb-icon">💡</span><span>Suggestions &amp; Reports</span></div>
       <div class="sb-item agent-hide" id="admin-onboard-btn" data-tab="onboard" onclick="switchOM('onboard')"><span class="sb-icon">👥</span><span>Onboarding / Offboarding</span></div>
     </div>
+
     <!-- TL nav -->
     <div id="tl-nav" class="hidden">
       <div class="sb-section-lbl">PERFORMANCE</div>
@@ -672,6 +734,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
       <div class="sb-item" onclick="openRosterMgr()"><span class="sb-icon">⚙️</span><span>Manage Roster</span></div>
       <div class="sb-item" id="tl-nav-onboard" onclick="tlShowView('onboard')"><span class="sb-icon">👥</span><span>Onboarding / Offboarding</span></div>
     </div>
+
     <!-- Agent nav -->
     <div id="agent-nav" class="hidden">
       <div class="sb-section-lbl">MY RECORDS</div>
@@ -686,6 +749,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
       <div class="sb-item" data-tab="kb" onclick="switchAgentTab('kb')"><span class="sb-icon">📖</span><span>Knowledge Base</span></div>
       <div class="sb-divider"></div>
     </div>
+
     <div class="sb-footer">
       <!-- Suggestion bubble — agent view only -->
       <div id="sg-bubble-wrap" style="display:none;margin-bottom:10px;">
@@ -742,6 +806,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
       <button class="sb-logout" onclick="doLogout()">Sign Out →</button>
     </div>
   </nav>
+
   <!-- ── CONTENT ── -->
   <div id="content">
     <!-- Top bar -->
@@ -749,8 +814,10 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
       <div class="tb-title" id="tb-title">Dashboard</div>
       <div class="tb-actions" id="tb-actions"></div>
     </div>
+
   <!-- MAIN -->
   <div id="main">
+
     <!-- TL DASHBOARD -->
     <div id="v-tl" class="view active">
       <div class="week-bar">
@@ -764,6 +831,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
           <option value="">All Agents</option>
         </select>
       </div>
+
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-val" id="s-cnt">0</div>
@@ -775,6 +843,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
         <div class="stat-card"><div class="stat-val" id="s-wk2">—</div><div class="stat-lbl">Avg. WK2 CVR%</div></div>
       </div>
     </div>
+
     <!-- TL COACHING LOGS (separate view) -->
     <div id="v-tl-logs" class="view">
       <div class="week-bar">
@@ -788,10 +857,12 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
           <option value="">All Agents</option>
         </select>
       </div>
+
       <div class="filter-bar">
         <input class="f-search" id="f-search" placeholder="🔍 Search agent, team lead…" oninput="renderTable()"/>
         <button class="btn btn-outline btn-sm" onclick="clearFilters()">✕ Clear</button>
       </div>
+
       <div class="tbl-wrap">
         <div class="tbl-hdr"><h3>Coaching Entries</h3><span class="cnt-badge" id="tbl-cnt">0</span></div>
         <div class="tbl-scroll">
@@ -806,12 +877,14 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
         </div>
       </div>
     </div>
+
     <!-- TL ATTENDANCE POINTS VIEW -->
     <div id="v-tl-attendance" class="view">
       <div style="padding:0 0 16px 0;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
         <h2 style="margin:0;font-size:1.1rem;font-weight:700;color:var(--g900)">🗓️ Attendance Points Summary</h2>
         <span style="font-size:.75rem;color:var(--g400);margin-left:auto">Rolling 4-month window</span>
       </div>
+
       <!-- Alert level legend -->
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
         <span style="background:#FEF9C3;border:1px solid #FDE047;border-radius:20px;padding:3px 12px;font-size:.75rem;font-weight:600;color:#854D0E">🟡 Yellow: 2–3.75 pts</span>
@@ -819,6 +892,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
         <span style="background:#FEE2E2;border:1px solid #F87171;border-radius:20px;padding:3px 12px;font-size:.75rem;font-weight:600;color:#7F1D1D">🔴 Red: 6+ pts</span>
         <span style="background:#F0FDF4;border:1px solid #4ADE80;border-radius:20px;padding:3px 12px;font-size:.75rem;font-weight:600;color:#14532D">✅ Clear: &lt;2 pts</span>
       </div>
+
       <!-- Summary table -->
       <div class="tbl-wrap">
         <div class="tbl-hdr">
@@ -840,6 +914,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
           </table>
         </div>
       </div>
+
       <!-- Per-agent detail accordion (populated on click) -->
       <div id="tl-att-detail" style="margin-top:18px;display:none">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
@@ -856,10 +931,13 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
           </table>
         </div>
       </div>
+
       <!-- Attendance Points Guide -->
       <div style="margin-top:24px;background:#fff;border-radius:12px;border:1px solid var(--g200);padding:16px 20px">
         <h3 style="margin:0 0 12px 0;font-size:.9rem;font-weight:700;color:var(--g700)">📖 Attendance Points Guide</h3>
+
         <p style="font-size:.8rem;color:var(--g600);margin:0 0 10px 0">Points are calculated from the <strong>combined Late + Early Out minutes</strong> from Hubstaff. Only records within the last 4 months are counted as active.</p>
+
         <table style="width:100%;border-collapse:collapse;font-size:.8rem;margin-bottom:14px">
           <thead><tr style="background:var(--g50)">
             <th style="text-align:left;padding:6px 10px;border-bottom:1px solid var(--g200)">Combined Time (Late + Early Out)</th>
@@ -875,6 +953,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
             <tr style="background:#FEF2F2"><td style="padding:5px 10px">NCNS — No Call, No Show (manually recorded)</td><td style="text-align:center;padding:5px 10px;font-weight:700">2.00</td></tr>
           </tbody>
         </table>
+
         <table style="width:100%;border-collapse:collapse;font-size:.8rem">
           <thead><tr style="background:var(--g50)">
             <th style="text-align:left;padding:6px 10px;border-bottom:1px solid var(--g200)">Alert Level</th>
@@ -890,6 +969,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
         </table>
       </div>
     </div>
+
     <!-- OM COACHING -->
     <!-- OM COACHING DASHBOARD (charts) -->
     <div id="v-om-dash" class="view">
@@ -907,6 +987,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
         <div class="chart-card"><h4>📈 Entries Per Day</h4><canvas id="ch-day" height="200"></canvas></div>
         <div class="chart-card"><h4>📊 By Team Lead</h4><canvas id="ch-tl" height="200"></canvas></div>
       </div>
+
       <!-- Per-TL coaching breakdown by week -->
       <div style="margin-top:22px;background:#fff;border:1px solid var(--g200);border-radius:12px;padding:18px 20px;">
         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
@@ -920,6 +1001,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
         </div>
       </div>
     </div>
+
     <!-- OM COACHING LOGS (table only) -->
     <div id="v-om-c" class="view">
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
@@ -947,6 +1029,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
         </div>
       </div>
     </div>
+
     <!-- OM NTE -->
     <div id="v-om-n" class="view">
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
@@ -970,6 +1053,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
         </div>
       </div>
     </div>
+
     <!-- OM FOLLOW THROUGH -->
     <div id="v-om-f" class="view">
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
@@ -993,12 +1077,15 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
         </div>
       </div>
     </div>
+
+
     <!-- OM ATTENDANCE POINTS DASHBOARD -->
     <div id="v-om-attendance" class="view">
       <div id="om-att-content">
         <!-- Rendered by renderOMAttendance() -->
       </div>
     </div>
+
     <!-- RESET PASSWORDS VIEW (OM only) -->
     <div id="v-om-pwreset" class="view">
       <div style="background:#fff;border-radius:14px;padding:24px 28px;border:1px solid #e5e7eb;box-shadow:0 2px 8px rgba(0,0,0,.06);max-width:640px;">
@@ -1011,6 +1098,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
         </div>
       </div>
     </div>
+
     <!-- SUGGESTIONS & REPORTS VIEW (OM only) -->
     <div id="v-om-suggestions" class="view">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
@@ -1035,7 +1123,9 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
         </div>
       </div>
       <div id="sg-om-list" style="font-size:.85rem;color:#9ca3af;font-style:italic;">Loading…</div>
+
     </div>
+
     <!-- AGENT VIEW (filtered — own records only) -->
     <div id="v-agent" class="view">
       <!-- Welcome banner -->
@@ -1062,6 +1152,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
           </div>
         </div>
       </div>
+
       <!-- Coaching Logs section -->
       <div id="av-coaching" class="av-section">
         <div class="tbl-wrap">
@@ -1078,6 +1169,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
           </div>
         </div>
       </div>
+
       <!-- NTE Logs section -->
       <div id="av-nte" class="av-section" style="display:none">
         <div class="tbl-wrap">
@@ -1092,6 +1184,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
           </div>
         </div>
       </div>
+
       <!-- Follow Through section -->
       <div id="av-ft" class="av-section" style="display:none">
         <div class="tbl-wrap">
@@ -1106,6 +1199,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
           </div>
         </div>
       </div>
+
       <!-- My Performance section -->
       <div id="av-perf" class="av-section" style="display:none">
         <div class="tbl-wrap">
@@ -1130,10 +1224,13 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
           </div>
         </div>
       </div>
+
       <!-- ── PHOENIX CALCULATOR ── -->
       <div id="av-calc" class="av-section" style="display:none">
+
         <!-- ── PHOENIX INCENTIVE CALCULATOR ── -->
         <div style="max-width:100%;">
+
           <!-- Tier Guide -->
           <div style="background:var(--hdr-grad);border-radius:12px 12px 0 0;padding:13px 22px;">
             <div style="font-size:.82rem;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:1px;">🏆 CVR% Tier Guide</div>
@@ -1160,6 +1257,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
               <div style="font-size:.82rem;font-weight:600;color:#dc2626;margin-top:3px;">Below 2.45%</div>
             </div>
           </div>
+
           <!-- Inputs -->
           <div style="background:var(--g800);padding:11px 22px;border-left:1px solid var(--yellow-dk);border-right:1px solid var(--yellow-dk);">
             <div style="font-size:.8rem;font-weight:800;color:var(--yellow);text-transform:uppercase;letter-spacing:.8px;">✏️ Enter Your Metrics</div>
@@ -1184,8 +1282,10 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
                 oninput="calcPhoenix()">
             </div>
           </div>
+
           <!-- Empty state -->
           <div id="px-empty" style="background:#fff;border:1px solid var(--yellow-dk);border-top:none;padding:18px 22px;text-align:center;color:#9ca3af;font-size:.9rem;"></div>
+
           <!-- Result panel -->
           <div id="px-result" style="display:none;background:var(--hdr-grad);border:1px solid var(--yellow-dk);border-top:none;padding:24px 26px;box-shadow:0 4px 14px rgba(94,138,80,.22);">
             <div style="display:grid;grid-template-columns:1fr 1.5fr 1.2fr;gap:24px;align-items:start;">
@@ -1206,6 +1306,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
               </div>
             </div>
           </div>
+
           <!-- Info box -->
           <div style="background:var(--yellow-lt);border:1px solid var(--yellow-dk);border-top:none;border-radius:0 0 12px 12px;padding:16px 22px;">
             <div style="font-size:.9rem;font-weight:700;color:var(--yellow-dk);margin-bottom:10px;">ℹ️ How Valid Points Are Counted</div>
@@ -1217,17 +1318,23 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
               <li>Your CVR% determines your Tier — higher CVR% unlocks higher per-point rates above 4</li>
             </ul>
           </div>
+
         </div>
+
       </div>
+
       <!-- ── MY ATTENDANCE ── -->
       <div id="av-attendance" class="av-section" style="display:none">
+
         <!-- Alert Banner -->
         <div id="att-alert-banner" style="display:none"></div>
+
         <!-- Sub-tab bar -->
         <div style="background:#fff;border-radius:12px 12px 0 0;border:1px solid var(--g200);border-bottom:none;padding:0 8px;display:flex;gap:0;margin-bottom:0;">
           <button id="att-sub-log" class="att-subtab active" onclick="switchAttTab('log')">📋 Attendance Log</button>
           <button id="att-sub-policy" class="att-subtab" onclick="switchAttTab('policy')">📖 Attendance Policy</button>
         </div>
+
         <!-- LOG PANEL -->
         <div id="att-panel-log">
           <!-- Points Summary -->
@@ -1242,6 +1349,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
               <div id="att-level-chip" style="font-size:.78rem;font-weight:700;padding:5px 14px;border-radius:999px;background:rgba(255,255,255,.2);color:#fff;">✅ Clear</div>
             </div>
           </div>
+
           <!-- Table -->
           <div class="tbl-wrap" style="border-radius:0 0 12px 12px;">
             <div class="tbl-scroll">
@@ -1256,13 +1364,17 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
             </div>
           </div>
         </div>
+
         <!-- POLICY PANEL -->
         <div id="att-panel-policy" style="display:none">
           <div class="tbl-wrap" style="padding:22px;border-radius:0 0 12px 12px;">
+
             <div style="font-size:1rem;font-weight:700;color:var(--black);margin-bottom:16px;">📖 Attendance Policy — Penalty & Points Guide</div>
+
             <div style="background:var(--yellow-lt);border:1.5px solid var(--yellow);border-radius:10px;padding:16px;margin-bottom:20px;font-size:.84rem;line-height:1.7;color:var(--black);">
               Attendance points remain on record for <strong>4 months</strong> from the date of occurrence. After 4 months, the points are automatically cleared from your active total. Accumulating points within a 4-month window may result in progressive disciplinary action.
             </div>
+
             <!-- Occurrence Types & Definitions -->
             <div style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--g500);margin-bottom:10px;">Occurrence Types</div>
             <div class="tbl-wrap" style="margin-bottom:20px;">
@@ -1276,6 +1388,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
                 </tbody>
               </table>
             </div>
+
             <!-- Point Calculation Table -->
             <div style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--g500);margin-bottom:10px;">Point Calculation — Based on Combined Late + Early-Out Time</div>
             <div style="background:var(--g50);border:1px solid var(--g200);border-radius:8px;padding:10px 14px;margin-bottom:10px;font-size:.78rem;color:var(--g600);">
@@ -1295,6 +1408,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
                 </tbody>
               </table>
             </div>
+
             <!-- Progressive Discipline -->
             <div style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--g500);margin-bottom:10px;">Progressive Discipline Thresholds</div>
             <div class="tbl-wrap" style="margin-bottom:20px;">
@@ -1308,13 +1422,17 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
                 </tbody>
               </table>
             </div>
+
             <!-- Appeal -->
             <div style="background:#EFF6FF;border:1.5px solid #BFDBFE;border-radius:10px;padding:16px;font-size:.84rem;line-height:1.7;color:#1E3A5F;">
               <strong>📋 Appeals Process:</strong> If you believe an attendance record is inaccurate, you may submit an appeal directly from the Attendance Log tab by clicking the <em>Appeal</em> button on any record. Your appeal will be reviewed by your Team Lead and Operations Manager.
             </div>
+
           </div>
         </div>
+
       </div><!-- /av-attendance -->
+
       <!-- ── LEAD FOLLOW-UP ── -->
       <div id="av-leads" class="av-section" style="display:none">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
@@ -1339,7 +1457,12 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
         <!-- Lead cards -->
         <div id="lead-list" style="display:flex;flex-direction:column;gap:10px;"></div>
       </div><!-- /av-leads -->
+
   </div><!-- /main -->
+
+
+
+
 <!-- CALENDAR VIEW -->
 <div id="v-cal" class="view">
   <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px;">
@@ -1384,6 +1507,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
     <div id="todo-list" style="display:flex;flex-direction:column;gap:6px;"></div>
   </div>
 </div>
+
 <!-- TL/OM LEAD FOLLOW-UP VIEW -->
 <div id="v-leads-tl" class="view">
   <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
@@ -1415,6 +1539,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
   <!-- Lead list -->
   <div id="tl-lead-list" style="display:flex;flex-direction:column;gap:10px;"></div>
 </div>
+
 <!-- ADD EVENT MODAL -->
 <div id="cal-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9000;align-items:center;justify-content:center;">
   <div style="background:#fff;border-radius:14px;padding:28px 26px;width:360px;max-width:95vw;box-shadow:var(--shl);">
@@ -1437,6 +1562,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
     </div>
   </div>
 </div>
+
 <!-- ACTION ITEMS VIEW -->
 <div id="v-actions" class="view">
   <!-- Header -->
@@ -1477,6 +1603,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
   <!-- Empty state -->
   <div id="ai-empty" style="display:none;text-align:center;padding:40px;color:var(--g400);font-size:.88rem;">No action items yet.</div>
 </div>
+
 <!-- ONBOARDING / OFFBOARDING VIEW -->
 <div id="v-onboard" class="view">
   <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px;">
@@ -1497,6 +1624,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
   <div id="ob-cards" style="display:flex;flex-direction:column;gap:10px;"></div>
   <div id="ob-empty" style="display:none;text-align:center;padding:40px;color:var(--g400);font-size:.88rem;">No entries yet. Click "+ New Entry" to add one.</div>
 </div>
+
 <!-- AGENT RANKING VIEW -->
 <div id="v-ranking" class="view">
   <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px;">
@@ -1527,6 +1655,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
   </div>
   <div id="rank-cards" style="display:flex;flex-direction:column;gap:9px;"></div>
 </div>
+
 <!-- ADD ACTION ITEM MODAL -->
 <div id="ai-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9100;align-items:center;justify-content:center;">
   <div style="background:#fff;border-radius:14px;padding:28px 26px;width:420px;max-width:95vw;box-shadow:var(--shl);max-height:90vh;overflow-y:auto;">
@@ -1565,6 +1694,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
     </div>
   </div>
 </div>
+
 <!-- LEAD FOLLOW-UP MODAL -->
 <div id="lead-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9200;align-items:center;justify-content:center;">
   <div style="background:#fff;border-radius:14px;padding:28px 26px;width:440px;max-width:95vw;box-shadow:var(--shl);max-height:90vh;overflow-y:auto;">
@@ -1603,11 +1733,13 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
     </div>
   </div>
 </div>
+
 <!-- ════════════════════════════════════════
      KNOWLEDGE BASE VIEW (all roles)
 ════════════════════════════════════════ -->
 <div id="v-kb" class="view">
 <div class="kb-wrap">
+
 <!-- HEADER -->
 <div class="kb-hdr">
   <h1>📖 Agent Knowledge Base</h1>
@@ -1618,6 +1750,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
     <div class="kb-stat"><div class="kb-stat-n">🇺🇸 🇵🇭</div><div class="kb-stat-l">Bilingual</div></div>
   </div>
 </div>
+
 <!-- SEARCH -->
 <div class="kb-search-row">
   <div class="kb-search-wrap">
@@ -1627,6 +1760,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
   </div>
   <span class="kb-lang-badge" id="kb-lang" style="display:none"></span>
 </div>
+
 <!-- CATEGORY TABS -->
 <div class="kb-tabs" id="kb-tabs">
   <div class="kb-tab active" onclick="filterCat('all',this)">🗂 All</div>
@@ -1640,13 +1774,18 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
   <div class="kb-tab" onclick="filterCat('cleaners',this)">🧹 Cleaners</div>
   <div class="kb-tab" onclick="filterCat('support',this)">📞 Support</div>
 </div>
+
 <div class="kb-count" id="kb-count"></div>
 <div id="kb-results"></div>
+
 </div><!-- /wrap -->
 </div>
+
   </div><!-- /content -->
 </div><!-- /app -->
+
 <!-- ═══════════════ MODALS ═══════════════ -->
+
 <!-- NOTION-STYLE COACHING LOG DETAIL -->
 <div class="overlay" id="m-logdetail">
   <div class="modal modal-lg">
@@ -1683,6 +1822,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
     </div>
   </div>
 </div>
+
 <!-- AGENT DETAIL -->
 <div class="overlay" id="m-detail">
   <div class="modal modal-lg">
@@ -1703,6 +1843,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
     <div class="mfooter"><button class="btn btn-outline" onclick="closeM('m-detail')">Close</button></div>
   </div>
 </div>
+
 <!-- SUGGESTIONS / REPORT ISSUE MODAL -->
 <div class="overlay" id="m-suggest">
   <div class="modal" style="max-width:520px;">
@@ -1712,6 +1853,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
     </div>
     <div class="mbody">
       <p style="margin:0 0 16px;font-size:.82rem;color:#6b7280;">Have an idea or spotted an issue? Share it here — only your TL and OM can see your name.</p>
+
       <!-- Type -->
       <div style="margin-bottom:14px;">
         <label style="display:block;font-size:.75rem;font-weight:600;color:#374151;margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em;">Type</label>
@@ -1722,21 +1864,25 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
           <label style="display:flex;align-items:center;gap:5px;font-size:.82rem;cursor:pointer;"><input type="radio" name="sg-type" value="Other"> 📌 Other</label>
         </div>
       </div>
+
       <!-- Subject -->
       <div style="margin-bottom:14px;">
         <label style="display:block;font-size:.75rem;font-weight:600;color:#374151;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em;">Subject <span style="color:#ef4444;">*</span></label>
         <input id="sg-subject" type="text" maxlength="120" placeholder="Brief title of your suggestion or issue…" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:.85rem;box-sizing:border-box;font-family:inherit;">
       </div>
+
       <!-- Details -->
       <div style="margin-bottom:16px;">
         <label style="display:block;font-size:.75rem;font-weight:600;color:#374151;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em;">Details <span style="color:#ef4444;">*</span></label>
         <textarea id="sg-body" rows="5" maxlength="2000" placeholder="Describe in detail. For bugs, mention what happened and what you expected…" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:.85rem;resize:vertical;box-sizing:border-box;font-family:inherit;"></textarea>
         <div id="sg-char" style="text-align:right;font-size:.7rem;color:#9ca3af;margin-top:2px;">0 / 2000</div>
       </div>
+
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
         <button onclick="submitSuggestion()" style="background:#16a34a;color:#fff;border:none;border-radius:8px;padding:10px 22px;font-size:.85rem;font-weight:600;cursor:pointer;font-family:inherit;">Submit</button>
         <span id="sg-status" style="font-size:.8rem;color:#16a34a;display:none;"></span>
       </div>
+
       <!-- Past submissions -->
       <div style="border-top:1px solid #e5e7eb;padding-top:16px;">
         <div style="font-size:.75rem;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">My Past Submissions</div>
@@ -1745,6 +1891,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
     </div>
   </div>
 </div>
+
 <!-- COACHING LOG -->
 <div class="overlay" id="m-log">
   <div class="modal modal-lg">
@@ -1770,6 +1917,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
           <div style="font-size:.72rem;color:var(--g500);margin-top:5px;">📌 Enter the week number of the agent's performance being coached.</div>
         </div>
       </div>
+
       <div class="sec-hdr"><h3>Performance Metrics</h3></div>
       <div class="fg3">
         <div class="fg"><label>Leads Touch <span class="req">★</span></label><input type="number" id="cl-leads" min="0" oninput="calcMetrics();saveDraftLog()"/></div>
@@ -1780,6 +1928,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
         <div class="fg"><label>CVR% — Conversion Rate</label><div class="auto-calc" id="cl-cvr-d">Auto-calculated</div><input type="hidden" id="cl-cvr"/></div>
         <div class="fg"><label>WK2 CVR% <span class="req">★</span></label><input type="number" id="cl-wk2" min="0" max="100" step="0.1" placeholder="Enter manually" oninput="saveDraftLog()"/></div>
       </div>
+
       <!-- 4-week trajectory -->
       <div class="sec-hdr" style="background:#f9fafb;border-top:2px solid #e5e7eb;"><h3 style="color:#374151;">📊 4-Week Trajectory</h3></div>
       <div id="traj-wrap" style="overflow-x:auto;padding:0 0 8px;">
@@ -1800,6 +1949,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
           <tbody id="traj-body"></tbody>
         </table>
       </div>
+
       <div class="sec-hdr" style="background:var(--g800);"><h3 style="color:var(--yellow);">🎯 Coaching Focus &amp; Target Calculator</h3></div>
       <div class="calc-section">
         <!-- Focus checkboxes -->
@@ -1866,6 +2016,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
         </div>
         <div class="calc-note">💡 Current column auto-fills from performance data above. Set a target TCR% to project connects &amp; sales; set a target CSR% to project sales impact. Target Leads auto-fills from your entry (override if needed).</div>
       </div>
+
       <div class="sec-hdr"><h3>Coaching Notes</h3></div>
       <div class="fg2">
         <div class="fg"><label>NTE Type (if applicable)</label>
@@ -1889,6 +2040,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
     </div>
   </div>
 </div>
+
 <!-- DOCUMENTS -->
 <div class="overlay" id="m-docs">
   <div class="modal" style="max-width:480px;width:95%;">
@@ -1897,6 +2049,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
       <button class="mclose" onclick="closeM('m-docs')">✕</button>
     </div>
     <div class="mbody" style="padding:16px 20px 20px;">
+
       <!-- ADHERENCE DRAWER -->
       <details open style="margin-bottom:8px;border:1.5px solid var(--g200);border-radius:10px;overflow:hidden;">
         <summary style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;background:var(--g100);cursor:pointer;user-select:none;font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--g700);list-style:none;-webkit-appearance:none;">
@@ -1904,6 +2057,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
           <span style="font-size:.7rem;color:var(--g400);transition:transform .2s;" class="doc-chev">▼</span>
         </summary>
         <div style="padding:12px;display:flex;flex-direction:column;gap:8px;">
+
           <a href="https://docs.google.com/document/d/1yzFrW5HjC4lCdPyzMoYoyxX0X_rcte8amE4WkQpkqrU/edit?tab=t.0" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--g200);border-radius:8px;text-decoration:none;color:inherit;background:#fff;">
             <span style="font-size:1.1rem;">📄</span>
             <div style="flex:1;">
@@ -1912,6 +2066,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
             </div>
             <span style="font-size:.7rem;background:#fef3c7;color:#92400e;padding:2px 7px;border-radius:4px;font-weight:600;">COPY</span>
           </a>
+
           <a href="https://docs.google.com/document/d/1eCeaX0CVLax1Xb7CNcyLyFpZMdXfv6Jmwuytt74Ja0Q/edit?tab=t.0" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--g200);border-radius:8px;text-decoration:none;color:inherit;background:#fff;">
             <span style="font-size:1.1rem;">📄</span>
             <div style="flex:1;">
@@ -1920,6 +2075,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
             </div>
             <span style="font-size:.7rem;background:#fef3c7;color:#92400e;padding:2px 7px;border-radius:4px;font-weight:600;">COPY</span>
           </a>
+
           <a href="https://docs.google.com/document/d/1jOD2EdcBD5XorbgrUx19ZGe4IahiqJYE9x5NP7YnS9Q/edit?tab=t.0" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--g200);border-radius:8px;text-decoration:none;color:inherit;background:#fff;">
             <span style="font-size:1.1rem;">📄</span>
             <div style="flex:1;">
@@ -1928,6 +2084,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
             </div>
             <span style="font-size:.7rem;background:#fef3c7;color:#92400e;padding:2px 7px;border-radius:4px;font-weight:600;">COPY</span>
           </a>
+
           <a href="https://docs.google.com/document/d/1jyPxLUlaqhAf4YIHjtImV75daAfs94Z38eS65oXnrCE/edit?tab=t.0" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--g200);border-radius:8px;text-decoration:none;color:inherit;background:#fff;">
             <span style="font-size:1.1rem;">📄</span>
             <div style="flex:1;">
@@ -1936,6 +2093,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
             </div>
             <span style="font-size:.7rem;background:#fef3c7;color:#92400e;padding:2px 7px;border-radius:4px;font-weight:600;">COPY</span>
           </a>
+
           <a href="https://docs.google.com/document/d/1x1ox02PYdkAAH7Xjzl3oWANQpcjf2iIsyP8XDswNWfI/edit?tab=t.0" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--g200);border-radius:8px;text-decoration:none;color:inherit;background:#fff;">
             <span style="font-size:1.1rem;">📖</span>
             <div style="flex:1;">
@@ -1944,8 +2102,10 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
             </div>
             <span style="font-size:.7rem;background:#e0e7ff;color:#3730a3;padding:2px 7px;border-radius:4px;font-weight:600;">REF</span>
           </a>
+
         </div>
       </details>
+
       <!-- ATTENDANCE DRAWER -->
       <details style="margin-bottom:8px;border:1.5px solid var(--g200);border-radius:10px;overflow:hidden;">
         <summary style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;background:var(--g100);cursor:pointer;user-select:none;font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--g700);list-style:none;-webkit-appearance:none;">
@@ -1953,6 +2113,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
           <span style="font-size:.7rem;color:var(--g400);" class="doc-chev">▼</span>
         </summary>
         <div style="padding:12px;display:flex;flex-direction:column;gap:8px;">
+
           <a href="https://docs.google.com/document/d/1fKaQQxztnlj9E1ESZJLM9_SlUa2ehruC7yAoHBr0ISk/edit?tab=t.0" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--g200);border-radius:8px;text-decoration:none;color:inherit;background:#fff;">
             <span style="font-size:1.1rem;">📄</span>
             <div style="flex:1;">
@@ -1961,6 +2122,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
             </div>
             <span style="font-size:.7rem;background:#fef3c7;color:#92400e;padding:2px 7px;border-radius:4px;font-weight:600;">COPY</span>
           </a>
+
           <a href="https://docs.google.com/document/d/1vw2WfdQo4amzQWUf4d6nDlDGxmaZ9hZLjnt4hcw4u6w/edit?tab=t.0" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--g200);border-radius:8px;text-decoration:none;color:inherit;background:#fff;">
             <span style="font-size:1.1rem;">📄</span>
             <div style="flex:1;">
@@ -1969,6 +2131,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
             </div>
             <span style="font-size:.7rem;background:#fef3c7;color:#92400e;padding:2px 7px;border-radius:4px;font-weight:600;">COPY</span>
           </a>
+
           <a href="https://docs.google.com/document/d/1hGWZPa73cYjUvOBjC_LZ-14j87wngCOOnR6wQlDyhxo/edit?tab=t.0" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--g200);border-radius:8px;text-decoration:none;color:inherit;background:#fff;">
             <span style="font-size:1.1rem;">📄</span>
             <div style="flex:1;">
@@ -1977,6 +2140,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
             </div>
             <span style="font-size:.7rem;background:#fef3c7;color:#92400e;padding:2px 7px;border-radius:4px;font-weight:600;">COPY</span>
           </a>
+
           <a href="https://docs.google.com/document/d/1unzlD8_D87-qgq-g4hC73ixJBkFdGFN3UOZxZZbyUBQ/edit?tab=t.0" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--g200);border-radius:8px;text-decoration:none;color:inherit;background:#fff;">
             <span style="font-size:1.1rem;">📄</span>
             <div style="flex:1;">
@@ -1985,6 +2149,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
             </div>
             <span style="font-size:.7rem;background:#fef3c7;color:#92400e;padding:2px 7px;border-radius:4px;font-weight:600;">COPY</span>
           </a>
+
           <a href="https://docs.google.com/document/d/1jtBhj19RyvH2Fixc7uh2qU4qYwQ4IueOpgedfIQ792c/edit?tab=t.0" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--g200);border-radius:8px;text-decoration:none;color:inherit;background:#fff;">
             <span style="font-size:1.1rem;">📄</span>
             <div style="flex:1;">
@@ -1993,6 +2158,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
             </div>
             <span style="font-size:.7rem;background:#fef3c7;color:#92400e;padding:2px 7px;border-radius:4px;font-weight:600;">COPY</span>
           </a>
+
           <a href="https://docs.google.com/presentation/d/1a0ZWcW27x_juGxnMX_HOPQfUc_m5WXc7cAJsHM0BKWA/edit?slide=id.p6#slide=id.p6" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--g200);border-radius:8px;text-decoration:none;color:inherit;background:#fff;">
             <span style="font-size:1.1rem;">📊</span>
             <div style="flex:1;">
@@ -2001,6 +2167,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
             </div>
             <span style="font-size:.7rem;background:#e0e7ff;color:#3730a3;padding:2px 7px;border-radius:4px;font-weight:600;">REF</span>
           </a>
+
           <a href="https://docs.google.com/presentation/d/1a0ZWcW27x_juGxnMX_HOPQfUc_m5WXc7cAJsHM0BKWA/edit?slide=id.p10#slide=id.p10" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--g200);border-radius:8px;text-decoration:none;color:inherit;background:#fff;">
             <span style="font-size:1.1rem;">📊</span>
             <div style="flex:1;">
@@ -2009,6 +2176,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
             </div>
             <span style="font-size:.7rem;background:#e0e7ff;color:#3730a3;padding:2px 7px;border-radius:4px;font-weight:600;">REF</span>
           </a>
+
           <a href="https://docs.google.com/spreadsheets/d/1Xgk5txTCknhEyTcOrkZA1QgFrpWyzPiIaLAy1Yd9Fqg/edit?gid=1730443937#gid=1730443937" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--g200);border-radius:8px;text-decoration:none;color:inherit;background:#fff;">
             <span style="font-size:1.1rem;">📊</span>
             <div style="flex:1;">
@@ -2017,6 +2185,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
             </div>
             <span style="font-size:.7rem;background:#e0e7ff;color:#3730a3;padding:2px 7px;border-radius:4px;font-weight:600;">REF</span>
           </a>
+
         </div>
       </details>
       <!-- ONBOARDING DRAWER -->
@@ -2026,6 +2195,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
           <span style="font-size:.7rem;color:var(--g400);" class="doc-chev">▼</span>
         </summary>
         <div style="padding:12px;display:flex;flex-direction:column;gap:8px;">
+
           <a href="https://docs.google.com/presentation/d/1-hfvIiofuchcjW_Lv-GDmO7-3oMX6WYrg8X61Tw8d5M/edit?slide=id.g3e6ee815f80_1_23#slide=id.g3e6ee815f80_1_23" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--g200);border-radius:8px;text-decoration:none;color:inherit;background:#fff;">
             <span style="font-size:1.1rem;">📊</span>
             <div style="flex:1;">
@@ -2034,6 +2204,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
             </div>
             <span style="font-size:.7rem;background:#e0e7ff;color:#3730a3;padding:2px 7px;border-radius:4px;font-weight:600;">REF</span>
           </a>
+
           <a href="https://docs.google.com/document/d/1l1C2x0zWqWXJjGAMXtXuDJKdv-29zfzFkKDoUIs6VAM/edit?tab=t.0" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--g200);border-radius:8px;text-decoration:none;color:inherit;background:#fff;">
             <span style="font-size:1.1rem;">📄</span>
             <div style="flex:1;">
@@ -2042,8 +2213,10 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
             </div>
             <span style="font-size:.7rem;background:#e0e7ff;color:#3730a3;padding:2px 7px;border-radius:4px;font-weight:600;">REF</span>
           </a>
+
         </div>
       </details>
+
       <!-- SALES & PERFORMANCE DRAWER -->
       <details style="margin-bottom:8px;border:1.5px solid var(--g200);border-radius:10px;overflow:hidden;">
         <summary style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;background:var(--g100);cursor:pointer;user-select:none;font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--g700);list-style:none;-webkit-appearance:none;">
@@ -2051,6 +2224,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
           <span style="font-size:.7rem;color:var(--g400);" class="doc-chev">▼</span>
         </summary>
         <div style="padding:12px;display:flex;flex-direction:column;gap:8px;">
+
           <a href="https://docs.google.com/presentation/d/1ZGPnMrR267ssXOHLLeRG6lb4vhmn1ueL3ofrzDVMSnk/edit?slide=id.g37ca187c4eb_0_528#slide=id.g37ca187c4eb_0_528" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--g200);border-radius:8px;text-decoration:none;color:inherit;background:#fff;">
             <span style="font-size:1.1rem;">📊</span>
             <div style="flex:1;">
@@ -2059,6 +2233,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
             </div>
             <span style="font-size:.7rem;background:#e0e7ff;color:#3730a3;padding:2px 7px;border-radius:4px;font-weight:600;">REF</span>
           </a>
+
           <a href="https://docs.google.com/presentation/d/1I4-1lDdNR8N-td-8Z8JZWVWGm9mwJsu23SeB7tx7R7o/edit?slide=id.p6#slide=id.p6" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--g200);border-radius:8px;text-decoration:none;color:inherit;background:#fff;">
             <span style="font-size:1.1rem;">📊</span>
             <div style="flex:1;">
@@ -2067,6 +2242,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
             </div>
             <span style="font-size:.7rem;background:#e0e7ff;color:#3730a3;padding:2px 7px;border-radius:4px;font-weight:600;">REF</span>
           </a>
+
           <a href="https://docs.google.com/presentation/d/12RRG8FPi0wPIYrDckjh6Rav8dIzQf1S-3-7qaPr_LUo/edit?slide=id.g371d670a997_0_5#slide=id.g371d670a997_0_5" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--g200);border-radius:8px;text-decoration:none;color:inherit;background:#fff;">
             <span style="font-size:1.1rem;">📊</span>
             <div style="flex:1;">
@@ -2075,12 +2251,15 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
             </div>
             <span style="font-size:.7rem;background:#e0e7ff;color:#3730a3;padding:2px 7px;border-radius:4px;font-weight:600;">REF</span>
           </a>
+
         </div>
       </details>
       <!-- ADD MORE CATEGORIES HERE -->
+
     </div>
   </div>
 </div>
+
 <!-- ONBOARDING / OFFBOARDING MODAL -->
 <div class="overlay" id="m-onboard">
   <div class="modal" style="max-width:520px;width:95%;">
@@ -2098,6 +2277,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
           <option value="offboarding">🔴 Offboarding</option>
         </select>
       </div>
+
       <!-- ── OFFBOARDING FIELDS ── -->
       <div id="ob-offboard-section" style="display:none;">
         <div style="margin-bottom:12px;">
@@ -2151,6 +2331,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
           </div>
         </div>
       </div>
+
       <!-- ── ONBOARDING FIELDS ── -->
       <div id="ob-onboard-section" style="display:none;">
         <div style="margin-bottom:12px;">
@@ -2202,6 +2383,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
           </div>
         </div>
       </div>
+
       <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;">
         <button onclick="closeM('m-onboard')" style="padding:9px 20px;border:1.5px solid var(--g300);border-radius:8px;background:#fff;font-family:inherit;font-size:.85rem;cursor:pointer;">Cancel</button>
         <button onclick="saveOnboardLog()" style="padding:9px 20px;background:var(--yellow-dk);color:#fff;border:none;border-radius:8px;font-family:inherit;font-size:.85rem;font-weight:700;cursor:pointer;">Save Entry</button>
@@ -2209,6 +2391,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
     </div>
   </div>
 </div>
+
 <!-- FOLLOW THROUGH -->
 <div class="overlay" id="m-ft">
   <div class="modal modal-sm">
@@ -2235,6 +2418,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
     </div>
   </div>
 </div>
+
 <!-- NTE -->
 <div class="overlay" id="m-nte">
   <div class="modal">
@@ -2284,6 +2468,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
     </div>
   </div>
 </div>
+
 <!-- ATTENDANCE APPEAL -->
 <div class="overlay" id="m-att-appeal">
   <div class="modal">
@@ -2311,6 +2496,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
     </div>
   </div>
 </div>
+
 <!-- COMMITMENT STAR -->
 <div class="overlay" id="m-commit">
   <div class="modal">
@@ -2342,7 +2528,12 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
     </div>
   </div>
 </div>
+
+
+
+
 <div id="toast"></div>
+
 <script>
 /* ═══════════════════════════════════════
    DATA
@@ -2392,6 +2583,7 @@ const AGENTS=[
   {name:'Joenel Las',           h:'2026-06-08', tl:''},
   {name:'Darlyn Acuriza',       h:'2026-06-01', tl:''},
 ];
+
 const DEFAULT_TLS=[
   'Team Jhay Oglimen',
   'Team Jumz Delacruz',
@@ -2401,10 +2593,13 @@ const DEFAULT_TLS=[
 ];
 let rosterAgents=[...AGENTS];
 let rosterTLS=[...DEFAULT_TLS];
+
 function fillTLs(ids){
   const opts='<option value="">— Select —</option>'+rosterTLS.map(t=>`<option value="${e(t)}">${e(t)}</option>`).join('');
   ids.forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
 }
+
+
 const WEEKS=Array.from({length:451},(_,i)=>550+i);
 const OM='milettegaw@homeaglowsales.com';
 const ADMIN='milettegaw@homeaglowsales.com';
@@ -2448,6 +2643,8 @@ const NO_DELETE=new Set([
   'krismayes@homeaglowsalestwo.com',
   'joenellas@homeaglowsales.com',
 ]);
+
+
 const AGENTS_VIEW=new Set([
   'jardenepetines@homeaglowsalestwo.com',
   'cjgarces@homeaglowsales.com',
@@ -2553,6 +2750,7 @@ const EDIT_ALLOWED=new Set([
   'renilouyutuc@homeaglowsalestwo.com',
   'maureenulao@homeaglowsalesone.com',
 ]);
+
 // Maps each TL email → their team name (must match exactly what's stored in coaching logs)
 const ATL_EMAILS=new Set([
   'genevievepalec@homeaglowsalesone.com',
@@ -2571,6 +2769,7 @@ const TL_TEAM_MAP={
 };
 // Returns the logged-in TL's team, or '' if OM/admin (sees all)
 function myTeam(){ return (CU&&!CU.isOM&&!ATL_EMAILS.has(CU.email)&&TL_TEAM_MAP[CU.email])||''; }
+
 /* ─── FIREBASE CONFIG ───────────────────────────────────────────────────────
    Replace each REPLACE_ME_... value with your actual Firebase project keys.
    Get them from: console.firebase.google.com → Project Settings → Your apps
@@ -2583,10 +2782,12 @@ const FIREBASE_CONFIG = {
   messagingSenderId: "930144157431",
   appId:             "1:930144157431:web:94bdd4450432bdb55addf2"
 };
+
 const CONFIG_MISSING = FIREBASE_CONFIG.apiKey.startsWith('REPLACE_ME');
 let FB_READY = false;
 let FSB = null;
 let FSAUTH = null;
+
 /* ─── EMAILJS CONFIG ─────────────────────────────────────────────────────────
    Sign up free at https://www.emailjs.com → create a Gmail service → create
    a template → paste the three IDs below.  Leave as-is to skip email sending.
@@ -2594,6 +2795,7 @@ let FSAUTH = null;
 const EMAILJS_PUBLIC_KEY  = 'YOUR_EMAILJS_PUBLIC_KEY';   // Account → API Keys
 const EMAILJS_SERVICE_ID  = 'YOUR_SERVICE_ID';            // Email Services tab
 const EMAILJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID';           // Email Templates tab
+
 // Show setup screen ONLY if the config still has placeholder values
 if(CONFIG_MISSING){
   document.addEventListener('DOMContentLoaded',()=>{
@@ -2626,10 +2828,12 @@ if(CONFIG_MISSING){
   }
   tryInitFirebase();
 }
+
 /* In-memory cache — kept in sync by real-time Firestore listeners */
 let DB  = { logs:[], ft:[], nte:[], cm:{} };
 // Attendance: Sheets-based cache (Option B)
 let _unsubs = [];  // listener unsubscribers
+
 async function fsWrite(col,id,data){
   try{ await FSB.collection(col).doc(id).set(data); return true; }
   catch(err){ toast('❌ Save error: '+err.message); return false; }
@@ -2639,11 +2843,13 @@ async function fsDel(col,id){
   catch(err){ toast('❌ Delete error: '+err.message); return false; }
 }
 function uid(){return '_'+Math.random().toString(36).slice(2,9);}
+
 /* ─── GOOGLE SHEETS SYNC ────────────────────────────────────────────────────
    Paste your deployed Apps Script Web App URL below.
    Leave empty ('') to disable sheet sync.
    ─────────────────────────────────────────────────────────────────────── */
 const SHEETS_URL = 'https://sheetdb.io/api/v1/hxgegag6py2q0';
+
 async function syncToSheet(type, action, id, row){
   if(!SHEETS_URL) return;
   const sheetName = {coaching:'Coaching Logs', nte:'NTE Logs', ft:'Follow Through', onboard:'Onboarding Logs'}[type];
@@ -2682,6 +2888,7 @@ async function syncToSheet(type, action, id, row){
     }
   } catch(e){ console.warn('Sheet sync failed:', e.message); toast('⚠️ Sheet sync failed: '+e.message); }
 }
+
 function sheetRowCoaching(entry, cm){
   return {
     'ID':              entry.id,
@@ -2708,12 +2915,14 @@ function sheetRowCoaching(entry, cm){
     'Commitment - Task':      cm?(cm.task||''):'',
     'Commitment - Action':    cm?(cm.action||cm.act||''):'',
     'Commitment - Result':    cm?(cm.result||cm.res||''):'',
+
     'Commitment TL':          cm?(cm.tl||''):'',
     'Commitment Status':      cm&&(cm.situation||cm.sit||cm.task||cm.action||cm.act||cm.result||cm.res)?'Complete':'Pending',
     'Agent Email':            cm?(cm.agentEmail||''):'',
     'Logged At':       entry.at||new Date().toISOString()
   };
 }
+
 function sheetRowNTE(entry){
   return {
     'ID':                entry.id,
@@ -2735,6 +2944,7 @@ function sheetRowNTE(entry){
     'Logged At':         entry.at||new Date().toISOString()
   };
 }
+
 function sheetRowFT(entry){
   return {
     'ID':               entry.id,
@@ -2775,6 +2985,7 @@ function e(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g
 function pct(v){return(v===''||v===null||v===undefined)?'—':parseFloat(v).toFixed(1)+'%';}
 function fd(d){if(!d)return'—';const[y,m,dy]=d.split('-');return`${m}/${dy}/${y}`;}
 function hireOf(n){const a=AGENTS.find(x=>x.name===n);return a?a.h:null;}
+
 function tenure(hire,ref){
   if(!hire||!ref)return'—';
   const w=Math.floor((new Date(ref)-new Date(hire))/(7*864e5));
@@ -2784,6 +2995,7 @@ function tenure(hire,ref){
   if(w<=10)return'7-10w';
   return'11+w';
 }
+
 /* ═══════════════════════════════════════
    FIRESTORE REAL-TIME LISTENERS
 ═══════════════════════════════════════ */
@@ -2791,10 +3003,12 @@ function setLoading(pct){
   const b=document.getElementById('loading-bar');
   if(b){b.style.width=pct+'%';if(pct>=100)setTimeout(()=>b.style.width='0%',400);}
 }
+
 function setupListeners(){
   if(!FSB) return;
   _unsubs.forEach(u=>u()); _unsubs=[];
   setLoading(20);
+
   const u1=FSB.collection('px_logs').orderBy('at','desc').onSnapshot(snap=>{
     DB.logs=snap.docs.map(d=>({...d.data(),id:d.id}));
     setLoading(60);
@@ -2815,10 +3029,12 @@ function setupListeners(){
       }
     }
   },err=>console.error('logs:',err));
+
   const u2=FSB.collection('px_ft').orderBy('at','desc').onSnapshot(snap=>{
     DB.ft=snap.docs.map(d=>({...d.data(),id:d.id}));
     if(CU&&CU.isOM) renderOMF(); else if(CU&&CU.isAgentView) renderAgentView();
   },err=>console.error('ft:',err));
+
   const u3=FSB.collection('px_nte').orderBy('at','desc').onSnapshot(snap=>{
     DB.nte=snap.docs.map(d=>({...d.data(),id:d.id}));
     if(CU&&CU.isOM){
@@ -2829,6 +3045,7 @@ function setupListeners(){
     else if(CU&&!CU.isOM&&!CU.isAgentView&&document.getElementById('v-tl-attendance')?.classList.contains('active')) renderTLAttendance();
     setLoading(100);
   },err=>console.error('nte:',err));
+
   const u4=FSB.collection('px_cm').onSnapshot(snap=>{
     DB.cm={};
     snap.docs.forEach(d=>{DB.cm[d.id]=d.data();});
@@ -2836,6 +3053,7 @@ function setupListeners(){
     else if(CU&&CU.isAgentView){renderAgentView();}
     else if(CU){renderTable();renderDash();}
   },err=>console.error('cm:',err));
+
   const u5=FSB.collection('px_roster').onSnapshot(snap=>{
     const docs={};
     snap.docs.forEach(d=>{docs[d.id]=d.data();});
@@ -2872,25 +3090,31 @@ function setupListeners(){
     fillTLs(['cl-tl']);
     populateAllFilters();
   },err=>console.error('roster:',err));
+
   _unsubs=[u1,u2,u3,u4,u5];
 }
+
 /* ═══════════════════════════════════════
    AUTH
 ═══════════════════════════════════════ */
 let CU=null;
+
 /* ── Two-step login state ─────────────────────────────────────────────── */
 let _loginEmail='';
 let _loginIsNew=false;
+
 /* Hash a password with SHA-256 (no plaintext stored anywhere) */
 async function hashPassword(pw){
   const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(pw));
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
+
 /* Step 1 — validate email, check if password exists */
 async function doEmailContinue(){
   const email=document.getElementById('l-email').value.trim().toLowerCase();
   const err=document.getElementById('lerr');
   err.style.display='none';
+
   if(!email){
     err.textContent='⚠️ Please enter your email address.';
     err.style.display='block';
@@ -2902,6 +3126,7 @@ async function doEmailContinue(){
     err.style.display='block';
     return;
   }
+
   // Validate email is a recognised user
   // First do a live Firestore fetch to catch dynamically-added users
   try{
@@ -2916,20 +3141,25 @@ async function doEmailContinue(){
       Object.entries(agDoc.data().map).forEach(([em,name])=>{ AGENTS_VIEW.add(em); EMAIL_TO_AGENT[em]=name; });
     }
   }catch(e){ console.warn('Access fetch failed, using cached maps:',e); }
+
   const isOM=email===OM, isTL=!!TL_TEAM_MAP[email], isAgent=AGENTS_VIEW.has(email);
   if(!isOM&&!isTL&&!isAgent){
     err.textContent='⚠️ Email not recognised. Contact your Team Lead.';
     err.style.display='block';
     return;
   }
+
   _loginEmail=email;
+
   // Check Firestore for an existing password hash
   try{
     const doc=await FSB.collection('px_users').doc(email).get();
     const hasPassword=doc.exists&&doc.data()?.hash;
     _loginIsNew=!hasPassword;
+
     document.getElementById('l-pw').value='';
     document.getElementById('l-pw2').value='';
+
     if(_loginIsNew){
       document.getElementById('ls2-hint').textContent='First time logging in. Create a password to secure your account.';
       document.getElementById('l-pw-lbl').textContent='Create a Password';
@@ -2941,6 +3171,7 @@ async function doEmailContinue(){
       document.getElementById('l-pw2-wrap').style.display='none';
       document.getElementById('l-pw-btn').textContent='Sign In →';
     }
+
     document.getElementById('ls1').style.display='none';
     document.getElementById('ls2').style.display='';
     document.getElementById('l-pw').focus();
@@ -2950,6 +3181,7 @@ async function doEmailContinue(){
     err.style.display='block';
   }
 }
+
 /* Back to email step */
 function backToEmail(){
   _loginEmail='';
@@ -2958,16 +3190,19 @@ function backToEmail(){
   document.getElementById('lerr').style.display='none';
   document.getElementById('l-email').focus();
 }
+
 /* Step 2 — verify or create password, then route into app */
 async function doPasswordSubmit(){
   const pw=document.getElementById('l-pw').value;
   const err=document.getElementById('lerr');
   err.style.display='none';
+
   if(!pw){
     err.textContent='⚠️ Please enter your password.';
     err.style.display='block';
     return;
   }
+
   if(_loginIsNew){
     // New user: validate and save password
     const pw2=document.getElementById('l-pw2').value;
@@ -3010,10 +3245,12 @@ async function doPasswordSubmit(){
     }
   }
 }
+
 /* Route into the app after successful authentication */
 function finishLogin(email){
   const err=document.getElementById('lerr');
   err.style.display='none';
+
   // ── OM ──
   if(email===OM){
     try{
@@ -3034,6 +3271,7 @@ function finishLogin(email){
     }
     return;
   }
+
   // ── TEAM LEAD ──
   const tlTeam=TL_TEAM_MAP[email];
   if(tlTeam){
@@ -3049,6 +3287,7 @@ function finishLogin(email){
     showView('v-tl'); initDash();
     return;
   }
+
   // ── AGENT ──
   const agentName=EMAIL_TO_AGENT[email]||email.split('@')[0];
   CU={email,role:agentName,isOM:false,isAgentView:true,agentName};
@@ -3063,10 +3302,12 @@ function finishLogin(email){
   subscribeLeads();
   showView('v-agent');
 }
+
 /* ── LEAD FOLLOW-UP ── */
 const LEAD_STATUS_LABEL={pending:'⏳ Pending',contacted:'📞 Contacted',sold:'✅ Sold',not_interested:'❌ Not Interested'};
 const LEAD_STATUS_COLOR={pending:'#f59e0b',contacted:'#2563eb',sold:'#16a34a',not_interested:'#6b7280'};
 const LEAD_STATUS_BG={pending:'#fef3c7',contacted:'#dbeafe',sold:'#dcfce7',not_interested:'#f3f4f6'};
+
 function subscribeLeads(){
   if(_leadUnsub){_leadUnsub();_leadUnsub=null;}
   if(!FSB)return;
@@ -3083,6 +3324,7 @@ function subscribeLeads(){
     updateLeadBadge();
   });
 }
+
 function openLeadModal(id){
   const modal=document.getElementById('lead-modal');
   if(!modal)return;
@@ -3112,6 +3354,7 @@ function openLeadModal(id){
   setTimeout(()=>document.getElementById('lead-name').focus(),80);
 }
 function closeLeadModal(){ const m=document.getElementById('lead-modal'); if(m)m.style.display='none'; }
+
 async function saveLead(){
   const name=(document.getElementById('lead-name').value||'').trim();
   if(!name){alert('Lead name is required.');return;}
@@ -3136,10 +3379,12 @@ async function saveLead(){
   }
   closeLeadModal();
 }
+
 async function deleteLead(id){
   if(!confirm('Remove this lead?'))return;
   await FSB.collection('px_leads').doc(id).delete();
 }
+
 function updateLeadBadge(){
   const today=new Date(); today.setHours(0,0,0,0);
   let count=0;
@@ -3153,15 +3398,18 @@ function updateLeadBadge(){
     if(b){b.style.display=count>0?'inline-flex':'none';b.textContent=count;}
   });
 }
+
 function renderLeads(){
   const today=new Date(); today.setHours(0,0,0,0);
   const isTLView=CU&&!CU.isAgentView; // TL, ATL, OM all use the TL view
+
   if(isTLView){
     // ── TL / OM VIEW ──
     const agentFilter=(document.getElementById('tl-lead-filter-agent')?.value)||'all';
     const statusFilter=(document.getElementById('tl-lead-filter-status')?.value)||'all';
     const overdueOnly=document.getElementById('tl-lead-overdue-only')?.checked||false;
     const search=((document.getElementById('tl-lead-search')?.value)||'').toLowerCase();
+
     // Populate agent dropdown
     const agentSel=document.getElementById('tl-lead-filter-agent');
     if(agentSel){
@@ -3169,11 +3417,13 @@ function renderLeads(){
       const agentNames=[...new Set(_leadItems.map(l=>l.agentName||l.agentEmail).filter(Boolean))].sort();
       agentSel.innerHTML='<option value="all">All Agents</option>'+agentNames.map(n=>`<option value="${n}"${n===currentAgentVal?' selected':''}>${n}</option>`).join('');
     }
+
     let arr=[..._leadItems];
     if(agentFilter!=='all') arr=arr.filter(l=>(l.agentName||l.agentEmail)===agentFilter);
     if(statusFilter!=='all') arr=arr.filter(l=>l.status===statusFilter);
     if(overdueOnly) arr=arr.filter(l=>l.followup&&l.status!=='sold'&&l.status!=='not_interested'&&new Date(l.followup)<today);
     if(search) arr=arr.filter(l=>(l.name||'').toLowerCase().includes(search)||(l.agentName||'').toLowerCase().includes(search)||(l.notes||'').toLowerCase().includes(search));
+
     // Overdue banner
     const overdue=_leadItems.filter(l=>l.followup&&l.status!=='sold'&&l.status!=='not_interested'&&new Date(l.followup)<today);
     const banner=document.getElementById('tl-leads-overdue-banner');
@@ -3184,11 +3434,14 @@ function renderLeads(){
         banner.textContent=`⚠️ ${overdue.length} overdue follow-up${overdue.length>1?'s':''} — ${names}`;
       } else { banner.style.display='none'; }
     }
+
     const countEl=document.getElementById('tl-lead-count');
     if(countEl) countEl.textContent=`${arr.length} lead${arr.length!==1?'s':''}`;
+
     const list=document.getElementById('tl-lead-list');
     if(!list)return;
     if(arr.length===0){list.innerHTML='<div style="text-align:center;padding:32px;color:var(--g400);font-size:.85rem;">No leads match your filters.</div>';return;}
+
     list.innerHTML=arr.map(l=>{
       const isOverdue=l.followup&&l.status!=='sold'&&l.status!=='not_interested'&&new Date(l.followup)<today;
       const followupStr=l.followup?`<span style="color:${isOverdue?'#ef4444':'var(--g500)'};font-weight:${isOverdue?'700':'400'};">${isOverdue?'⚠️ Overdue · ':' Follow-up '}${l.followup}</span>`:'';
@@ -3215,6 +3468,7 @@ function renderLeads(){
         </div>
       </div>`;
     }).join('');
+
   } else {
     // ── AGENT VIEW (existing logic) ──
     const list=document.getElementById('lead-list');
@@ -3254,6 +3508,7 @@ function renderLeads(){
     }).join('');
   }
 }
+
 /* ── SETTINGS PANEL ── */
 function toggleSettings(){
   const panel=document.getElementById('px-panel');
@@ -3291,6 +3546,7 @@ function loadPreferences(){
   applyTheme(theme);
 }
 loadPreferences();
+
 /* ── CALENDAR ── */
 const US_HOLIDAYS = (()=>{
   const h=[];
@@ -3346,13 +3602,17 @@ const US_HOLIDAYS = (()=>{
   });
   return h;
 })();
+
 let calYear=new Date().getFullYear();
 let calMonth=new Date().getMonth();
+
 // In-memory cache loaded from Firestore
 let _calFSEvents=[];
+
 function calGetEvents(){
   return [...US_HOLIDAYS,..._calFSEvents];
 }
+
 async function calLoadFSEvents(){
   try{
     const snap=await FSB.collection('px_calendar_events').orderBy('date').get();
@@ -3363,22 +3623,27 @@ async function calLoadFSEvents(){
   }
   renderCalendar();
 }
+
 function renderCalendar(){
   const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
   const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   const label=document.getElementById('cal-month-label');
   if(label) label.textContent=months[calMonth]+' '+calYear;
+
   const hdr=document.getElementById('cal-header-row');
   if(hdr){hdr.innerHTML='';days.forEach(d=>{hdr.innerHTML+=`<div class="cal-hdr-cell">${d}</div>`;});}
+
   const grid=document.getElementById('cal-grid');
   if(!grid)return;
   grid.innerHTML='';
+
   const firstDay=new Date(calYear,calMonth,1).getDay();
   const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
   const daysInPrev=new Date(calYear,calMonth,0).getDate();
   const today=new Date();
   const todayStr=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
   const allEvents=calGetEvents();
+
   const totalCells=Math.ceil((firstDay+daysInMonth)/7)*7;
   for(let i=0;i<totalCells;i++){
     let dayNum,mo,yr,isOther=false;
@@ -3398,6 +3663,7 @@ function renderCalendar(){
     });
     grid.innerHTML+=`<div class="cal-cell${isOther?' other-month':''}${isToday?' today':''}"><div class="cal-day-num">${dayNum}</div>${chips}</div>`;
   }
+
   const addBtn=document.getElementById('cal-add-btn');
   if(addBtn){
     const canAdd=CU&&(CU.isOM||(!CU.isAgentView&&TL_TEAM_MAP&&TL_TEAM_MAP[CU.email]));
@@ -3405,8 +3671,10 @@ function renderCalendar(){
   }
   renderTodoList();
 }
+
 function calPrev(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}
 function calNext(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCalendar();}
+
 function openAddEvent(){
   const modal=document.getElementById('cal-modal');
   if(modal){
@@ -3440,6 +3708,7 @@ async function saveCalEvent(){
     toast('⚠️ Could not save event.');
   }
 }
+
 async function deleteCalEvent(id){
   if(!id)return;
   if(!confirm('Delete this event?'))return;
@@ -3452,6 +3721,7 @@ async function deleteCalEvent(id){
     toast('⚠️ Could not delete event.');
   }
 }
+
 /* ── TO-DO LIST ── */
 function todoKey(){ return 'px-todo-'+(CU?CU.email:'guest'); }
 function todoLoad(){ return JSON.parse(localStorage.getItem(todoKey())||'[]'); }
@@ -3496,14 +3766,18 @@ function renderTodoList(){
     </div>`).join('');
   list.innerHTML=rows||'<div style="text-align:center;color:var(--g400);font-size:.82rem;padding:14px;">No tasks yet. Click + Add Task to get started.</div>';
 }
+
 /* ── LEADS (Firestore) ── */
 let _leadItems=[];
 let _leadUnsub=null;
+
 /* ── ACTION ITEMS ── */
 let _aiUnsub=null;
 let _aiItems=[];
+
 function aiIsLeader(){ return CU&&(CU.isOM||ATL_EMAILS.has(CU.email)||TL_TEAM_MAP[CU.email]); }
 function aiCanAssign(){ return CU&&CU.isOM; }
+
 function aiPopulateAssignees(){
   const sel=document.getElementById('ai-assignee');
   if(!sel)return;
@@ -3519,6 +3793,7 @@ function aiPopulateAssignees(){
     sel.innerHTML+=`<option value="${email}">${name} (ATL)</option>`;
   });
 }
+
 function aiPopulateFilterAssignees(){
   const sel=document.getElementById('ai-filter-assignee');
   if(!sel)return;
@@ -3533,6 +3808,7 @@ function aiPopulateFilterAssignees(){
   });
   if([...sel.options].some(o=>o.value===current)) sel.value=current;
 }
+
 function subscribeActionItems(){
   if(_aiUnsub){ _aiUnsub(); _aiUnsub=null; }
   if(!FSB||!aiIsLeader())return;
@@ -3557,20 +3833,26 @@ function subscribeActionItems(){
     });
   });
 }
+
 function renderActionItems(){
   if(!aiIsLeader())return;
   const statusFilter=document.getElementById('ai-filter-status')?.value||'all';
   const assigneeFilter=document.getElementById('ai-filter-assignee')?.value||'all';
   const priIcon={high:'&#x1F534;',medium:'&#x1F7E1;',low:'&#x1F7E2;'};
+
   // Show/hide add button
   const addBtn=document.getElementById('ai-add-btn');
   if(addBtn) addBtn.style.display=aiCanAssign()?'inline-flex':'none';
+
   aiPopulateFilterAssignees();
+
   let items=_aiItems;
   if(statusFilter!=='all') items=items.filter(i=>i.status===statusFilter);
   if(assigneeFilter!=='all') items=items.filter(i=>i.assignedTo===assigneeFilter);
+
   const cols={'not_started':[],'in_progress':[],'done':[]};
   items.forEach(item=>{ if(cols[item.status]) cols[item.status].push(item); });
+
   const empty=document.getElementById('ai-empty');
   const board=document.getElementById('ai-board');
   if(items.length===0&&statusFilter==='all'&&assigneeFilter==='all'){
@@ -3580,6 +3862,7 @@ function renderActionItems(){
   }
   if(empty)empty.style.display='none';
   if(board)board.style.display='grid';
+
   ['not_started','in_progress','done'].forEach(status=>{
     const col=document.getElementById('ai-col-'+status);
     if(!col)return;
@@ -3607,6 +3890,7 @@ function renderActionItems(){
     }).join('');
   });
 }
+
 function openAIModal(){
   if(!aiCanAssign())return;
   aiPopulateAssignees();
@@ -3620,6 +3904,7 @@ function openAIModal(){
   if(modal)modal.style.display='flex';
 }
 function closeAIModal(){ const m=document.getElementById('ai-modal'); if(m)m.style.display='none'; }
+
 async function saveActionItem(){
   const title=(document.getElementById('ai-title').value||'').trim();
   const assignedTo=document.getElementById('ai-assignee').value;
@@ -3636,6 +3921,7 @@ async function saveActionItem(){
   });
   closeAIModal();
 }
+
 async function aiSetStatus(id,status){
   await FSB.collection('px_action_items').doc(id).update({status,updatedAt:new Date().toISOString()});
 }
@@ -3643,6 +3929,7 @@ async function aiDelete(id){
   if(!confirm('Delete this action item?'))return;
   await FSB.collection('px_action_items').doc(id).delete();
 }
+
 function doLogout(){
   _unsubs.forEach(u=>u()); _unsubs=[];
   if(_aiUnsub){ _aiUnsub(); _aiUnsub=null; }
@@ -3669,6 +3956,7 @@ function doLogout(){
   document.getElementById('app').classList.remove('on');
   document.getElementById('hdr-user').textContent='';
 }
+
 document.addEventListener('keydown',ev=>{
   if(ev.key!=='Enter') return;
   const lp=document.getElementById('login-page');
@@ -3677,6 +3965,7 @@ document.addEventListener('keydown',ev=>{
   if(document.getElementById('ls2').style.display!=='none') doPasswordSubmit();
   else doEmailContinue();
 });
+
 /* ═══════════════════════════════════════
    VIEW
 ═══════════════════════════════════════ */
@@ -3684,6 +3973,7 @@ function showView(id){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
+
 function toggleSbSub(id){
   const sub=document.getElementById(id);
   if(!sub) return;
@@ -3699,6 +3989,7 @@ function toggleSbSub(id){
     if(arr) arr.classList.add('open');
   }
 }
+
 function switchOM(tab){
   document.querySelectorAll('#om-nav .sb-item').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
   const titles={dash:'Coaching Dashboard',coaching:'Coaching Logs',nte:'NTE Logs',ft:'Follow Through',attendance:'Attendance Points',ranking:'Agent Ranking',pwreset:'Reset Passwords',kb:'Knowledge Base',suggestions:'Suggestions & Reports',calendar:'Team Calendar',actions:'Action Items',leads:'Lead Follow-Ups',onboard:'Onboarding / Offboarding'};
@@ -3720,6 +4011,7 @@ function switchOM(tab){
   if(tab==='leads'){subscribeLeads();renderLeads();}
   if(tab==='onboard'){subscribeOnboard();renderOnboardDash();}
 }
+
 /* ═══════════════════════════════════════
    DASHBOARD INIT
 ═══════════════════════════════════════ */
@@ -3729,16 +4021,20 @@ function initDash(){
   // Use the latest (highest) week that has data; fall back to 550
   const used=[...new Set(DB.logs.map(l=>l.wk).filter(Boolean))].map(Number).sort((a,b)=>b-a);
   ws.value=used[0]||550;
+
   // Populate the Coaching Logs view week selector
   const wkLogs=document.getElementById('wk-sel-logs');
   if(wkLogs){
     wkLogs.innerHTML=WEEKS.map(w=>`<option value="${w}">WK${w}</option>`).join('');
     wkLogs.value=used[0]||550;
   }
+
   // Populate all team/agent dropdowns from roster
   populateAllFilters();
+
   renderDash();
 }
+
 /* ═══════════════════════════════════════
    DASHBOARD RENDER
 ═══════════════════════════════════════ */
@@ -3760,7 +4056,9 @@ function getFilt(){
       (!sq||l.agent.toLowerCase().includes(sq)||(l.tl||'').toLowerCase().includes(sq));
   });
 }
+
 function renderDash(){renderStats();renderTable();}
+
 function renderStats(){
   const rows=getFilt();
   // Unique agents coached this week for this TL
@@ -3778,6 +4076,7 @@ function renderStats(){
   document.getElementById('s-csr').textContent=avg(rows.map(r=>parseFloat(r.csr)).filter(v=>!isNaN(v)));
   document.getElementById('s-wk2').textContent=avg(rows.map(r=>parseFloat(r.wk2)).filter(v=>!isNaN(v)));
 }
+
 function renderTable(){
   const rows=getFilt();
   document.getElementById('tbl-cnt').textContent=rows.length;
@@ -3815,17 +4114,21 @@ function renderTable(){
   const tlBadge=document.getElementById('nav-badge-tl-logs');
   if(tlBadge){tlBadge.textContent=tlPending>9?'9+':tlPending;tlBadge.style.display=tlPending>0?'':'none';}
 }
+
 /* ── TL ATTENDANCE POINTS VIEW ───────────────────────────────────────────── */
 function renderTLAttendance(){
   const body=document.getElementById('tl-att-body');
   const foot=document.getElementById('tl-att-foot');
   const cnt=document.getElementById('tl-att-cnt');
   if(!body||!foot)return;
+
   const cutoff=new Date();
   cutoff.setMonth(cutoff.getMonth()-4);
   const myTL=myTeam(); // empty string if OM/admin (sees all)
+
   // Get all attendance NTE records for this TL's team
   const attRecs=(DB.nte||[]).filter(r=>r.type==='Attendance');
+
   // Group by agent — only include agents on TL's team
   const agentMap={};
   attRecs.forEach(r=>{
@@ -3839,25 +4142,32 @@ function renderTLAttendance(){
     if(!agentMap[r.agent].lastDate||r.date>agentMap[r.agent].lastDate)
       agentMap[r.agent].lastDate=r.date;
   });
+
   // Sort: highest points first
   const agents=Object.keys(agentMap).sort((a,b)=>agentMap[b].activePts-agentMap[a].activePts);
+
   // Update nav badge — count of agents at yellow or above
   const atRisk=agents.filter(a=>agentMap[a].activePts>=2).length;
   const badge=document.getElementById('nav-badge-tl-att');
   if(badge){badge.textContent=atRisk>9?'9+':atRisk;badge.style.display=atRisk>0?'':'none';}
+
   cnt.textContent=agents.length;
+
   function getLevel(pts){
     if(pts>=6)   return {label:'🔴 Red',    bg:'#FEE2E2',color:'#7F1D1D'};
     if(pts>=4)   return {label:'🟠 Orange',  bg:'#FED7AA',color:'#7C2D12'};
     if(pts>=2)   return {label:'🟡 Yellow',  bg:'#FEF9C3',color:'#854D0E'};
     return             {label:'✅ Clear',    bg:'#F0FDF4',color:'#14532D'};
   }
+
   const statusMap={Late:'att-late',Missed:'att-missed',Abandoned:'att-abandoned',Absent:'att-absent',NCNS:'att-missed'};
+
   if(!agents.length){
     body.innerHTML=`<tr><td colspan="6"><div class="empty-st"><div class="ei">✅</div><p>No attendance records found${myTL?' for '+myTL:''}.</p></div></td></tr>`;
     foot.innerHTML='';
     return;
   }
+
   body.innerHTML=agents.map((name,i)=>{
     const d=agentMap[name];
     const pts=Math.round(d.activePts*100)/100;
@@ -3871,6 +4181,7 @@ function renderTLAttendance(){
       <td style="color:var(--g500);font-size:.85rem">${d.lastDate?fd(d.lastDate):'—'}</td>
     </tr>`;
   }).join('');
+
   // Footer: total across all agents
   const grandTotal=Math.round(agents.reduce((s,a)=>s+agentMap[a].activePts,0)*100)/100;
   foot.innerHTML=`<tr style="background:var(--g50);font-weight:700;border-top:2px solid var(--g200)">
@@ -3878,9 +4189,11 @@ function renderTLAttendance(){
     <td style="padding:8px 10px;font-size:1.05rem;color:var(--red)">${grandTotal}</td>
     <td colspan="3" style="padding:8px 10px;color:var(--g400);font-size:.8rem">${atRisk} agent${atRisk!==1?'s':''} at yellow or above</td>
   </tr>`;
+
   // Store map for detail panel
   window._tlAttMap=agentMap;
   window._tlAttStatusMap=statusMap;
+
   // ── Render pending appeals section ──
   const pendingAppeals=(DB.nte||[]).filter(r=>{
     if(r.type!=='Attendance'||r.appealStatus!=='Pending') return false;
@@ -3919,6 +4232,7 @@ function renderTLAttendance(){
     pendingEl.innerHTML='';
   }
 }
+
 async function resolveAppeal(nteId, action){
   // action = 'Approved' or 'Declined'
   const existing=(DB.nte||[]).find(x=>x.id===nteId);
@@ -3940,6 +4254,7 @@ async function resolveAppeal(nteId, action){
   toast(action==='Approved'?'✅ Appeal approved — points removed.':'❌ Appeal declined — no changes.');
   renderTLAttendance();
 }
+
 function tlShowAttDetail(agentName){
   const map=window._tlAttMap||{};
   const smMap=window._tlAttStatusMap||{};
@@ -3949,9 +4264,11 @@ function tlShowAttDetail(agentName){
   const title=document.getElementById('tl-att-detail-title');
   const tbody=document.getElementById('tl-att-detail-body');
   if(!panel||!title||!tbody)return;
+
   title.textContent='Records for '+agentName;
   const recs=[...d.records].sort((a,b)=>new Date(a.date)-new Date(b.date));
   const cutoff=new Date();cutoff.setMonth(cutoff.getMonth()-4);
+
   tbody.innerHTML=recs.map((r,i)=>{
     const isActive=new Date(r.date)>=cutoff;
     const sc=smMap[r.attStatus]||'';
@@ -3965,20 +4282,25 @@ function tlShowAttDetail(agentName){
       <td style="font-size:.78rem;color:var(--g600)">${e(r.notes||'—')}</td>
     </tr>`;
   }).join('')||'<tr><td colspan="7">No records.</td></tr>';
+
   panel.style.display='';
   panel.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
+
 /* ═══════════════════════════════════════
    OM ATTENDANCE DASHBOARD
 ═══════════════════════════════════════ */
 function renderOMAttendance(){
   const wrap=document.getElementById('om-att-content');
   if(!wrap)return;
+
   const cutoff=new Date();
   cutoff.setMonth(cutoff.getMonth()-4);
   const cutoffStr=cutoff.toISOString().slice(0,10);
+
   // Gather all attendance NTEs
   const attRecs=(DB.nte||[]).filter(r=>r.type==='Attendance');
+
   // Group by agent
   const agentMap={};
   attRecs.forEach(r=>{
@@ -3986,6 +4308,7 @@ function renderOMAttendance(){
     agentMap[r.agent].recs.push(r);
     if((r.date||'')>=cutoffStr) agentMap[r.agent].activeRecs.push(r);
   });
+
   // Build summary array — only agents with ≥1 record
   const rows=Object.values(agentMap).map(a=>{
     const active=a.activeRecs;
@@ -4001,16 +4324,20 @@ function renderOMAttendance(){
     const pendingAppeals=a.recs.filter(r=>r.appealStatus==='Pending');
     return{agent:a.agent,tl:a.tl,activePts,incidents,level,levelColor,lastDate,pendingAppeals,recs:a.recs,activeRecs:a.activeRecs};
   }).filter(r=>r.recs.length>0);
+
   // Sort: red first, then orange, yellow, none; within same level sort by pts desc
   const levelOrder={'🔴 Red':0,'🟠 Orange':1,'🟡 Yellow':2,'None':3};
   rows.sort((a,b)=>(levelOrder[a.level]??4)-(levelOrder[b.level]??4)||b.activePts-a.activePts);
+
   const totalPts=rows.reduce((s,r)=>s+r.activePts,0);
   const atRisk=rows.filter(r=>r.activePts>=2).length;
   const redCount=rows.filter(r=>r.activePts>=6).length;
   const pendingCount=rows.reduce((s,r)=>s+r.pendingAppeals.length,0);
+
   // Update nav badge
   const badge=document.getElementById('nav-badge-om-att');
   if(badge){badge.textContent=redCount;badge.style.display=redCount?'':'none';}
+
   // Pending appeals card
   const allPending=rows.flatMap(r=>r.pendingAppeals.map(p=>({...p,agentName:r.agent,agentTL:r.tl})));
   const pendingHtml=allPending.length?`
@@ -4047,6 +4374,7 @@ function renderOMAttendance(){
       </table>
     </div>`:
     `<div style="background:#F0FDF4;border:1px solid #86EFAC;border-radius:10px;padding:10px 18px;margin-bottom:18px;font-size:.83rem;color:#166534;">✅ No pending appeals.</div>`;
+
   // Summary stats
   const statsHtml=`
     <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:20px;">
@@ -4067,6 +4395,7 @@ function renderOMAttendance(){
         <div style="font-size:.75rem;color:#78350F;font-weight:600;margin-top:2px">Pending Appeals</div>
       </div>
     </div>`;
+
   // Main table
   const tableRows=rows.map((r,i)=>`
     <tr style="cursor:pointer" onclick="omShowAttDetail('${e(r.agent)}')">
@@ -4081,6 +4410,7 @@ function renderOMAttendance(){
       <td style="padding:8px 12px;font-size:.82rem;color:var(--g500)">${fd(r.lastDate)}</td>
       <td style="padding:8px 12px;font-size:.82rem;color:var(--blue)">${r.pendingAppeals.length?`<span style="background:#FEF9C3;color:#92400E;padding:1px 7px;border-radius:20px;font-weight:700">⏳ ${r.pendingAppeals.length}</span>`:'—'}</td>
     </tr>`).join('')||'<tr><td colspan="8" style="padding:20px;text-align:center;color:var(--g400)">No attendance records found.</td></tr>';
+
   const tableHtml=`
     <div class="tbl-wrap">
       <div class="tbl-hdr">
@@ -4103,8 +4433,10 @@ function renderOMAttendance(){
         </table>
       </div>
     </div>`;
+
   // Expandable detail placeholder
   const detailHtml=`<div id="om-att-detail" style="margin-top:16px;display:none"></div>`;
+
   // Alert level legend + guide
   const guideHtml=`
     <div style="margin-top:24px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:18px 22px;">
@@ -4117,6 +4449,7 @@ function renderOMAttendance(){
       </div>
       <div style="font-size:.78rem;color:var(--g500)">Active points are counted within a rolling 4-month window. Points outside this window are expired and excluded from the totals shown above.</div>
     </div>`;
+
   wrap.innerHTML=`
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap;">
       <h2 style="margin:0;font-size:1.05rem;font-weight:700">🗓️ Attendance Points Dashboard</h2>
@@ -4128,19 +4461,24 @@ function renderOMAttendance(){
     ${detailHtml}
     ${guideHtml}`;
 }
+
 function omShowAttDetail(agentName){
   const panel=document.getElementById('om-att-detail');
   if(!panel)return;
+
   // Toggle off if same agent clicked
   if(panel._agent===agentName&&panel.style.display!=='none'){
     panel.style.display='none';panel._agent='';return;
   }
   panel._agent=agentName;
+
   const cutoff=new Date();
   cutoff.setMonth(cutoff.getMonth()-4);
   const cutoffStr=cutoff.toISOString().slice(0,10);
+
   const recs=(DB.nte||[]).filter(r=>r.type==='Attendance'&&r.agent===agentName)
     .sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+
   const rows=recs.map((r,i)=>{
     const isExpired=(r.date||'')<cutoffStr;
     const st=r.appealStatus||'';
@@ -4160,6 +4498,7 @@ function omShowAttDetail(agentName){
       <td style="padding:6px 10px;font-size:.78rem">${appealCell}</td>
     </tr>`;
   }).join('')||'<tr><td colspan="8" style="padding:16px;text-align:center;color:var(--g400)">No records.</td></tr>';
+
   panel.innerHTML=`
     <div style="background:#F8FAFC;border:1px solid #e5e7eb;border-radius:12px;padding:18px 20px;">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
@@ -4177,6 +4516,7 @@ function omShowAttDetail(agentName){
   panel.style.display='';
   panel.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
+
 async function resolveAppealOM(nteId, action){
   const existing=(DB.nte||[]).find(x=>x.id===nteId);
   if(!existing){toast('❌ Record not found.');return;}
@@ -4198,6 +4538,7 @@ async function resolveAppealOM(nteId, action){
   // Also re-render TL view if visible
   if(document.getElementById('v-tl-attendance')?.classList.contains('active')) renderTLAttendance();
 }
+
 function clearFilters(){
   const onLogsView=document.getElementById('v-tl-logs')?.classList.contains('active');
   if(onLogsView){
@@ -4212,6 +4553,7 @@ function clearFilters(){
   document.getElementById('f-search').value='';
   renderDash();
 }
+
 // Switch TL nav views (Dashboard / Coaching Logs / Attendance Points)
 function tlShowView(tab){
   const viewMap={dashboard:'v-tl',logs:'v-tl-logs',nte:'v-om-n',attendance:'v-tl-attendance',ranking:'v-ranking',kb:'v-kb',calendar:'v-cal',actions:'v-actions',leads:'v-leads-tl',onboard:'v-onboard'};
@@ -4230,11 +4572,13 @@ function tlShowView(tab){
   if(tab==='leads'){subscribeLeads();renderLeads();}
   if(tab==='onboard'){subscribeOnboard();renderOnboardDash();}
 }
+
 /* ═══════════════════════════════════════
    ONBOARDING / OFFBOARDING
 ═══════════════════════════════════════ */
 let _obLogs=[];
 let _obUnsub=null;
+
 function openOnboardModal(){
   // Reset all fields
   ['ob-type','ob-off-agent','ob-off-date','ob-off-wk','ob-off-reason','ob-off-reason-specify','ob-on-agent','ob-on-hire','ob-on-date','ob-on-wk'].forEach(id=>{
@@ -4263,11 +4607,13 @@ function openOnboardModal(){
   });
   openM('m-onboard');
 }
+
 function obToggleType(){
   const t=document.getElementById('ob-type').value;
   document.getElementById('ob-offboard-section').style.display=t==='offboarding'?'block':'none';
   document.getElementById('ob-onboard-section').style.display=t==='onboarding'?'block':'none';
 }
+
 function obAutoPopulate(){
   const sel=document.getElementById('ob-off-agent');
   const opt=sel.options[sel.selectedIndex];
@@ -4285,14 +4631,17 @@ function obAutoPopulate(){
     document.getElementById('ob-off-tenure').value='';
   }
 }
+
 function obToggleReason(){
   const v=document.getElementById('ob-off-reason').value;
   document.getElementById('ob-off-reason-other').style.display=v==='Others'?'block':'none';
 }
+
 function obToggleDisc(){
   const v=document.querySelector('input[name="ob-on-disc"]:checked')?.value;
   document.getElementById('ob-on-disc-topics').style.display=v==='yes'?'grid':'none';
 }
+
 async function saveOnboardLog(){
   const type=document.getElementById('ob-type').value;
   if(!type){toast('⚠️ Please select a type.');return;}
@@ -4354,6 +4703,7 @@ async function saveOnboardLog(){
     renderOnboardDash();
   }catch(err){toast('❌ Error saving. Try again.');console.error(err);}
 }
+
 function subscribeOnboard(){
   if(_obUnsub){_obUnsub();_obUnsub=null;}
   if(!FSB)return;
@@ -4365,6 +4715,7 @@ function subscribeOnboard(){
     renderOnboardDash();
   },err=>console.error('ob snapshot err',err));
 }
+
 function renderOnboardDash(){
   const filter=(document.getElementById('ob-filter-type')||{}).value||'all';
   const logs=filter==='all'?_obLogs:_obLogs.filter(l=>l.type===filter);
@@ -4410,6 +4761,7 @@ function renderOnboardDash(){
     </div>`;
   }).join('');
 }
+
 function exportOnboardExcel(){
   if(!window.XLSX){toast('⚠️ SheetJS not loaded. Please refresh.');return;}
   if(!_obLogs.length){toast('⚠️ No entries to export.');return;}
@@ -4440,6 +4792,7 @@ function exportOnboardExcel(){
   XLSX.writeFile(wb,`onboard_offboard_${new Date().toISOString().slice(0,10)}.xlsx`);
   toast('✅ Excel exported.');
 }
+
 async function deleteOnboardLog(id){
   if(!id)return;
   if(!confirm('Delete this entry? This cannot be undone.'))return;
@@ -4452,6 +4805,7 @@ async function deleteOnboardLog(id){
     toast('⚠️ Could not delete entry.');
   }
 }
+
 /* ═══════════════════════════════════════
    AGENT RANKING (WK553)
 ═══════════════════════════════════════ */
@@ -4485,7 +4839,9 @@ const RANKING_DATA=[
   {name:'Renato Bisquera Jr',tl:'Jumar',leads:683,connect:50,sale:2,tcr:7.32,csr:4.00,cured:2.40},
   {name:'Lester John Mamaril',tl:'Jumar',leads:774,connect:49,sale:1,tcr:6.33,csr:2.04,cured:0.00},
 ];
+
 let _rankMetric='tcr';
+
 function setRankMetric(m){
   _rankMetric=m;
   ['tcr','csr','cured'].forEach(k=>{
@@ -4499,6 +4855,7 @@ function setRankMetric(m){
   });
   renderRanking();
 }
+
 function _rankMetricColor(metric,value){
   if(metric==='tcr'){
     if(value>=13)return{bg:'#dcfce7',color:'#15803D'};
@@ -4515,10 +4872,12 @@ function _rankMetricColor(metric,value){
   if(value>=2)return{bg:'#fef3c7',color:'#B45309'};
   return{bg:'#fee2e2',color:'#DC2626'};
 }
+
 function _rankTLColor(tl){
   const map={Jhay:{bg:'#dbeafe',color:'#1d4ed8'},Jumar:{bg:'#f3e8ff',color:'#7c3aed'},Florence:{bg:'#fce7f3',color:'#be185d'},Jersey:{bg:'#ccfbf1',color:'#0f766e'}};
   return map[tl]||{bg:'#f3f4f6',color:'#374151'};
 }
+
 function renderRanking(){
   const metric=_rankMetric;
   const tlF=(document.getElementById('rank-tl-filter')||{}).value||'all';
@@ -4561,6 +4920,7 @@ function renderRanking(){
     </div>`;
   }).join('');
 }
+
 // Rebuild agent dropdown for coaching logs view
 function updateAgentFilterLogs(){
   const tm=myTeam()||document.getElementById('f-team-logs')?.value||'';
@@ -4570,6 +4930,7 @@ function updateAgentFilterLogs(){
   fa.innerHTML=agentOptsHtml(tm,prev);
   if(prev&&!rosterAgents.find(a=>a.name===prev)) fa.value='';
 }
+
 /* ── Shared helper: Team options HTML from roster ── */
 function tlOptsHtml(selectedVal=''){
   // Always include "Transition Team" for unassigned agents
@@ -4622,6 +4983,7 @@ function populateAllFilters(){
   updateOMNAgentFilter();
   updateOMFTAgentFilter();
 }
+
 // Rebuild agent dropdown based on selected team (TL dashboard)
 function updateAgentFilter(){
   const tm=myTeam()||document.getElementById('f-team')?.value||'';
@@ -4631,6 +4993,7 @@ function updateAgentFilter(){
   fa.innerHTML=agentOptsHtml(tm,prev);
   if(prev&&!rosterAgents.find(a=>a.name===prev)) fa.value='';
 }
+
 // Rebuild agent dropdown for OM coaching dashboard
 function updateOMAgentFilter(){
   const tm=document.getElementById('om-f-team')?.value||'';
@@ -4640,6 +5003,7 @@ function updateOMAgentFilter(){
   fa.innerHTML=agentOptsHtml(tm,prev);
   if(prev&&!rosterAgents.find(a=>a.name===prev)) fa.value='';
 }
+
 // OM NTE agent filter
 function updateOMNAgentFilter(){
   const tm=document.getElementById('om-n-f-tl')?.value||'';
@@ -4656,6 +5020,7 @@ function updateOMFTAgentFilter(){
   const prev=fa.value;
   fa.innerHTML=agentOptsHtml(tm,prev);
 }
+
 function clearOMFilters(){
   document.getElementById('om-f-team').value='';
   document.getElementById('om-f-agent').value='';
@@ -4663,6 +5028,7 @@ function clearOMFilters(){
   updateOMAgentFilter();
   renderOMDash();
 }
+
 function updateOMCAgentFilter(){
   const tm=document.getElementById('om-c-f-team')?.value||'';
   const fa=document.getElementById('om-c-f-agent');
@@ -4670,6 +5036,7 @@ function updateOMCAgentFilter(){
   const prev=fa.value;
   fa.innerHTML=agentOptsHtml(tm,prev);
 }
+
 function clearOMCFilters(){
   if(document.getElementById('om-c-f-team')) document.getElementById('om-c-f-team').value='';
   if(document.getElementById('om-c-f-agent')) document.getElementById('om-c-f-agent').value='';
@@ -4677,6 +5044,7 @@ function clearOMCFilters(){
   updateOMCAgentFilter();
   renderOMC();
 }
+
 function clearOMNFilters(){
   if(document.getElementById('om-n-f-tl')) document.getElementById('om-n-f-tl').value='';
   if(document.getElementById('om-n-f-agent')) document.getElementById('om-n-f-agent').value='';
@@ -4684,6 +5052,7 @@ function clearOMNFilters(){
   updateOMNAgentFilter();
   renderOMN();
 }
+
 function clearOMFTFilters(){
   if(document.getElementById('om-ft-f-tl')) document.getElementById('om-ft-f-tl').value='';
   if(document.getElementById('om-ft-f-agent')) document.getElementById('om-ft-f-agent').value='';
@@ -4691,10 +5060,12 @@ function clearOMFTFilters(){
   updateOMFTAgentFilter();
   renderOMF();
 }
+
 /* ═══════════════════════════════════════
    AGENT DETAIL
 ═══════════════════════════════════════ */
 let curId=null;
+
 function openDetail(id){
   const r=DB.logs.find(l=>l.id===id);
   if(!r)return;
@@ -4702,6 +5073,7 @@ function openDetail(id){
   const tn=tenure(hireOf(r.agent),r.date);
   document.getElementById('d-title').textContent=r.agent;
   document.getElementById('d-sub').textContent=`WK${r.wk} · ${fd(r.date)} · ${r.tl}`;
+
   document.getElementById('d-ov').innerHTML=`
     <div class="info-row">
       <div class="ii"><span class="ik">Date</span><span class="iv">${fd(r.date)}</span></div>
@@ -4784,6 +5156,7 @@ function openDetail(id){
       </div>
     </div>`:''}
   `;
+
   document.getElementById('d-notes').innerHTML=`
     ${r.hi?`<div class="sec-hdr"><h3>✨ Highlights</h3></div><div class="txt-block">${e(r.hi)}</div>`:''}
     ${r.opp?`<div class="sec-hdr"><h3>🎯 Agent Opportunities</h3></div><div class="txt-block">${e(r.opp)}</div>`:''}
@@ -4791,10 +5164,12 @@ function openDetail(id){
       <button class="btn btn-yellow btn-full" onclick="openCommit('${id}')">⭐ View / Add Agent Commitment (STAR)</button>
     </div>
   `;
+
   renderCommit(id);
   switchDTab('ov');
   openM('m-detail');
 }
+
 function renderCommit(id){
   const c=DB.cm[id];
   const el=document.getElementById('d-commit');
@@ -4816,16 +5191,19 @@ function renderCommit(id){
     <div style="margin-top:11px"><button class="btn btn-outline btn-sm" onclick="openCommit('${id}')">✏️ Edit Commitment</button></div>
   `;
 }
+
 function switchDTab(t){
   document.querySelectorAll('#m-detail .m-tab').forEach(x=>x.classList.toggle('active',x.dataset.t===t));
   document.getElementById('d-ov').classList.toggle('hidden',t!=='ov');
   document.getElementById('d-notes').classList.toggle('hidden',t!=='notes');
   document.getElementById('d-commit').classList.toggle('hidden',t!=='commit');
 }
+
 /* ═══════════════════════════════════════
    COACHING LOG FORM
 ═══════════════════════════════════════ */
 const LOG_DRAFT_KEY='px_log_draft';
+
 function saveDraftLog(){
   if(editingLogId) return; // don't draft-save when editing existing
   const draft={
@@ -4852,11 +5230,13 @@ function saveDraftLog(){
   if(draft.agent||draft.date||draft.leads||draft.hi||draft.opp)
     localStorage.setItem(LOG_DRAFT_KEY,JSON.stringify(draft));
 }
+
 function clearDraftLog(){
   localStorage.removeItem(LOG_DRAFT_KEY);
   const banner=document.getElementById('log-draft-banner');
   if(banner) banner.style.display='none';
 }
+
 function restoreDraftLog(draft){
   fillAgents(['cl-agent']);
   fillTLs(['cl-tl']);
@@ -4884,6 +5264,7 @@ function restoreDraftLog(draft){
   const banner=document.getElementById('log-draft-banner');
   if(banner) banner.style.display='none';
 }
+
 function openLogModal(){
   fillAgents(['cl-agent']);
   fillTLs(['cl-tl']);
@@ -4896,6 +5277,7 @@ function openLogModal(){
   document.getElementById('cl-ten').textContent='Select agent & date';
   ['cl-tcr-d','cl-csr-d','cl-cvr-d'].forEach(id=>document.getElementById(id).textContent='Auto-calculated');
   ['cl-tcr','cl-csr','cl-cvr'].forEach(id=>document.getElementById(id).value='');
+
   // Reset calculator
   ['cc-tgt-tcr','cc-tgt-csr','cc-tgt-leads'].forEach(id=>{
     const el=document.getElementById(id);
@@ -4909,10 +5291,12 @@ function openLogModal(){
   ['fc-tcr','fc-csr','fc-cvr','fc-wk2'].forEach(id=>{
     const el=document.getElementById(id);if(el)el.checked=false;
   });
+
   editingLogId=null;
   _trajW1=null;
   render4WeekTrajectory('','');
   document.querySelector('#m-log .mhdr h2').textContent='📋 Coaching Log — Performance';
+
   // Check for saved draft
   const banner=document.getElementById('log-draft-banner');
   const raw=localStorage.getItem(LOG_DRAFT_KEY);
@@ -4928,9 +5312,12 @@ function openLogModal(){
       banner.style.display='flex';
     } catch(e){ clearDraftLog(); }
   } else if(banner){ banner.style.display='none'; }
+
   openM('m-log');
 }
+
 let editingLogId=null;
+
 function editLog(id){
   const r=DB.logs.find(l=>l.id===id);
   if(!r)return;
@@ -4972,6 +5359,7 @@ function editLog(id){
   document.querySelector('#m-log .mhdr h2').textContent='✏️ Edit Coaching Log';
   openM('m-log');
 }
+
 function updTenure(ctx){
   const pfx=ctx==='cl'?'cl':ctx==='nte'?'nte':'nte';
   const dateEl=document.getElementById(pfx+'-date');
@@ -4982,6 +5370,7 @@ function updTenure(ctx){
   if(!d||!ag){tenEl.textContent='Select agent & date';return;}
   tenEl.textContent=tenure(hireOf(ag),d);
 }
+
 function calcMetrics(){
   const leads=parseFloat(document.getElementById('cl-leads').value)||0;
   const conn=parseFloat(document.getElementById('cl-conn').value)||0;
@@ -4997,6 +5386,7 @@ function calcMetrics(){
   document.getElementById('cl-cvr').value=cvr;
   calcCalc();
 }
+
 function calcCalc(){
   // Current column always uses the form fields (the log being entered/edited)
   let leads, conn, sales, curTCR, curCSR;
@@ -5015,6 +5405,7 @@ function calcCalc(){
   } else {
     leads=0; conn=0; sales=0; curTCR=0; curCSR=0;
   }
+
   // — Current column —
   const s=id=>document.getElementById(id);
   s('cc-cur-tcr').textContent   = leads>0 ? curTCR.toFixed(1)+'%' : '—';
@@ -5022,14 +5413,17 @@ function calcCalc(){
   s('cc-cur-conn').textContent  = conn||'—';
   s('cc-cur-csr').textContent   = conn>0  ? curCSR.toFixed(1)+'%' : '—';
   s('cc-cur-sales').textContent = sales||'—';
+
   // Auto-fill target leads if the field is empty or untouched
   const ldEl = s('cc-tgt-leads');
   if(!ldEl.dataset.touched && leads>0) ldEl.value = leads;
+
   const tgtLeads = parseFloat(ldEl.value)||0;
   const rawTCR   = s('cc-tgt-tcr').value;
   const rawCSR   = s('cc-tgt-csr').value;
   const tgtTCR   = rawTCR!=='' ? parseFloat(rawTCR) : NaN;
   const tgtCSR   = rawCSR!=='' ? parseFloat(rawCSR) : NaN;
+
   // — Target TCR Lever column —
   let tcrConn = 0;
   if(!isNaN(tgtTCR) && tgtLeads>0){
@@ -5041,6 +5435,7 @@ function calcCalc(){
   } else {
     ['cc-tcr-conn','cc-tcr-csr','cc-tcr-sales'].forEach(id=>s(id).textContent='—');
   }
+
   // — Target CSR Lever column —
   // Uses connects from TCR column (or current connects if no TCR target)
   const csrConns = (!isNaN(tgtTCR)&&tgtLeads>0) ? tcrConn : conn;
@@ -5055,6 +5450,7 @@ function calcCalc(){
     s('cc-csr-sales').textContent = '—';
   }
 }
+
 // Mark target leads as manually touched so auto-fill stops overriding
 document.addEventListener('DOMContentLoaded',()=>{
   const ld=document.getElementById('cc-tgt-leads');
@@ -5062,6 +5458,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   const avLd=document.getElementById('av-cc-tgt-leads');
   if(avLd) avLd.addEventListener('input',function(){this.dataset.touched='1';});
 });
+
 /* ── AGENT VIEW CALCULATOR ── */
 function avCalcInit(){
   // Pull from agent's most recent coaching log
@@ -5083,6 +5480,7 @@ function avCalcInit(){
   if(ldEl&&!ldEl.dataset.touched&&leads>0) ldEl.value=leads;
   avCalcCalc();
 }
+
 function avCalcCalc(){
   if(!CU||!CU.isAgentView) return;
   const myLogs=(DB.logs||[]).filter(l=>l.agent===CU.agentName).sort((a,b)=>b.date.localeCompare(a.date));
@@ -5093,11 +5491,13 @@ function avCalcCalc(){
   const curTCR=leads>0?(conn/leads)*100:0;
   const curCSR=conn>0?(sales/conn)*100:0;
   const s=id=>document.getElementById(id);
+
   s('av-cc-cur-tcr').textContent=leads>0?curTCR.toFixed(1)+'%':'—';
   s('av-cc-cur-leads').textContent=leads||'—';
   s('av-cc-cur-conn').textContent=conn||'—';
   s('av-cc-cur-csr').textContent=conn>0?curCSR.toFixed(1)+'%':'—';
   s('av-cc-cur-sales').textContent=sales||'—';
+
   const ldEl=s('av-cc-tgt-leads');
   if(ldEl&&!ldEl.dataset.touched&&leads>0) ldEl.value=leads;
   const tgtLeads=parseFloat(ldEl&&ldEl.value)||0;
@@ -5105,6 +5505,7 @@ function avCalcCalc(){
   const rawCSR=s('av-cc-tgt-csr').value;
   const tgtTCR=rawTCR!==''?parseFloat(rawTCR):NaN;
   const tgtCSR=rawCSR!==''?parseFloat(rawCSR):NaN;
+
   let tcrConn=0;
   if(!isNaN(tgtTCR)&&tgtLeads>0){
     tcrConn=Math.round(tgtLeads*(tgtTCR/100)*10)/10;
@@ -5115,6 +5516,7 @@ function avCalcCalc(){
   } else {
     ['av-cc-tcr-conn','av-cc-tcr-csr','av-cc-tcr-sales'].forEach(id=>s(id).textContent='—');
   }
+
   const csrConns=(!isNaN(tgtTCR)&&tgtLeads>0)?tcrConn:conn;
   const csrLeads=(!isNaN(tgtTCR)&&tgtLeads>0)?tgtLeads:leads;
   const csrTCRlbl=(!isNaN(tgtTCR))?tgtTCR.toFixed(1)+'%':(leads>0?curTCR.toFixed(1)+'%':'—');
@@ -5127,7 +5529,9 @@ function avCalcCalc(){
     s('av-cc-csr-sales').textContent='—';
   }
 }
+
 function req(id,lbl){const el=document.getElementById(id);if(!el||!el.value.trim()){toast('⚠️ "'+lbl+'" is required.');return false;}return true;}
+
 /* ── SUGGESTIONS / REPORT ISSUE ── */
 function openSuggestModal(){
   openM('m-suggest');
@@ -5140,6 +5544,7 @@ function openSuggestModal(){
     body.addEventListener('input',()=>cnt.textContent=body.value.length+' / 2000');
   }
 }
+
 async function submitSuggestion(){
   if(!CU||!CU.isAgentView) return;
   const subject=(document.getElementById('sg-subject').value||'').trim();
@@ -5171,6 +5576,7 @@ async function submitSuggestion(){
     console.error('suggestion submit:',e);
   }
 }
+
 function renderOMSuggestions(){
   if(!CU||!CU.isOM) return;
   const box=document.getElementById('sg-om-list');
@@ -5213,6 +5619,7 @@ function renderOMSuggestions(){
     })
     .catch(e=>{box.innerHTML='<span style="color:#9ca3af;font-style:italic;">Could not load submissions.</span>';console.error(e);});
 }
+
 async function updateSuggestionStatus(id, status){
   try{
     await FSB.collection('px_suggestions').doc(id).update({status});
@@ -5221,6 +5628,7 @@ async function updateSuggestionStatus(id, status){
     console.error(e);
   }
 }
+
 function renderSuggestionHistory(){
   if(!CU||!CU.isAgentView) return;
   const box=document.getElementById('sg-history');
@@ -5252,6 +5660,7 @@ function renderSuggestionHistory(){
     })
     .catch(()=>{box.innerHTML='<em>Could not load history.</em>';});
 }
+
 async function saveLog(){
   if(!req('cl-date','Date of Coaching'))return;
   if(!req('cl-agent','Agent Name'))return;
@@ -5265,6 +5674,7 @@ async function saveLog(){
   const csr=document.getElementById('cl-csr').value;
   const cvr=document.getElementById('cl-cvr').value;
   if(!tcr||!csr||!cvr){toast('⚠️ Enter Leads Touch, Connect & Sales to auto-calculate metrics.');return;}
+
   const _agentName=document.getElementById('cl-agent').value;
   const entry={
     id:editingLogId||uid(),
@@ -5303,17 +5713,20 @@ async function saveLog(){
   document.getElementById('wk-sel').value=entry.wk;
   renderDash();
 }
+
 async function delLog(id){
   if(!confirm('Delete this coaching entry?'))return;
   const ok=await fsDel('px_logs',id);
   if(ok){ syncToSheet('coaching','delete',id,{}); toast('🗑 Entry deleted.'); }
 }
+
 /* ═══════════════════════════════════════
    DOCUMENTS
 ═══════════════════════════════════════ */
 function openDocsModal(){
   openM('m-docs');
 }
+
 /* ═══════════════════════════════════════
    FOLLOW THROUGH
 ═══════════════════════════════════════ */
@@ -5324,6 +5737,7 @@ function openFTModal(){
   document.getElementById('ft-applied').value='';
   openM('m-ft');
 }
+
 async function saveFT(){
   if(!req('ft-date','Date'))return;
   if(!req('ft-agent','Agent Name'))return;
@@ -5344,10 +5758,12 @@ async function saveFT(){
   syncToSheet('ft','upsert',ftEntry.id, sheetRowFT(ftEntry));
   closeM('m-ft');toast('✅ Follow through saved!');
 }
+
 /* ═══════════════════════════════════════
    NTE
 ═══════════════════════════════════════ */
 let curNTE='';
+
 function onNTETypeChange(val){
   curNTE=val;
   document.getElementById('nte-title').textContent='📝 NTE Log — '+val;
@@ -5360,6 +5776,7 @@ function onNTETypeChange(val){
     if(document.getElementById('nte-att-status'))document.getElementById('nte-att-status').value='';
   }
 }
+
 function openNTEModal(type){
   fillAgents(['nte-agent']);
   document.getElementById('nte-date').value='';
@@ -5375,6 +5792,7 @@ function openNTEModal(type){
   onNTETypeChange(sel.value);
   openM('m-nte');
 }
+
 async function saveNTE(){
   if(!req('nte-date','Date NTE Served'))return;
   if(!req('nte-agent','Agent Name'))return;
@@ -5404,6 +5822,7 @@ async function saveNTE(){
   syncToSheet('nte','upsert',nteEntry.id, sheetRowNTE(nteEntry));
   closeM('m-nte');toast('✅ NTE log saved!');
 }
+
 /* ═══════════════════════════════════════
    COMMITMENT STAR
 ═══════════════════════════════════════ */
@@ -5418,6 +5837,7 @@ function openCommit(id){
   document.getElementById('c-tl').value=c.tl||'';
   curId=id;openM('m-commit');
 }
+
 /* ── Reverse-lookup: agent name → email ───────────────────────────────── */
 function agentEmailByName(name){
   if(!name) return '';
@@ -5427,9 +5847,11 @@ function agentEmailByName(name){
   }
   return '';
 }
+
 async function saveCommit(){
   if(!curId) return;
   const logEntry=DB.logs.find(l=>l.id===curId);
+
   // Resolve the agent's email:
   // 1. If the agent is logged in themselves → use their own email
   // 2. Otherwise reverse-lookup from EMAIL_TO_AGENT by agent name
@@ -5439,6 +5861,7 @@ async function saveCommit(){
     (CU?.isAgentView ? CU.email : '') ||
     agentEmailByName(logEntry?.agent||'') ||
     existingCm.agentEmail || '';
+
   const cmData={
     situation  : document.getElementById('c-sit').value,
     task       : document.getElementById('c-task').value,
@@ -5456,6 +5879,7 @@ async function saveCommit(){
   toast('✅ Commitment saved!');
   sendCommitmentEmail(cmData, logEntry);
 }
+
 /* ── Send commitment email ────────────────────────────────────────────────
    • If EmailJS is configured → sends automatically, no user action needed
    • Otherwise → opens a pre-filled mailto: in the agent's/TL's email client
@@ -5468,10 +5892,12 @@ async function sendCommitmentEmail(cmData, logEntry){
   const date      = logEntry?.date ? fd(logEntry.date) : '—';
   const tlName    = cmData.tl || logEntry?.tl || '—';
   const submittedAt = new Date().toLocaleString('en-US',{timeZone:'America/Chicago'});
+
   if(!toEmail){
     toast('⚠️ No email address found for this agent. Commitment is saved.');
     return;
   }
+
   // ── Path A: EmailJS (automatic, no user action) ──────────────────────
   if(EMAILJS_PUBLIC_KEY && !EMAILJS_PUBLIC_KEY.startsWith('YOUR_')){
     try{
@@ -5493,9 +5919,11 @@ async function sendCommitmentEmail(cmData, logEntry){
     }
     return;
   }
+
   // ── Path B: mailto: fallback (works immediately, one-click send) ──────
   openMailto(toEmail,agentName,week,date,tlName,cmData,submittedAt);
 }
+
 function openMailto(toEmail,agentName,week,date,tlName,cmData,submittedAt){
   const subject=`Your Phoenix Coaching Commitment — ${week}`;
   const body=[
@@ -5530,19 +5958,23 @@ function openMailto(toEmail,agentName,week,date,tlName,cmData,submittedAt){
   setTimeout(()=>document.body.removeChild(a),200);
   toast('📧 Email draft opened for '+toEmail+' — click Send in your email client.');
 }
+
 /* ═══════════════════════════════════════
    OM DASHBOARDS
 ═══════════════════════════════════════ */
 let CHT={};
+
 /* ── Coaching Dashboard — charts ── */
 function renderOMTLBreakdown(){
   const wk=parseInt(document.getElementById('om-tl-wk')?.value);
   const wrap=document.getElementById('om-tl-breakdown');
   if(!wrap)return;
   if(!wk){wrap.innerHTML='<div style="color:var(--g400);font-size:.82rem;text-align:center;padding:20px 0">Select a week to view breakdown.</div>';return;}
+
   // Get all TL teams from roster
   const tlNames=[...new Set(rosterAgents.map(a=>a.tl).filter(Boolean))].sort();
   const wkLogs=DB.logs.filter(l=>l.wk===wk);
+
   const rows=tlNames.map(tl=>{
     const teamRoster=rosterAgents.filter(a=>a.tl===tl);
     const total=teamRoster.length;
@@ -5551,7 +5983,9 @@ function renderOMTLBreakdown(){
     const pct=total?Math.round((coached/total)*100):0;
     return{tl,coached,total,pct};
   }).filter(r=>r.total>0).sort((a,b)=>b.pct-a.pct);
+
   if(!rows.length){wrap.innerHTML='<div style="color:var(--g400);font-size:.82rem;text-align:center;padding:20px 0">No data for this week.</div>';return;}
+
   wrap.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:.83rem;">
     <thead><tr style="color:var(--g500);font-size:.75rem;font-weight:700;border-bottom:1.5px solid var(--g200);">
       <th style="padding:6px 10px;text-align:left">#</th>
@@ -5585,10 +6019,12 @@ function renderOMTLBreakdown(){
     </tfoot>
   </table>`;
 }
+
 function renderOMDash(){
   // Populate team dropdown from roster (not from log data)
   const omFTeam=document.getElementById('om-f-team');
   if(omFTeam&&omFTeam.options.length<=1) omFTeam.innerHTML=tlOptsHtml(omFTeam.value);
+
   // Populate week dropdown for TL breakdown
   const omTLWk=document.getElementById('om-tl-wk');
   if(omTLWk&&omTLWk.options.length<=1){
@@ -5598,6 +6034,7 @@ function renderOMDash(){
     if(usedWks.length) omTLWk.value=usedWks[0];
   }
   renderOMTLBreakdown();
+
   const tm=(document.getElementById('om-f-team')||{}).value||'';
   const ag=(document.getElementById('om-f-agent')||{}).value||'';
   const sq=((document.getElementById('om-f-search')||{}).value||'').toLowerCase();
@@ -5605,18 +6042,22 @@ function renderOMDash(){
     (!tm||l.tl===tm)&&(!ag||l.agent===ag)&&
     (!sq||(l.agent||'').toLowerCase().includes(sq)||(l.tl||'').toLowerCase().includes(sq))
   );
+
   // Charts
   const dayMap={};
   data.forEach(l=>{dayMap[l.date]=(dayMap[l.date]||0)+1;});
   const days=Object.keys(dayMap).sort().slice(-14);
+
   if(CHT.day)CHT.day.destroy();
   CHT.day=new Chart(document.getElementById('ch-day').getContext('2d'),{
     type:'bar',
     data:{labels:days.map(fd),datasets:[{label:'Entries',data:days.map(d=>dayMap[d]),backgroundColor:'#83B271',borderColor:'#5E8A50',borderWidth:2,borderRadius:6}]},
     options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}
   });
+
   const tlMap={}; data.forEach(l=>{tlMap[l.tl]=(tlMap[l.tl]||0)+1;});
   const tls=Object.keys(tlMap); const total=tls.map(t=>tlMap[t]).reduce((a,b)=>a+b,0)||1;
+
   if(CHT.tl)CHT.tl.destroy();
   CHT.tl=new Chart(document.getElementById('ch-tl').getContext('2d'),{
     type:'doughnut',
@@ -5625,6 +6066,7 @@ function renderOMDash(){
       tooltip:{callbacks:{label:c=>`${c.label}: ${c.raw} (${((c.raw/total)*100).toFixed(1)}%)`}}}}
   });
 }
+
 /* ── Coaching Logs — table (like NTE / FT) ── */
 function renderOMC(){
   // Populate team dropdown from roster
@@ -5675,18 +6117,22 @@ function renderOMC(){
     </tr>`;
   }).join('');
 }
+
 /* Open Notion-style coaching log card detail */
 function openLogCard(id){
   const r=DB.logs.find(l=>l.id===id); if(!r) return;
   const cm=DB.cm[id]||{};
   const done=cm.situation||cm.sit||cm.task||cm.action||cm.act||cm.res;
+
   document.getElementById('nd-agent').textContent=r.agent||'—';
+
   document.getElementById('nd-meta').innerHTML=`
     <div class="nm-item"><span class="nm-lbl">Team Lead</span><span class="nm-val">${e(r.tl)||'—'}</span></div>
     <div class="nm-item"><span class="nm-lbl">Date of Coaching</span><span class="nm-val">${fd(r.date)}</span></div>
     <div class="nm-item"><span class="nm-lbl">WK#</span><span class="nm-val">WK${r.wk}</span></div>
     <div class="nm-item"><span class="nm-lbl">Tenure</span><span class="nm-val">${tenure(hireOf(r.agent),r.date)}</span></div>
   `;
+
   document.getElementById('nd-metrics').innerHTML=`
     <div class="nm-card"><div class="v">${r.leads||'—'}</div><div class="k">Leads</div></div>
     <div class="nm-card"><div class="v">${r.conn||'—'}</div><div class="k">Connect</div></div>
@@ -5696,9 +6142,11 @@ function openLogCard(id){
     <div class="nm-card"><div class="v">${pct(r.cvr)}</div><div class="k">CVR%</div></div>
     <div class="nm-card"><div class="v">${pct(r.wk2)}</div><div class="k">WK2 CVR%</div></div>
   `;
+
   document.getElementById('nd-hi').textContent=r.hi||'No highlights recorded.';
   document.getElementById('nd-opp').textContent=r.opp||'No opportunities recorded.';
   document.getElementById('nd-notes').textContent=r.notes||'No coaching notes recorded.';
+
   const cs=document.getElementById('nd-commit-sec');
   if(done){
     cs.style.display='';
@@ -5706,11 +6154,14 @@ function openLogCard(id){
       .filter(([,v])=>v).map(([k,v])=>`<div style="margin-bottom:10px"><div class="notion-section-lbl" style="font-size:.6rem">${k}</div><div class="notion-text">${e(v)}</div></div>`).join('');
     document.getElementById('nd-commit').innerHTML=rows||'—';
   } else { cs.style.display='none'; }
+
   document.getElementById('nd-status-badge').innerHTML=done
     ?'<span class="status-done">✅ Commitment Complete</span>'
     :'<span class="status-pend">⏳ Commitment Pending</span>';
+
   openM('m-logdetail');
 }
+
 function renderOMN(){
   const tl=(document.getElementById('om-n-f-tl')?.value||'').toLowerCase();
   const ag=(document.getElementById('om-n-f-agent')?.value||'').toLowerCase();
@@ -5748,10 +6199,12 @@ function renderOMN(){
     </tr>`;
   }).join('')||`<tr><td colspan="10"><div class="empty-st"><div class="ei">📝</div><p>No NTE logs yet.</p></div></td></tr>`;
 }
+
 /* Helper: look up TL from roster for an agent name */
 function getTLForAgent(agentName){
   return rosterAgents.find(a=>a.name===agentName)?.tl||'';
 }
+
 function renderOMF(){
   const tl=(document.getElementById('om-ft-f-tl')?.value||'').toLowerCase();
   const ag=(document.getElementById('om-ft-f-agent')?.value||'').toLowerCase();
@@ -5782,6 +6235,7 @@ function renderOMF(){
     </tr>`;
   }).join('')||`<tr><td colspan="7"><div class="empty-st"><div class="ei">🔄</div><p>No follow through logs yet.</p></div></td></tr>`;
 }
+
 /* ═══════════════════════════════════════
    EXPORT CSV
 ═══════════════════════════════════════ */
@@ -5806,7 +6260,9 @@ function exportCSV(type){
   a.download=`${name}-${new Date().toISOString().slice(0,10)}.csv`;
   a.click();toast('📥 CSV exported!');
 }
+
 function ce(v){if(!v)return'""';return'"'+String(v).replace(/"/g,'""')+'"';}
+
 /* ═══════════════════════════════════════
    HELPERS
 ═══════════════════════════════════════ */
@@ -5814,32 +6270,39 @@ function fillAgents(ids){
   const opts='<option value="">— Select Agent —</option>'+rosterAgents.map(a=>`<option value="${e(a.name)}">${e(a.name)}</option>`).join('');
   ids.forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
 }
+
 function fillWeeks(ids){
   const opts='<option value="">— Select Week —</option>'+WEEKS.map(w=>`<option value="${w}">WK${w}</option>`).join('');
   ids.forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
 }
+
 function openM(id){document.getElementById(id).classList.add('open');}
 function closeM(id){document.getElementById(id).classList.remove('open');}
+
 document.querySelectorAll('.overlay').forEach(el=>{
   el.addEventListener('click',ev=>{if(ev.target===el)el.classList.remove('open');});
 });
+
 function toggleMenu(){const m=document.getElementById('ham-menu');if(m)m.classList.toggle('open');}
 function closeMenu(){const m=document.getElementById('ham-menu');if(m)m.classList.remove('open');}
 document.addEventListener('click',ev=>{
   const w=document.querySelector('.ham-wrap');
   if(w&&!w.contains(ev.target))closeMenu();
 });
+
 let tt;
 function toast(msg){
   const el=document.getElementById('toast');
   el.textContent=msg;el.classList.add('on');
   clearTimeout(tt);tt=setTimeout(()=>el.classList.remove('on'),3200);
 }
+
 /* init week select on page load */
 (()=>{
   const s=document.getElementById('wk-sel');
   if(s&&!s.children.length)s.innerHTML=WEEKS.map(w=>`<option value="${w}">WK${w}</option>`).join('');
 })();
+
 /* ═══════════════════════════════════════
    ROSTER MANAGER (Admin only)
 ═══════════════════════════════════════ */
@@ -5848,6 +6311,7 @@ function toast(msg){
    RESET PASSWORDS VIEW
 ══════════════════════════════════════════════════════════════════════ */
 let _pwResetUsers=[];   // [{email, createdAt}] loaded from px_users
+
 async function loadPwResetView(){
   const list=document.getElementById('pw-reset-list');
   list.innerHTML='<div style="color:#9ca3af;font-size:.85rem;">Loading…</div>';
@@ -5865,6 +6329,7 @@ async function loadPwResetView(){
     list.innerHTML='<div style="color:#ef4444;font-size:.85rem;">⚠️ Could not load users. Please try again.</div>';
   }
 }
+
 function filterPwResetList(){
   const q=document.getElementById('pw-reset-search').value.toLowerCase().trim();
   const filtered=q
@@ -5872,6 +6337,7 @@ function filterPwResetList(){
     : _pwResetUsers;
   renderPwResetList(filtered);
 }
+
 function renderPwResetList(users){
   const list=document.getElementById('pw-reset-list');
   if(!users.length){
@@ -5893,6 +6359,7 @@ function renderPwResetList(users){
     </div>`;
   }).join('');
 }
+
 async function confirmResetPw(email, name){
   if(!confirm(`Reset password for ${name}?\n\nThey will be asked to create a new password on their next login.`)) return;
   try{
@@ -5906,8 +6373,10 @@ async function confirmResetPw(email, name){
     toast('⚠️ Reset failed. Please try again.');
   }
 }
+
 /* ══════════════════════════════════════════════════════════════════════ */
 let _rosterFiltered=[];
+
 function openRosterMgr(){
   const team=myTeam();
   const tlf=document.getElementById('rm-tl-filter');
@@ -5932,6 +6401,7 @@ function openRosterMgr(){
   renderRosterTLs();
   openM('m-roster');
 }
+
 function toggleRosterAddForm(){
   const form=document.getElementById('rm-add-form');
   if(!form)return;
@@ -5956,27 +6426,34 @@ function toggleRosterAddForm(){
     if(ni) ni.focus();
   }
 }
+
 function renderRosterAgents(){
   const tbody=document.getElementById('roster-agent-list');
   if(!tbody)return;
+
   // Refresh TL filter options (keep current selection)
   const tlf=document.getElementById('rm-tl-filter');
   const selTL=tlf?tlf.value:'';
   if(tlf){
     tlf.innerHTML='<option value="">All TLs</option>'+rosterTLS.map(t=>`<option value="${e(t)}"${t===selTL?' selected':''}>${e(t)}</option>`).join('');
   }
+
   const sq=((document.getElementById('rm-search')||{}).value||'').toLowerCase();
   const ftl=selTL;
+
   _rosterFiltered=rosterAgents.filter(a=>
     (!sq||a.name.toLowerCase().includes(sq))&&
     (!ftl||a.tl===ftl)
   );
+
   const cnt=document.getElementById('rm-count');
   if(cnt) cnt.textContent=`${_rosterFiltered.length} agent${_rosterFiltered.length!==1?'s':''}`;
+
   if(!_rosterFiltered.length){
     tbody.innerHTML=`<tr><td colspan="5" style="text-align:center;color:#9ca3af;padding:24px 12px;font-style:italic;">No agents found</td></tr>`;
     return;
   }
+
   tbody.innerHTML=_rosterFiltered.map((a,i)=>`
     <tr>
       <td class="rm-num">${i+1}</td>
@@ -5989,6 +6466,7 @@ function renderRosterAgents(){
       </td>
     </tr>`).join('');
 }
+
 function rosterEditInline(idx){
   const agent=_rosterFiltered[idx];
   if(!agent)return;
@@ -6016,6 +6494,7 @@ function rosterEditInline(idx){
       <button class="rm-cancel-btn" onclick="renderRosterAgents()">✕</button>
     </td>`;
 }
+
 async function rosterSaveInline(idx){
   const agent=_rosterFiltered[idx];
   if(!agent)return;
@@ -6037,6 +6516,7 @@ async function rosterSaveInline(idx){
   await fsWrite('px_roster','agents',{list:newList,hire:hireMap,teamLead:tlMap});
   toast('✅ Agent updated!');
 }
+
 async function rosterAddAgent(){
   const nameEl =document.getElementById('rm-new-name');
   const emailEl=document.getElementById('rm-new-email');
@@ -6069,6 +6549,7 @@ async function rosterAddAgent(){
   toggleRosterAddForm();
   toast('✅ Agent added! They can now log in with their email.');
 }
+
 function rosterDelByIdx(idx){
   const agent=_rosterFiltered[idx];
   if(!agent)return;
@@ -6076,6 +6557,7 @@ function rosterDelByIdx(idx){
   if(team && agent.tl!==team){toast('⚠️ You can only remove agents from your team.');return;}
   rosterRemoveAgent(agent.name);
 }
+
 async function rosterRemoveAgent(name){
   if(!confirm(`Remove "${name}" from the roster?`))return;
   const newList=rosterAgents.filter(a=>a.name!==name).map(a=>a.name);
@@ -6084,6 +6566,7 @@ async function rosterRemoveAgent(name){
   await fsWrite('px_roster','agents',{list:newList,hire:hireMap,teamLead:tlMap});
   toast('🗑 Agent removed.');
 }
+
 function renderRosterTLs(){
   const container=document.getElementById('roster-tl-list');
   if(!container)return;
@@ -6093,6 +6576,7 @@ function renderRosterTLs(){
       <button onclick="rosterRemoveTL('${e(t)}')" title="Remove TL">✕</button>
     </div>`).join('');
 }
+
 async function rosterAddTL(){
   const nameEl =document.getElementById('roster-tl-name');
   const emailEl=document.getElementById('roster-tl-email');
@@ -6114,12 +6598,15 @@ async function rosterAddTL(){
   if(emailEl)emailEl.value='';
   toast('✅ Team lead added! They can now log in with their email.');
 }
+
 async function rosterRemoveTL(name){
   if(!confirm(`Remove "${name}" from Team Leads?`))return;
   const newList=rosterTLS.filter(t=>t!==name);
   await fsWrite('px_roster','tls',{list:newList});
   toast('🗑 Team lead removed.');
 }
+
+
 /* ═══════════════════════════════════════
    NTE DELETE + DETAIL + SIGNATURE
 ═══════════════════════════════════════ */
@@ -6128,9 +6615,11 @@ async function delNTE(id){
   const ok=await fsDel('px_nte',id);
   if(ok){ syncToSheet('nte','delete',id,{}); toast('🗑 NTE record deleted.'); }
 }
+
 let _sigNTEId=null;
 let _sigDrawing=false;
 let _sigLastX=0,_sigLastY=0;
+
 function openNTEDetail(id){
   const r=DB.nte.find(n=>n.id===id);
   if(!r)return;
@@ -6175,6 +6664,7 @@ function openNTEDetail(id){
   openM('m-nte-detail');
   if(!signed) initSigCanvas();
 }
+
 function clearNTESig(){
   // Re-open to show the canvas
   const r=DB.nte.find(n=>n.id===_sigNTEId);
@@ -6189,11 +6679,13 @@ function clearNTESig(){
     </div>`;
   initSigCanvas();
 }
+
 function initSigCanvas(){
   const c=document.getElementById('sig-canvas');
   if(!c)return;
   const ctx=c.getContext('2d');
   ctx.strokeStyle='#1e293b';ctx.lineWidth=2.5;ctx.lineCap='round';ctx.lineJoin='round';
+
   function pos(ev){
     const rect=c.getBoundingClientRect();
     const scaleX=c.width/rect.width;
@@ -6218,11 +6710,13 @@ function initSigCanvas(){
   c.addEventListener('touchmove',draw,{passive:false});
   c.addEventListener('touchend',stop);
 }
+
 function clearSigCanvas(){
   const c=document.getElementById('sig-canvas');
   if(!c)return;
   c.getContext('2d').clearRect(0,0,c.width,c.height);
 }
+
 async function saveNTESig(){
   const ackChk=document.getElementById('nte-ack-chk');
   if(ackChk&&!ackChk.checked){toast('⚠️ Please check the acknowledgment box first.');return;}
@@ -6241,12 +6735,14 @@ async function saveNTESig(){
   toast('✅ Signature & acknowledgment saved!');
   openNTEDetail(_sigNTEId);
 }
+
 /* ═══════════════════════════════════════
    LOGIN EMAIL DETECT — show agent name selector
 ═══════════════════════════════════════ */
 function onEmailInput(){
   document.getElementById('lerr').style.display='none';
 }
+
 /* ═══════════════════════════════════════
    AGENT VIEW
 ═══════════════════════════════════════ */
@@ -6263,12 +6759,14 @@ function switchAgentTab(tab){
   if(tab==='calc') avCalcInit();
   if(tab==='attendance') renderAttendance();
 }
+
 function renderAgentView(){
   if(!CU||!CU.isAgentView) return;
   // Show agent-only sidebar buttons
   const bubble=document.getElementById('sg-bubble-wrap');
   if(bubble) bubble.style.display='';
   const name=CU.agentName;
+
   /* Coaching Logs */
   const logs=DB.logs.filter(r=>r.agent===name);
   document.getElementById('av-stat-c').textContent=logs.length;
@@ -6293,10 +6791,12 @@ function renderAgentView(){
       <td><button class="btn btn-yellow btn-sm" onclick="openDetail('${r.id}')">&#x1F441; View</button></td>
     </tr>`;
   }).join(''):`<tr><td colspan="14"><div class="empty-st"><div class="ei">&#x1F4CB;</div><p>No coaching logs yet.</p></div></td></tr>`;
+
   /* Notification badge — coaching tab */
   const pendingCM=logs.filter(r=>{const cm=DB.cm[r.id]||{};return!(cm.situation||cm.sit||cm.task||cm.action||cm.act||cm.result||cm.res);}).length;
   const badge=document.getElementById('nav-badge-coaching');
   if(badge){badge.textContent=pendingCM>9?'9+':pendingCM;badge.style.display=pendingCM>0?'':'none';}
+
   /* NTE Logs */
   const ntes=DB.nte.filter(r=>r.agent===name);
   document.getElementById('av-stat-n').textContent=ntes.length;
@@ -6316,6 +6816,7 @@ function renderAgentView(){
       <td><button class="btn btn-sm" style="background:${signed?'#16a34a':'#d97706'};color:#fff;border:none;border-radius:6px;padding:4px 12px;cursor:pointer;font-size:.75rem;" onclick="openNTEDetail('${r.id}')">${signed?'&#x2705; View':'&#x270D;&#xFE0F; Sign'}</button></td>
     </tr>`;
   }).join(''):`<tr><td colspan="7"><div class="empty-st"><div class="ei">&#x1F4DD;</div><p>No NTE notices yet.</p></div></td></tr>`;
+
   /* Follow Through */
   const fts=DB.ft.filter(r=>r.agent===name);
   document.getElementById('av-stat-f').textContent=fts.length;
@@ -6327,13 +6828,16 @@ function renderAgentView(){
     <td>${e(r.applied)}</td>
     <td style="max-width:200px;font-size:.82rem">${e(r.opp)||'&#x2014;'}</td>
   </tr>`).join(''):`<tr><td colspan="5"><div class="empty-st"><div class="ei">&#x1F504;</div><p>No follow through logs yet.</p></div></td></tr>`;
+
   /* Attendance — always refresh nav badge, re-render if tab is visible */
   renderAttendance();
 }
+
 /* ═══════════════════════════════════════
    4-WEEK TRAJECTORY (coaching log modal)
 ═══════════════════════════════════════ */
 let _trajW1=null;
+
 function render4WeekTrajectory(agentName, excludeWk){
   const loading=document.getElementById('traj-loading');
   const tbl=document.getElementById('traj-tbl');
@@ -6399,6 +6903,7 @@ function render4WeekTrajectory(agentName, excludeWk){
   _trajW1={leads:+w1.leads||0,conn:+w1.conn||0,sales:+w1.sales||0,tcr:+w1.tcr||0,csr:+w1.csr||0};
   calcCalc();
 }
+
 /* ═══════════════════════════════════════
    MY PERFORMANCE CHARTS (agent view)
 ═══════════════════════════════════════ */
@@ -6406,6 +6911,7 @@ function renderAgentPerf(){
   if(!CU||!CU.isAgentView)return;
   const name=CU.agentName;
   const logs=[...DB.logs.filter(r=>r.agent===name)].sort((a,b)=>b.wk-a.wk).slice(0,4).reverse();
+
   function makeBar(canvasId,lbl,data,color){
     const c=document.getElementById(canvasId);
     if(!c)return;
@@ -6420,6 +6926,7 @@ function renderAgentPerf(){
       options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{beginAtZero:true,grid:{color:'#f3f4f6'}}}}
     });
   }
+
   if(!logs.length){
     ['ap-leads-ch','ap-calls-ch','ap-sales-ch','ap-rates-ch'].forEach(id=>{
       const c=document.getElementById(id);
@@ -6427,9 +6934,11 @@ function renderAgentPerf(){
     });
     return;
   }
+
   makeBar('ap-leads-ch','Leads Touch',logs.map(r=>+r.leads||0),'#ABCB89');
   makeBar('ap-calls-ch','Calls Made',logs.map(r=>+r.conn||0),'#2563EB');
   makeBar('ap-sales-ch','No. of Sales',logs.map(r=>+r.sales||0),'#16A34A');
+
   // Line chart: TCR%, CSR%, WK2 CVR%
   const rc=document.getElementById('ap-rates-ch');
   if(rc){
@@ -6448,6 +6957,7 @@ function renderAgentPerf(){
     });
   }
 }
+
 /* ═══════════════════════════════════════
    ATTENDANCE TRACKER
 ═══════════════════════════════════════ */
@@ -6457,21 +6967,26 @@ function switchAttTab(tab){
     document.getElementById('att-panel-'+t).style.display=t===tab?'':'none';
   });
 }
+
 function renderAttendance(){
   if(!CU||!CU.isAgentView)return;
   const name=CU.agentName;
+
   // Filter attendance NTE records for this agent from Firestore
   const recs=(DB.nte||[]).filter(r=>r.agent===name&&r.type==='Attendance')
     .sort((a,b)=>new Date(a.date)-new Date(b.date));
+
   // ── 4-month rolling cutoff ──
   const cutoff=new Date();
   cutoff.setMonth(cutoff.getMonth()-4);
+
   let activePts=0;
   recs.forEach(r=>{
     const recDate=new Date(r.date);
     if(recDate>=cutoff) activePts+=parseFloat(r.pts)||0;
   });
   activePts=Math.round(activePts*100)/100;
+
   // ── Alert banner ──
   const banner=document.getElementById('att-alert-banner');
   if(banner){
@@ -6488,6 +7003,7 @@ function renderAttendance(){
       banner.innerHTML='🟡 <span><strong>Caution Level:</strong> You have '+activePts+' active attendance points. Please review the attendance policy.</span>';
     }
   }
+
   // ── Points summary card ──
   const totalEl=document.getElementById('att-total-pts');
   const chipEl=document.getElementById('att-level-chip');
@@ -6502,18 +7018,21 @@ function renderAttendance(){
     else if(activePts>=2) {chipEl.innerHTML='🟡 Caution'; chipEl.style.cssText='background:#CA8A04;color:#fff;border-radius:999px;padding:4px 14px;font-size:.8rem;font-weight:700;';}
     else                  {chipEl.innerHTML='✅ Clear';   chipEl.style.cssText='background:#16A34A;color:#fff;border-radius:999px;padding:4px 14px;font-size:.8rem;font-weight:700;';}
   }
+
   // ── Nav badge ──
   const navBadge=document.getElementById('nav-badge-att');
   if(navBadge){
     if(activePts>=2){navBadge.style.display='';navBadge.textContent=activePts;}
     else navBadge.style.display='none';
   }
+
   // ── Table rows ──
   if(!tbody)return;
   if(!recs.length){
     tbody.innerHTML='<tr><td colspan="8"><div class="empty-st"><div class="ei">📅</div><p>No attendance records found.</p></div></td></tr>';
     return;
   }
+
   tbody.innerHTML=recs.map((r,i)=>{
     const recDate=new Date(r.date);
     const isExpired=recDate<cutoff;
@@ -6523,6 +7042,7 @@ function renderAttendance(){
     const statusBadge=r.attStatus?`<span class="att-status ${stClass}">${r.attStatus}</span>`:'<span style="color:var(--g400);font-size:.75rem">—</span>';
     const ptsBadge=pts?`<span class="${isExpired?'att-ptsbadge-exp':'att-ptsbadge'}">${pts}</span>`:'—';
     const expiredLabel=isExpired?'<span style="display:block;font-size:.65rem;color:var(--g400);margin-top:2px">Expired</span>':'';
+
     let appealCell='—';
     if(r.appeal){
       const st=r.appealStatus||'Pending';
@@ -6536,6 +7056,7 @@ function renderAttendance(){
     }else if(!isExpired){
       appealCell=`<button class="att-appeal-btn" onclick="openAttAppeal('${r.id}')">Appeal</button>`;
     }
+
     return`<tr>
       <td style="color:var(--g400);font-size:.72rem">${i+1}</td>
       <td style="font-size:.8rem;white-space:nowrap">${fd(r.date)}</td>
@@ -6548,6 +7069,7 @@ function renderAttendance(){
     </tr>`;
   }).join('');
 }
+
 function openAttAppeal(nteId){
   const r=(DB.nte||[]).find(x=>x.id===nteId);
   if(!r){toast('❌ Record not found.');return;}
@@ -6572,6 +7094,7 @@ function openAttAppeal(nteId){
   document.getElementById('att-appeal-drive').value='';
   openM('m-att-appeal');
 }
+
 async function saveAttAppeal(){
   const nteId=document.getElementById('att-appeal-nteId')?.value;
   const what=document.getElementById('att-appeal-what')?.value?.trim();
@@ -6591,6 +7114,7 @@ async function saveAttAppeal(){
   toast('✅ Appeal submitted! Your TL will review it.');
   renderAttendance();
 }
+
 /* ═══════════════════════════════════════
    PHOENIX INCENTIVE CALCULATOR
 ═══════════════════════════════════════ */
@@ -6605,6 +7129,7 @@ const PX_RATES=[
   [66.1,  79.6,  93.2, 106.8],  // col 3 = Tier 2 (3.45%–3.94%)
   [84.8,  98.3, 111.9, 125.4]   // col 4 = Tier 1 (CVR ≥ 3.95%)
 ];
+
 function _pxTier(cvr){
   if(cvr>=3.95)return{num:1,col:4,label:'Tier 1',range:'CVR ≥ 3.95%'};
   if(cvr>=3.45)return{num:2,col:3,label:'Tier 2',range:'3.45%–3.94%'};
@@ -6612,6 +7137,7 @@ function _pxTier(cvr){
   if(cvr>=2.45)return{num:4,col:1,label:'Tier 4',range:'2.45%–2.94%'};
   return{num:5,col:0,label:'Tier 5',range:'Below 2.45%'};
 }
+
 // WK2+WK3 incentive using fractional per-point band rates — no rounding
 // Formula: <4 pts = $0; =4 pts = flat $60; >4 pts = $60 + (pts−4) × rate, rate changes by band
 // Band 1 (pts 4-10): 6-pt capacity; Bands 2-4 (5-pt each); decimals supported throughout
@@ -6627,6 +7153,7 @@ function _pxWk23Incentive(pts,col){
   // $60 flat bonus for reaching 4 pts + per-point band earnings above 4
   return 60+b1*r[0]+b2*r[1]+b3*r[2]+b4*r[3];
 }
+
 function calcPhoenix(){
   const cvrVal=document.getElementById('px-cvr');
   const wk23Val=document.getElementById('px-wk23');
@@ -6671,6 +7198,10 @@ function calcPhoenix(){
   if(res)res.style.display='';
   if(empty)empty.style.display='none';
 }
+
+
+
+
 /* ════════════════════════════════════════
    KNOWLEDGE BASE DATA & FUNCTIONS
 ════════════════════════════════════════ */
@@ -6678,6 +7209,7 @@ function calcPhoenix(){
 //  KNOWLEDGE BASE DATA
 // ══════════════════════════════════════
 const KB = [
+
 // ─── TIME RECOMMENDATIONS ─────────────────────────────────────────────────
 {
   id:'t1', cat:'time', icon:'⏱',
@@ -6735,6 +7267,7 @@ const KB = [
     <ul><li>Den</li><li>Basement</li><li>Attic</li><li>Office Room</li><li>Laundry Room</li><li>Extended Den</li><li>Sunroom</li><li>Theatre Room</li><li>Loft</li><li>Play Room</li></ul>
     <div class="spiel"><div class="spiel-lbl">💬 Mungkahing Script</div><p>"Magandang tanong! Para matiyak na inirerekomenda namin ang tamang bilang ng oras — mayroon ba kayong karagdagang espasyo tulad ng den, opisina, laundry room, basement, attic, sunroom, loft, play room, o theatre room? Lahat ng iyon ay binibilang bilang karagdagang silid, at nais naming matiyak na may sapat na oras ang inyong cleaner para sa kahanga-hangang trabaho!"</p></div>`
 },
+
 // ─── WHAT'S INCLUDED ──────────────────────────────────────────────────────
 {
   id:'i1', cat:'included', icon:'✅',
@@ -6804,6 +7337,7 @@ const KB = [
     </ul>
     <div class="spiel"><div class="spiel-lbl">💬 Mungkahing Script</div><p>"Ikinatutuwa kong sabihin sa inyo ang tungkol sa kung ano ang nagpapaiba sa Homeaglow! Ang aming mga Cleaning Professional ay available tuwing weekends at holidays, may dala silang sariling propesyonal na kagamitan, at bawat isa ay dumaan sa mahigpit na criminal background check para sa inyong ganap na kapayapaan ng isip. Bilang ForeverClean member, masatatamasa rin ninyo ang mga presyo na hanggang 50% mas mababa — kasama ang 24/7 access sa inyong personal na Dashboard!"</p></div>`
 },
+
 // ─── PREMIUM TASKS ───────────────────────────────────────────────────────
 {
   id:'p1', cat:'premium', icon:'⭐',
@@ -6851,6 +7385,7 @@ const KB = [
     <p>Makikipag-ugnayan din sa inyo ang inyong cleaner bago dumating para kumpirmahin na lahat ng planong gawin ay kasya sa oras na na-book!</p>
     <div class="spiel"><div class="spiel-lbl">💬 Mungkahing Script</div><p>"Siyempre, kaya iyon! Lahat ng booking ay nagsisimula sa minimum na 2 oras, na perpekto para sa standard na paglilinis. Kung gusto mong isama ang mga premium na serbisyo tulad ng paglilinis ng oven, refrigerator, o baseboards, inirerekomenda naming magdagdag ng kahit 1 karagdagang oras bawat isa para may sapat na oras ang inyong cleaner. Gusto ba ninyong isama ang alinman ngayon?"</p></div>`
 },
+
 // ─── NOT COVERED ─────────────────────────────────────────────────────────
 {
   id:'n1', cat:'notcovered', icon:'🚫',
@@ -6940,6 +7475,7 @@ const KB = [
       <p>"Ang gawaing iyon ay hindi kasama sa aming standard na paglilinis. Ngunit maaari kayong direktang makipag-usap sa inyong cleaner bago ang appointment para malaman kung kaya nilang gawin iyon — nasa kanila ang pagpapasya!"</p>
     </div>`
 },
+
 // ─── BOOKING & SCHEDULING ─────────────────────────────────────────────────
 {
   id:'b1', cat:'booking', icon:'📅',
@@ -7108,6 +7644,7 @@ const KB = [
   a_fil:`<p>Tiyak! Ikalulugod naming ayusin ang inyong unang paglilinis sa isa sa aming mga top-rated na lokal na Cleaning Professional. Para sa mga susunod na paglilinis, magkakaroon ka ng kakayahang <strong>piliin ang iyong preferred na cleaner direkta mula sa iyong Dashboard</strong> — kung saan maaari mong tingnan ang profile ng bawat cleaner at basahin ang mga customer review.</p>
     <div class="spiel"><div class="spiel-lbl">💬 Mungkahing Script</div><p>"Tiyak, at ganap naming naiintindihan kung gaano ito kahalaga! Titiyakin kong ang inyong unang paglilinis ay iaayos sa isa sa aming mga top-rated na lokal na Cleaning Professional. Para sa mga susunod na appointment, maaari ka ring mag-browse ng available na mga cleaner direkta mula sa inyong Dashboard, tingnan ang kanilang mga profile at mga tunay na customer review, at piliin ang pinakaangkop para sa inyong tahanan!"</p></div>`
 },
+
 // ─── BILLING & PAYMENTS ──────────────────────────────────────────────────
 {
   id:'bi1', cat:'billing', icon:'💳',
@@ -7271,6 +7808,7 @@ const KB = [
   a_fil:`<p>Ang naaangkop na buwis ay maaaring i-apply sa inyong membership, depende sa inyong lokasyon at lokal na regulasyon sa buwis. Ang inyong panghuling singil ay magrerepresenta ng anumang naaangkop na buwis sa oras ng pagsingil.</p>
     <div class="spiel"><div class="spiel-lbl">💬 Mungkahing Script</div><p>"Magandang tanong! Ang naaangkop na buwis ay maaaring i-apply sa inyong membership depende sa inyong lokasyon at lokal na regulasyon sa buwis, at ang inyong panghuling singil ay magrerepresenta ng anumang buwis sa oras ng pagsingil. Kung may mga katanungan kayo tungkol sa inyong mga singil, lagi kaming available na tumulong at magbigay ng kumpletong breakdown. Nais naming matiyak na walang sorpresa!"</p></div>`
 },
+
 // ─── CLEANERS & SERVICE ──────────────────────────────────────────────────
 {
   id:'c1', cat:'cleaners', icon:'🔒',
@@ -7344,6 +7882,7 @@ const KB = [
     </ul>
     <div class="spiel"><div class="spiel-lbl">💬 Mungkahing Script</div><p>"Tiyak — at ito ay isa sa mga feature na lubos na minamahal ng aming mga miyembro! Kapag nag-book ka, maaari kang mag-browse ng lahat ng available na Cleaning Professional sa inyong lugar, tingnan ang kanilang mga kumpletong profile at basahin ang mga tunay na customer review, at mag-send ng request sa hanggang 3 cleaners nang sabay-sabay — sisingilin ka lamang para sa isang tumanggap. Para makita lamang ng inyong preferred na mga cleaner ang inyong request, alisan lamang ng check ang 'Match 1st available top-rated cleaner' sa inyong Dashboard. Ikaw ang may kontrol sa iyong karanasan!"</p></div>`
 },
+
 // ─── SUPPORT & GENERAL ───────────────────────────────────────────────────
 {
   id:'s1', cat:'support', icon:'📞',
@@ -7387,20 +7926,24 @@ const KB = [
     <div class="spiel"><div class="spiel-lbl">💬 Mungkahing Script</div><p>"Ganap naming naiintindihan kung gaano ito nakakaalarma, at tunay naming pinahahalagahan ang inyong pag-abiso sa amin! Minsan ang mga tawag ay nagpapakita bilang spam dahil sa mga automated na sistema o kung paano nairehistro ang caller ID — ito ay hindi bihira para sa mga business line at hindi nagpapahiwatig ng anumang mali sa inyong dako. Tiyakin kong ire-report ito sa aming IT Team agad para masiyasat at maayos nila ito sa lalong madaling panahon. Maraming salamat sa pagdadala nito sa aming atensyon!"</p></div>`
 },
 ];
+
 // ══════════════════════════════════════
 //  LANGUAGE DETECTION
 // ══════════════════════════════════════
 const FIL_KW = ['ano','paano','ilang','oras','kasama','hindi','kung','sa','ang','mga','ito','ba','po','ko','iyon','pano','pwede','meron','wala','saan','sino','alin','sino','narito','gusto','dapat','kailangan','gaano','kailan','saan','mayroon','may','bilang','bawat','lahat','kahit','para','namin','nila','ninyo','inyong','aming','natin','natin','lang','din','rin','mo','niya','nila','sila','siya','kami','tayo','kayo'];
+
 function detectLang(q){
   if(!q) return 'en';
   const w = q.toLowerCase().split(/\s+/);
   const hits = w.filter(x => FIL_KW.some(k => x===k || x.startsWith(k))).length;
   return hits >= 1 ? 'fil' : 'en';
 }
+
 // ══════════════════════════════════════
 //  STATE
 // ══════════════════════════════════════
 let _cat = 'all', _lang = 'en', _open = new Set();
+
 // ══════════════════════════════════════
 //  RENDER
 // ══════════════════════════════════════
@@ -7409,6 +7952,7 @@ const CAT_LABELS = {
   notcovered:'🚫 Not Covered', booking:'📅 Booking & Scheduling', billing:'💳 Billing & Payments',
   cleaners:'🧹 Cleaners & Service', support:'📞 Support & General'
 };
+
 /* ── FAVORITES helpers ── */
 function _favKey(){ return 'kb_favs_'+(typeof CU!=='undefined'&&CU?(CU.email||CU.uid||'g'):'g'); }
 function kbGetFavs(){ try{ return new Set(JSON.parse(localStorage.getItem(_favKey())||'[]')); }catch(e){ return new Set(); } }
@@ -7422,10 +7966,12 @@ function kbToggleFav(id, ev){
   if(tab) tab.textContent = s.size ? '⭐ Favorites ('+s.size+')' : '⭐ Favorites';
   renderAll();
 }
+
 function renderAll(){
   const q = (document.getElementById('kb-q').value||'').trim();
   const lang = detectLang(q);
   _lang = lang;
+
   // language badge
   const badge = document.getElementById('kb-lang');
   if(q){
@@ -7434,8 +7980,10 @@ function renderAll(){
   } else {
     badge.style.display='none';
   }
+
   // clear button
   document.getElementById('kb-clr').style.display = q ? 'block' : 'none';
+
   // filter
   const favs = kbGetFavs();
   // update tab label
@@ -7454,8 +8002,10 @@ function renderAll(){
       i.a_fil.toLowerCase().includes(ql)
     );
   }
+
   // count
   document.getElementById('kb-count').textContent = q||_cat!=='all' ? `${items.length} article${items.length!==1?'s':''} found` : '';
+
   // group by cat
   if(!items.length){
     const emptyMsg = _cat==='favs'
@@ -7464,8 +8014,10 @@ function renderAll(){
     document.getElementById('kb-results').innerHTML = emptyMsg;
     return;
   }
+
   const groups = {};
   items.forEach(i => { if(!groups[i.cat]) groups[i.cat]=[]; groups[i.cat].push(i); });
+
   let html = '';
   for(const [cat, citems] of Object.entries(groups)){
     if(_cat==='all') html += `<div class="kb-section"><div class="kb-sec-title">${CAT_LABELS[cat]||cat}</div>`;
@@ -7501,16 +8053,19 @@ function renderAll(){
   }
   document.getElementById('kb-results').innerHTML = html;
 }
+
 // ══════════════════════════════════════
 //  INTERACTIONS
 // ══════════════════════════════════════
 function kbSearch(){ renderAll(); }
 function clearSearch(){ document.getElementById('kb-q').value=''; renderAll(); document.getElementById('kb-q').focus(); }
 function filterCat(cat, el){ _cat=cat; document.querySelectorAll('.kb-tab').forEach(t=>t.classList.remove('active')); el.classList.add('active'); renderAll(); }
+
 function toggleItem(id){
   if(_open.has(id)) _open.delete(id); else _open.add(id);
   renderAll();
 }
+
 function switchLang(e, id, lang){
   e.stopPropagation();
   _lang = lang;
@@ -7519,10 +8074,13 @@ function switchLang(e, id, lang){
   _open.add(id);
   renderAll();
 }
+
 // init
 document.getElementById('stat-total').textContent = KB.length;
 renderAll();
+
 </script>
+
 <!-- Agent Roster Manager Modal (table view) -->
 <div class="overlay" id="m-roster">
   <div class="modal" style="max-width:860px;">
@@ -7534,8 +8092,10 @@ renderAll();
       </div>
       <button class="mclose" onclick="closeM('m-roster')">✕</button>
     </div>
+
     <!-- White body -->
     <div class="mbody" style="background:#fff;color:#1a1a1a;padding:20px 22px;">
+
       <!-- Filter row -->
       <div class="rm-filter">
         <input class="rm-search" id="rm-search" placeholder="🔍  Search agent name..." oninput="renderRosterAgents()" />
@@ -7545,6 +8105,7 @@ renderAll();
         <span class="rm-count" id="rm-count">0 agents</span>
         <button class="btn btn-yellow btn-sm" style="margin-left:auto;white-space:nowrap;" onclick="toggleRosterAddForm()">+ Add Agent</button>
       </div>
+
       <!-- Add Agent form (hidden by default) -->
       <div class="rm-add-form" id="rm-add-form">
         <div style="flex:1;min-width:160px;">
@@ -7568,6 +8129,7 @@ renderAll();
           <button class="btn btn-outline btn-sm" onclick="toggleRosterAddForm()">Cancel</button>
         </div>
       </div>
+
       <!-- Agent table -->
       <div style="overflow-x:auto;max-height:360px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:10px;">
         <table class="rm-table">
@@ -7583,6 +8145,7 @@ renderAll();
           <tbody id="roster-agent-list"></tbody>
         </table>
       </div>
+
       <!-- Team Lead Manager (collapsible) -->
       <div class="rm-tl-section">
         <details>
@@ -7599,6 +8162,7 @@ renderAll();
           </div>
         </details>
       </div>
+
       <!-- Footer close -->
       <div style="text-align:right;margin-top:18px;border-top:1px solid #f3f4f6;padding-top:14px;">
         <button class="btn btn-outline" onclick="closeM('m-roster')">Close</button>
@@ -7606,6 +8170,8 @@ renderAll();
     </div>
   </div>
 </div>
+
+
 <!-- NTE Detail + Signature Modal -->
 <div class="overlay" id="m-nte-detail">
   <div class="modal modal-sm">
@@ -7616,5 +8182,6 @@ renderAll();
     <div class="mbody" id="nte-detail-body"></div>
   </div>
 </div>
+
 </body>
 </html>
