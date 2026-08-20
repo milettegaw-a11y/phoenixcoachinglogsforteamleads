@@ -69,6 +69,9 @@ body{font-family:'Poppins',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sa
 .btn-full{width:100%;justify-content:center;}
 .btn-login{width:100%;padding:13px;background:var(--yellow);color:var(--black);border:none;border-radius:var(--rs);font-size:1rem;font-weight:500;cursor:pointer;margin-top:6px;transition:background .15s;}
 .btn-login:hover{background:var(--yellow-dk);}
+.btn-google{width:100%;padding:13px;background:#fff;color:#374151;border:1.5px solid #d1d5db;border-radius:var(--rs);font-size:1rem;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:background .15s;font-family:inherit;}
+.btn-google:hover{background:#f9fafb;border-color:#9ca3af;}
+.btn-google:disabled{opacity:.6;cursor:not-allowed;}
 .btn-google{width:100%;padding:12px 16px;background:#fff;color:#3c4043;border:1.5px solid #dadce0;border-radius:var(--rs);font-size:.95rem;font-weight:500;cursor:pointer;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:10px;transition:background .15s,box-shadow .15s;box-shadow:0 1px 3px rgba(0,0,0,.08);}
 .btn-google:hover{background:#f8f9fa;box-shadow:0 2px 6px rgba(0,0,0,.15);}
 .btn-google:active{background:#e8eaed;}
@@ -639,30 +642,11 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
     <h1 class="login-title">PHOENIX</h1>
     <p class="login-sub">Coaching Log Management System</p>
     <div id="lerr" class="login-err"></div>
-
-    <!-- Step 1 — Email -->
-    <div id="ls1">
-      <div class="fg">
-        <label>Email Address</label>
-        <input type="text" id="l-email" placeholder="yourname@email.com" autocomplete="email"/>
-      </div>
-      <button class="btn-login" onclick="doEmailContinue()">Continue →</button>
-    </div>
-
-    <!-- Step 2 — Password (existing) or Set password (new) -->
-    <div id="ls2" style="display:none">
-      <p id="ls2-hint" style="font-size:.85rem;color:#888;margin-bottom:14px;text-align:left"></p>
-      <div class="fg">
-        <label id="l-pw-lbl">Password</label>
-        <input type="password" id="l-pw" placeholder="Enter your password" autocomplete="current-password"/>
-      </div>
-      <div class="fg" id="l-pw2-wrap" style="display:none">
-        <label>Confirm Password</label>
-        <input type="password" id="l-pw2" placeholder="Confirm your password" autocomplete="new-password"/>
-      </div>
-      <button class="btn-login" id="l-pw-btn" onclick="doPasswordSubmit()">Sign In →</button>
-      <button onclick="backToEmail()" style="background:none;border:none;color:#888;font-size:.8rem;cursor:pointer;margin-top:10px;display:block;width:100%;text-align:center">← Use a different email</button>
-    </div>
+    <button class="btn-google" id="btn-google-signin" onclick="doGoogleSignIn()">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" height="20" alt="Google"/>
+      Sign in with Google
+    </button>
+    <p style="font-size:.75rem;color:#9ca3af;margin-top:16px">Only authorised Phoenix accounts may sign in.</p>
   </div>
 </div>
 
@@ -838,9 +822,25 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
           <div style="font-size:.72rem;font-weight:700;color:var(--g400);letter-spacing:.03em;margin-top:2px" id="s-cnt-ratio"></div>
           <div class="stat-lbl">Agents Coached / Total</div>
         </div>
+        <div class="stat-card">
+          <div class="stat-val" id="s-pct">—</div>
+          <div class="stat-lbl">Completion %</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" id="s-deficit" style="color:#ef4444">0</div>
+          <div class="stat-lbl">Deficit (Not Yet Coached)</div>
+        </div>
         <div class="stat-card"><div class="stat-val" id="s-tcr">—</div><div class="stat-lbl">Avg. TCR%</div></div>
         <div class="stat-card"><div class="stat-val" id="s-csr">—</div><div class="stat-lbl">Avg. CSR%</div></div>
         <div class="stat-card"><div class="stat-val" id="s-wk2">—</div><div class="stat-lbl">Avg. WK2 CVR%</div></div>
+      </div>
+
+      <!-- Coaching Completion Breakdown Table -->
+      <div style="margin-top:18px;background:#fff;border:1px solid var(--g200);border-radius:12px;padding:18px 20px;">
+        <h4 style="margin:0 0 12px;font-size:.92rem;font-weight:700">📋 Agent Coaching Completion</h4>
+        <div id="tl-completion-breakdown">
+          <div style="color:var(--g400);font-size:.82rem;text-align:center;padding:16px 0">Select a week to view agent coaching status.</div>
+        </div>
       </div>
     </div>
 
@@ -2850,23 +2850,14 @@ function uid(){return '_'+Math.random().toString(36).slice(2,9);}
    ─────────────────────────────────────────────────────────────────────── */
 const SHEETS_URL = 'https://sheetdb.io/api/v1/hxgegag6py2q0';
 
-async function syncToSheet(type, action, id, row){
+async function syncToSheet(type, action, id, row, isNew){
   if(!SHEETS_URL) return;
   const sheetName = {coaching:'Coaching Logs', nte:'NTE Logs', ft:'Follow Through', onboard:'Onboarding Logs'}[type];
   if(!sheetName) return;
   try{
     if(action==='upsert'){
-      // Try PATCH first (update existing row by ID column)
-      const pRes = await fetch(`${SHEETS_URL}/ID/${encodeURIComponent(id)}?sheet=${encodeURIComponent(sheetName)}`,{
-        method:'PATCH',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({data:row})
-      });
-      let pData={};
-      try{ pData=await pRes.json(); }catch(_){}
-      if(pData.error) throw new Error('PATCH: '+pData.error);
-      // If no row was updated, create a new one
-      if(!pData.updated || parseInt(pData.updated)===0){
+      if(isNew){
+        // New entry: POST directly (1 request — no PATCH probe needed)
         const postRes = await fetch(SHEETS_URL,{
           method:'POST',
           headers:{'Content-Type':'application/json'},
@@ -2876,6 +2867,16 @@ async function syncToSheet(type, action, id, row){
         try{ postData=await postRes.json(); }catch(_){}
         if(postData.error) throw new Error('POST: '+postData.error);
         if(!postRes.ok) throw new Error('POST failed ('+postRes.status+'): '+JSON.stringify(postData));
+      } else {
+        // Edit: PATCH only (1 request — row already exists)
+        const pRes = await fetch(`${SHEETS_URL}/ID/${encodeURIComponent(id)}?sheet=${encodeURIComponent(sheetName)}`,{
+          method:'PATCH',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({data:row})
+        });
+        let pData={};
+        try{ pData=await pRes.json(); }catch(_){}
+        if(pData.error) throw new Error('PATCH: '+pData.error);
       }
     } else if(action==='delete'){
       const dRes = await fetch(`${SHEETS_URL}/ID/${encodeURIComponent(id)}?sheet=${encodeURIComponent(sheetName)}`,{
@@ -3099,150 +3100,64 @@ function setupListeners(){
 ═══════════════════════════════════════ */
 let CU=null;
 
-/* ── Two-step login state ─────────────────────────────────────────────── */
-let _loginEmail='';
-let _loginIsNew=false;
-
-/* Hash a password with SHA-256 (no plaintext stored anywhere) */
-async function hashPassword(pw){
-  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(pw));
-  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+/* ── Google Sign-In ───────────────────────────────────────────────────── */
+function _resetGoogleBtn(){
+  const btn=document.getElementById('btn-google-signin');
+  if(!btn) return;
+  btn.disabled=false;
+  btn.innerHTML='<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" height="20" alt="Google"/> Sign in with Google';
 }
 
-/* Step 1 — validate email, check if password exists */
-async function doEmailContinue(){
-  const email=document.getElementById('l-email').value.trim().toLowerCase();
+async function doGoogleSignIn(){
   const err=document.getElementById('lerr');
   err.style.display='none';
+  const btn=document.getElementById('btn-google-signin');
+  btn.disabled=true;
+  btn.textContent='Signing in…';
 
-  if(!email){
-    err.textContent='⚠️ Please enter your email address.';
-    err.style.display='block';
-    return;
-  }
   if(!FB_READY) tryInitFirebase();
   if(!FB_READY){
     err.textContent='⚠️ Unable to connect. Check your internet and refresh.';
     err.style.display='block';
+    _resetGoogleBtn();
     return;
   }
 
-  // Validate email is a recognised user
-  // First do a live Firestore fetch to catch dynamically-added users
   try{
-    const [tlDoc,agDoc]=await Promise.all([
-      FSB.collection('px_roster').doc('tl_access').get(),
-      FSB.collection('px_roster').doc('agent_access').get()
-    ]);
-    if(tlDoc.exists&&tlDoc.data()?.map){
-      Object.entries(tlDoc.data().map).forEach(([em,team])=>{ TL_TEAM_MAP[em]=team; });
-    }
-    if(agDoc.exists&&agDoc.data()?.map){
-      Object.entries(agDoc.data().map).forEach(([em,name])=>{ AGENTS_VIEW.add(em); EMAIL_TO_AGENT[em]=name; });
-    }
-  }catch(e){ console.warn('Access fetch failed, using cached maps:',e); }
+    const provider=new firebase.auth.GoogleAuthProvider();
+    const result=await FSAUTH.signInWithPopup(provider);
+    const email=result.user.email.toLowerCase();
 
-  const isOM=email===OM, isTL=!!TL_TEAM_MAP[email], isAgent=AGENTS_VIEW.has(email);
-  if(!isOM&&!isTL&&!isAgent){
-    err.textContent='⚠️ Email not recognised. Contact your Team Lead.';
-    err.style.display='block';
-    return;
-  }
+    // Refresh roster from Firestore
+    try{
+      const [tlDoc,agDoc]=await Promise.all([
+        FSB.collection('px_roster').doc('tl_access').get(),
+        FSB.collection('px_roster').doc('agent_access').get()
+      ]);
+      if(tlDoc.exists&&tlDoc.data()?.map) Object.entries(tlDoc.data().map).forEach(([em,team])=>{ TL_TEAM_MAP[em]=team; });
+      if(agDoc.exists&&agDoc.data()?.map) Object.entries(agDoc.data().map).forEach(([em,name])=>{ AGENTS_VIEW.add(em); EMAIL_TO_AGENT[em]=name; });
+    }catch(e){ console.warn('Roster fetch failed, using cached:',e); }
 
-  _loginEmail=email;
-
-  // Check Firestore for an existing password hash
-  try{
-    const doc=await FSB.collection('px_users').doc(email).get();
-    const hasPassword=doc.exists&&doc.data()?.hash;
-    _loginIsNew=!hasPassword;
-
-    document.getElementById('l-pw').value='';
-    document.getElementById('l-pw2').value='';
-
-    if(_loginIsNew){
-      document.getElementById('ls2-hint').textContent='First time logging in. Create a password to secure your account.';
-      document.getElementById('l-pw-lbl').textContent='Create a Password';
-      document.getElementById('l-pw2-wrap').style.display='';
-      document.getElementById('l-pw-btn').textContent='Set Password & Sign In →';
-    } else {
-      document.getElementById('ls2-hint').textContent='Signing in as '+email;
-      document.getElementById('l-pw-lbl').textContent='Password';
-      document.getElementById('l-pw2-wrap').style.display='none';
-      document.getElementById('l-pw-btn').textContent='Sign In →';
+    const isOM=email===OM, isTL=!!TL_TEAM_MAP[email], isAgent=AGENTS_VIEW.has(email);
+    if(!isOM&&!isTL&&!isAgent){
+      await FSAUTH.signOut();
+      err.textContent='⚠️ Your Google account is not authorised. Contact your Team Lead.';
+      err.style.display='block';
+      _resetGoogleBtn();
+      return;
     }
 
-    document.getElementById('ls1').style.display='none';
-    document.getElementById('ls2').style.display='';
-    document.getElementById('l-pw').focus();
+    finishLogin(email);
   }catch(ex){
-    console.error('px_users lookup:',ex);
-    err.textContent='⚠️ Connection error. Please try again.';
+    console.error('Google Sign-In error:',ex);
+    const msg=ex.code==='auth/popup-closed-by-user'?'⚠️ Sign-in cancelled. Click the button to try again.':
+               ex.code==='auth/popup-blocked'?'⚠️ Popup blocked. Please allow popups for this site.':
+               ex.code==='auth/operation-not-allowed'?'⚠️ Google Sign-In is not enabled. Enable it in Firebase Console → Authentication → Sign-in method.':
+               ex.code==='auth/unauthorized-domain'?'⚠️ This domain is not authorised. Add it in Firebase Console → Authentication → Settings → Authorised domains.':
+               `⚠️ Sign-in failed (${ex.code||'unknown'}). Check the browser console for details.`;
+    err.textContent=msg;
     err.style.display='block';
-  }
-}
-
-/* Back to email step */
-function backToEmail(){
-  _loginEmail='';
-  document.getElementById('ls1').style.display='';
-  document.getElementById('ls2').style.display='none';
-  document.getElementById('lerr').style.display='none';
-  document.getElementById('l-email').focus();
-}
-
-/* Step 2 — verify or create password, then route into app */
-async function doPasswordSubmit(){
-  const pw=document.getElementById('l-pw').value;
-  const err=document.getElementById('lerr');
-  err.style.display='none';
-
-  if(!pw){
-    err.textContent='⚠️ Please enter your password.';
-    err.style.display='block';
-    return;
-  }
-
-  if(_loginIsNew){
-    // New user: validate and save password
-    const pw2=document.getElementById('l-pw2').value;
-    if(pw.length<6){
-      err.textContent='⚠️ Password must be at least 6 characters.';
-      err.style.display='block';
-      return;
-    }
-    if(pw!==pw2){
-      err.textContent='⚠️ Passwords do not match. Please try again.';
-      err.style.display='block';
-      return;
-    }
-    try{
-      const hash=await hashPassword(pw);
-      await FSB.collection('px_users').doc(_loginEmail).set({hash,createdAt:new Date().toISOString()});
-      finishLogin(_loginEmail);
-    }catch(ex){
-      console.error('Password save:',ex);
-      err.textContent='⚠️ Could not save password. Please try again.';
-      err.style.display='block';
-    }
-  } else {
-    // Existing user: verify password
-    try{
-      const hash=await hashPassword(pw);
-      const doc=await FSB.collection('px_users').doc(_loginEmail).get();
-      if(doc.exists&&doc.data()?.hash===hash){
-        finishLogin(_loginEmail);
-      } else {
-        err.textContent='⚠️ Incorrect password. Please try again.';
-        err.style.display='block';
-        document.getElementById('l-pw').value='';
-        document.getElementById('l-pw').focus();
-      }
-    }catch(ex){
-      console.error('Password verify:',ex);
-      err.textContent='⚠️ Connection error. Please try again.';
-      err.style.display='block';
-    }
+    _resetGoogleBtn();
   }
 }
 
@@ -3945,26 +3860,16 @@ function doLogout(){
   document.getElementById('om-nav').classList.add('hidden');
   document.getElementById('tl-nav').classList.add('hidden');
   document.querySelectorAll('.agent-hide').forEach(el=>el.style.display='');
-  CU=null; _loginEmail='';
-  // Reset login to step 1
-  document.getElementById('ls1').style.display='';
-  document.getElementById('ls2').style.display='none';
-  document.getElementById('l-email').value='';
-  document.getElementById('l-pw').value='';
+  CU=null;
   document.getElementById('lerr').style.display='none';
+  _resetGoogleBtn();
+  if(FSAUTH) FSAUTH.signOut().catch(()=>{});
   document.getElementById('login-page').style.display='flex';
   document.getElementById('app').classList.remove('on');
   document.getElementById('hdr-user').textContent='';
 }
 
-document.addEventListener('keydown',ev=>{
-  if(ev.key!=='Enter') return;
-  const lp=document.getElementById('login-page');
-  if(!lp||lp.style.display==='none') return;
-  // Fire whichever step is visible
-  if(document.getElementById('ls2').style.display!=='none') doPasswordSubmit();
-  else doEmailContinue();
-});
+// Login is now Google Sign-In (popup); no Enter-key handler needed.
 
 /* ═══════════════════════════════════════
    VIEW
@@ -4062,19 +3967,62 @@ function renderDash(){renderStats();renderTable();}
 function renderStats(){
   const rows=getFilt();
   // Unique agents coached this week for this TL
-  const coachedAgents=new Set(rows.map(r=>r.agent)).size;
+  const coachedSet=new Set(rows.map(r=>r.agent));
+  const coachedAgents=coachedSet.size;
   // Total roster headcount for this TL's team
   const tm=myTeam();
-  const teamTotal=tm
-    ? rosterAgents.filter(a=>a.tl===tm).length
-    : rosterAgents.length;
+  const teamRoster=tm
+    ? rosterAgents.filter(a=>a.tl===tm)
+    : rosterAgents;
+  const teamTotal=teamRoster.length;
+  const deficit=Math.max(0,teamTotal-coachedAgents);
+  const pct=teamTotal?Math.round((coachedAgents/teamTotal)*100):0;
+
   document.getElementById('s-cnt').textContent=coachedAgents;
   const ratioEl=document.getElementById('s-cnt-ratio');
   if(ratioEl) ratioEl.textContent=`out of ${teamTotal} on roster`;
+
+  const pctEl=document.getElementById('s-pct');
+  if(pctEl){
+    pctEl.textContent=pct+'%';
+    pctEl.style.color=pct>=80?'#22c55e':pct>=50?'#f59e0b':'#ef4444';
+  }
+  const defEl=document.getElementById('s-deficit');
+  if(defEl){
+    defEl.textContent=deficit;
+    defEl.style.color=deficit===0?'#22c55e':deficit<=3?'#f59e0b':'#ef4444';
+  }
+
   const avg=arr=>arr.length?(arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(1)+'%':'—';
   document.getElementById('s-tcr').textContent=avg(rows.map(r=>parseFloat(r.tcr)).filter(v=>!isNaN(v)));
   document.getElementById('s-csr').textContent=avg(rows.map(r=>parseFloat(r.csr)).filter(v=>!isNaN(v)));
   document.getElementById('s-wk2').textContent=avg(rows.map(r=>parseFloat(r.wk2)).filter(v=>!isNaN(v)));
+
+  // Per-agent coaching completion breakdown
+  const wrap=document.getElementById('tl-completion-breakdown');
+  if(!wrap)return;
+  if(!teamRoster.length){wrap.innerHTML='<div style="color:var(--g400);font-size:.82rem;text-align:center;padding:16px 0">No roster data.</div>';return;}
+  const sortedRoster=[...teamRoster].sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  const coached=sortedRoster.filter(a=>coachedSet.has(a.name));
+  const notCoached=sortedRoster.filter(a=>!coachedSet.has(a.name));
+  const makeRow=(a,done)=>`<tr style="border-bottom:1px solid var(--g100)">
+    <td style="padding:6px 10px">${e(a.name||a.agent||'')}</td>
+    <td style="padding:6px 10px;text-align:center">${done?'<span style="color:#22c55e;font-weight:700">✅ Coached</span>':'<span style="color:#ef4444;font-weight:700">⏳ Pending</span>'}</td>
+  </tr>`;
+  wrap.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:.83rem">
+    <thead><tr style="color:var(--g500);font-size:.75rem;font-weight:700;border-bottom:1.5px solid var(--g200)">
+      <th style="padding:6px 10px;text-align:left">Agent</th>
+      <th style="padding:6px 10px;text-align:center">Status</th>
+    </tr></thead>
+    <tbody>${[...notCoached.map(a=>makeRow(a,false)),...coached.map(a=>makeRow(a,true))].join('')}</tbody>
+    <tfoot><tr style="font-weight:700;border-top:1.5px solid var(--g200);background:var(--g50,#f9fafb)">
+      <td style="padding:6px 10px;font-size:.78rem;color:var(--g500)">Total: ${teamTotal} agents</td>
+      <td style="padding:6px 10px;text-align:center;font-size:.78rem">
+        <span style="color:#22c55e">${coachedAgents} coached</span>
+        ${deficit>0?`&nbsp;·&nbsp;<span style="color:#ef4444">${deficit} pending</span>`:''}
+      </td>
+    </tr></tfoot>
+  </table>`;
 }
 
 function renderTable(){
@@ -4697,7 +4645,7 @@ async function saveOnboardLog(){
   }
   try{
     const docRef=await FSB.collection('px_onboard_logs').add(data);
-    syncToSheet('onboard','upsert',docRef.id,sheetRowOnboard({...data,id:docRef.id}));
+    syncToSheet('onboard','upsert',docRef.id,sheetRowOnboard({...data,id:docRef.id}),true);
     closeM('m-onboard');
     toast('✅ Entry saved.');
     renderOnboardDash();
@@ -5704,7 +5652,7 @@ async function saveLog(){
   };
   const ok=await fsWrite('px_logs',entry.id,entry);
   if(!ok)return;
-  syncToSheet('coaching','upsert',entry.id, sheetRowCoaching(entry, DB.cm[entry.id]||null));
+  syncToSheet('coaching','upsert',entry.id, sheetRowCoaching(entry, DB.cm[entry.id]||null), !editingLogId);
   const wasEdit=!!editingLogId;
   editingLogId=null;
   clearDraftLog();
@@ -5755,7 +5703,7 @@ async function saveFT(){
   };
   const ok=await fsWrite('px_ft',ftEntry.id,ftEntry);
   if(!ok)return;
-  syncToSheet('ft','upsert',ftEntry.id, sheetRowFT(ftEntry));
+  syncToSheet('ft','upsert',ftEntry.id, sheetRowFT(ftEntry), true);
   closeM('m-ft');toast('✅ Follow through saved!');
 }
 
@@ -5819,7 +5767,7 @@ async function saveNTE(){
   };
   const ok=await fsWrite('px_nte',nteEntry.id,nteEntry);
   if(!ok)return;
-  syncToSheet('nte','upsert',nteEntry.id, sheetRowNTE(nteEntry));
+  syncToSheet('nte','upsert',nteEntry.id, sheetRowNTE(nteEntry), true);
   closeM('m-nte');toast('✅ NTE log saved!');
 }
 
@@ -5873,7 +5821,7 @@ async function saveCommit(){
   };
   const ok=await fsWrite('px_cm',curId,cmData);
   if(!ok) return;
-  if(logEntry) syncToSheet('coaching','upsert',curId, sheetRowCoaching(logEntry, cmData));
+  if(logEntry) syncToSheet('coaching','upsert',curId, sheetRowCoaching(logEntry, cmData), false);
   closeM('m-commit');
   renderCommit(curId);
   toast('✅ Commitment saved!');
@@ -5981,10 +5929,15 @@ function renderOMTLBreakdown(){
     const coachedAgents=new Set(wkLogs.filter(l=>l.tl===tl).map(l=>l.agent));
     const coached=coachedAgents.size;
     const pct=total?Math.round((coached/total)*100):0;
-    return{tl,coached,total,pct};
+    const deficit=total-coached;
+    return{tl,coached,total,pct,deficit};
   }).filter(r=>r.total>0).sort((a,b)=>b.pct-a.pct);
 
   if(!rows.length){wrap.innerHTML='<div style="color:var(--g400);font-size:.82rem;text-align:center;padding:20px 0">No data for this week.</div>';return;}
+
+  const totalCoached=rows.reduce((s,r)=>s+r.coached,0);
+  const totalRoster=rows.reduce((s,r)=>s+r.total,0);
+  const totalDeficit=rows.reduce((s,r)=>s+r.deficit,0);
 
   wrap.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:.83rem;">
     <thead><tr style="color:var(--g500);font-size:.75rem;font-weight:700;border-bottom:1.5px solid var(--g200);">
@@ -5992,10 +5945,13 @@ function renderOMTLBreakdown(){
       <th style="padding:6px 10px;text-align:left">Team Lead</th>
       <th style="padding:6px 10px;text-align:center">Coached</th>
       <th style="padding:6px 10px;text-align:center">Total on Roster</th>
-      <th style="padding:6px 10px;text-align:left">Coverage</th>
+      <th style="padding:6px 10px;text-align:left">Completion</th>
+      <th style="padding:6px 10px;text-align:center">Deficit</th>
     </tr></thead>
     <tbody>${rows.map((r,i)=>{
       const barColor=r.pct>=80?'#4ade80':r.pct>=50?'#facc15':'#f87171';
+      const defColor=r.deficit===0?'#22c55e':r.deficit<=3?'#f59e0b':'#ef4444';
+      const defBg=r.deficit===0?'#f0fdf4':r.deficit<=3?'#fefce8':'#fef2f2';
       return`<tr style="border-bottom:1px solid var(--g100);">
         <td style="padding:7px 10px;color:var(--g400)">${i+1}</td>
         <td style="padding:7px 10px;font-weight:600">${e(r.tl)}</td>
@@ -6009,14 +5965,20 @@ function renderOMTLBreakdown(){
             <span style="font-size:.78rem;font-weight:700;color:var(--g600);min-width:34px">${r.pct}%</span>
           </div>
         </td>
+        <td style="padding:7px 10px;text-align:center;">
+          <span style="display:inline-block;padding:2px 10px;border-radius:20px;font-weight:700;font-size:.82rem;background:${defBg};color:${defColor}">
+            ${r.deficit===0?'✅ 0':r.deficit}
+          </span>
+        </td>
       </tr>`;
     }).join('')}</tbody>
     <tfoot><tr style="font-weight:700;border-top:1.5px solid var(--g200);background:var(--g50,#f9fafb)">
-      <td colspan="2" style="padding:7px 10px;color:var(--g500);font-size:.78rem">Total</td>
-      <td style="padding:7px 10px;text-align:center">${rows.reduce((s,r)=>s+r.coached,0)}</td>
-      <td style="padding:7px 10px;text-align:center;color:var(--g500)">${rows.reduce((s,r)=>s+r.total,0)}</td>
-      <td style="padding:7px 10px;font-size:.78rem;color:var(--g400)">WK${wk} overall</td>
-    </tfoot>
+      <td colspan="2" style="padding:7px 10px;color:var(--g500);font-size:.78rem">Total — WK${wk}</td>
+      <td style="padding:7px 10px;text-align:center">${totalCoached}</td>
+      <td style="padding:7px 10px;text-align:center;color:var(--g500)">${totalRoster}</td>
+      <td style="padding:7px 10px;font-size:.78rem;color:var(--g400)">${totalRoster?Math.round((totalCoached/totalRoster)*100):0}% overall</td>
+      <td style="padding:7px 10px;text-align:center;font-size:.82rem;color:${totalDeficit===0?'#22c55e':'#ef4444'};font-weight:700">${totalDeficit===0?'✅ 0':totalDeficit}</td>
+    </tr></tfoot>
   </table>`;
 }
 
@@ -6731,7 +6693,7 @@ async function saveNTESig(){
   const updated={...r,signature:dataUrl,signedAt:new Date().toISOString(),acknowledged:true};
   const ok=await fsWrite('px_nte',_sigNTEId,updated);
   if(!ok)return;
-  syncToSheet('nte','upsert',_sigNTEId, sheetRowNTE(updated));
+  syncToSheet('nte','upsert',_sigNTEId, sheetRowNTE(updated), false);
   toast('✅ Signature & acknowledgment saved!');
   openNTEDetail(_sigNTEId);
 }
