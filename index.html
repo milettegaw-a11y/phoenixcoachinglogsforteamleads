@@ -2852,7 +2852,7 @@ const SHEETS_URL = 'https://sheetdb.io/api/v1/hxgegag6py2q0';
 
 async function syncToSheet(type, action, id, row){
   if(!SHEETS_URL) return;
-  const sheetName = {coaching:'Coaching Logs', nte:'NTE Logs', ft:'Follow Through', onboard:'Onboarding Logs'}[type];
+  const sheetName = {coaching:'Coaching Logs', nte:'NTE Logs', ft:'Follow Through'}[type];
   if(!sheetName) return;
   try{
     if(action==='upsert'){
@@ -2862,31 +2862,22 @@ async function syncToSheet(type, action, id, row){
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({data:row})
       });
-      let pData={};
-      try{ pData=await pRes.json(); }catch(_){}
-      if(pData.error) throw new Error('PATCH: '+pData.error);
+      const pData = await pRes.json();
       // If no row was updated, create a new one
       if(!pData.updated || parseInt(pData.updated)===0){
-        const postRes = await fetch(SHEETS_URL,{
+        await fetch(SHEETS_URL,{
           method:'POST',
           headers:{'Content-Type':'application/json'},
           body:JSON.stringify({data:[row], sheet:sheetName})
         });
-        let postData={};
-        try{ postData=await postRes.json(); }catch(_){}
-        if(postData.error) throw new Error('POST: '+postData.error);
-        if(!postRes.ok) throw new Error('POST failed ('+postRes.status+'): '+JSON.stringify(postData));
       }
     } else if(action==='delete'){
-      const dRes = await fetch(`${SHEETS_URL}/ID/${encodeURIComponent(id)}?sheet=${encodeURIComponent(sheetName)}`,{
+      await fetch(`${SHEETS_URL}/ID/${encodeURIComponent(id)}?sheet=${encodeURIComponent(sheetName)}`,{
         method:'DELETE',
         headers:{'Content-Type':'application/json'}
       });
-      let dData={};
-      try{ dData=await dRes.json(); }catch(_){}
-      if(dData.error) throw new Error('DELETE: '+dData.error);
     }
-  } catch(e){ console.warn('Sheet sync failed:', e.message); toast('⚠️ Sheet sync failed: '+e.message); }
+  } catch(e){ console.warn('Sheet sync skipped:', e.message); }
 }
 
 function sheetRowCoaching(entry, cm){
@@ -2954,31 +2945,6 @@ function sheetRowFT(entry){
     'Applied Coaching': entry.applied||'',
     'Opportunity':      entry.opp||'',
     'Logged At':        entry.at||new Date().toISOString()
-  };
-}
-function sheetRowOnboard(entry){
-  const isOn=entry.type==='onboarding';
-  return {
-    'ID':                     entry.id,
-    'Type':                   isOn?'Onboarding':'Offboarding',
-    'Agent':                  entry.agent||'',
-    'Hire Date':              entry.hireDate||'',
-    'Tenure':                 entry.tenure||'',
-    'Onboarding Date':        entry.onDate||'',
-    'Offboarding Date':       entry.offDate||'',
-    'WK#':                    entry.wk||'',
-    'Reason':                 entry.reason||'',
-    'Aircall Deactivated':    entry.aircall?'Yes':'No',
-    'Posted Slack Directory': entry.slackDir?'Yes':'No',
-    'Turned Off 0 Sales Ch':  entry.zeroCh?'Yes':'No',
-    'Onboarding Discussion':  entry.disc==='yes'?'Yes':'No',
-    'Discussion Topics':      (entry.topics||[]).join(', '),
-    'Added to Channels':      entry.addedChannels?'Yes':'No',
-    'Posted to Directory':    entry.postedDir?'Yes':'No',
-    'Added to Hubspot':       entry.addedHs?'Yes':'No',
-    'Requested OM Hubspot':   entry.reqOmHs?'Yes':'No',
-    'Created By':             entry.createdBy||'',
-    'Created At':             entry.createdAt||''
   };
 }
 function e(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
@@ -3606,22 +3572,15 @@ const US_HOLIDAYS = (()=>{
 let calYear=new Date().getFullYear();
 let calMonth=new Date().getMonth();
 
-// In-memory cache loaded from Firestore
-let _calFSEvents=[];
-
 function calGetEvents(){
-  return [...US_HOLIDAYS,..._calFSEvents];
+  const stored=JSON.parse(localStorage.getItem('px-cal-events')||'[]');
+  return [...US_HOLIDAYS,...stored];
 }
-
-async function calLoadFSEvents(){
-  try{
-    const snap=await FSB.collection('px_calendar_events').orderBy('date').get();
-    _calFSEvents=snap.docs.map(d=>({...d.data(),_id:d.id}));
-  }catch(err){
-    console.error('calLoadFSEvents',err);
-    _calFSEvents=[];
-  }
-  renderCalendar();
+function calSaveUserEvents(events){
+  localStorage.setItem('px-cal-events',JSON.stringify(events));
+}
+function calUserEvents(){
+  return JSON.parse(localStorage.getItem('px-cal-events')||'[]');
 }
 
 function renderCalendar(){
@@ -3654,12 +3613,9 @@ function renderCalendar(){
     const isToday=dateStr===todayStr;
     const dayEvents=allEvents.filter(ev=>ev.date===dateStr);
     let chips='';
-    const canManage=CU&&(CU.isOM||(!CU.isAgentView&&TL_TEAM_MAP&&TL_TEAM_MAP[CU.email]));
     dayEvents.forEach(ev=>{
       const cls=ev.type==='holiday'?'cal-ev-holiday':'cal-ev-team';
-      const delBtn=(ev.type!=='holiday'&&ev._id&&canManage)?
-        `<span onclick="event.stopPropagation();deleteCalEvent('${ev._id}')" title="Delete" style="margin-left:4px;cursor:pointer;font-size:.7rem;opacity:.6;hover:opacity:1;">✕</span>`:'';
-      chips+=`<span class="cal-ev-chip ${cls}" title="${ev.title}" style="display:inline-flex;align-items:center;gap:2px;">${e(ev.title)}${delBtn}</span>`;
+      chips+=`<span class="cal-ev-chip ${cls}" title="${ev.title}">${ev.title}</span>`;
     });
     grid.innerHTML+=`<div class="cal-cell${isOther?' other-month':''}${isToday?' today':''}"><div class="cal-day-num">${dayNum}</div>${chips}</div>`;
   }
@@ -3689,37 +3645,16 @@ function closeAddEvent(){
   const modal=document.getElementById('cal-modal');
   if(modal) modal.style.display='none';
 }
-async function saveCalEvent(){
+function saveCalEvent(){
   const title=document.getElementById('cal-ev-title').value.trim();
   const date=document.getElementById('cal-ev-date').value;
   const notes=document.getElementById('cal-ev-notes').value.trim();
   if(!title||!date){alert('Please enter a title and date.');return;}
-  try{
-    await FSB.collection('px_calendar_events').add({
-      date,title,notes,type:'team',
-      addedBy:(CU?CU.email||'':''),
-      createdAt:firebase.firestore.FieldValue.serverTimestamp()
-    });
-    toast('📅 Event saved!');
-    closeAddEvent();
-    await calLoadFSEvents();
-  }catch(err){
-    console.error('saveCalEvent',err);
-    toast('⚠️ Could not save event.');
-  }
-}
-
-async function deleteCalEvent(id){
-  if(!id)return;
-  if(!confirm('Delete this event?'))return;
-  try{
-    await FSB.collection('px_calendar_events').doc(id).delete();
-    toast('🗑 Event deleted.');
-    await calLoadFSEvents();
-  }catch(err){
-    console.error('deleteCalEvent',err);
-    toast('⚠️ Could not delete event.');
-  }
+  const events=calUserEvents();
+  events.push({date,title,notes,type:'team',addedBy:(CU?CU.email||'':'')});
+  calSaveUserEvents(events);
+  closeAddEvent();
+  renderCalendar();
 }
 
 /* ── TO-DO LIST ── */
@@ -4006,7 +3941,7 @@ function switchOM(tab){
   if(tab==='pwreset')loadPwResetView();
   if(tab==='kb')renderAll();
   if(tab==='suggestions')renderOMSuggestions();
-  if(tab==='calendar')calLoadFSEvents();
+  if(tab==='calendar')renderCalendar();
   if(tab==='actions'){subscribeActionItems();renderActionItems();}
   if(tab==='leads'){subscribeLeads();renderLeads();}
   if(tab==='onboard'){subscribeOnboard();renderOnboardDash();}
@@ -4567,7 +4502,7 @@ function tlShowView(tab){
   if(tab==='attendance') renderTLAttendance();
   if(tab==='ranking') renderRanking();
   if(tab==='kb') renderAll();
-  if(tab==='calendar') calLoadFSEvents();
+  if(tab==='calendar') renderCalendar();
   if(tab==='actions'){subscribeActionItems();renderActionItems();}
   if(tab==='leads'){subscribeLeads();renderLeads();}
   if(tab==='onboard'){subscribeOnboard();renderOnboardDash();}
@@ -4696,8 +4631,7 @@ async function saveOnboardLog(){
     });
   }
   try{
-    const docRef=await FSB.collection('px_onboard_logs').add(data);
-    syncToSheet('onboard','upsert',docRef.id,sheetRowOnboard({...data,id:docRef.id}));
+    await FSB.collection('px_onboard_logs').add(data);
     closeM('m-onboard');
     toast('✅ Entry saved.');
     renderOnboardDash();
@@ -4798,7 +4732,6 @@ async function deleteOnboardLog(id){
   if(!confirm('Delete this entry? This cannot be undone.'))return;
   try{
     await FSB.collection('px_onboard_logs').doc(id).delete();
-    syncToSheet('onboard','delete',id,{});
     toast('🗑 Entry deleted.');
   }catch(err){
     console.error('delete ob log',err);
