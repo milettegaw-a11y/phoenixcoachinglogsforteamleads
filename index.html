@@ -2552,7 +2552,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
       <div class="fg2">
         <div class="fg"><label>Date of Coaching <span class="req">★</span></label><input type="date" id="cl-date" onchange="updTenure('cl');saveDraftLog()"/></div>
         <div class="fg"><label>Agent Name <span class="req">★</span></label>
-          <select id="cl-agent" onchange="updTenure('cl');render4WeekTrajectory(this.value,document.getElementById('cl-wk').value);saveDraftLog()"><option value="">— Select Agent —</option></select>
+          <select id="cl-agent" onchange="onAgentChange(this.value)"><option value="">— Select Agent —</option></select>
         </div>
         <div class="fg"><label>Agent Tenure (auto)</label><div class="tenure-pill" id="cl-ten">Select agent &amp; date</div></div>
         <div class="fg"><label>Team Lead <span class="req">★</span></label>
@@ -2562,6 +2562,14 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
           <select id="cl-wk" onchange="render4WeekTrajectory(document.getElementById('cl-agent').value,this.value);saveDraftLog()"><option value="">— Select Week —</option></select>
           <div style="font-size:.72rem;color:var(--g500);margin-top:5px;font-weight:700;">📌 Enter the week number the coaching was held.</div>
         </div>
+      </div>
+
+      <!-- ── Previous Coaching History (auto-loads when agent is selected) ── -->
+      <div id="prev-coaching-wrap" style="display:none;">
+        <div class="sec-hdr" style="background:linear-gradient(90deg,#1e3a5f,#2a5298);">
+          <h3 style="color:#fff;">📜 Previous Coaching History</h3>
+        </div>
+        <div id="prev-coaching-body" style="padding:12px 16px 16px;background:#f0f4ff;border:1px solid #c7d7f5;border-top:none;border-radius:0 0 8px 8px;margin-bottom:4px;"></div>
       </div>
 
       <div class="sec-hdr"><h3>Performance Metrics</h3></div>
@@ -6308,6 +6316,9 @@ function openLogModal(){
   editingLogId=null;
   _trajW1=null;
   render4WeekTrajectory('','');
+  // Hide previous coaching history panel on fresh open
+  const prevWrap=document.getElementById('prev-coaching-wrap');
+  if(prevWrap) prevWrap.style.display='none';
   document.querySelector('#m-log .mhdr h2').textContent='📋 Coaching Log — Performance';
 
   // Check for saved draft
@@ -6330,6 +6341,78 @@ function openLogModal(){
 }
 
 let editingLogId=null;
+
+/* ── Previous Coaching History ────────────────────────────────────────────
+   Called whenever agent dropdown changes in the coaching log modal.
+   Reads DB.logs (already in memory) — no extra Firestore calls needed.
+─────────────────────────────────────────────────────────────────────────── */
+function onAgentChange(val){
+  try{updTenure('cl');}catch(err){console.error('[onAgentChange] updTenure',err);}
+  try{render4WeekTrajectory(val,document.getElementById('cl-wk')?.value||'');}catch(err){console.error('[onAgentChange] render4WeekTrajectory',err);}
+  try{loadPrevCoaching(val);}catch(err){
+    console.error('[onAgentChange] loadPrevCoaching',err);
+    const w=document.getElementById('prev-coaching-wrap');
+    const b=document.getElementById('prev-coaching-body');
+    if(w&&b&&val){b.innerHTML='<div style="color:#64748b;font-size:.82rem;font-style:italic;">Unable to load coaching history.</div>';w.style.display='';}
+  }
+  try{saveDraftLog();}catch(err){console.error('[onAgentChange] saveDraftLog',err);}
+}
+
+function loadPrevCoaching(agentName){
+  const wrap=document.getElementById('prev-coaching-wrap');
+  const body=document.getElementById('prev-coaching-body');
+  if(!wrap||!body) return;
+  if(!agentName){wrap.style.display='none';return;}
+
+  // Find past logs for this agent, excluding current edit session, newest first
+  const past=(DB.logs||[])
+    .filter(l=>l.agent===agentName && l.id!==editingLogId)
+    .sort((a,b)=>(b.date||'').localeCompare(a.date||''))
+    .slice(0,1);
+
+  if(!past.length){
+    body.innerHTML=`<div style="color:#64748b;font-size:.82rem;font-style:italic;padding:4px 0;">No previous coaching records found for <strong>${agentName}</strong>.</div>`;
+    wrap.style.display='';
+    return;
+  }
+
+  const cards=past.map(log=>{
+    const cm=DB.cm[log.id]||{};
+    const hasCm=!!(cm.situation||cm.sit||cm.task||cm.action||cm.act||cm.result||cm.res);
+    const focus=(log.focus&&log.focus.length)?log.focus.join(', '):'—';
+    const metricPill=(val,label,color)=>val?`<span style="display:inline-block;background:${color}18;color:${color};border:1px solid ${color}40;border-radius:4px;padding:1px 7px;font-size:.72rem;font-weight:700;margin-right:4px;">${label}: ${val}%</span>`:'';
+    const metrics=[
+      metricPill(log.tcr,'TCR','#2563eb'),
+      metricPill(log.csr,'CSR','#16a34a'),
+      metricPill(log.cvr,'CVR','#d97706'),
+      metricPill(log.wk2,'WK2 CVR','#dc2626'),
+    ].filter(Boolean).join('');
+
+    const cmBlock=hasCm?`
+      <div style="margin-top:8px;border-top:1px solid #c7d7f5;padding-top:8px;">
+        <div style="font-size:.72rem;font-weight:700;color:#1e3a5f;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em;">🤝 Commitment (STAR)</div>
+        ${cm.situation||cm.sit?`<div style="font-size:.78rem;color:#374151;margin-bottom:2px;"><span style="font-weight:700;color:#1e3a5f;">Situation:</span> ${cm.situation||cm.sit}</div>`:''}
+        ${cm.task?`<div style="font-size:.78rem;color:#374151;margin-bottom:2px;"><span style="font-weight:700;color:#1e3a5f;">Task:</span> ${cm.task}</div>`:''}
+        ${cm.action||cm.act?`<div style="font-size:.78rem;color:#374151;margin-bottom:2px;"><span style="font-weight:700;color:#1e3a5f;">Action:</span> ${cm.action||cm.act}</div>`:''}
+        ${cm.result||cm.res?`<div style="font-size:.78rem;color:#374151;"><span style="font-weight:700;color:#1e3a5f;">Result:</span> ${cm.result||cm.res}</div>`:''}
+      </div>`
+    :`<div style="margin-top:6px;font-size:.75rem;color:#94a3b8;font-style:italic;">No commitment recorded for this session.</div>`;
+
+    return`<div style="background:#fff;border:1px solid #c7d7f5;border-radius:8px;padding:10px 14px;margin-bottom:10px;box-shadow:0 1px 4px rgba(30,58,95,.07);">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:6px;">
+        <div style="font-size:.82rem;font-weight:700;color:#1e3a5f;">📅 ${log.date?fd(log.date):log.date||'—'} &nbsp;·&nbsp; WK${log.wk||'—'}</div>
+        <span style="font-size:.72rem;background:${hasCm?'#dcfce7':'#fef9c3'};color:${hasCm?'#166534':'#92400e'};border-radius:4px;padding:1px 8px;font-weight:700;">${hasCm?'✅ Committed':'⏳ No Commitment'}</span>
+      </div>
+      <div style="margin-bottom:5px;">${metrics||'<span style="font-size:.75rem;color:#94a3b8;">Metrics not recorded</span>'}</div>
+      ${log.opp?`<div style="font-size:.78rem;color:#374151;margin-bottom:3px;"><span style="font-weight:700;color:#64748b;">🎯 Opportunity:</span> ${log.opp}</div>`:''}
+      ${log.focus&&log.focus.length?`<div style="font-size:.75rem;color:#64748b;margin-bottom:2px;"><span style="font-weight:700;">Focus:</span> ${focus}</div>`:''}
+      ${cmBlock}
+    </div>`;
+  }).join('');
+
+  body.innerHTML=`<div style="font-size:.78rem;color:#64748b;margin-bottom:10px;">Most recent coaching session for <strong style="color:#1e3a5f;">${agentName}</strong>:</div>${cards}`;
+  wrap.style.display='';
+}
 
 function editLog(id){
   const r=DB.logs.find(l=>l.id===id);
@@ -6369,6 +6452,7 @@ function editLog(id){
   editingLogId=id;
   _trajW1=null;
   render4WeekTrajectory(r.agent, r.wk);
+  loadPrevCoaching(r.agent);
   document.querySelector('#m-log .mhdr h2').textContent='✏️ Edit Coaching Log';
   openM('m-log');
 }
