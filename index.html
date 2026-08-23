@@ -612,6 +612,76 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
 .ai-card-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
 .ai-status-btn{border:1.5px solid var(--g300);border-radius:6px;padding:4px 9px;font-size:.7rem;font-weight:600;cursor:pointer;background:#fff;font-family:inherit;transition:all .12s;}
 .ai-status-btn:hover{background:var(--yellow-lt);border-color:var(--yellow-dk);}
+
+/* ===== RAINMAKER REFERENCE GUIDE ===== */
+.rm-guide-btn{display:inline-flex;align-items:center;gap:7px;margin-top:16px;padding:10px 20px;background:linear-gradient(135deg,var(--yellow-dk),var(--yellow));color:#fff;border:none;border-radius:8px;font-size:.85rem;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(94,138,80,.35);transition:all .15s;font-family:inherit;}
+.rm-guide-btn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(94,138,80,.45);}
+#rm-overlay{display:none;position:fixed;inset:0;z-index:9000;background:rgba(30,30,30,.65);backdrop-filter:blur(3px);align-items:center;justify-content:center;}
+/* CL split-view */
+#m-cl.cl-split{flex-direction:row;align-items:flex-start;justify-content:center;gap:16px;padding:20px 16px;overflow-y:auto;}
+#m-cl.cl-split .modal{flex:0 0 580px;max-width:580px;max-height:88vh;overflow-y:auto;}
+#m-cl.cl-split #cl-rm-panel{display:flex!important;}
+#m-cl.cl-split #cl-rm-panel #rm-modal{width:100%;max-height:88vh;border-radius:12px;}
+#m-cl.cl-split #cl-rm-panel .rm-obj-grid{grid-template-columns:1fr;}
+#m-cl.cl-split #cl-rm-panel .rm-bm-grid{grid-template-columns:1fr;}
+#rm-overlay.open{display:flex;}
+#rm-modal{background:#fff;border-radius:14px;width:min(860px,96vw);max-height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.28);}
+#rm-modal-hdr{padding:18px 22px 0;border-bottom:1px solid #e5e7eb;background:linear-gradient(135deg,var(--yellow-dk) 0%,#6ba55f 100%);flex-shrink:0;}
+#rm-modal-hdr h2{color:#fff;font-size:1.1rem;font-weight:800;margin:0 0 14px;letter-spacing:.3px;}
+.rm-tabs{display:flex;gap:4px;}
+.rm-tab{padding:8px 18px;border-radius:7px 7px 0 0;border:none;background:rgba(255,255,255,.22);color:rgba(255,255,255,.85);font-size:.8rem;font-weight:600;cursor:pointer;font-family:inherit;transition:all .13s;}
+.rm-tab.active,.rm-tab:hover{background:#fff;color:var(--yellow-dk);}
+.rm-close-btn{position:absolute;top:14px;right:18px;background:rgba(255,255,255,.25);border:none;color:#fff;font-size:1.2rem;line-height:1;width:30px;height:30px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;transition:background .13s;}
+.rm-close-btn:hover{background:rgba(255,255,255,.4);}
+#rm-modal-hdr{position:relative;}
+.rm-body{overflow-y:auto;flex:1;padding:22px;}
+.rm-panel{display:none;}
+.rm-panel.active{display:block;}
+/* Benchmark */
+.rm-loop-box{background:linear-gradient(135deg,#f0f7ec,#e7f0d2);border:2px solid var(--yellow);border-radius:10px;padding:16px 20px;margin-bottom:22px;}
+.rm-loop-box h3{color:var(--yellow-dk);font-size:.9rem;font-weight:800;margin:0 0 10px;text-transform:uppercase;letter-spacing:.5px;}
+.rm-loop-steps{display:flex;flex-wrap:wrap;gap:8px;}
+.rm-loop-step{background:#fff;border:1.5px solid var(--yellow);border-radius:20px;padding:5px 13px;font-size:.76rem;font-weight:600;color:var(--yellow-dk);white-space:nowrap;}
+.rm-loop-arrow{color:var(--yellow-dk);font-size:.9rem;font-weight:700;display:flex;align-items:center;}
+.rm-stages-grid{display:flex;flex-direction:column;gap:10px;}
+.rm-stage-card{border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;transition:box-shadow .15s;}
+.rm-stage-card:hover{box-shadow:0 4px 14px rgba(0,0,0,.1);}
+.rm-stage-hdr{display:flex;align-items:center;gap:12px;padding:12px 16px;background:#f9fafb;cursor:pointer;user-select:none;}
+.rm-stage-num{width:30px;height:30px;border-radius:50%;background:var(--yellow-dk);color:#fff;font-size:.8rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.rm-stage-title{font-size:.85rem;font-weight:700;color:#1f2937;flex:1;}
+.rm-stage-chevron{color:#9ca3af;font-size:.8rem;transition:transform .2s;}
+.rm-stage-card.open .rm-stage-chevron{transform:rotate(90deg);}
+.rm-stage-body{padding:14px 16px 14px 58px;border-top:1px solid #f3f4f6;display:none;}
+.rm-stage-card.open .rm-stage-body{display:block;}
+.rm-stage-script{font-size:.82rem;color:#374151;line-height:1.6;font-style:italic;background:#f9fafb;border-left:3px solid var(--yellow);padding:10px 14px;border-radius:0 6px 6px 0;}
+/* Question Bank */
+.rm-q-section{margin-bottom:20px;}
+.rm-q-section-title{font-size:.78rem;font-weight:800;color:var(--yellow-dk);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;padding-bottom:5px;border-bottom:2px solid var(--yellow-lt);}
+.rm-q-card{border:1px solid #e5e7eb;border-radius:8px;padding:12px 14px;margin-bottom:8px;background:#fafafa;}
+.rm-q-card:hover{background:#f0f7ec;border-color:var(--yellow);}
+.rm-q-row{display:flex;align-items:flex-start;gap:10px;}
+.rm-badge{font-size:.65rem;font-weight:700;padding:2px 8px;border-radius:10px;white-space:nowrap;flex-shrink:0;margin-top:2px;}
+.rm-badge.req{background:var(--yellow-dk);color:#fff;}
+.rm-badge.rec{background:#e0f2fe;color:#0369a1;}
+.rm-q-text{font-size:.83rem;color:#1f2937;font-weight:600;line-height:1.4;}
+.rm-q-follow{font-size:.76rem;color:#6b7280;margin-top:5px;padding-left:2px;}
+.rm-q-purpose{font-size:.72rem;color:#9ca3af;margin-top:3px;padding-left:2px;font-style:italic;}
+/* Objection Playbook */
+.rm-obj-card{border:1px solid #e5e7eb;border-radius:10px;margin-bottom:10px;overflow:hidden;}
+.rm-obj-hdr{display:flex;align-items:center;gap:12px;padding:13px 16px;background:#f9fafb;cursor:pointer;user-select:none;}
+.rm-obj-num{width:26px;height:26px;border-radius:50%;background:#f59e0b;color:#fff;font-size:.75rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.rm-obj-label{font-size:.85rem;font-weight:700;color:#1f2937;flex:1;}
+.rm-obj-chevron{color:#9ca3af;font-size:.8rem;transition:transform .2s;}
+.rm-obj-card.open .rm-obj-chevron{transform:rotate(90deg);}
+.rm-obj-body{display:none;padding:14px 16px;border-top:1px solid #f3f4f6;}
+.rm-obj-card.open .rm-obj-body{display:block;}
+.rm-obj-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media(max-width:600px){.rm-obj-grid{grid-template-columns:1fr;}}
+.rm-obj-field{background:#f9fafb;border-radius:7px;padding:10px 12px;}
+.rm-obj-field-label{font-size:.68rem;font-weight:800;color:var(--yellow-dk);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+.rm-obj-field-val{font-size:.79rem;color:#374151;line-height:1.5;}
+.rm-obj-avoid{grid-column:1/-1;background:#fff1f2;border:1px solid #fecdd3;}
+.rm-obj-avoid .rm-obj-field-label{color:#be123c;}
 </style>
 </head>
 <body>
@@ -693,6 +763,8 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
       <div class="sb-section-lbl">FOLLOW-UP</div>
       <div class="sb-item" data-tab="ft" onclick="switchOM('ft');toggleSbSub('om-sub-ft')"><span class="sb-icon">🔄</span><span>Follow Through</span><span class="sb-arrow" id="om-arr-ft">›</span></div>
       <div class="sb-sub-item agent-hide" id="om-sub-ft" onclick="openFTModal()"><span class="sb-icon">🔁</span><span>New Follow Through</span></div>
+      <div class="sb-item" data-tab="cl" onclick="switchOM('cl');toggleSbSub('om-sub-cl')"><span class="sb-icon">🎧</span><span>Call Listening</span><span class="sb-arrow" id="om-arr-cl">›</span></div>
+      <div class="sb-sub-item agent-hide" id="om-sub-cl" onclick="openCLModal()"><span class="sb-icon">➕</span><span>New Call Listening</span></div>
       <div class="sb-item" data-tab="actions" onclick="switchOM('actions')"><span class="sb-icon">⚡</span><span>Action Items</span><span id="nav-badge-actions" class="sb-notif" style="display:none"></span></div>
       <div class="sb-item agent-hide" data-tab="leads" onclick="switchOM('leads')"><span class="sb-icon">📞</span><span>Lead Follow-Ups</span><span id="nav-badge-om-leads" class="sb-notif" style="display:none"></span></div>
       <div class="sb-divider"></div>
@@ -722,6 +794,8 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
       <div class="sb-section-lbl">FOLLOW-UP</div>
       <div class="sb-item" id="tl-nav-ft" onclick="toggleSbSub('tl-sub-ft')"><span class="sb-icon">🔄</span><span>Follow Through</span><span class="sb-arrow" id="tl-arr-ft">›</span></div>
       <div class="sb-sub-item" id="tl-sub-ft" onclick="openFTModal()"><span class="sb-icon">🔁</span><span>New Follow Through</span></div>
+      <div class="sb-item" id="tl-nav-cl" onclick="tlShowView('cl');toggleSbSub('tl-sub-cl')"><span class="sb-icon">🎧</span><span>Call Listening</span><span class="sb-arrow" id="tl-arr-cl">›</span></div>
+      <div class="sb-sub-item" id="tl-sub-cl" onclick="openCLModal()"><span class="sb-icon">➕</span><span>New Call Listening</span></div>
       <div class="sb-item" id="tl-nav-actions" onclick="tlShowView('actions')"><span class="sb-icon">⚡</span><span>Action Items</span><span id="nav-badge-tl-actions" class="sb-notif" style="display:none"></span></div>
       <div class="sb-item" id="tl-nav-leads" onclick="tlShowView('leads')"><span class="sb-icon">📞</span><span>Lead Follow-Ups</span><span id="nav-badge-tl-leads" class="sb-notif" style="display:none"></span></div>
       <div class="sb-divider"></div>
@@ -747,6 +821,8 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
       <div class="sb-item" data-tab="attendance" onclick="switchAgentTab('attendance')"><span class="sb-icon">📅</span><span>My Attendance</span><span id="nav-badge-att" class="sb-notif" style="display:none"></span></div>
       <div class="sb-item" data-tab="leads" onclick="switchAgentTab('leads')"><span class="sb-icon">📞</span><span>Lead Follow-Up</span><span id="nav-badge-leads" class="sb-notif" style="display:none"></span></div>
       <div class="sb-item" data-tab="kb" onclick="switchAgentTab('kb')"><span class="sb-icon">📖</span><span>Knowledge Base</span></div>
+      <div class="sb-divider"></div>
+      <div class="sb-item" onclick="openRainmakerGuide()"><span class="sb-icon">🌧️</span><span>Rainmaker Guide</span></div>
       <div class="sb-divider"></div>
     </div>
 
@@ -832,7 +908,59 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
         </select>
       </div>
 
-      <div class="stats-grid">
+      <!-- ── Weekly Coaching Completion Dashboard ─────────────────────── -->
+      <div id="tl-comp-dash" style="margin-top:20px;">
+        <!-- Section header -->
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          <h4 style="margin:0;font-size:.9rem;font-weight:700;color:var(--g600);">📊 Weekly Coaching Completion</h4>
+          <span id="comp-wk-label" style="background:var(--accent,#83B271);color:#fff;font-size:.72rem;font-weight:700;border-radius:20px;padding:2px 10px;">WK—</span>
+        </div>
+
+        <!-- KPI Cards -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px;">
+          <div class="stat-card" style="text-align:center;">
+            <div class="stat-val" id="kpi-sessions" style="font-size:1.6rem;">0</div>
+            <div class="stat-lbl">Coaching Sessions</div>
+          </div>
+          <div class="stat-card" style="text-align:center;">
+            <div class="stat-val" id="kpi-coached-pct" style="font-size:1.6rem;">0%</div>
+            <div class="stat-lbl">TL Completion %</div>
+          </div>
+          <div class="stat-card" style="text-align:center;">
+            <div class="stat-val" id="kpi-commit-pct" style="font-size:1.6rem;">0%</div>
+            <div class="stat-lbl">Agent Completion %</div>
+          </div>
+          <div class="stat-card" style="text-align:center;">
+            <div class="stat-val" id="kpi-pending" style="font-size:1.6rem;color:#ef4444;">0</div>
+            <div class="stat-lbl">Agents Pending</div>
+          </div>
+        </div>
+
+        <!-- Weekly History Table -->
+        <div style="background:#fff;border:1px solid var(--g200);border-radius:12px;padding:16px 18px;margin-bottom:14px;">
+          <h4 style="margin:0 0 10px;font-size:.85rem;font-weight:700;color:var(--g600);">📅 Weekly Completion Overview</h4>
+          <div class="tbl-scroll" style="max-height:220px;overflow-y:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:.82rem;">
+              <thead><tr style="color:var(--g500);font-size:.74rem;font-weight:700;border-bottom:1.5px solid var(--g200);">
+                <th style="padding:6px 10px;text-align:left">Week</th>
+                <th style="padding:6px 10px;text-align:center">Sessions</th>
+                <th style="padding:6px 10px;text-align:center">TL%</th>
+                <th style="padding:6px 10px;text-align:center">Agent%</th>
+                <th style="padding:6px 10px;text-align:center">Fully Completed%</th>
+              </tr></thead>
+              <tbody id="comp-week-body"><tr><td colspan="5" style="text-align:center;padding:12px;color:var(--g400);font-size:.8rem;">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Pending Agents Table -->
+        <div id="tl-pending-wrap" style="background:#fff;border:1px solid var(--g200);border-radius:12px;padding:16px 18px;">
+          <h4 style="margin:0 0 10px;font-size:.85rem;font-weight:700;color:var(--g600);">⏳ Not Yet Coached This Week</h4>
+          <div id="tl-pending-body"><div style="text-align:center;color:var(--g400);font-size:.8rem;padding:12px;">Select a week above.</div></div>
+        </div>
+      </div>
+
+      <div class="stats-grid" style="margin-top:20px;">
         <div class="stat-card">
           <div class="stat-val" id="s-cnt">0</div>
           <div style="font-size:.72rem;font-weight:700;color:var(--g400);letter-spacing:.03em;margin-top:2px" id="s-cnt-ratio"></div>
@@ -841,6 +969,35 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
         <div class="stat-card"><div class="stat-val" id="s-tcr">—</div><div class="stat-lbl">Avg. TCR%</div></div>
         <div class="stat-card"><div class="stat-val" id="s-csr">—</div><div class="stat-lbl">Avg. CSR%</div></div>
         <div class="stat-card"><div class="stat-val" id="s-wk2">—</div><div class="stat-lbl">Avg. WK2 CVR%</div></div>
+      </div>
+
+      <div class="chart-grid" style="margin-top:22px;">
+        <div class="chart-card"><h4>📈 Entries Per Day</h4><canvas id="ch-day-tl" height="200"></canvas></div>
+        <div class="chart-card"><h4>📊 By Team Lead</h4><canvas id="ch-tl-tl" height="200"></canvas></div>
+      </div>
+
+
+    </div>
+
+    <!-- TL CALL LISTENING VIEW -->
+    <div id="v-tl-cl" class="view">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+        <h2 style="margin:0;flex:1">🎧 Call Listening Logs</h2>
+        <button class="btn btn-yellow" onclick="openCLModal()">+ New Call Listening</button>
+        <button class="btn btn-outline btn-sm" onclick="exportCSV('cl')">⬇ Export CSV</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+        <input class="f-search" id="tl-cl-f-search" placeholder="🔍 Search agent…" oninput="renderCLLogs()" style="max-width:260px;flex:1;"/>
+        <button class="btn btn-outline btn-sm" onclick="document.getElementById('tl-cl-f-search').value='';renderCLLogs()">✕ Clear</button>
+      </div>
+      <div class="tbl-wrap">
+        <div class="tbl-hdr"><h3>Call Listening Records</h3><span class="cnt-badge" id="tl-cl-cnt">0</span></div>
+        <div class="tbl-scroll">
+          <table>
+            <thead><tr><th>#</th><th>Date</th><th>Agent</th><th>Aircall</th><th>Outcome</th><th>Score</th><th>Level</th></tr></thead>
+            <tbody id="tl-cl-body"></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -868,7 +1025,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
         <div class="tbl-scroll">
           <table>
             <thead><tr>
-              <th>#</th><th>Date</th><th>Agent Name</th><th>Tenure</th><th>Team Lead</th>
+              <th style="width:36px;min-width:36px;text-align:center">#</th><th>Date</th><th>Agent Name</th><th>Tenure</th><th>Team Lead</th>
               <th>WK#</th><th>Leads</th><th>Connect</th><th>Sales</th>
               <th>TCR%</th><th>CSR%</th><th>CVR%</th><th>WK2 CVR%</th><th>Status</th><th>Actions</th>
             </tr></thead>
@@ -983,9 +1140,73 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
         <input class="f-search" id="om-f-search" placeholder="🔍 Search agent…" oninput="renderOMDash()" style="max-width:220px;flex:1;"/>
         <button class="btn btn-outline btn-sm" onclick="clearOMFilters()">✕ Clear</button>
       </div>
-      <div class="chart-grid">
-        <div class="chart-card"><h4>📈 Entries Per Day</h4><canvas id="ch-day" height="200"></canvas></div>
-        <div class="chart-card"><h4>📊 By Team Lead</h4><canvas id="ch-tl" height="200"></canvas></div>
+      <!-- ── OM Weekly Coaching Completion Dashboard ──────────────────── -->
+      <div id="om-comp-dash" style="margin-top:22px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          <h4 style="margin:0;font-size:.9rem;font-weight:700;color:var(--g600);">📊 Weekly Coaching Completion</h4>
+          <span id="om-comp-wk-label" style="background:var(--accent,#83B271);color:#fff;font-size:.72rem;font-weight:700;border-radius:20px;padding:2px 10px;">WK—</span>
+        </div>
+
+        <!-- KPI Cards -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px;">
+          <div class="stat-card" style="text-align:center;">
+            <div class="stat-val" id="om-kpi-sessions" style="font-size:1.6rem;">0</div>
+            <div class="stat-lbl">Coaching Sessions</div>
+          </div>
+          <div class="stat-card" style="text-align:center;">
+            <div class="stat-val" id="om-kpi-coached-pct" style="font-size:1.6rem;">0%</div>
+            <div class="stat-lbl">TL Completion %</div>
+          </div>
+          <div class="stat-card" style="text-align:center;">
+            <div class="stat-val" id="om-kpi-commit-pct" style="font-size:1.6rem;">0%</div>
+            <div class="stat-lbl">Agent Completion %</div>
+          </div>
+          <div class="stat-card" style="text-align:center;">
+            <div class="stat-val" id="om-kpi-pending" style="font-size:1.6rem;color:#ef4444;">0</div>
+            <div class="stat-lbl">Agents Pending</div>
+          </div>
+        </div>
+
+        <!-- Per-TL Completion Breakdown -->
+        <div style="background:#fff;border:1px solid var(--g200);border-radius:12px;padding:16px 18px;margin-bottom:14px;">
+          <h4 style="margin:0 0 10px;font-size:.85rem;font-weight:700;color:var(--g600);">👥 Completion by Team Lead</h4>
+          <div class="tbl-scroll" style="max-height:260px;overflow-y:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:.82rem;">
+              <thead><tr style="color:var(--g500);font-size:.74rem;font-weight:700;border-bottom:1.5px solid var(--g200);">
+                <th style="padding:6px 10px;text-align:left">Team Lead</th>
+                <th style="padding:6px 10px;text-align:center">Sessions</th>
+                <th style="padding:6px 10px;text-align:center">Roster</th>
+                <th style="padding:6px 10px;text-align:center">TL%</th>
+                <th style="padding:6px 10px;text-align:center">Agent%</th>
+                <th style="padding:6px 10px;text-align:center">Pending</th>
+              </tr></thead>
+              <tbody id="om-comp-tl-body"><tr><td colspan="6" style="text-align:center;padding:12px;color:var(--g400);font-size:.8rem;">Select a week above.</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Weekly History Table -->
+        <div style="background:#fff;border:1px solid var(--g200);border-radius:12px;padding:16px 18px;margin-bottom:14px;">
+          <h4 style="margin:0 0 10px;font-size:.85rem;font-weight:700;color:var(--g600);">📅 Weekly Completion Overview (All Teams)</h4>
+          <div class="tbl-scroll" style="max-height:220px;overflow-y:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:.82rem;">
+              <thead><tr style="color:var(--g500);font-size:.74rem;font-weight:700;border-bottom:1.5px solid var(--g200);">
+                <th style="padding:6px 10px;text-align:left">Week</th>
+                <th style="padding:6px 10px;text-align:center">Sessions</th>
+                <th style="padding:6px 10px;text-align:center">TL%</th>
+                <th style="padding:6px 10px;text-align:center">Agent%</th>
+                <th style="padding:6px 10px;text-align:center">Fully Completed%</th>
+              </tr></thead>
+              <tbody id="om-comp-week-body"><tr><td colspan="5" style="text-align:center;padding:12px;color:var(--g400);font-size:.8rem;">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Pending Agents (all teams) -->
+        <div style="background:#fff;border:1px solid var(--g200);border-radius:12px;padding:16px 18px;">
+          <h4 style="margin:0 0 10px;font-size:.85rem;font-weight:700;color:var(--g600);">⏳ Not Yet Coached This Week</h4>
+          <div id="om-pending-body"><div style="text-align:center;color:var(--g400);font-size:.8rem;padding:12px;">Select a week above.</div></div>
+        </div>
       </div>
 
       <!-- Per-TL coaching breakdown by week -->
@@ -1000,6 +1221,12 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
           <div style="color:var(--g400);font-size:.82rem;text-align:center;padding:20px 0">Select a week to view breakdown.</div>
         </div>
       </div>
+
+      <div class="chart-grid" style="margin-top:22px;">
+        <div class="chart-card"><h4>📈 Entries Per Day</h4><canvas id="ch-day" height="200"></canvas></div>
+        <div class="chart-card"><h4>📊 By Team Lead</h4><canvas id="ch-tl" height="200"></canvas></div>
+      </div>
+
     </div>
 
     <!-- OM COACHING LOGS (table only) -->
@@ -1073,6 +1300,31 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
           <table>
             <thead><tr><th>#</th><th>Date</th><th>Agent</th><th>Team Lead</th><th>Aircall</th><th>Applied Coaching?</th><th>Opportunity</th></tr></thead>
             <tbody id="om-f-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- OM CALL LISTENING VIEW -->
+    <div id="v-om-cl" class="view">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+        <h2 style="margin:0;flex:1">🎧 Call Listening Logs</h2>
+        <button class="btn btn-yellow" onclick="openCLModal()">+ New Call Listening</button>
+        <button class="btn btn-outline btn-sm" onclick="exportCSV('cl')">⬇ Export CSV</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+        <select class="f-select" id="om-cl-f-tl" onchange="updateOMCLAgentFilter();renderCLLogs()" style="min-width:160px"><option value="">All Teams</option></select>
+        <select class="f-select" id="om-cl-f-agent" onchange="renderCLLogs()" style="min-width:155px"><option value="">All Agents</option></select>
+        <input class="f-search" id="om-cl-f-search" placeholder="🔍 Search agent…" oninput="renderCLLogs()" style="max-width:220px;flex:1;"/>
+        <button class="btn btn-outline btn-sm" onclick="clearOMCLFilters()">✕ Clear</button>
+      </div>
+      <div class="tbl-wrap">
+        <div class="tbl-hdr"><h3>Call Listening Records</h3><span class="cnt-badge" id="om-cl-cnt">0</span></div>
+        <div class="tbl-scroll">
+          <table>
+            <thead><tr><th>#</th><th>Date</th><th>Agent</th><th>Team Lead</th><th>Aircall</th><th>Outcome</th><th>Score</th><th>Level</th></tr></thead>
+            <tbody id="om-cl-body"></tbody>
           </table>
         </div>
       </div>
@@ -1458,10 +1710,404 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
         <div id="lead-list" style="display:flex;flex-direction:column;gap:10px;"></div>
       </div><!-- /av-leads -->
 
+
   </div><!-- /main -->
 
 
 
+
+<!-- RAINMAKER REFERENCE GUIDE MODAL -->
+<div id="rm-overlay" onclick="if(event.target===this)closeRainmakerGuide()">
+  <div id="rm-modal">
+    <div id="rm-modal-hdr">
+      <button class="rm-close-btn" onclick="closeRainmakerGuide()">✕</button>
+      <h2>📖 Rainmaker Reference Guide</h2>
+      <div class="rm-tabs">
+        <button class="rm-tab active" onclick="switchRmTab('benchmark',this)">🏆 Benchmark</button>
+        <button class="rm-tab" onclick="switchRmTab('questions',this)">❓ Question Bank</button>
+        <button class="rm-tab" onclick="switchRmTab('objections',this)">🛡️ Objection Playbook</button>
+      </div>
+    </div>
+    <div class="rm-body">
+
+      <!-- TAB 1: BENCHMARK -->
+      <div id="rm-panel-benchmark" class="rm-panel active">
+        <div class="rm-loop-box">
+          <h3>⚡ The Rainmaker Loop</h3>
+          <div class="rm-loop-steps">
+            <span class="rm-loop-step">Ask required question</span>
+            <span class="rm-loop-arrow">→</span>
+            <span class="rm-loop-step">Acknowledge the answer</span>
+            <span class="rm-loop-arrow">→</span>
+            <span class="rm-loop-step">Find the meaning</span>
+            <span class="rm-loop-arrow">→</span>
+            <span class="rm-loop-step">Connect a relevant benefit</span>
+            <span class="rm-loop-arrow">→</span>
+            <span class="rm-loop-step">Check acceptance</span>
+            <span class="rm-loop-arrow">→</span>
+            <span class="rm-loop-step">Advance the booking</span>
+          </div>
+        </div>
+        <div class="rm-stages-grid">
+          <div class="rm-stage-card open">
+            <div class="rm-stage-hdr" onclick="toggleRmStage(this)">
+              <div class="rm-stage-num">1</div>
+              <div class="rm-stage-title">Open and Gain Permission</div>
+              <span class="rm-stage-chevron">▶</span>
+            </div>
+            <div class="rm-stage-body">
+              <div class="rm-stage-script">"Hi [Name], this is [Agent] from Homeaglow on a recorded line. I'm reaching out because you expressed interest in getting help with your home — I'd love to learn a bit more about what you need. Do you have a few minutes so I can understand your situation and check the best available option for you?"</div>
+            </div>
+          </div>
+          <div class="rm-stage-card">
+            <div class="rm-stage-hdr" onclick="toggleRmStage(this)">
+              <div class="rm-stage-num">2</div>
+              <div class="rm-stage-title">Required Home Discovery</div>
+              <span class="rm-stage-chevron">▶</span>
+            </div>
+            <div class="rm-stage-body">
+              <div class="rm-stage-script">"Let me ask a few quick questions so I can recommend the right amount of time and the right scope for your first cleaning. How many bedrooms and bathrooms would you like included? Which areas need the most attention on the first visit? Do you have any pets or anyone with allergies the cleaner should know about?"</div>
+            </div>
+          </div>
+          <div class="rm-stage-card">
+            <div class="rm-stage-hdr" onclick="toggleRmStage(this)">
+              <div class="rm-stage-num">3</div>
+              <div class="rm-stage-title">Deepen Pain and Motivation</div>
+              <span class="rm-stage-chevron">▶</span>
+            </div>
+            <div class="rm-stage-body">
+              <div class="rm-stage-script">"You mentioned [answer]. What has made that hardest to keep up with? And when the home is clean and taken care of — what does that feel like for you or your family?"</div>
+            </div>
+          </div>
+          <div class="rm-stage-card">
+            <div class="rm-stage-hdr" onclick="toggleRmStage(this)">
+              <div class="rm-stage-num">4</div>
+              <div class="rm-stage-title">Find the True Barrier</div>
+              <span class="rm-stage-chevron">▶</span>
+            </div>
+            <div class="rm-stage-body">
+              <div class="rm-stage-script">"When you first looked at the offer, what kept you from completing it — was it the price, the membership, the commitment, the timing, or wanting more confidence in the cleaner?"</div>
+            </div>
+          </div>
+          <div class="rm-stage-card">
+            <div class="rm-stage-hdr" onclick="toggleRmStage(this)">
+              <div class="rm-stage-num">5</div>
+              <div class="rm-stage-title">Recommend and Personalize</div>
+              <span class="rm-stage-chevron">▶</span>
+            </div>
+            <div class="rm-stage-body">
+              <div class="rm-stage-script">"Based on [home size / scope / situation], I recommend [hours]. Here's why that works for your home: [personalized reason]. This gives you [specific outcome] and sets you up for a consistent result going forward."</div>
+            </div>
+          </div>
+          <div class="rm-stage-card">
+            <div class="rm-stage-hdr" onclick="toggleRmStage(this)">
+              <div class="rm-stage-num">6</div>
+              <div class="rm-stage-title">Resolve and Verify</div>
+              <span class="rm-stage-chevron">▶</span>
+            </div>
+            <div class="rm-stage-body">
+              <div class="rm-stage-script">"That makes sense. Here is exactly how [concern] works… Does that resolve the concern, or is there another part of it I should address?"</div>
+            </div>
+          </div>
+          <div class="rm-stage-card">
+            <div class="rm-stage-hdr" onclick="toggleRmStage(this)">
+              <div class="rm-stage-num">7</div>
+              <div class="rm-stage-title">Explain Price and Terms</div>
+              <span class="rm-stage-chevron">▶</span>
+            </div>
+            <div class="rm-stage-body">
+              <div class="rm-stage-script">"Today's charge is [amount]. After the first cleaning, your ongoing rate is [rate] per visit on a [frequency] schedule. Can you tell me how you understand today's charge and the future cost?"</div>
+            </div>
+          </div>
+          <div class="rm-stage-card">
+            <div class="rm-stage-hdr" onclick="toggleRmStage(this)">
+              <div class="rm-stage-num">8</div>
+              <div class="rm-stage-title">Close Into Scheduling</div>
+              <span class="rm-stage-chevron">▶</span>
+            </div>
+            <div class="rm-stage-body">
+              <div class="rm-stage-script">"Great — let's secure the cleaning. What day next week works best for you? Morning or afternoon?"</div>
+            </div>
+          </div>
+          <div class="rm-stage-card">
+            <div class="rm-stage-hdr" onclick="toggleRmStage(this)">
+              <div class="rm-stage-num">9</div>
+              <div class="rm-stage-title">Confirm and Reinforce</div>
+              <span class="rm-stage-chevron">▶</span>
+            </div>
+            <div class="rm-stage-body">
+              <div class="rm-stage-script">"Let's review everything once: your appointment is [date/time], the scope is [rooms], today's charge is [amount], and your ongoing rate is [rate]. Is everything correct and do you agree to those terms?"</div>
+            </div>
+          </div>
+        </div>
+      </div><!-- /benchmark -->
+
+      <!-- TAB 2: QUESTION BANK -->
+      <div id="rm-panel-questions" class="rm-panel">
+        <div class="rm-q-section">
+          <div class="rm-q-section-title">🔓 Opening & Permission</div>
+          <div class="rm-q-card">
+            <div class="rm-q-row"><span class="rm-badge req">Required</span><div><div class="rm-q-text">"Do you have a few minutes so I can understand what you need and check the best available option?"</div><div class="rm-q-follow">Follow-up: "I appreciate that — this will only take a few minutes and I want to make sure I match you with the right fit."</div><div class="rm-q-purpose">Purpose: Establish consent and frame the call as collaborative, not a pitch.</div></div></div>
+          </div>
+        </div>
+        <div class="rm-q-section">
+          <div class="rm-q-section-title">🔍 Reason for Inquiry</div>
+          <div class="rm-q-card">
+            <div class="rm-q-row"><span class="rm-badge req">Required</span><div><div class="rm-q-text">"What made you start looking for help with the cleaning?"</div><div class="rm-q-follow">Follow-up: "How long has that been a challenge?" / "What's changed recently that made this a priority?"</div><div class="rm-q-purpose">Purpose: Uncover the emotional and practical motivation driving the inquiry.</div></div></div>
+          </div>
+          <div class="rm-q-card">
+            <div class="rm-q-row"><span class="rm-badge rec">Recommended</span><div><div class="rm-q-text">"Are you currently using any cleaning service or handling it yourself?"</div><div class="rm-q-follow">Follow-up: "What's working about that? What isn't?"</div><div class="rm-q-purpose">Purpose: Identify current baseline and gaps to position Homeaglow's value.</div></div></div>
+          </div>
+          <div class="rm-q-card">
+            <div class="rm-q-row"><span class="rm-badge rec">Recommended</span><div><div class="rm-q-text">"Have you had a professional cleaner before? How did that go?"</div><div class="rm-q-follow">Follow-up: "What worked well? What would you want to be different?"</div><div class="rm-q-purpose">Purpose: Surface prior experience to tailor reassurances and expectations.</div></div></div>
+          </div>
+        </div>
+        <div class="rm-q-section">
+          <div class="rm-q-section-title">🏠 Home Discovery</div>
+          <div class="rm-q-card">
+            <div class="rm-q-row"><span class="rm-badge req">Required</span><div><div class="rm-q-text">"How many bedrooms and bathrooms would you like included in the first visit?"</div><div class="rm-q-follow">Follow-up: "Any other spaces — kitchen, living room, home office?"</div><div class="rm-q-purpose">Purpose: Establish scope to build an accurate recommendation.</div></div></div>
+          </div>
+          <div class="rm-q-card">
+            <div class="rm-q-row"><span class="rm-badge req">Required</span><div><div class="rm-q-text">"Which areas need the most attention on the first cleaning?"</div><div class="rm-q-follow">Follow-up: "Is this more of a deep clean situation or more of a maintenance clean?"</div><div class="rm-q-purpose">Purpose: Prioritize scope and set the right expectation for the first visit.</div></div></div>
+          </div>
+          <div class="rm-q-card">
+            <div class="rm-q-row"><span class="rm-badge rec">Recommended</span><div><div class="rm-q-text">"How would you describe the current condition of the home?"</div><div class="rm-q-follow">Follow-up: "Any areas that haven't been cleaned in a while or need extra time?"</div><div class="rm-q-purpose">Purpose: Adjust hours recommendation and set realistic expectations.</div></div></div>
+          </div>
+          <div class="rm-q-card">
+            <div class="rm-q-row"><span class="rm-badge rec">Recommended</span><div><div class="rm-q-text">"What would a perfect clean look like for you — what's the outcome you're hoping for?"</div><div class="rm-q-follow">Follow-up: "If you walked into the home after the cleaning, what would tell you it was done right?"</div><div class="rm-q-purpose">Purpose: Connect the service to their personal definition of success.</div></div></div>
+          </div>
+        </div>
+        <div class="rm-q-section">
+          <div class="rm-q-section-title">📅 Timing & Frequency</div>
+          <div class="rm-q-card">
+            <div class="rm-q-row"><span class="rm-badge req">Required</span><div><div class="rm-q-text">"When would you ideally like the first cleaning completed?"</div><div class="rm-q-follow">Follow-up: "Is there a specific event or reason for that timeline?"</div><div class="rm-q-purpose">Purpose: Create urgency and align scheduling to a real need.</div></div></div>
+          </div>
+          <div class="rm-q-card">
+            <div class="rm-q-row"><span class="rm-badge req">Required</span><div><div class="rm-q-text">"If the first cleaning goes well, how often would help be useful — weekly, every two weeks, monthly, or only as needed?"</div><div class="rm-q-follow">Follow-up: "A lot of customers in similar situations find [frequency] works best — does that sound right for your lifestyle?"</div><div class="rm-q-purpose">Purpose: Anchor ongoing frequency and move toward a membership conversation.</div></div></div>
+          </div>
+        </div>
+        <div class="rm-q-section">
+          <div class="rm-q-section-title">🐾 Cleaner Fit</div>
+          <div class="rm-q-card">
+            <div class="rm-q-row"><span class="rm-badge req">Required</span><div><div class="rm-q-text">"Do you have any pets the cleaner should know about?"</div><div class="rm-q-follow">Follow-up: "Are they friendly with strangers? Any areas to keep them out of?"</div><div class="rm-q-purpose">Purpose: Flag safety and logistics; shows professionalism.</div></div></div>
+          </div>
+          <div class="rm-q-card">
+            <div class="rm-q-row"><span class="rm-badge req">Required</span><div><div class="rm-q-text">"Does anyone in the home have allergies or require specific cleaning products?"</div><div class="rm-q-follow">Follow-up: "We can note that in the service instructions for the cleaner."</div><div class="rm-q-purpose">Purpose: Demonstrates care and helps avoid issues on the first visit.</div></div></div>
+          </div>
+          <div class="rm-q-card">
+            <div class="rm-q-row"><span class="rm-badge rec">Recommended</span><div><div class="rm-q-text">"Do you have any preference for the cleaner — experience level, language, gender?"</div><div class="rm-q-follow">Follow-up: "We'll do our best to match you based on availability and ratings."</div><div class="rm-q-purpose">Purpose: Addresses trust concerns proactively and personalizes the match.</div></div></div>
+          </div>
+        </div>
+        <div class="rm-q-section">
+          <div class="rm-q-section-title">🚧 Barrier Discovery</div>
+          <div class="rm-q-card">
+            <div class="rm-q-row"><span class="rm-badge req">Required</span><div><div class="rm-q-text">"When you first reviewed the offer, what kept you from completing the booking?"</div><div class="rm-q-follow">Follow-up: "Was it more about [price / commitment / trust / timing]?"</div><div class="rm-q-purpose">Purpose: Identify the real objection early so it can be addressed before closing.</div></div></div>
+          </div>
+          <div class="rm-q-card">
+            <div class="rm-q-row"><span class="rm-badge rec">Recommended</span><div><div class="rm-q-text">"Is there anything else holding you back from moving forward today?"</div><div class="rm-q-follow">Follow-up: "I want to make sure I address everything before we wrap up."</div><div class="rm-q-purpose">Purpose: Surface hidden objections before entering the close.</div></div></div>
+          </div>
+          <div class="rm-q-card">
+            <div class="rm-q-row"><span class="rm-badge rec">Recommended</span><div><div class="rm-q-text">"Is budget a factor in what you're looking for today?"</div><div class="rm-q-follow">Follow-up: "Just so I can make the right recommendation — what range were you thinking?"</div><div class="rm-q-purpose">Purpose: Qualify budget sensitivity before presenting price.</div></div></div>
+          </div>
+        </div>
+        <div class="rm-q-section">
+          <div class="rm-q-section-title">💳 Close & Confirmation</div>
+          <div class="rm-q-card">
+            <div class="rm-q-row"><span class="rm-badge rec">Recommended</span><div><div class="rm-q-text">"Based on everything I've heard, here's what I'd recommend — does this sound right for your situation?"</div><div class="rm-q-follow">Follow-up: "Let me tell you why I landed on that."</div><div class="rm-q-purpose">Purpose: Create buy-in on the recommendation before presenting price.</div></div></div>
+          </div>
+          <div class="rm-q-card">
+            <div class="rm-q-row"><span class="rm-badge rec">Recommended</span><div><div class="rm-q-text">"Given everything we've talked about, do you feel like this is worth trying?"</div><div class="rm-q-follow">Follow-up: "What would make you feel more confident about it?"</div><div class="rm-q-purpose">Purpose: Check perceived value before transitioning to price.</div></div></div>
+          </div>
+          <div class="rm-q-card">
+            <div class="rm-q-row"><span class="rm-badge req">Required</span><div><div class="rm-q-text">"Before we process anything, can you tell me how you understand today's charge and the future cost?"</div><div class="rm-q-follow">Follow-up: Correct any misunderstanding before proceeding.</div><div class="rm-q-purpose">Purpose: Compliance and clarity — ensures the customer understands what they're agreeing to.</div></div></div>
+          </div>
+          <div class="rm-q-card">
+            <div class="rm-q-row"><span class="rm-badge req">Required</span><div><div class="rm-q-text">"Great — let's secure the cleaning. What day works best for you?"</div><div class="rm-q-follow">Follow-up: "Morning or afternoon? We'll get that on the schedule."</div><div class="rm-q-purpose">Purpose: The close — move directly to scheduling to lock in commitment.</div></div></div>
+          </div>
+          <div class="rm-q-card">
+            <div class="rm-q-row"><span class="rm-badge req">Required</span><div><div class="rm-q-text">"Let's review the appointment, scope, charges, and commitment once more. Is everything correct and do you agree?"</div><div class="rm-q-follow">Follow-up: State each item clearly and pause for verbal confirmation.</div><div class="rm-q-purpose">Purpose: Final confirmation — verbal agreement on all key terms before processing.</div></div></div>
+          </div>
+        </div>
+      </div><!-- /questions -->
+
+      <!-- TAB 3: OBJECTION PLAYBOOK -->
+      <div id="rm-panel-objections" class="rm-panel">
+        <p style="font-size:.8rem;color:#6b7280;margin-bottom:16px;">Click any objection to see the full 6-part response framework.</p>
+        <div class="rm-obj-card open">
+          <div class="rm-obj-hdr" onclick="toggleRmObj(this)">
+            <div class="rm-obj-num">1</div>
+            <div class="rm-obj-label">"I need to think about it."</div>
+            <span class="rm-obj-chevron">▶</span>
+          </div>
+          <div class="rm-obj-body">
+            <div class="rm-obj-grid">
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Acknowledge</div><div class="rm-obj-field-val">"That makes complete sense — this is a real commitment and you want to feel good about it."</div></div>
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Clarify</div><div class="rm-obj-field-val">"What part do you want to think through — the price, the cleaner match, the commitment, or something else?"</div></div>
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Suggested Response</div><div class="rm-obj-field-val">"Let's work through that together right now — I have all the information you'd need to make this decision."</div></div>
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Acceptance Check</div><div class="rm-obj-field-val">"Does that address what you were unsure about, or is there still something we should talk through?"</div></div>
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Transition</div><div class="rm-obj-field-val">"If we can resolve that, is there anything else standing in the way of getting started today?"</div></div>
+              <div class="rm-obj-field rm-obj-avoid"><div class="rm-obj-field-label">⚠️ Avoid</div><div class="rm-obj-field-val">Saying "No problem, take your time" and ending the call. Thinking about it without a specific concern is almost always a softer objection in disguise.</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="rm-obj-card">
+          <div class="rm-obj-hdr" onclick="toggleRmObj(this)">
+            <div class="rm-obj-num">2</div>
+            <div class="rm-obj-label">"Membership" (fee, frequency, or enrollment?)</div>
+            <span class="rm-obj-chevron">▶</span>
+          </div>
+          <div class="rm-obj-body">
+            <div class="rm-obj-grid">
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Acknowledge</div><div class="rm-obj-field-val">"I hear you — the membership structure is a new concept for a lot of people."</div></div>
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Clarify</div><div class="rm-obj-field-val">"Is it the ongoing fee, the cleaning frequency, or the enrollment itself that's the concern?"</div></div>
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Suggested Response</div><div class="rm-obj-field-val">"The membership is what keeps your cleaner consistent and your price protected. Without it, you'd pay a higher rate each time with no continuity."</div></div>
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Acceptance Check</div><div class="rm-obj-field-val">"Does knowing how the membership works change how you feel about it?"</div></div>
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Transition</div><div class="rm-obj-field-val">"If the membership made sense, what else would we need to work through?"</div></div>
+              <div class="rm-obj-field rm-obj-avoid"><div class="rm-obj-field-label">⚠️ Avoid</div><div class="rm-obj-field-val">Lumping all membership concerns together. Always clarify which part — fee, cadence, or concept — before responding.</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="rm-obj-card">
+          <div class="rm-obj-hdr" onclick="toggleRmObj(this)">
+            <div class="rm-obj-num">3</div>
+            <div class="rm-obj-label">"Commitment" (exact term + cancellation)</div>
+            <span class="rm-obj-chevron">▶</span>
+          </div>
+          <div class="rm-obj-body">
+            <div class="rm-obj-grid">
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Acknowledge</div><div class="rm-obj-field-val">"That's a fair concern — nobody wants to feel locked in."</div></div>
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Clarify</div><div class="rm-obj-field-val">"When you say commitment, are you concerned about the length of time or the cancellation policy?"</div></div>
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Suggested Response</div><div class="rm-obj-field-val">"The minimum term is [X months]. After that, you can cancel anytime. During the term, you can reschedule or skip — you're not tied to a rigid schedule."</div></div>
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Acceptance Check</div><div class="rm-obj-field-val">"Knowing the exact terms, does the commitment feel manageable?"</div></div>
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Transition</div><div class="rm-obj-field-val">"Most customers tell me after the first cleaning they never want to cancel — let's get you to that first experience."</div></div>
+              <div class="rm-obj-field rm-obj-avoid"><div class="rm-obj-field-label">⚠️ Avoid</div><div class="rm-obj-field-val">Using vague language like "it's pretty flexible." State the exact term and cancellation policy clearly — ambiguity creates chargebacks.</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="rm-obj-card">
+          <div class="rm-obj-hdr" onclick="toggleRmObj(this)">
+            <div class="rm-obj-num">4</div>
+            <div class="rm-obj-label">"Price / too expensive" (which part?)</div>
+            <span class="rm-obj-chevron">▶</span>
+          </div>
+          <div class="rm-obj-body">
+            <div class="rm-obj-grid">
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Acknowledge</div><div class="rm-obj-field-val">"I appreciate your honesty — price is always worth discussing."</div></div>
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Clarify</div><div class="rm-obj-field-val">"Is it the initial charge today, the ongoing rate, or the total cost over time that feels like too much?"</div></div>
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Suggested Response</div><div class="rm-obj-field-val">"Let's look at it this way: [X hours] for [price] works out to [$/hr], which is less than most people spend eating out twice a month — and you get your time back every [frequency]."</div></div>
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Acceptance Check</div><div class="rm-obj-field-val">"When you look at it broken down that way, does the value feel more aligned with what you're getting?"</div></div>
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Transition</div><div class="rm-obj-field-val">"Getting started today locks in your rate and gets your home cleaned sooner — let's get you set up."</div></div>
+              <div class="rm-obj-field rm-obj-avoid"><div class="rm-obj-field-label">⚠️ Avoid</div><div class="rm-obj-field-val">Immediately offering a discount or alternative — first anchor the value. Only explore options after value is fully presented.</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="rm-obj-card">
+          <div class="rm-obj-hdr" onclick="toggleRmObj(this)">
+            <div class="rm-obj-num">5</div>
+            <div class="rm-obj-label">"One-time cleaning only" (transparent comparison)</div>
+            <span class="rm-obj-chevron">▶</span>
+          </div>
+          <div class="rm-obj-body">
+            <div class="rm-obj-grid">
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Acknowledge</div><div class="rm-obj-field-val">"Totally understand — you just want to try it without committing to anything long-term."</div></div>
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Clarify</div><div class="rm-obj-field-val">"Is that because you're not sure about the quality, the price ongoing, or just the commitment itself?"</div></div>
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Suggested Response</div><div class="rm-obj-field-val">"The one-time rate is [X], while the membership intro rate is [Y] — so you actually get a better first experience AND a lower price by going with the membership. The only difference is a [Z-month] commitment."</div></div>
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Acceptance Check</div><div class="rm-obj-field-val">"Does it make sense to go with the better rate given the difference in price?"</div></div>
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Transition</div><div class="rm-obj-field-val">"Think of the membership as a trial with a commitment — but you still get to cancel after [X months] if it's not the right fit."</div></div>
+              <div class="rm-obj-field rm-obj-avoid"><div class="rm-obj-field-label">⚠️ Avoid</div><div class="rm-obj-field-val">Hiding or minimizing the difference between one-time and membership. Transparency builds trust and reduces cancellations.</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="rm-obj-card">
+          <div class="rm-obj-hdr" onclick="toggleRmObj(this)">
+            <div class="rm-obj-num">6</div>
+            <div class="rm-obj-label">"Trust / stranger in my home"</div>
+            <span class="rm-obj-chevron">▶</span>
+          </div>
+          <div class="rm-obj-body">
+            <div class="rm-obj-grid">
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Acknowledge</div><div class="rm-obj-field-val">"That's a completely legitimate concern — your home is your safe space and you want to know who's coming in."</div></div>
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Clarify</div><div class="rm-obj-field-val">"Is it more about vetting and background checks, or about not having met the cleaner in person first?"</div></div>
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Suggested Response</div><div class="rm-obj-field-val">"Every cleaner goes through a background check and identity verification. You'll see their profile, ratings, and reviews before they arrive. You can also leave access instructions and add service notes."</div></div>
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Acceptance Check</div><div class="rm-obj-field-val">"Knowing you can see their background and ratings first, does that help with the concern?"</div></div>
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Transition</div><div class="rm-obj-field-val">"Most customers feel much more comfortable once they've seen the profile — let's get you to that first experience."</div></div>
+              <div class="rm-obj-field rm-obj-avoid"><div class="rm-obj-field-label">⚠️ Avoid</div><div class="rm-obj-field-val">Dismissing the concern as irrational. This is one of the most emotionally charged objections — validate fully before presenting facts.</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="rm-obj-card">
+          <div class="rm-obj-hdr" onclick="toggleRmObj(this)">
+            <div class="rm-obj-num">7</div>
+            <div class="rm-obj-label">"Quality / bad prior cleaner"</div>
+            <span class="rm-obj-chevron">▶</span>
+          </div>
+          <div class="rm-obj-body">
+            <div class="rm-obj-grid">
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Acknowledge</div><div class="rm-obj-field-val">"I'm sorry that happened — a bad experience makes it hard to trust again."</div></div>
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Clarify</div><div class="rm-obj-field-val">"What specifically went wrong — was it the quality of the cleaning itself, communication, or something else?"</div></div>
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Suggested Response</div><div class="rm-obj-field-val">"We let you leave detailed service notes so the cleaner knows exactly what matters to you. You also rate after every visit and can request a different cleaner if needed. If there's an issue, we make it right."</div></div>
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Acceptance Check</div><div class="rm-obj-field-val">"Does knowing you have that level of control and a quality guarantee change how you feel about trying again?"</div></div>
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Transition</div><div class="rm-obj-field-val">"You deserve a clean home — and you deserve a service that actually delivers it. Let's give it one real shot."</div></div>
+              <div class="rm-obj-field rm-obj-avoid"><div class="rm-obj-field-label">⚠️ Avoid</div><div class="rm-obj-field-val">Comparing Homeaglow to the prior bad experience by name or disparaging other services. Focus on what makes this different.</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="rm-obj-card">
+          <div class="rm-obj-hdr" onclick="toggleRmObj(this)">
+            <div class="rm-obj-num">8</div>
+            <div class="rm-obj-label">"Not ready / timing"</div>
+            <span class="rm-obj-chevron">▶</span>
+          </div>
+          <div class="rm-obj-body">
+            <div class="rm-obj-grid">
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Acknowledge</div><div class="rm-obj-field-val">"Timing is everything — I don't want to push you into something that doesn't fit your life right now."</div></div>
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Clarify</div><div class="rm-obj-field-val">"What's happening in your life that makes now feel too soon? Is there an event or milestone you're waiting on?"</div></div>
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Suggested Response</div><div class="rm-obj-field-val">"We can schedule the first visit 2–3 weeks out — you don't have to start this week. Locking in the rate today means you get the offer as it stands, and we build around your schedule."</div></div>
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Acceptance Check</div><div class="rm-obj-field-val">"If we set the first appointment around [their event / future date], does that feel more workable?"</div></div>
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Transition</div><div class="rm-obj-field-val">"Let's lock in the date that works for you — you stay in control of when it happens."</div></div>
+              <div class="rm-obj-field rm-obj-avoid"><div class="rm-obj-field-label">⚠️ Avoid</div><div class="rm-obj-field-val">Pressing urgency in a way that feels dishonest. If timing is a real concern, align to their actual timeline — a booked appointment at a future date is still a win.</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="rm-obj-card">
+          <div class="rm-obj-hdr" onclick="toggleRmObj(this)">
+            <div class="rm-obj-num">9</div>
+            <div class="rm-obj-label">"Need to ask someone" (spouse / partner)</div>
+            <span class="rm-obj-chevron">▶</span>
+          </div>
+          <div class="rm-obj-body">
+            <div class="rm-obj-grid">
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Acknowledge</div><div class="rm-obj-field-val">"Of course — major decisions are better made together."</div></div>
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Clarify</div><div class="rm-obj-field-val">"What do you think their main concern will be? Price, the commitment, or something else?"</div></div>
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Suggested Response</div><div class="rm-obj-field-val">"Let's resolve your concerns first — if you're confident in it, that conversation becomes a lot easier. What would make you personally feel good about moving forward?"</div></div>
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Acceptance Check</div><div class="rm-obj-field-val">"If [partner] was on the call right now and asked about [likely concern], what would you want me to tell them?"</div></div>
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Transition</div><div class="rm-obj-field-val">"Once you're satisfied, would you feel comfortable making the decision — or would it be better to loop them in now?"</div></div>
+              <div class="rm-obj-field rm-obj-avoid"><div class="rm-obj-field-label">⚠️ Avoid</div><div class="rm-obj-field-val">Asking for a callback without resolving the present customer's own concerns first. Surface and address their objection before involving a third party.</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="rm-obj-card">
+          <div class="rm-obj-hdr" onclick="toggleRmObj(this)">
+            <div class="rm-obj-num">10</div>
+            <div class="rm-obj-label">"Found another cleaner"</div>
+            <span class="rm-obj-chevron">▶</span>
+          </div>
+          <div class="rm-obj-body">
+            <div class="rm-obj-grid">
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Acknowledge</div><div class="rm-obj-field-val">"That's great — it sounds like you're serious about getting help. Good for you."</div></div>
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Clarify</div><div class="rm-obj-field-val">"What stood out about them that made them feel like a better fit — was it price, schedule, no commitment, or something else?"</div></div>
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Suggested Response</div><div class="rm-obj-field-val">"I want to make sure you're comparing accurately. [Address the specific factor they named — rate, vetting, consistency.] With us, you also get [relevant differentiator]."</div></div>
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Acceptance Check</div><div class="rm-obj-field-val">"Knowing that, does Homeaglow still feel like it could be the right fit — or is the other option clearly better on [specific factor]?"</div></div>
+              <div class="rm-obj-field"><div class="rm-obj-field-label">Transition</div><div class="rm-obj-field-val">"If the comparison is close, the intro offer gives you a low-risk way to find out. You can always revisit after the first cleaning."</div></div>
+              <div class="rm-obj-field rm-obj-avoid"><div class="rm-obj-field-label">⚠️ Avoid</div><div class="rm-obj-field-val">Badmouthing the competition. Ask what made them better and compare accurately — emotional validation plus honest comparison is more persuasive than pressure.</div></div>
+            </div>
+          </div>
+        </div>
+      </div><!-- /objections -->
+
+    </div><!-- /rm-body -->
+  </div><!-- /rm-modal -->
+</div><!-- /rm-overlay -->
 
 <!-- CALENDAR VIEW -->
 <div id="v-cal" class="view">
@@ -1914,7 +2560,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
         </div>
         <div class="fg"><label>WK# of Performance <span class="req">★</span></label>
           <select id="cl-wk" onchange="render4WeekTrajectory(document.getElementById('cl-agent').value,this.value);saveDraftLog()"><option value="">— Select Week —</option></select>
-          <div style="font-size:.72rem;color:var(--g500);margin-top:5px;">📌 Enter the week number of the agent's performance being coached.</div>
+          <div style="font-size:.72rem;color:var(--g500);margin-top:5px;font-weight:700;">📌 Enter the week number the coaching was held.</div>
         </div>
       </div>
 
@@ -2419,6 +3065,209 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
   </div>
 </div>
 
+<!-- CALL LISTENING MODAL -->
+<div class="overlay" id="m-cl">
+  <div class="modal" style="max-width:620px">
+    <div class="mhead"><span>🎧 Call Listening Log</span><button class="mclose" onclick="closeCLModal()">✕</button></div>
+    <div class="mbody" style="padding:0">
+
+      <!-- Top info section -->
+      <div style="padding:20px 24px 0">
+        <div class="fg-row">
+          <div class="fg"><label>Agent <span class="req">★</span></label>
+            <select id="cl2-agent"></select>
+          </div>
+          <div class="fg"><label>Team Lead <span class="req">★</span></label>
+            <select id="cl2-tl"></select>
+          </div>
+        </div>
+        <div class="fg-row">
+          <div class="fg"><label>Call Date <span class="req">★</span></label>
+            <input type="date" id="cl-date"/>
+          </div>
+          <div class="fg"><label>Outcome <span class="req">★</span></label>
+            <select id="cl-outcome">
+              <option value="">— Select —</option>
+              <option>Sale</option>
+              <option>Callback</option>
+              <option>Not a Sale</option>
+              <option>Follow-up</option>
+            </select>
+          </div>
+        </div>
+        <div class="fg" style="margin-bottom:0"><label>Aircall Link</label>
+          <input type="url" id="cl-air" placeholder="https://…"/>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <div style="margin:20px 0 0;border-top:2px solid #f0f0f0"></div>
+
+      <!-- Rating header -->
+      <div style="padding:14px 24px 10px;display:flex;align-items:center;justify-content:space-between">
+        <div style="font-weight:700;font-size:0.95rem;color:#333;letter-spacing:0.02em">📋 CALL EVALUATION</div>
+        <div style="display:flex;gap:10px;font-size:0.72rem;font-weight:600">
+          <span style="background:#e8f5e9;color:#2e7d32;padding:3px 9px;border-radius:20px">✓ Followed = 1 pt</span>
+          <span style="background:#fff3e0;color:#e65100;padding:3px 9px;border-radius:20px">⚠ Needs Coaching = 0 pt</span>
+          <span style="background:#f5f5f5;color:#777;padding:3px 9px;border-radius:20px">— N/A</span>
+        </div>
+      </div>
+
+      <!-- Rating rows -->
+      <div id="cl-ratings" style="padding:0 16px 4px">
+
+        <style>
+          .cl-cat-row{display:flex;align-items:center;gap:12px;padding:9px 8px;border-radius:10px;margin-bottom:6px;transition:background .15s}
+          .cl-cat-row:hover{background:#fafafa}
+          .cl-cat-num{width:26px;height:26px;border-radius:50%;background:var(--yellow-dk);color:#fff;font-size:0.72rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+          .cl-cat-info{flex:1;min-width:0}
+          .cl-cat-name{font-weight:600;font-size:0.88rem;color:#222;margin-bottom:1px}
+          .cl-cat-desc{font-size:0.75rem;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+          .cl-r{border:1.5px solid #ddd;border-radius:8px;padding:6px 10px;font-size:0.82rem;font-weight:600;cursor:pointer;background:#fff;min-width:155px;transition:border-color .2s,background .2s}
+          .cl-r:focus{outline:none;border-color:var(--yellow-dk)}
+          .cl-r.r-followed{border-color:#66bb6a;background:#f1fbf2;color:#2e7d32}
+          .cl-r.r-coaching{border-color:#ffa726;background:#fff8f0;color:#e65100}
+          .cl-r.r-na{border-color:#bbb;background:#f7f7f7;color:#888}
+        </style>
+
+        <div class="cl-cat-row">
+          <div class="cl-cat-num">1</div>
+          <div class="cl-cat-info">
+            <div class="cl-cat-name">Connect</div>
+            <div class="cl-cat-desc">Earns permission — opens with a personalized reason</div>
+          </div>
+          <select id="cl-r1" class="cl-r" onchange="updateCLScore();styleCLSelect(this)">
+            <option value="">— Select —</option>
+            <option value="1">✓ Followed</option>
+            <option value="0">⚠ Needs Coaching</option>
+            <option value="na">— Not Applicable</option>
+          </select>
+        </div>
+
+        <div class="cl-cat-row">
+          <div class="cl-cat-num">2</div>
+          <div class="cl-cat-info">
+            <div class="cl-cat-name">Discover</div>
+            <div class="cl-cat-desc">Finds the need behind the request</div>
+          </div>
+          <select id="cl-r2" class="cl-r" onchange="updateCLScore();styleCLSelect(this)">
+            <option value="">— Select —</option>
+            <option value="1">✓ Followed</option>
+            <option value="0">⚠ Needs Coaching</option>
+            <option value="na">— Not Applicable</option>
+          </select>
+        </div>
+
+        <div class="cl-cat-row">
+          <div class="cl-cat-num">3</div>
+          <div class="cl-cat-info">
+            <div class="cl-cat-name">Personalize</div>
+            <div class="cl-cat-desc">Turns answers into value for the prospect</div>
+          </div>
+          <select id="cl-r3" class="cl-r" onchange="updateCLScore();styleCLSelect(this)">
+            <option value="">— Select —</option>
+            <option value="1">✓ Followed</option>
+            <option value="0">⚠ Needs Coaching</option>
+            <option value="na">— Not Applicable</option>
+          </select>
+        </div>
+
+        <div class="cl-cat-row">
+          <div class="cl-cat-num">4</div>
+          <div class="cl-cat-info">
+            <div class="cl-cat-name">Isolate</div>
+            <div class="cl-cat-desc">Confirms the true objection</div>
+          </div>
+          <select id="cl-r4" class="cl-r" onchange="updateCLScore();styleCLSelect(this)">
+            <option value="">— Select —</option>
+            <option value="1">✓ Followed</option>
+            <option value="0">⚠ Needs Coaching</option>
+            <option value="na">— Not Applicable</option>
+          </select>
+        </div>
+
+        <div class="cl-cat-row">
+          <div class="cl-cat-num">5</div>
+          <div class="cl-cat-info">
+            <div class="cl-cat-name">Resolve</div>
+            <div class="cl-cat-desc">Answers the objection and checks for acceptance</div>
+          </div>
+          <select id="cl-r5" class="cl-r" onchange="updateCLScore();styleCLSelect(this)">
+            <option value="">— Select —</option>
+            <option value="1">✓ Followed</option>
+            <option value="0">⚠ Needs Coaching</option>
+            <option value="na">— Not Applicable</option>
+          </select>
+        </div>
+
+        <div class="cl-cat-row">
+          <div class="cl-cat-num">6</div>
+          <div class="cl-cat-info">
+            <div class="cl-cat-name">Convert</div>
+            <div class="cl-cat-desc">Transitions confidently to booking</div>
+          </div>
+          <select id="cl-r6" class="cl-r" onchange="updateCLScore();styleCLSelect(this)">
+            <option value="">— Select —</option>
+            <option value="1">✓ Followed</option>
+            <option value="0">⚠ Needs Coaching</option>
+            <option value="na">— Not Applicable</option>
+          </select>
+        </div>
+
+        <div class="cl-cat-row">
+          <div class="cl-cat-num">7</div>
+          <div class="cl-cat-info">
+            <div class="cl-cat-name">Confirm</div>
+            <div class="cl-cat-desc">Creates informed confidence before ending the call</div>
+          </div>
+          <select id="cl-r7" class="cl-r" onchange="updateCLScore();styleCLSelect(this)">
+            <option value="">— Select —</option>
+            <option value="1">✓ Followed</option>
+            <option value="0">⚠ Needs Coaching</option>
+            <option value="na">— Not Applicable</option>
+          </select>
+        </div>
+
+      </div>
+
+      <!-- Score card -->
+      <div style="margin:12px 16px 16px;border-radius:12px;overflow:hidden;border:1.5px solid #e8e0c8">
+        <div style="background:linear-gradient(135deg,#f5c518 0%,#f0a800 100%);padding:14px 20px;display:flex;align-items:center;gap:16px">
+          <div style="text-align:center;background:rgba(0,0,0,0.12);border-radius:10px;padding:8px 18px">
+            <div style="font-size:2rem;font-weight:800;color:#fff;line-height:1" id="cl-score-display">0</div>
+            <div style="font-size:0.68rem;color:rgba(255,255,255,0.85);font-weight:600;margin-top:2px">OUT OF 7</div>
+          </div>
+          <div style="flex:1">
+            <div style="font-size:0.72rem;color:rgba(255,255,255,0.8);font-weight:600;text-transform:uppercase;letter-spacing:0.05em">Performance Level</div>
+            <div style="font-size:1.25rem;font-weight:800;color:#fff;margin-top:2px" id="cl-level-display">—</div>
+            <div style="font-size:0.75rem;color:rgba(255,255,255,0.92);margin-top:6px;line-height:1.45" id="cl-meaning-display"></div>
+            <div style="font-size:0.72rem;color:rgba(255,255,255,0.8);margin-top:5px;font-style:italic;line-height:1.4" id="cl-coaching-display"></div>
+          </div>
+          <div style="font-size:0.72rem;color:rgba(255,255,255,0.9);line-height:1.9;text-align:right">
+            <strong style="color:#fff">7</strong> — Rainmaker Level<br>
+            <strong style="color:#fff">5–6</strong> — Strong<br>
+            <strong style="color:#fff">3–4</strong> — Inconsistent<br>
+            <strong style="color:#fff">0–2</strong> — Major Gaps
+          </div>
+        </div>
+      </div>
+
+      <!-- Call Review Notes -->
+      <div style="margin:0 16px 16px">
+        <label style="display:block;font-size:0.78rem;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">📝 Call Review Notes</label>
+        <textarea id="cl-notes" rows="3" placeholder="Add coaching notes, observations, or action items…" style="width:100%;box-sizing:border-box;border:1.5px solid #e5e7eb;border-radius:8px;padding:10px 12px;font-size:0.88rem;font-family:inherit;resize:vertical;color:#1f2937;line-height:1.5;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='#f5c518'" onblur="this.style.borderColor='#e5e7eb'"></textarea>
+      </div>
+
+    </div>
+    <div class="mfooter">
+      <button class="btn btn-outline" onclick="closeCLModal()">Cancel</button>
+      <button class="btn" id="cl-rm-toggle-btn" style="background:linear-gradient(135deg,#5e8a50,#7ab865);color:#fff;border:none;font-weight:700;display:inline-flex;align-items:center;gap:6px;" onclick="openCLRainmakerGuide()">📖 Rainmaker Guide</button>
+      <button class="btn btn-yellow" onclick="saveCL()">💾 Save Call Listening</button>
+    </div>
+  </div>
+  <div id="cl-rm-panel" style="display:none;flex-direction:column;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.25);flex:1;min-width:420px;max-width:780px;max-height:88vh;"></div>
+</div>
+
 <!-- NTE -->
 <div class="overlay" id="m-nte">
   <div class="modal">
@@ -2596,6 +3445,13 @@ let rosterTLS=[...DEFAULT_TLS];
 
 function fillTLs(ids){
   const opts='<option value="">— Select —</option>'+rosterTLS.map(t=>`<option value="${e(t)}">${e(t)}</option>`).join('');
+  ids.forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
+}
+
+/* CL modal — individual TL + ATL names */
+const CL_TL_NAMES=['Jhay Oglimen','Jumz Delacruz','Florence Llait','Jersey Deguzman','Dopear Bundang','Genevieve Palec','Renilo Uyutuc','Maureen Ulao'];
+function fillCLTLs(ids){
+  const opts='<option value="">— Select —</option>'+CL_TL_NAMES.map(n=>`<option value="${e(n)}">${e(n)}</option>`).join('');
   ids.forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
 }
 
@@ -2812,6 +3668,7 @@ if(CONFIG_MISSING){
         }
         FSB    = firebase.firestore();
         FSAUTH = firebase.auth();
+        FSAUTH.signInAnonymously().catch(e=>console.warn('Anon auth:',e.message));
         FB_READY = true;
         console.log('Firebase ready (Auth + Firestore).');
         // Init EmailJS if keys are provided
@@ -2830,9 +3687,11 @@ if(CONFIG_MISSING){
 }
 
 /* In-memory cache — kept in sync by real-time Firestore listeners */
-let DB  = { logs:[], ft:[], nte:[], cm:{} };
+let DB  = { logs:[], ft:[], nte:[], cl:[], cm:{} };
 // Attendance: Sheets-based cache (Option B)
 let _unsubs = [];  // listener unsubscribers
+let _sheetOnlyLogs = [];   // coaching rows in SheetDB but not yet in Firestore
+let _sheetLoaded   = false; // fetch SheetDB only once per session
 
 async function fsWrite(col,id,data){
   try{ await FSB.collection(col).doc(id).set(data); return true; }
@@ -2852,7 +3711,7 @@ const SHEETS_URL = 'https://sheetdb.io/api/v1/hxgegag6py2q0';
 
 async function syncToSheet(type, action, id, row){
   if(!SHEETS_URL) return;
-  const sheetName = {coaching:'Coaching Logs', nte:'NTE Logs', ft:'Follow Through'}[type];
+  const sheetName = {coaching:'Coaching Logs', nte:'NTE Logs', ft:'Follow Through', cl:'Call Listening'}[type];
   if(!sheetName) return;
   try{
     if(action==='upsert'){
@@ -2947,10 +3806,31 @@ function sheetRowFT(entry){
     'Logged At':        entry.at||new Date().toISOString()
   };
 }
+function sheetRowCL(entry){
+  return {
+    'ID':           entry.id,
+    'Date':         entry.date,
+    'Agent':        entry.agent,
+    'Team Lead':    entry.tl||'',
+    'Aircall Link': entry.air||'',
+    'Outcome':      entry.outcome||'',
+    'Connect':      entry.r1||'',
+    'Discover':     entry.r2||'',
+    'Personalize':  entry.r3||'',
+    'Isolate':      entry.r4||'',
+    'Resolve':      entry.r5||'',
+    'Convert':      entry.r6||'',
+    'Confirm':      entry.r7||'',
+    'Total Score':  entry.score||0,
+    'Level':        entry.level||'',
+    'Notes':        entry.notes||'',
+    'Logged At':    entry.at||new Date().toISOString()
+  };
+}
 function e(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function pct(v){return(v===''||v===null||v===undefined)?'—':parseFloat(v).toFixed(1)+'%';}
 function fd(d){if(!d)return'—';const[y,m,dy]=d.split('-');return`${m}/${dy}/${y}`;}
-function hireOf(n){const a=AGENTS.find(x=>x.name===n);return a?a.h:null;}
+function hireOf(n){const a=rosterAgents.find(x=>x.name===n)||AGENTS.find(x=>x.name===n);return a?a.h:null;}
 
 function tenure(hire,ref){
   if(!hire||!ref)return'—';
@@ -2960,6 +3840,64 @@ function tenure(hire,ref){
   if(w<=6)return'5-6w';
   if(w<=10)return'7-10w';
   return'11+w';
+}
+
+/* ─── LOG VALIDATION ────────────────────────────────────────────────────────
+   Reject Firestore px_logs documents where 'tl' or 'agent' contain coaching
+   text instead of real names.  This happens when old imports stored methodology
+   notes in the wrong fields.
+   ─────────────────────────────────────────────────────────────────────── */
+function isValidLog(r){
+  if(!r.agent||!r.tl) return false;
+  // Build the set of valid TL names from initialised roster data
+  const validTLs=new Set([
+    ...rosterTLS,
+    ...rosterAgents.map(a=>a.tl).filter(Boolean)
+  ]);
+  // TL must be a recognised team name (not coaching notes / methodology text)
+  if(!validTLs.has(r.tl)) return false;
+  // Agent field should be a short personal name, not a paragraph
+  if((r.agent||'').length>80) return false;
+  return true;
+}
+
+/* ─── SHEETDB READ ──────────────────────────────────────────────────────────
+   Fetch the Coaching Logs sheet and merge any rows that are in the sheet
+   but not yet in Firestore (e.g. legacy data, or rows where sync failed).
+   Called once after the first onSnapshot fires.
+   ─────────────────────────────────────────────────────────────────────── */
+async function mergeSheetLogs(){
+  try{
+    const res=await fetch(SHEETS_URL+'?sheet='+encodeURIComponent('Coaching Logs'));
+    if(!res.ok){console.warn('SheetDB read error:',res.status);return;}
+    const rows=await res.json();
+    if(!Array.isArray(rows)||!rows.length) return;
+    const fsIds=new Set(DB.logs.map(l=>l.id));
+    _sheetOnlyLogs=rows.map(r=>({
+      id:    r['ID']||'',
+      date:  r['DATE']||r['Date']||'',
+      agent: r['Agent']||'',
+      tl:    r['Team Lead']||'',
+      wk:    r['WK#']||'',
+      leads: r['Leads ']||r['Leads']||'',
+      conn:  r['Connect']||'',
+      sales: r['Sales']||'',
+      tcr:   r['TCR%']||'',
+      csr:   r['CSR%']||'',
+      cvr:   r['CVR%']||'',
+      wk2:   r['WK2 CVR%']||'',
+      hi:    r['Hihglights']||r['Highlights']||'',
+      opp:   r['Opportunities']||'',
+      notes: r['Coaching Notes']||'',
+      at:    r['Logged At']||''
+    })).filter(r=>r.id&&!fsIds.has(r.id));
+    if(_sheetOnlyLogs.length){
+      DB.logs=[...DB.logs,..._sheetOnlyLogs];
+      DB.logs.sort((a,b)=>(b.at||'').localeCompare(a.at||''));
+      if(CU&&!CU.isOM&&!CU.isAgentView) renderDash();
+      else if(CU&&CU.isOM) renderOMC();
+    }
+  }catch(e){console.warn('SheetDB merge failed:',e.message);}
 }
 
 /* ═══════════════════════════════════════
@@ -2976,7 +3914,13 @@ function setupListeners(){
   setLoading(20);
 
   const u1=FSB.collection('px_logs').orderBy('at','desc').onSnapshot(snap=>{
-    DB.logs=snap.docs.map(d=>({...d.data(),id:d.id}));
+    const fsLogs=snap.docs.map(d=>({...d.data(),id:d.id})).filter(isValidLog);
+    const fsIds=new Set(fsLogs.map(l=>l.id));
+    // Merge Firestore records with any sheet-only records (no duplicate IDs)
+    DB.logs=[...fsLogs,..._sheetOnlyLogs.filter(s=>s.id&&!fsIds.has(s.id))];
+    DB.logs.sort((a,b)=>(b.at||'').localeCompare(a.at||''));
+    // Kick off the SheetDB read once (adds records in sheet but not Firestore)
+    if(!_sheetLoaded){_sheetLoaded=true;mergeSheetLogs();}
     setLoading(60);
     if(CU){
       if(CU.isOM){ renderOMC(); }
@@ -3000,6 +3944,11 @@ function setupListeners(){
     DB.ft=snap.docs.map(d=>({...d.data(),id:d.id}));
     if(CU&&CU.isOM) renderOMF(); else if(CU&&CU.isAgentView) renderAgentView();
   },err=>console.error('ft:',err));
+
+  const uCL=FSB.collection('px_cl').orderBy('at','desc').onSnapshot(snap=>{
+    DB.cl=snap.docs.map(d=>({...d.data(),id:d.id}));
+    renderCLLogs();
+  },err=>console.error('cl:',err));
 
   const u3=FSB.collection('px_nte').orderBy('at','desc').onSnapshot(snap=>{
     DB.nte=snap.docs.map(d=>({...d.data(),id:d.id}));
@@ -3052,7 +4001,7 @@ function setupListeners(){
     // Re-render roster modal if open
     renderRosterAgents();renderRosterTLs();
     // Refresh all dropdowns from updated roster
-    fillAgents(['cl-agent','ft-agent','nte-agent']);
+    fillAgents(['cl-agent','cl2-agent','ft-agent','nte-agent']);
     fillTLs(['cl-tl']);
     populateAllFilters();
   },err=>console.error('roster:',err));
@@ -3873,7 +4822,7 @@ function doLogout(){
   _aiItems=[];
   _leadItems=[];
   _obLogs=[];
-  DB={logs:[],ft:[],nte:[],cm:{}};
+  DB={logs:[],ft:[],nte:[],cl:[],cm:{}};
   document.getElementById('admin-roster-btn').style.display='none';
   document.getElementById('admin-pw-btn').style.display='none';
   document.getElementById('agent-nav').classList.add('hidden');
@@ -3927,15 +4876,16 @@ function toggleSbSub(id){
 
 function switchOM(tab){
   document.querySelectorAll('#om-nav .sb-item').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
-  const titles={dash:'Coaching Dashboard',coaching:'Coaching Logs',nte:'NTE Logs',ft:'Follow Through',attendance:'Attendance Points',ranking:'Agent Ranking',pwreset:'Reset Passwords',kb:'Knowledge Base',suggestions:'Suggestions & Reports',calendar:'Team Calendar',actions:'Action Items',leads:'Lead Follow-Ups',onboard:'Onboarding / Offboarding'};
+  const titles={dash:'Coaching Dashboard',coaching:'Coaching Logs',nte:'NTE Logs',ft:'Follow Through',cl:'Call Listening',attendance:'Attendance Points',ranking:'Agent Ranking',pwreset:'Reset Passwords',kb:'Knowledge Base',suggestions:'Suggestions & Reports',calendar:'Team Calendar',actions:'Action Items',leads:'Lead Follow-Ups',onboard:'Onboarding / Offboarding'};
   const el=document.getElementById('tb-title'); if(el) el.textContent=titles[tab]||'';
-  const map={dash:'v-om-dash',coaching:'v-om-c',nte:'v-om-n',ft:'v-om-f',attendance:'v-om-attendance',ranking:'v-ranking',pwreset:'v-om-pwreset',kb:'v-kb',suggestions:'v-om-suggestions',calendar:'v-cal',actions:'v-actions',leads:'v-leads-tl',onboard:'v-onboard'};
+  const map={dash:'v-om-dash',coaching:'v-om-c',nte:'v-om-n',ft:'v-om-f',cl:'v-om-cl',attendance:'v-om-attendance',ranking:'v-ranking',pwreset:'v-om-pwreset',kb:'v-kb',suggestions:'v-om-suggestions',calendar:'v-cal',actions:'v-actions',leads:'v-leads-tl',onboard:'v-onboard'};
   showView(map[tab]||'v-om-dash');
   populateAllFilters();
   if(tab==='dash')renderOMDash();
   if(tab==='coaching')renderOMC();
   if(tab==='nte')renderOMN();
   if(tab==='ft')renderOMF();
+  if(tab==='cl')renderCLLogs();
   if(tab==='attendance')renderOMAttendance();
   if(tab==='ranking')renderRanking();
   if(tab==='pwreset')loadPwResetView();
@@ -3992,7 +4942,31 @@ function getFilt(){
   });
 }
 
-function renderDash(){renderStats();renderTable();}
+function renderDash(){
+  renderStats();renderTable();renderCoachingCompletion();
+  // Charts for TL/ATL view
+  const rows=getFilt();
+  const dayMap={};
+  rows.forEach(l=>{dayMap[l.date]=(dayMap[l.date]||0)+1;});
+  const days=Object.keys(dayMap).sort().slice(-14);
+  if(CHT.dayTL)CHT.dayTL.destroy();
+  const cvDay=document.getElementById('ch-day-tl');
+  if(cvDay)CHT.dayTL=new Chart(cvDay.getContext('2d'),{
+    type:'bar',
+    data:{labels:days.map(fd),datasets:[{label:'Entries',data:days.map(d=>dayMap[d]),backgroundColor:'#83B271',borderColor:'#5E8A50',borderWidth:2,borderRadius:6}]},
+    options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}
+  });
+  const tlMap={};rows.forEach(l=>{tlMap[l.tl]=(tlMap[l.tl]||0)+1;});
+  const tls=Object.keys(tlMap);const total=tls.map(t=>tlMap[t]).reduce((a,b)=>a+b,0)||1;
+  if(CHT.tlTL)CHT.tlTL.destroy();
+  const cvTL=document.getElementById('ch-tl-tl');
+  if(cvTL)CHT.tlTL=new Chart(cvTL.getContext('2d'),{
+    type:'doughnut',
+    data:{labels:tls,datasets:[{data:tls.map(t=>tlMap[t]),backgroundColor:['#83B271','#E7F0D2','#ABCB89','#D2EA9B','#3d6b2c'],borderWidth:0}]},
+    options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:11}}},
+      tooltip:{callbacks:{label:c=>`${c.label}: ${c.raw} (${((c.raw/total)*100).toFixed(1)}%)`}}}}
+  });
+}
 
 function renderStats(){
   const rows=getFilt();
@@ -4023,7 +4997,7 @@ function renderTable(){
   tb.innerHTML=rows.map((r,i)=>{
     const tn=tenure(hireOf(r.agent),r.date);
     return`<tr>
-      <td style="color:var(--g400);font-size:.72rem">${i+1}</td>
+      <td style="color:var(--g400);font-size:.72rem;width:36px;min-width:36px;text-align:center">${i+1}</td>
       <td>${fd(r.date)}</td>
       <td><button class="agent-btn" onclick="openDetail('${r.id}')">${e(r.agent)}</button></td>
       <td><span class="t-badge">${tn}</span></td>
@@ -4048,6 +5022,111 @@ function renderTable(){
   const tlPending=rows.filter(r=>{const c=DB.cm[r.id]||{};return!(c.situation||c.sit||c.task||c.action||c.act||c.result||c.res);}).length;
   const tlBadge=document.getElementById('nav-badge-tl-logs');
   if(tlBadge){tlBadge.textContent=tlPending>9?'9+':tlPending;tlBadge.style.display=tlPending>0?'':'none';}
+}
+
+/* ── TL COACHING COMPLETION DASHBOARD ───────────────────────────────────── */
+function renderCoachingCompletion(){
+  const wkEl=document.getElementById('wk-sel');
+  const wk=parseInt(wkEl?.value);
+  const tm=myTeam();
+
+  // Update badge label
+  const wkLabel=document.getElementById('comp-wk-label');
+  if(wkLabel) wkLabel.textContent=wk?`WK${wk}`:'WK—';
+
+  // Roster for this TL (or all if OM/no team)
+  const teamRoster=tm?rosterAgents.filter(a=>a.tl===tm):rosterAgents;
+  const total=teamRoster.length;
+
+  // Logs for selected week, scoped to TL's team
+  const wkLogs=DB.logs.filter(l=>l.wk===wk&&(!tm||l.tl===tm));
+  const coachedSet=new Set(wkLogs.map(l=>l.agent));
+  const coached=coachedSet.size;
+
+  // Agent commitment complete = log has a commitment record
+  const withCommit=wkLogs.filter(l=>{
+    const c=DB.cm[l.id]||{};
+    return !!(c.situation||c.sit||c.task||c.action||c.act||c.res||c.result);
+  });
+
+  const coachedPct=total?Math.round((coached/total)*100):0;
+  // Agent completion = % of coached agents who have a commitment
+  const agentPct=coached?Math.round((withCommit.length/coached)*100):0;
+  // Fully completed = both coached AND commitment present / total roster
+  const fullyPct=total?Math.round((withCommit.length/total)*100):0;
+  const pendingCount=Math.max(0,total-coached);
+
+  // Helper to colour a pct value
+  const pctColor=p=>p>=80?'#4ade80':p>=50?'#facc15':'#f87171';
+
+  // Update KPI cards
+  const setSafe=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  setSafe('kpi-sessions',wkLogs.length);
+  const kpiCoached=document.getElementById('kpi-coached-pct');
+  if(kpiCoached){kpiCoached.textContent=coachedPct+'%';kpiCoached.style.color=pctColor(coachedPct);}
+  const kpiAgent=document.getElementById('kpi-commit-pct');
+  if(kpiAgent){kpiAgent.textContent=agentPct+'%';kpiAgent.style.color=pctColor(agentPct);}
+  const kpiPending=document.getElementById('kpi-pending');
+  if(kpiPending){kpiPending.textContent=pendingCount;kpiPending.style.color=pendingCount===0?'#4ade80':'#ef4444';}
+
+  // ── Weekly history table ───────────────────────────────────────────────
+  const compBody=document.getElementById('comp-week-body');
+  if(compBody){
+    const allWks=[...new Set(DB.logs.filter(l=>!tm||l.tl===tm).map(l=>l.wk).filter(Boolean))].map(Number).sort((a,b)=>b-a);
+    if(!allWks.length){
+      compBody.innerHTML=`<tr><td colspan="5" style="text-align:center;padding:12px;color:var(--g400);font-size:.8rem;">No coaching data yet.</td></tr>`;
+    } else {
+      compBody.innerHTML=allWks.map(w=>{
+        const wLogs=DB.logs.filter(l=>l.wk===w&&(!tm||l.tl===tm));
+        const wCoached=new Set(wLogs.map(l=>l.agent)).size;
+        const wCommit=wLogs.filter(l=>{const c=DB.cm[l.id]||{};return !!(c.situation||c.sit||c.task||c.action||c.act||c.res||c.result);}).length;
+        const wTlPct=total?Math.round((wCoached/total)*100):0;
+        const wAgPct=wCoached?Math.round((wCommit/wCoached)*100):0;
+        const wFullPct=total?Math.round((wCommit/total)*100):0;
+        const isSelected=w===wk;
+        return`<tr style="border-bottom:1px solid var(--g100);${isSelected?'background:#83B27115;font-weight:700;':''}">
+          <td style="padding:6px 10px;">${isSelected?'<strong>':''}WK${w}${isSelected?'</strong>':''} ${isSelected?'<span style="font-size:.68rem;color:#83B271;font-weight:700;">← current</span>':''}</td>
+          <td style="padding:6px 10px;text-align:center;">${wLogs.length}</td>
+          <td style="padding:6px 10px;text-align:center;"><span style="color:${pctColor(wTlPct)};font-weight:700;">${wTlPct}%</span></td>
+          <td style="padding:6px 10px;text-align:center;"><span style="color:${pctColor(wAgPct)};font-weight:700;">${wAgPct}%</span></td>
+          <td style="padding:6px 10px;text-align:center;"><span style="color:${pctColor(wFullPct)};font-weight:700;">${wFullPct}%</span></td>
+        </tr>`;
+      }).join('');
+    }
+  }
+
+  // ── Pending agents table ────────────────────────────────────────────────
+  const pendingBody=document.getElementById('tl-pending-body');
+  if(!pendingBody) return;
+
+  if(!wk){
+    pendingBody.innerHTML=`<div style="text-align:center;color:var(--g400);font-size:.8rem;padding:12px;">Select a week above.</div>`;
+    return;
+  }
+
+  const pendingAgents=teamRoster.filter(a=>!coachedSet.has(a.name));
+
+  if(!pendingAgents.length){
+    pendingBody.innerHTML=`<div style="color:#4ade80;font-weight:700;font-size:.85rem;text-align:center;padding:14px 0;">✅ All agents have been coached this week!</div>`;
+    return;
+  }
+
+  pendingBody.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:.82rem;">
+    <thead><tr style="color:var(--g500);font-size:.74rem;font-weight:700;border-bottom:1.5px solid var(--g200);">
+      <th style="padding:5px 10px;text-align:left">#</th>
+      <th style="padding:5px 10px;text-align:left">Agent Name</th>
+      <th style="padding:5px 10px;text-align:left">Team</th>
+      <th style="padding:5px 10px;text-align:left">Status</th>
+    </tr></thead>
+    <tbody>${pendingAgents.map((a,i)=>`
+      <tr style="border-bottom:1px solid var(--g100);">
+        <td style="padding:6px 10px;color:var(--g400);font-size:.78rem;">${i+1}</td>
+        <td style="padding:6px 10px;font-weight:600;">${e(a.name)}</td>
+        <td style="padding:6px 10px;font-size:.78rem;color:var(--g500);">${e(a.tl)}</td>
+        <td style="padding:6px 10px;"><span style="background:#f8717122;color:#ef4444;border:1px solid #f8717144;border-radius:20px;padding:2px 10px;font-size:.72rem;font-weight:700;">⏳ Pending</span></td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
 }
 
 /* ── TL ATTENDANCE POINTS VIEW ───────────────────────────────────────────── */
@@ -4491,9 +5570,9 @@ function clearFilters(){
 
 // Switch TL nav views (Dashboard / Coaching Logs / Attendance Points)
 function tlShowView(tab){
-  const viewMap={dashboard:'v-tl',logs:'v-tl-logs',nte:'v-om-n',attendance:'v-tl-attendance',ranking:'v-ranking',kb:'v-kb',calendar:'v-cal',actions:'v-actions',leads:'v-leads-tl',onboard:'v-onboard'};
+  const viewMap={dashboard:'v-tl',logs:'v-tl-logs',nte:'v-om-n',attendance:'v-tl-attendance',ranking:'v-ranking',kb:'v-kb',calendar:'v-cal',actions:'v-actions',leads:'v-leads-tl',onboard:'v-onboard',cl:'v-tl-cl'};
   showView(viewMap[tab]||'v-tl');
-  ['dash','logs','nte','attendance','ranking','kb','calendar','actions','leads','onboard'].forEach(t=>{
+  ['dash','logs','nte','attendance','ranking','kb','calendar','actions','leads','onboard','cl'].forEach(t=>{
     const el=document.getElementById('tl-nav-'+t);
     if(el) el.classList.toggle('active',t===tab||(t==='dash'&&tab==='dashboard'));
   });
@@ -4506,6 +5585,7 @@ function tlShowView(tab){
   if(tab==='actions'){subscribeActionItems();renderActionItems();}
   if(tab==='leads'){subscribeLeads();renderLeads();}
   if(tab==='onboard'){subscribeOnboard();renderOnboardDash();}
+  if(tab==='cl') renderCLLogs();
 }
 
 /* ═══════════════════════════════════════
@@ -5693,6 +6773,105 @@ async function saveFT(){
 }
 
 /* ═══════════════════════════════════════
+   CALL LISTENING
+═══════════════════════════════════════ */
+function styleCLSelect(el){
+  el.classList.remove('r-followed','r-coaching','r-na');
+  if(el.value==='1') el.classList.add('r-followed');
+  else if(el.value==='0') el.classList.add('r-coaching');
+  else if(el.value==='na') el.classList.add('r-na');
+}
+function clScore(){
+  let s=0;
+  for(let i=1;i<=7;i++){
+    const el=document.getElementById('cl-r'+i);
+    if(el && el.value==='1') s+=1;
+  }
+  return s;
+}
+function clLevel(score){
+  if(score>=7) return '🏆 Rainmaker Level';
+  if(score>=5) return '💪 Strong';
+  if(score>=3) return '⚡ Inconsistent';
+  return '🔴 Major Gaps';
+}
+const CL_LEVEL_INFO={
+  'rainmaker':{ meaning:'Repeatable conversion behaviors with clear customer control.', coaching:'Preserve strengths; polish the lowest-scoring item.' },
+  'strong':   { meaning:'Good selling behaviors with one or two material gaps.',        coaching:'Assign one targeted behavior and verify on the next call.' },
+  'inconsistent':{ meaning:'Results may depend heavily on lead quality.',              coaching:'Coach discovery-to-value connection before advanced closing.' },
+  'major':    { meaning:'Missing foundations create low trust or poor conversion.',     coaching:'Role-play opening, discovery, value and close in sequence.' }
+};
+function clLevelKey(score){
+  if(score>=7) return 'rainmaker';
+  if(score>=5) return 'strong';
+  if(score>=3) return 'inconsistent';
+  return 'major';
+}
+function updateCLScore(){
+  const s=clScore();
+  const lv=clLevel(s);
+  const key=clLevelKey(s);
+  const info=CL_LEVEL_INFO[key]||{};
+  const sd=document.getElementById('cl-score-display');
+  const ld=document.getElementById('cl-level-display');
+  const md=document.getElementById('cl-meaning-display');
+  const cd=document.getElementById('cl-coaching-display');
+  if(sd) sd.textContent=s;
+  if(ld) ld.textContent=lv;
+  if(md) md.textContent=s>0?(info.meaning||''):'';
+  if(cd) cd.textContent=s>0?('🎯 '+info.coaching||''):'';
+}
+function openCLModal(){
+  fillAgents(['cl2-agent']);
+  fillCLTLs(['cl2-tl']);
+  document.getElementById('cl-date').value=new Date().toISOString().slice(0,10);
+  document.getElementById('cl-air').value='';
+  document.getElementById('cl-outcome').value='';
+  const notesEl=document.getElementById('cl-notes');
+  if(notesEl) notesEl.value='';
+  for(let i=1;i<=7;i++){
+    const el=document.getElementById('cl-r'+i);
+    if(el){ el.value=''; styleCLSelect(el); }
+  }
+  updateCLScore();
+  openM('m-cl');
+}
+async function saveCL(){
+  const agent=document.getElementById('cl2-agent').value;
+  const tl=document.getElementById('cl2-tl').value;
+  const date=document.getElementById('cl-date').value;
+  const outcome=document.getElementById('cl-outcome').value;
+  if(!req([{id:'cl2-agent',label:'Agent'},{id:'cl2-tl',label:'Team Lead'},{id:'cl-date',label:'Call Date'},{id:'cl-outcome',label:'Outcome'}])) return;
+  const scores={};
+  for(let i=1;i<=7;i++){
+    const el=document.getElementById('cl-r'+i);
+    const v=el?el.value:'';
+    scores['r'+i]=v==='1'?'Followed':v==='0'?'Needs Coaching':v==='na'?'Not Applicable':'';
+  }
+  const score=clScore();
+  const level=clLevel(score);
+  const notesEl=document.getElementById('cl-notes');
+  const clEntry={
+    id: uid(),
+    date,
+    agent,
+    tl,
+    air: document.getElementById('cl-air').value,
+    outcome,
+    ...scores,
+    score,
+    level,
+    notes: notesEl?notesEl.value.trim():'',
+    at: new Date().toISOString(),
+    loggedBy: CU?CU.email:''
+  };
+  const ok=await fsWrite('px_cl',clEntry.id,clEntry);
+  if(!ok)return;
+  syncToSheet('cl','upsert',clEntry.id, sheetRowCL(clEntry));
+  closeM('m-cl');toast('✅ Call listening saved!');
+}
+
+/* ═══════════════════════════════════════
    NTE
 ═══════════════════════════════════════ */
 let curNTE='';
@@ -5951,6 +7130,129 @@ function renderOMTLBreakdown(){
       <td style="padding:7px 10px;font-size:.78rem;color:var(--g400)">WK${wk} overall</td>
     </tfoot>
   </table>`;
+  renderOMCoachingCompletion();
+}
+
+function renderOMCoachingCompletion(){
+  const wk=parseInt(document.getElementById('om-tl-wk')?.value);
+  const total=rosterAgents.length;
+
+  // Badge label
+  const lbl=document.getElementById('om-comp-wk-label');
+  if(lbl) lbl.textContent=wk?`WK${wk}`:'WK—';
+
+  const pctColor=p=>p>=80?'#4ade80':p>=50?'#facc15':'#f87171';
+  const setSafe=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+
+  const wkLogs=DB.logs.filter(l=>l.wk===wk);
+  const coachedSet=new Set(wkLogs.map(l=>l.agent));
+  const coached=coachedSet.size;
+
+  const withCommit=wkLogs.filter(l=>{
+    const c=DB.cm[l.id]||{};
+    return !!(c.situation||c.sit||c.task||c.action||c.act||c.res||c.result);
+  });
+
+  const coachedPct=total?Math.round((coached/total)*100):0;
+  const agentPct=coached?Math.round((withCommit.length/coached)*100):0;
+  const pendingCount=Math.max(0,total-coached);
+
+  setSafe('om-kpi-sessions',wkLogs.length);
+  const kpiCo=document.getElementById('om-kpi-coached-pct');
+  if(kpiCo){kpiCo.textContent=coachedPct+'%';kpiCo.style.color=pctColor(coachedPct);}
+  const kpiAg=document.getElementById('om-kpi-commit-pct');
+  if(kpiAg){kpiAg.textContent=agentPct+'%';kpiAg.style.color=pctColor(agentPct);}
+  const kpiPend=document.getElementById('om-kpi-pending');
+  if(kpiPend){kpiPend.textContent=pendingCount;kpiPend.style.color=pendingCount===0?'#4ade80':'#ef4444';}
+
+  // Per-TL completion breakdown
+  const tlBody=document.getElementById('om-comp-tl-body');
+  if(tlBody){
+    if(!wk){
+      tlBody.innerHTML=`<tr><td colspan="6" style="text-align:center;padding:12px;color:var(--g400);font-size:.8rem;">Select a week above.</td></tr>`;
+    } else {
+      const tlNames=[...new Set(rosterAgents.map(a=>a.tl).filter(Boolean))].sort();
+      const rows=tlNames.map(tl=>{
+        const teamRoster=rosterAgents.filter(a=>a.tl===tl);
+        const tlTotal=teamRoster.length;
+        const tlLogs=wkLogs.filter(l=>l.tl===tl);
+        const tlCoached=new Set(tlLogs.map(l=>l.agent)).size;
+        const tlCommit=tlLogs.filter(l=>{const c=DB.cm[l.id]||{};return !!(c.situation||c.sit||c.task||c.action||c.act||c.res||c.result);}).length;
+        const tlPct=tlTotal?Math.round((tlCoached/tlTotal)*100):0;
+        const agPct=tlCoached?Math.round((tlCommit/tlCoached)*100):0;
+        const tlPending=Math.max(0,tlTotal-tlCoached);
+        return{tl,sessions:tlLogs.length,tlTotal,tlCoached,tlPct,agPct,tlPending};
+      }).filter(r=>r.tlTotal>0).sort((a,b)=>b.tlPct-a.tlPct);
+
+      if(!rows.length){
+        tlBody.innerHTML=`<tr><td colspan="6" style="text-align:center;padding:12px;color:var(--g400);font-size:.8rem;">No data for this week.</td></tr>`;
+      } else {
+        tlBody.innerHTML=rows.map((r,i)=>`<tr style="border-bottom:1px solid var(--g100);">
+          <td style="padding:6px 10px;color:var(--g500)">${e(r.tl)}</td>
+          <td style="padding:6px 10px;text-align:center">${r.sessions}</td>
+          <td style="padding:6px 10px;text-align:center">${r.tlTotal}</td>
+          <td style="padding:6px 10px;text-align:center"><span style="color:${pctColor(r.tlPct)};font-weight:700">${r.tlPct}%</span></td>
+          <td style="padding:6px 10px;text-align:center"><span style="color:${pctColor(r.agPct)};font-weight:700">${r.agPct}%</span></td>
+          <td style="padding:6px 10px;text-align:center;color:${r.tlPending===0?'#4ade80':'#ef4444'};font-weight:700">${r.tlPending}</td>
+        </tr>`).join('');
+      }
+    }
+  }
+
+  // Weekly history table — all weeks across all teams
+  const histBody=document.getElementById('om-comp-week-body');
+  if(histBody){
+    const allWks=[...new Set(DB.logs.map(l=>l.wk).filter(Boolean))].map(Number).sort((a,b)=>b-a);
+    if(!allWks.length){
+      histBody.innerHTML=`<tr><td colspan="5" style="text-align:center;padding:12px;color:var(--g400);font-size:.8rem;">No coaching data yet.</td></tr>`;
+    } else {
+      histBody.innerHTML=allWks.map(w=>{
+        const wLogs=DB.logs.filter(l=>l.wk===w);
+        const wCoached=new Set(wLogs.map(l=>l.agent)).size;
+        const wCommit=wLogs.filter(l=>{const c=DB.cm[l.id]||{};return !!(c.situation||c.sit||c.task||c.action||c.act||c.res||c.result);}).length;
+        const wTlPct=total?Math.round((wCoached/total)*100):0;
+        const wAgPct=wCoached?Math.round((wCommit/wCoached)*100):0;
+        const wFullPct=total?Math.round((wCommit/total)*100):0;
+        const isSelected=w===wk;
+        return`<tr style="border-bottom:1px solid var(--g100);${isSelected?'background:#83B27115;font-weight:700;':''}">
+          <td style="padding:6px 10px">WK${w}${isSelected?' ← current':''}</td>
+          <td style="padding:6px 10px;text-align:center">${wLogs.length}</td>
+          <td style="padding:6px 10px;text-align:center"><span style="color:${pctColor(wTlPct)}">${wTlPct}%</span></td>
+          <td style="padding:6px 10px;text-align:center"><span style="color:${pctColor(wAgPct)}">${wAgPct}%</span></td>
+          <td style="padding:6px 10px;text-align:center"><span style="color:${pctColor(wFullPct)}">${wFullPct}%</span></td>
+        </tr>`;
+      }).join('');
+    }
+  }
+
+  // Pending agents (all teams)
+  const pendingBody=document.getElementById('om-pending-body');
+  if(!pendingBody) return;
+  if(!wk){
+    pendingBody.innerHTML=`<div style="text-align:center;color:var(--g400);font-size:.8rem;padding:12px;">Select a week above.</div>`;
+    return;
+  }
+  const pendingAgents=rosterAgents.filter(a=>!coachedSet.has(a.name));
+  if(!pendingAgents.length){
+    pendingBody.innerHTML=`<div style="color:#4ade80;text-align:center;padding:12px;font-weight:700;">✅ All agents have been coached this week!</div>`;
+    return;
+  }
+  pendingBody.innerHTML=`<div class="tbl-scroll" style="max-height:260px;overflow-y:auto;">
+    <table style="width:100%;border-collapse:collapse;font-size:.82rem;">
+      <thead><tr style="color:var(--g500);font-size:.74rem;font-weight:700;border-bottom:1.5px solid var(--g200);">
+        <th style="padding:6px 10px;text-align:left">#</th>
+        <th style="padding:6px 10px;text-align:left">Agent</th>
+        <th style="padding:6px 10px;text-align:left">Team Lead</th>
+        <th style="padding:6px 10px;text-align:center">Status</th>
+      </tr></thead>
+      <tbody>${pendingAgents.map((a,i)=>`<tr style="border-bottom:1px solid var(--g100);">
+        <td style="padding:6px 10px;color:var(--g400)">${i+1}</td>
+        <td style="padding:6px 10px;font-weight:600">${e(a.name)}</td>
+        <td style="padding:6px 10px;color:var(--g500)">${e(a.tl||'—')}</td>
+        <td style="padding:6px 10px;text-align:center"><span style="background:#fef3c7;color:#92400e;font-size:.72rem;font-weight:700;border-radius:20px;padding:2px 8px;">⏳ Pending</span></td>
+      </tr>`).join('')}</tbody>
+    </table>
+  </div>`;
 }
 
 function renderOMDash(){
@@ -6170,6 +7472,98 @@ function renderOMF(){
 }
 
 /* ═══════════════════════════════════════
+   CALL LISTENING RENDER
+═══════════════════════════════════════ */
+function updateOMCLAgentFilter(){
+  const tlV=document.getElementById('om-cl-f-tl')?.value||'';
+  const agEl=document.getElementById('om-cl-f-agent');
+  if(!agEl)return;
+  const prev=agEl.value;
+  agEl.innerHTML='<option value="">All Agents</option>';
+  const agents=tlV?rosterAgents.filter(a=>a.tl===tlV||a.team===tlV):rosterAgents;
+  agents.forEach(a=>{const o=document.createElement('option');o.value=a.name;o.textContent=a.name;agEl.appendChild(o);});
+  agEl.value=agents.find(a=>a.name===prev)?prev:'';
+}
+function clearOMCLFilters(){
+  const tl=document.getElementById('om-cl-f-tl');
+  const ag=document.getElementById('om-cl-f-agent');
+  const sr=document.getElementById('om-cl-f-search');
+  if(tl)tl.value='';
+  if(ag)ag.value='';
+  if(sr)sr.value='';
+  updateOMCLAgentFilter();
+  renderCLLogs();
+}
+function renderCLLogs(){
+  if(!DB.cl) DB.cl=[];
+  const isOM=CU&&CU.isOM;
+  const isTL=CU&&!CU.isOM&&!CU.isAgentView;
+
+  // OM filters
+  const omTL=document.getElementById('om-cl-f-tl')?.value||'';
+  const omAg=document.getElementById('om-cl-f-agent')?.value||'';
+  const omSr=(document.getElementById('om-cl-f-search')?.value||'').toLowerCase();
+  // TL filter
+  const tlSr=(document.getElementById('tl-cl-f-search')?.value||'').toLowerCase();
+
+  // Populate OM TL filter if empty
+  if(isOM){
+    const tlEl=document.getElementById('om-cl-f-tl');
+    if(tlEl&&tlEl.options.length<=1){
+      rosterTLS.forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=t;tlEl.appendChild(o);});
+    }
+    updateOMCLAgentFilter();
+  }
+
+  let data=[...DB.cl];
+
+  // Filter for TL — only show their agents
+  if(isTL){
+    const myAgents=rosterAgents.filter(a=>a.tl===CU.role||a.team===CU.role).map(a=>a.name);
+    data=data.filter(r=>myAgents.includes(r.agent)||r.tl===CU.role);
+    if(tlSr) data=data.filter(r=>(r.agent||'').toLowerCase().includes(tlSr));
+  } else if(isOM){
+    if(omTL) data=data.filter(r=>r.tl===omTL);
+    if(omAg) data=data.filter(r=>r.agent===omAg);
+    if(omSr) data=data.filter(r=>(r.agent||'').toLowerCase().includes(omSr));
+  }
+
+  const levelColor={
+    'Rainmaker Level':'#83B271',
+    'Strong':'#4DA6FF',
+    'Inconsistent':'#FFA94D',
+    'Major Gaps':'#FF6B6B'
+  };
+
+  const rowHTML=(r,i)=>`<tr>
+    <td>${i+1}</td>
+    <td>${fd(r.date)}</td>
+    <td><strong>${e(r.agent)}</strong></td>
+    ${isOM?`<td>${e(r.tl)||'—'}</td>`:''}
+    <td>${r.air?`<a href="${e(r.air)}" target="_blank" style="color:var(--blue)">🔗 Call</a>`:'—'}</td>
+    <td><span style="font-size:.82rem">${e(r.outcome)||'—'}</span></td>
+    <td style="font-weight:700;text-align:center">${r.score??'—'}</td>
+    <td><span style="background:${levelColor[r.level]||'#ccc'};color:#fff;border-radius:20px;padding:2px 8px;font-size:.75rem;white-space:nowrap">${e(r.level)||'—'}</span></td>
+  </tr>`;
+
+  // OM table
+  const omBody=document.getElementById('om-cl-body');
+  const omCnt=document.getElementById('om-cl-cnt');
+  if(omBody&&isOM){
+    omBody.innerHTML=data.map((r,i)=>rowHTML(r,i)).join('')||`<tr><td colspan="8"><div class="empty-st"><div class="ei">🎧</div><p>No call listening logs yet.</p></div></td></tr>`;
+    if(omCnt) omCnt.textContent=data.length;
+  }
+
+  // TL table
+  const tlBody=document.getElementById('tl-cl-body');
+  const tlCnt=document.getElementById('tl-cl-cnt');
+  if(tlBody&&isTL){
+    tlBody.innerHTML=data.map((r,i)=>rowHTML(r,i)).join('')||`<tr><td colspan="7"><div class="empty-st"><div class="ei">🎧</div><p>No call listening logs yet.</p></div></td></tr>`;
+    if(tlCnt) tlCnt.textContent=data.length;
+  }
+}
+
+/* ═══════════════════════════════════════
    EXPORT CSV
 ═══════════════════════════════════════ */
 function exportCSV(type){
@@ -6182,6 +7576,10 @@ function exportCSV(type){
     headers=['#','Date Served','Type','Agent','Tenure','Details','NTE Link'];
     rows=DB.nte.map((r,i)=>[i+1,fd(r.date),r.type,r.agent,r.tenure,r.pts||r.notes,r.link].map(ce).join(','));
     name='phoenix-nte';
+  } else if(type==='cl'){
+    headers=['#','Date','Agent','Team Lead','Aircall Link','Outcome','Connect','Discover','Personalize','Isolate','Resolve','Convert','Confirm','Total Score','Level','Notes'];
+    rows=DB.cl.map((r,i)=>[i+1,fd(r.date),r.agent,r.tl,r.air,r.outcome,r.r1,r.r2,r.r3,r.r4,r.r5,r.r6,r.r7,r.score,r.level,r.notes||''].map(ce).join(','));
+    name='phoenix-call-listening';
   } else {
     headers=['#','Date','Agent','Aircall','Applied Coaching?','Opportunity'];
     rows=DB.ft.map((r,i)=>[i+1,fd(r.date),r.agent,r.air,r.applied,r.opp].map(ce).join(','));
@@ -6200,7 +7598,8 @@ function ce(v){if(!v)return'""';return'"'+String(v).replace(/"/g,'""')+'"';}
    HELPERS
 ═══════════════════════════════════════ */
 function fillAgents(ids){
-  const opts='<option value="">— Select Agent —</option>'+rosterAgents.map(a=>`<option value="${e(a.name)}">${e(a.name)}</option>`).join('');
+  const src=rosterAgents.length?rosterAgents:AGENTS;
+  const opts='<option value="">— Select Agent —</option>'+src.map(a=>`<option value="${e(a.name)}">${e(a.name)}</option>`).join('');
   ids.forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
 }
 
@@ -8011,6 +9410,53 @@ function switchLang(e, id, lang){
 // init
 document.getElementById('stat-total').textContent = KB.length;
 renderAll();
+
+// ===== RAINMAKER REFERENCE GUIDE =====
+function openRainmakerGuide() {
+  document.getElementById('rm-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeRainmakerGuide() {
+  document.getElementById('rm-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function openCLRainmakerGuide() {
+  var panel = document.getElementById('cl-rm-panel');
+  var rmModal = document.getElementById('rm-modal');
+  var clOverlay = document.getElementById('m-cl');
+  panel.appendChild(rmModal);
+  clOverlay.classList.add('cl-split');
+  document.getElementById('cl-rm-toggle-btn').style.display = 'none';
+}
+function closeCLRainmakerGuide() {
+  var rmOverlay = document.getElementById('rm-overlay');
+  var rmModal = document.getElementById('rm-modal');
+  var clOverlay = document.getElementById('m-cl');
+  rmOverlay.appendChild(rmModal);
+  clOverlay.classList.remove('cl-split');
+  document.getElementById('cl-rm-toggle-btn').style.display = '';
+}
+function closeCLModal() {
+  closeCLRainmakerGuide();
+  closeM('m-cl');
+}
+function switchRmTab(tab, btn) {
+  document.querySelectorAll('.rm-panel').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelectorAll('.rm-tab').forEach(function(t) { t.classList.remove('active'); });
+  document.getElementById('rm-panel-' + tab).classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+function toggleRmStage(hdr) {
+  var card = hdr.parentElement;
+  card.classList.toggle('open');
+}
+function toggleRmObj(hdr) {
+  var card = hdr.parentElement;
+  card.classList.toggle('open');
+}
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeRainmakerGuide();
+});
 
 </script>
 
