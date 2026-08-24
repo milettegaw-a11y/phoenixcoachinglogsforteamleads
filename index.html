@@ -833,6 +833,7 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
       <div class="sb-item" data-tab="leads" onclick="switchAgentTab('leads')"><span class="sb-icon">📞</span><span>Lead Follow-Up</span><span id="nav-badge-leads" class="sb-notif" style="display:none"></span></div>
       <div class="sb-item" data-tab="kb" onclick="switchAgentTab('kb')"><span class="sb-icon">📖</span><span>Knowledge Base</span></div>
       <div class="sb-divider"></div>
+      <div class="sb-item" data-tab="library" onclick="switchAgentTab('library')"><span class="sb-icon">🎵</span><span>Call Library</span></div>
       <div class="sb-item" onclick="openRainmakerGuide()"><span class="sb-icon">🌧️</span><span>Rainmaker Guide</span></div>
       <div class="sb-divider"></div>
     </div>
@@ -1739,6 +1740,71 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
         <div id="lead-list" style="display:flex;flex-direction:column;gap:10px;"></div>
       </div><!-- /av-leads -->
 
+      <!-- CALL LIBRARY -->
+      <div id="av-lib" class="av-section" style="display:none;padding:16px;">
+        <div style="margin-bottom:20px;">
+          <div style="font-size:1.05rem;font-weight:700;color:#111;margin-bottom:4px;">🎵 Rainmakers Call Library</div>
+          <div style="font-size:.82rem;color:#6b7280;">Listen to top-performing rainmaker calls. Learn from the best.</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px;">
+          <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.04);">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+              <span style="font-size:1.1rem;">📞</span>
+              <span style="font-weight:700;font-size:.88rem;color:#111;">Outbound Call #1</span>
+            </div>
+            <div style="font-size:.73rem;color:#6b7280;margin-bottom:10px;">Aug 17, 2026 · 8:06 PM</div>
+            <audio controls style="width:100%;height:36px;" src="calls/call_outbound_4058144735_2026-08-17_20-06.mp3"></audio>
+          </div>
+          <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.04);">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+              <span style="font-size:1.1rem;">📞</span>
+              <span style="font-weight:700;font-size:.88rem;color:#111;">Outbound Call #2</span>
+            </div>
+            <div style="font-size:.73rem;color:#6b7280;margin-bottom:10px;">Aug 21, 2026 · 10:06 AM</div>
+            <audio controls style="width:100%;height:36px;" src="calls/call_outbound_4071758966_2026-08-21_10-06.mp3"></audio>
+          </div>
+          <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.04);">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+              <span style="font-size:1.1rem;">🔗</span>
+              <span style="font-weight:700;font-size:.88rem;color:#111;">Conference Call #1</span>
+            </div>
+            <div style="font-size:.73rem;color:#6b7280;margin-bottom:10px;">Aug 21, 2026 · (linked to Outbound #2)</div>
+            <audio controls style="width:100%;height:36px;" src="calls/CONFERENCE_4071758966.mp3"></audio>
+          </div>
+          <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.04);">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+              <span style="font-size:1.1rem;">📞</span>
+              <span style="font-weight:700;font-size:.88rem;color:#111;">Outbound Call #3</span>
+            </div>
+            <div style="font-size:.73rem;color:#6b7280;margin-bottom:10px;">Aug 21, 2026 · 11:55 AM</div>
+            <audio controls style="width:100%;height:36px;" src="calls/call_outbound_4072153266_2026-08-21_11-55.mp3"></audio>
+          </div>
+          <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.04);">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+              <span style="font-size:1.1rem;">📞</span>
+              <span style="font-weight:700;font-size:.88rem;color:#111;">Outbound Call #4</span>
+            </div>
+            <div style="font-size:.73rem;color:#6b7280;margin-bottom:10px;">Aug 22, 2026 · 2:59 PM</div>
+            <audio controls style="width:100%;height:36px;" src="calls/call_outbound_4073640895_2026-08-22_14-59.mp3"></audio>
+          </div>
+          <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.04);">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+              <span style="font-size:1.1rem;">📞</span>
+              <span style="font-weight:700;font-size:.88rem;color:#111;">Outbound Call #5</span>
+            </div>
+            <div style="font-size:.73rem;color:#6b7280;margin-bottom:10px;">Aug 22, 2026 · 4:22 PM</div>
+            <audio controls style="width:100%;height:36px;" src="calls/call_outbound_4073689578_2026-08-22_16-22.mp3"></audio>
+          </div>
+          <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.04);">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+              <span style="font-size:1.1rem;">🔗</span>
+              <span style="font-weight:700;font-size:.88rem;color:#111;">Conference Call #2</span>
+            </div>
+            <div style="font-size:.73rem;color:#6b7280;margin-bottom:10px;">Aug 22, 2026</div>
+            <audio controls style="width:100%;height:36px;" src="calls/CONFERENCE_4073700095.mp3"></audio>
+          </div>
+        </div>
+      </div><!-- /av-lib -->
 
   </div><!-- /main -->
 
@@ -8319,11 +8385,11 @@ function onEmailInput(){
 function switchAgentTab(tab){
   document.querySelectorAll('#agent-nav .sb-item').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
   document.querySelectorAll('.av-section').forEach(s=>s.style.display='none');
-  const map={coaching:'av-coaching',nte:'av-nte',ft:'av-ft',perf:'av-perf',calc:'av-calc',attendance:'av-attendance',leads:'av-leads',kb:'__kb__'};
+  const map={coaching:'av-coaching',nte:'av-nte',ft:'av-ft',perf:'av-perf',calc:'av-calc',attendance:'av-attendance',leads:'av-leads',library:'av-lib',kb:'__kb__'};
   const secId=map[tab];
   if(secId==='__kb__'){showView('v-kb');renderAll();}else{showView('v-agent');if(secId){const sec=document.getElementById(secId);if(sec)sec.style.display='';}}
   if(tab==='leads'){if(!_leadUnsub)subscribeLeads();else renderLeads();}
-  const titles={coaching:'My Coaching',nte:'My NTE',ft:'My Follow Through',perf:'My Performance',calc:'Phoenix Calculator',attendance:'My Attendance',leads:'Lead Follow-Up',kb:'Knowledge Base'};
+  const titles={coaching:'My Coaching',nte:'My NTE',ft:'My Follow Through',perf:'My Performance',calc:'Phoenix Calculator',attendance:'My Attendance',leads:'Lead Follow-Up',library:'Call Library 🎵',kb:'Knowledge Base'};
   const el=document.getElementById('tb-title'); if(el) el.textContent=titles[tab]||'';
   if(tab==='perf') renderAgentPerf();
   if(tab==='calc') avCalcInit();
