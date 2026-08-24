@@ -682,6 +682,15 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
 .rm-obj-field-val{font-size:.79rem;color:#374151;line-height:1.5;}
 .rm-obj-avoid{grid-column:1/-1;background:#fff1f2;border:1px solid #fecdd3;}
 .rm-obj-avoid .rm-obj-field-label{color:#be123c;}
+.cl-subtabs{display:flex;gap:0;margin-bottom:16px;border-bottom:2px solid #e5e7eb;}
+.cl-subtab{background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;padding:8px 18px;font-size:.875rem;font-weight:600;color:#6b7280;cursor:pointer;border-radius:6px 6px 0 0;transition:color .15s,border-color .15s;}
+.cl-subtab:hover{color:#111;background:#f9fafb;}
+.cl-subtab.active{color:var(--accent,#2e5220);border-bottom-color:var(--accent,#2e5220);}
+html[data-theme="ocean"] .cl-subtab.active{color:#1a4e78;border-bottom-color:#1a4e78;}
+html[data-theme="sunset"] .cl-subtab.active{color:#7c2d12;border-bottom-color:#7c2d12;}
+html[data-theme="lavender"] .cl-subtab.active{color:#4a2d7a;border-bottom-color:#4a2d7a;}
+html[data-theme="slate"] .cl-subtab.active{color:#1f2937;border-bottom-color:#1f2937;}
+html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1232;}
 </style>
 </head>
 <body>
@@ -765,6 +774,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
       <div class="sb-sub-item agent-hide" id="om-sub-ft" onclick="openFTModal()"><span class="sb-icon">🔁</span><span>New Follow Through</span></div>
       <div class="sb-item" data-tab="cl" onclick="switchOM('cl');toggleSbSub('om-sub-cl')"><span class="sb-icon">🎧</span><span>Call Listening</span><span class="sb-arrow" id="om-arr-cl">›</span></div>
       <div class="sb-sub-item agent-hide" id="om-sub-cl" onclick="openCLModal()"><span class="sb-icon">➕</span><span>New Call Listening</span></div>
+      <div class="sb-sub-item agent-hide" id="om-sub-cl-dash" onclick="switchOM('cl');omShowCLTab('dashboard')"><span class="sb-icon">📊</span><span>Dashboard</span></div>
       <div class="sb-item" data-tab="actions" onclick="switchOM('actions')"><span class="sb-icon">⚡</span><span>Action Items</span><span id="nav-badge-actions" class="sb-notif" style="display:none"></span></div>
       <div class="sb-item agent-hide" data-tab="leads" onclick="switchOM('leads')"><span class="sb-icon">📞</span><span>Lead Follow-Ups</span><span id="nav-badge-om-leads" class="sb-notif" style="display:none"></span></div>
       <div class="sb-divider"></div>
@@ -796,6 +806,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
       <div class="sb-sub-item" id="tl-sub-ft" onclick="openFTModal()"><span class="sb-icon">🔁</span><span>New Follow Through</span></div>
       <div class="sb-item" id="tl-nav-cl" onclick="tlShowView('cl');toggleSbSub('tl-sub-cl')"><span class="sb-icon">🎧</span><span>Call Listening</span><span class="sb-arrow" id="tl-arr-cl">›</span></div>
       <div class="sb-sub-item" id="tl-sub-cl" onclick="openCLModal()"><span class="sb-icon">➕</span><span>New Call Listening</span></div>
+      <div class="sb-sub-item" id="tl-sub-cl-dash" onclick="tlShowView('cl');tlShowCLTab('dashboard')"><span class="sb-icon">📊</span><span>Dashboard</span></div>
       <div class="sb-item" id="tl-nav-actions" onclick="tlShowView('actions')"><span class="sb-icon">⚡</span><span>Action Items</span><span id="nav-badge-tl-actions" class="sb-notif" style="display:none"></span></div>
       <div class="sb-item" id="tl-nav-leads" onclick="tlShowView('leads')"><span class="sb-icon">📞</span><span>Lead Follow-Ups</span><span id="nav-badge-tl-leads" class="sb-notif" style="display:none"></span></div>
       <div class="sb-divider"></div>
@@ -981,23 +992,32 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
 
     <!-- TL CALL LISTENING VIEW -->
     <div id="v-tl-cl" class="view">
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
-        <h2 style="margin:0;flex:1">🎧 Call Listening Logs</h2>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+        <h2 style="margin:0;flex:1">🎧 Call Listening</h2>
         <button class="btn btn-yellow" onclick="openCLModal()">+ New Call Listening</button>
         <button class="btn btn-outline btn-sm" onclick="exportCSV('cl')">⬇ Export CSV</button>
       </div>
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
-        <input class="f-search" id="tl-cl-f-search" placeholder="🔍 Search agent…" oninput="renderCLLogs()" style="max-width:260px;flex:1;"/>
-        <button class="btn btn-outline btn-sm" onclick="document.getElementById('tl-cl-f-search').value='';renderCLLogs()">✕ Clear</button>
+      <div class="cl-subtabs">
+        <button id="cl-tl-tab-logs" class="cl-subtab active" onclick="tlShowCLTab('logs')">📋 Logs</button>
+        <button id="cl-tl-tab-dash" class="cl-subtab" onclick="tlShowCLTab('dashboard')">📊 Dashboard</button>
       </div>
-      <div class="tbl-wrap">
-        <div class="tbl-hdr"><h3>Call Listening Records</h3><span class="cnt-badge" id="tl-cl-cnt">0</span></div>
-        <div class="tbl-scroll">
-          <table>
-            <thead><tr><th>#</th><th>Date</th><th>Agent</th><th>Aircall</th><th>Outcome</th><th>Score</th><th>Level</th></tr></thead>
-            <tbody id="tl-cl-body"></tbody>
-          </table>
+      <div id="cl-tl-logs-tab">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+          <input class="f-search" id="tl-cl-f-search" placeholder="🔍 Search agent…" oninput="renderCLLogs()" style="max-width:260px;flex:1;"/>
+          <button class="btn btn-outline btn-sm" onclick="document.getElementById('tl-cl-f-search').value='';renderCLLogs()">✕ Clear</button>
         </div>
+        <div class="tbl-wrap">
+          <div class="tbl-hdr"><h3>Call Listening Records</h3><span class="cnt-badge" id="tl-cl-cnt">0</span></div>
+          <div class="tbl-scroll">
+            <table>
+              <thead><tr><th>#</th><th>Date</th><th>Agent</th><th>Aircall</th><th>Outcome</th><th>Score</th><th>Level</th><th></th></tr></thead>
+              <tbody id="tl-cl-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div id="cl-tl-dash-tab" style="display:none">
+        <div id="cl-tl-dash-content" style="margin-top:8px;"></div>
       </div>
     </div>
 
@@ -1308,25 +1328,34 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
 
     <!-- OM CALL LISTENING VIEW -->
     <div id="v-om-cl" class="view">
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
-        <h2 style="margin:0;flex:1">🎧 Call Listening Logs</h2>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+        <h2 style="margin:0;flex:1">🎧 Call Listening</h2>
         <button class="btn btn-yellow" onclick="openCLModal()">+ New Call Listening</button>
         <button class="btn btn-outline btn-sm" onclick="exportCSV('cl')">⬇ Export CSV</button>
       </div>
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
-        <select class="f-select" id="om-cl-f-tl" onchange="updateOMCLAgentFilter();renderCLLogs()" style="min-width:160px"><option value="">All Teams</option></select>
-        <select class="f-select" id="om-cl-f-agent" onchange="renderCLLogs()" style="min-width:155px"><option value="">All Agents</option></select>
-        <input class="f-search" id="om-cl-f-search" placeholder="🔍 Search agent…" oninput="renderCLLogs()" style="max-width:220px;flex:1;"/>
-        <button class="btn btn-outline btn-sm" onclick="clearOMCLFilters()">✕ Clear</button>
+      <div class="cl-subtabs">
+        <button id="cl-om-tab-logs" class="cl-subtab active" onclick="omShowCLTab('logs')">📋 Logs</button>
+        <button id="cl-om-tab-dash" class="cl-subtab" onclick="omShowCLTab('dashboard')">📊 Dashboard</button>
       </div>
-      <div class="tbl-wrap">
-        <div class="tbl-hdr"><h3>Call Listening Records</h3><span class="cnt-badge" id="om-cl-cnt">0</span></div>
-        <div class="tbl-scroll">
-          <table>
-            <thead><tr><th>#</th><th>Date</th><th>Agent</th><th>Team Lead</th><th>Aircall</th><th>Outcome</th><th>Score</th><th>Level</th></tr></thead>
-            <tbody id="om-cl-body"></tbody>
-          </table>
+      <div id="cl-om-logs-tab">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+          <select class="f-select" id="om-cl-f-tl" onchange="updateOMCLAgentFilter();renderCLLogs()" style="min-width:160px"><option value="">All Teams</option></select>
+          <select class="f-select" id="om-cl-f-agent" onchange="renderCLLogs()" style="min-width:155px"><option value="">All Agents</option></select>
+          <input class="f-search" id="om-cl-f-search" placeholder="🔍 Search agent…" oninput="renderCLLogs()" style="max-width:220px;flex:1;"/>
+          <button class="btn btn-outline btn-sm" onclick="clearOMCLFilters()">✕ Clear</button>
         </div>
+        <div class="tbl-wrap">
+          <div class="tbl-hdr"><h3>Call Listening Records</h3><span class="cnt-badge" id="om-cl-cnt">0</span></div>
+          <div class="tbl-scroll">
+            <table>
+              <thead><tr><th>#</th><th>Date</th><th>Agent</th><th>Team Lead</th><th>Aircall</th><th>Outcome</th><th>Score</th><th>Level</th><th></th></tr></thead>
+              <tbody id="om-cl-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div id="cl-om-dash-tab" style="display:none">
+        <div id="cl-om-dash-content" style="margin-top:8px;"></div>
       </div>
     </div>
 
@@ -3458,6 +3487,16 @@ function fillTLs(ids){
 
 /* CL modal — individual TL + ATL names */
 const CL_TL_NAMES=['Jhay Oglimen','Jumz Delacruz','Florence Llait','Jersey Deguzman','Dopear Bundang','Genevieve Palec','Renilo Uyutuc','Maureen Ulao'];
+const CL_EMAIL_NAME={
+  'reyoglimen@homeaglowsales.com':'Jhay Oglimen',
+  'jumardelacruz@homeaglowsales.com':'Jumz Delacruz',
+  'florencellait@homeaglowsales.com':'Florence Llait',
+  'dopearbundang@homeaglowsalestwo.com':'Dopear Bundang',
+  'jerseydeguzman@homeaglowsalesone.com':'Jersey Deguzman',
+  'genevievepalec@homeaglowsalesone.com':'Genevieve Palec',
+  'renilouyutuc@homeaglowsalestwo.com':'Renilou Uyutuc',
+  'maureenulao@homeaglowsalesone.com':'Maureen Ulao',
+};
 function fillCLTLs(ids){
   const opts='<option value="">— Select —</option>'+CL_TL_NAMES.map(n=>`<option value="${e(n)}">${e(n)}</option>`).join('');
   ids.forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
@@ -6925,7 +6964,10 @@ async function saveCL(){
   const tl=document.getElementById('cl2-tl').value;
   const date=document.getElementById('cl-date').value;
   const outcome=document.getElementById('cl-outcome').value;
-  if(!req([{id:'cl2-agent',label:'Agent'},{id:'cl2-tl',label:'Team Lead'},{id:'cl-date',label:'Call Date'},{id:'cl-outcome',label:'Outcome'}])) return;
+  if(!req('cl2-agent','Agent')) return;
+  if(!req('cl2-tl','Team Lead')) return;
+  if(!req('cl-date','Call Date')) return;
+  if(!req('cl-outcome','Outcome')) return;
   const scores={};
   for(let i=1;i<=7;i++){
     const el=document.getElementById('cl-r'+i);
@@ -6953,6 +6995,16 @@ async function saveCL(){
   if(!ok)return;
   syncToSheet('cl','upsert',clEntry.id, sheetRowCL(clEntry));
   closeM('m-cl');toast('✅ Call listening saved!');
+}
+async function deleteCL(id){
+  const rec=DB.cl.find(r=>r.id===id);
+  if(!rec) return;
+  const isOM=CU&&CU.isOM;
+  const canDel=CU&&!NO_DELETE.has(CU.email)&&(isOM||rec.loggedBy===CU.email);
+  if(!canDel){toast('⛔ You can only delete logs you created.');return;}
+  if(!confirm('Delete this call listening log?')) return;
+  const ok=await fsDel('px_cl',id);
+  if(ok){toast('🗑️ Log deleted.');}
 }
 
 /* ═══════════════════════════════════════
@@ -7604,7 +7656,7 @@ function renderCLLogs(){
   // Filter for TL — only show their agents
   if(isTL){
     const myAgents=rosterAgents.filter(a=>a.tl===CU.role||a.team===CU.role).map(a=>a.name);
-    data=data.filter(r=>myAgents.includes(r.agent)||r.tl===CU.role);
+    data=data.filter(r=>myAgents.includes(r.agent)||r.tl===CU.role||r.loggedBy===CU.email);
     if(tlSr) data=data.filter(r=>(r.agent||'').toLowerCase().includes(tlSr));
   } else if(isOM){
     if(omTL) data=data.filter(r=>r.tl===omTL);
@@ -7619,7 +7671,9 @@ function renderCLLogs(){
     'Major Gaps':'#FF6B6B'
   };
 
-  const rowHTML=(r,i)=>`<tr>
+  const rowHTML=(r,i)=>{
+    const canDel=CU&&!NO_DELETE.has(CU.email)&&(isOM||r.loggedBy===CU.email);
+    return `<tr>
     <td>${i+1}</td>
     <td>${fd(r.date)}</td>
     <td><strong>${e(r.agent)}</strong></td>
@@ -7628,13 +7682,15 @@ function renderCLLogs(){
     <td><span style="font-size:.82rem">${e(r.outcome)||'—'}</span></td>
     <td style="font-weight:700;text-align:center">${r.score??'—'}</td>
     <td><span style="background:${levelColor[r.level]||'#ccc'};color:#fff;border-radius:20px;padding:2px 8px;font-size:.75rem;white-space:nowrap">${e(r.level)||'—'}</span></td>
+    <td>${canDel?`<button class="btn btn-outline btn-sm" onclick="deleteCL('${r.id}')">🗑</button>`:'—'}</td>
   </tr>`;
+  };
 
   // OM table
   const omBody=document.getElementById('om-cl-body');
   const omCnt=document.getElementById('om-cl-cnt');
   if(omBody&&isOM){
-    omBody.innerHTML=data.map((r,i)=>rowHTML(r,i)).join('')||`<tr><td colspan="8"><div class="empty-st"><div class="ei">🎧</div><p>No call listening logs yet.</p></div></td></tr>`;
+    omBody.innerHTML=data.map((r,i)=>rowHTML(r,i)).join('')||`<tr><td colspan="9"><div class="empty-st"><div class="ei">🎧</div><p>No call listening logs yet.</p></div></td></tr>`;
     if(omCnt) omCnt.textContent=data.length;
   }
 
@@ -7642,9 +7698,107 @@ function renderCLLogs(){
   const tlBody=document.getElementById('tl-cl-body');
   const tlCnt=document.getElementById('tl-cl-cnt');
   if(tlBody&&isTL){
-    tlBody.innerHTML=data.map((r,i)=>rowHTML(r,i)).join('')||`<tr><td colspan="7"><div class="empty-st"><div class="ei">🎧</div><p>No call listening logs yet.</p></div></td></tr>`;
+    tlBody.innerHTML=data.map((r,i)=>rowHTML(r,i)).join('')||`<tr><td colspan="8"><div class="empty-st"><div class="ei">🎧</div><p>No call listening logs yet.</p></div></td></tr>`;
     if(tlCnt) tlCnt.textContent=data.length;
   }
+}
+
+function tlShowCLTab(tab){
+  const logsTab=document.getElementById('cl-tl-logs-tab');
+  const dashTab=document.getElementById('cl-tl-dash-tab');
+  const btnLogs=document.getElementById('cl-tl-tab-logs');
+  const btnDash=document.getElementById('cl-tl-tab-dash');
+  const isLogs=tab==='logs';
+  if(logsTab) logsTab.style.display=isLogs?'':'none';
+  if(dashTab) dashTab.style.display=isLogs?'none':'';
+  if(btnLogs) btnLogs.classList.toggle('active',isLogs);
+  if(btnDash) btnDash.classList.toggle('active',!isLogs);
+  if(!isLogs) renderCLDashboard('cl-tl-dash-content',false);
+}
+
+function omShowCLTab(tab){
+  const logsTab=document.getElementById('cl-om-logs-tab');
+  const dashTab=document.getElementById('cl-om-dash-tab');
+  const btnLogs=document.getElementById('cl-om-tab-logs');
+  const btnDash=document.getElementById('cl-om-tab-dash');
+  const isLogs=tab==='logs';
+  if(logsTab) logsTab.style.display=isLogs?'':'none';
+  if(dashTab) dashTab.style.display=isLogs?'none':'';
+  if(btnLogs) btnLogs.classList.toggle('active',isLogs);
+  if(btnDash) btnDash.classList.toggle('active',!isLogs);
+  if(!isLogs) renderCLDashboard('cl-om-dash-content',true);
+}
+
+function renderCLDashboard(containerId,isOMView){
+  const el=document.getElementById(containerId);
+  if(!el) return;
+  const today=new Date().toISOString().slice(0,10);
+  const todayStr=new Date().toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});
+  const todayLogs=(DB.cl||[]).filter(r=>r.date===today);
+  const allLeaders=Object.keys(TL_TEAM_MAP).map(email=>{
+    const isATL=ATL_EMAILS.has(email);
+    const role=TL_TEAM_MAP[email];
+    const name=CL_EMAIL_NAME[email]||email.split('@')[0];
+    const quota=isATL?5:Math.max((rosterAgents.filter(a=>a.tl===role||a.team===role).length)||1,1);
+    const done=todayLogs.filter(r=>r.loggedBy===email).length;
+    const pct=quota>0?Math.min(Math.round(done/quota*100),100):0;
+    const met=done>=quota;
+    return {email,name,role,isATL,quota,done,pct,met};
+  });
+  const leaders=isOMView?allLeaders:allLeaders.filter(l=>l.email===CU?.email);
+  const metCount=leaders.filter(l=>l.met).length;
+  const barColor=p=>p>=100?'#22c55e':p>=50?'#f59e0b':'#ef4444';
+  const badge=(done,quota,met)=>met
+    ?`<span style="background:#dcfce7;color:#166534;border-radius:20px;padding:2px 8px;font-size:.72rem;font-weight:700">✅ Met</span>`
+    :done>0
+      ?`<span style="background:#fef9c3;color:#854d0e;border-radius:20px;padding:2px 8px;font-size:.72rem;font-weight:700">⏳ ${done}/${quota}</span>`
+      :`<span style="background:#fee2e2;color:#7f1d1d;border-radius:20px;padding:2px 8px;font-size:.72rem;font-weight:700">❌ Not Started</span>`;
+  const cardHTML=l=>`
+    <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:8px;">
+      <div style="display:flex;align-items:center;gap:8px;justify-content:space-between;flex-wrap:wrap;">
+        <div>
+          <div style="font-weight:700;font-size:.95rem;color:#111">${e(l.name)}</div>
+          <div style="font-size:.75rem;color:#6b7280;">${e(l.role)}${l.isATL?' <span style="background:#dbeafe;color:#1e40af;border-radius:4px;padding:1px 5px;font-size:.68rem;font-weight:700">ATL</span>':''}</div>
+        </div>
+        <div style="text-align:right">
+          ${badge(l.done,l.quota,l.met)}
+          <div style="font-size:.75rem;color:#9ca3af;margin-top:3px">Quota: ${l.quota} call${l.quota!==1?'s':''}/day</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="flex:1;background:#f3f4f6;border-radius:99px;height:10px;overflow:hidden;">
+          <div style="height:100%;width:${l.pct}%;background:${barColor(l.pct)};border-radius:99px;transition:width .4s;"></div>
+        </div>
+        <div style="font-size:.82rem;font-weight:700;color:${barColor(l.pct)};min-width:36px;text-align:right">${l.pct}%</div>
+      </div>
+      <div style="font-size:.78rem;color:#6b7280;">${l.done} of ${l.quota} ${l.isATL?'calls':'agent call'+(l.quota!==1?'s':'')} completed today</div>
+    </div>`;
+  const atls=leaders.filter(l=>l.isATL);
+  const tls=leaders.filter(l=>!l.isATL);
+  el.innerHTML=`
+    <div style="margin-bottom:16px;">
+      <div style="font-size:1rem;font-weight:700;color:#111;margin-bottom:4px;">📅 Daily Call Listening Progress — ${todayStr}</div>
+      <div style="font-size:.82rem;color:#6b7280;">${metCount} of ${leaders.length} have met their daily quota</div>
+    </div>
+    ${isOMView&&atls.length?`
+      <div style="font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#6b7280;margin-bottom:8px;">Assistant Team Leads (ATL) — 5 calls/day</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-bottom:20px;">
+        ${atls.map(cardHTML).join('')}
+      </div>
+    `:''}
+    ${isOMView&&tls.length?`
+      <div style="font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#6b7280;margin-bottom:8px;">Team Leads — 1 call per agent/day</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;">
+        ${tls.map(cardHTML).join('')}
+      </div>
+    `:''}
+    ${!isOMView?`
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;">
+        ${leaders.map(cardHTML).join('')}
+      </div>
+    `:''}
+    ${leaders.length===0?`<div style="text-align:center;padding:40px;color:#9ca3af;">No data available.</div>`:''}
+  `;
 }
 
 /* ═══════════════════════════════════════
