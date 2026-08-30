@@ -827,6 +827,7 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
       <div class="sb-item" data-tab="nte" onclick="switchAgentTab('nte')"><span class="sb-icon">📝</span><span>My NTE</span></div>
       <div class="sb-item" data-tab="ft" onclick="switchAgentTab('ft')"><span class="sb-icon">🔄</span><span>My Follow Through</span></div>
       <div class="sb-item" data-tab="perf" onclick="switchAgentTab('perf')"><span class="sb-icon">📊</span><span>My Performance</span></div>
+      <div class="sb-item" data-tab="clhist" onclick="switchAgentTab('clhist')"><span class="sb-icon">🎧</span><span>My Call History</span></div>
       <div class="sb-item" data-tab="calc" onclick="switchAgentTab('calc')"><span class="sb-icon">🧮</span><span>Phoenix Calculator</span></div>
       <div class="sb-divider"></div>
       <div class="sb-item" data-tab="attendance" onclick="switchAgentTab('attendance')"><span class="sb-icon">📅</span><span>My Attendance</span><span id="nav-badge-att" class="sb-notif" style="display:none"></span></div>
@@ -1805,6 +1806,15 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
           </div>
         </div>
       </div><!-- /av-lib -->
+
+      <!-- MY CALL HISTORY (agent view) -->
+      <div id="av-cl-hist" class="av-section" style="display:none;padding:16px;">
+        <div style="margin-bottom:16px;">
+          <div style="font-size:1.05rem;font-weight:700;color:#111;margin-bottom:4px;">🎧 My Call History</div>
+          <div style="font-size:.82rem;color:#6b7280;">Your call listening sessions — tap any row to see full feedback.</div>
+        </div>
+        <div id="av-cl-hist-body"></div>
+      </div><!-- /av-cl-hist -->
 
   </div><!-- /main -->
 
@@ -4061,6 +4071,7 @@ function setupListeners(){
   const uCL=FSB.collection('px_cl').orderBy('at','desc').onSnapshot(snap=>{
     DB.cl=snap.docs.map(d=>({...d.data(),id:d.id}));
     renderCLLogs();
+    if(CU&&CU.isAgentView) renderAgentCLHist();
   },err=>console.error('cl:',err));
 
   const u3=FSB.collection('px_nte').orderBy('at','desc').onSnapshot(snap=>{
@@ -8385,15 +8396,16 @@ function onEmailInput(){
 function switchAgentTab(tab){
   document.querySelectorAll('#agent-nav .sb-item').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
   document.querySelectorAll('.av-section').forEach(s=>s.style.display='none');
-  const map={coaching:'av-coaching',nte:'av-nte',ft:'av-ft',perf:'av-perf',calc:'av-calc',attendance:'av-attendance',leads:'av-leads',library:'av-lib',kb:'__kb__'};
+  const map={coaching:'av-coaching',nte:'av-nte',ft:'av-ft',perf:'av-perf',clhist:'av-cl-hist',calc:'av-calc',attendance:'av-attendance',leads:'av-leads',library:'av-lib',kb:'__kb__'};
   const secId=map[tab];
   if(secId==='__kb__'){showView('v-kb');renderAll();}else{showView('v-agent');if(secId){const sec=document.getElementById(secId);if(sec)sec.style.display='';}}
   if(tab==='leads'){if(!_leadUnsub)subscribeLeads();else renderLeads();}
-  const titles={coaching:'My Coaching',nte:'My NTE',ft:'My Follow Through',perf:'My Performance',calc:'Phoenix Calculator',attendance:'My Attendance',leads:'Lead Follow-Up',library:'Call Library 🎵',kb:'Knowledge Base'};
+  const titles={coaching:'My Coaching',nte:'My NTE',ft:'My Follow Through',perf:'My Performance',clhist:'My Call History',calc:'Phoenix Calculator',attendance:'My Attendance',leads:'Lead Follow-Up',library:'Call Library 🎵',kb:'Knowledge Base'};
   const el=document.getElementById('tb-title'); if(el) el.textContent=titles[tab]||'';
   if(tab==='perf') renderAgentPerf();
   if(tab==='calc') avCalcInit();
   if(tab==='attendance') renderAttendance();
+  if(tab==='clhist') renderAgentCLHist();
 }
 
 function renderAgentView(){
@@ -8602,6 +8614,63 @@ function switchAttTab(tab){
     document.getElementById('att-sub-'+t).classList.toggle('active',t===tab);
     document.getElementById('att-panel-'+t).style.display=t===tab?'':'none';
   });
+}
+
+/* ═══════════════════════════════════════
+   AGENT CALL HISTORY
+═══════════════════════════════════════ */
+const AV_CL_RUBRIC=['Connect','Discover','Personalize','Isolate','Resolve','Convert','Confirm'];
+const AV_CL_LEVEL_COLOR={'Rainmaker Level':'#66bb6a','Strong':'#4DA6FF','Inconsistent':'#FFA94D','Major Gaps':'#FF6B6B'};
+const AV_CL_LEVEL_EMOJI={'Rainmaker Level':'🌧️','Strong':'💪','Inconsistent':'⚡','Major Gaps':'⚠️'};
+
+function renderAgentCLHist(){
+  const el=document.getElementById('av-cl-hist-body');
+  if(!el||!CU||!CU.isAgentView)return;
+  const myLogs=(DB.cl||[]).filter(r=>r.agent===CU.agentName).sort((a,b)=>b.at.localeCompare(a.at));
+  if(!myLogs.length){
+    el.innerHTML=`<div class="empty-st"><div class="ei">🎧</div><p>No call listening sessions logged yet.</p></div>`;
+    return;
+  }
+  el.innerHTML=myLogs.map((r,i)=>{
+    const color=AV_CL_LEVEL_COLOR[r.level]||'#ccc';
+    const emoji=AV_CL_LEVEL_EMOJI[r.level]||'📋';
+    const rubricRows=AV_CL_RUBRIC.map((name,idx)=>{
+      const val=r['r'+(idx+1)];
+      if(!val||val==='Not Applicable') return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;font-size:.79rem;opacity:.45"><span style="width:18px;text-align:center">—</span><span style="flex:1">${e(name)}</span><span>N/A</span></div>`;
+      const icon=val==='Followed'?'✅':'⚠️';
+      const c=val==='Followed'?'#2e7d32':'#e65100';
+      return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;font-size:.79rem;border-bottom:1px solid #f3f4f6"><span style="width:18px;text-align:center">${icon}</span><span style="flex:1;color:#333">${e(name)}</span><span style="font-weight:700;color:${c};font-size:.74rem">${e(val)}</span></div>`;
+    }).join('');
+    return `<div style="background:#fff;border:1.5px solid #e5e7eb;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.04);margin-bottom:10px;">
+      <div onclick="toggleAVCLCard(${i})" style="display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;user-select:none;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:700;font-size:.9rem;color:#111;margin-bottom:2px;">${fd(r.date)}</div>
+          <div style="font-size:.76rem;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${e(r.outcome)||'No outcome recorded'}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          <span style="background:${color};color:#fff;border-radius:20px;padding:3px 10px;font-size:.72rem;font-weight:700;white-space:nowrap;">${emoji} ${e(r.level)||'—'}</span>
+          <div style="font-size:.72rem;color:#888;margin-top:3px;">Score: <strong>${r.score??'—'}</strong> / 7</div>
+        </div>
+        <span id="av-cl-chev-${i}" style="font-size:.85rem;color:#aaa;margin-left:4px;flex-shrink:0;">▸</span>
+      </div>
+      <div id="av-cl-detail-${i}" style="display:none;border-top:1px solid #f0f0f0;padding:14px 16px;">
+        <div style="font-size:.74rem;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Rubric Breakdown</div>
+        ${rubricRows}
+        ${r.notes?`<div style="margin-top:12px;padding:10px;background:#f9fafb;border-radius:8px;font-size:.8rem;color:#333;"><span style="font-weight:700;color:#555;display:block;margin-bottom:4px;">📝 Coach Notes</span>${e(r.notes)}</div>`:''}
+        ${r.air?`<div style="margin-top:10px;"><a href="${e(r.air)}" target="_blank" style="color:var(--blue);font-size:.8rem;font-weight:600;">🔗 Listen to recording</a></div>`:''}
+        <div style="margin-top:10px;font-size:.71rem;color:#bbb;">Logged by ${e(r.loggedBy||'—')} · Team: ${e(r.tl||'—')}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleAVCLCard(i){
+  const d=document.getElementById('av-cl-detail-'+i);
+  const c=document.getElementById('av-cl-chev-'+i);
+  if(!d)return;
+  const open=d.style.display!=='none';
+  d.style.display=open?'none':'';
+  if(c)c.textContent=open?'▸':'▾';
 }
 
 function renderAttendance(){
