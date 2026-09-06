@@ -118,6 +118,40 @@ export default async function handler(req, res) {
       }
     }
 
+    // ── Step 3b: Fetch calls + SMS associated with contacts (not just tickets) ──
+    // HubSpot often logs calls/SMS on the contact record, not the ticket
+    const contactCallMap = {};  // contactId → [callIds]
+    const contactSmsMap = {};   // contactId → [smsIds]
+    if (allContactIds.length > 0) {
+      const contactIdsToCheck = allContactIds.slice(0, 100);
+      const [cCallResp, cSmsResp] = await Promise.all([
+        fetch('https://api.hubapi.com/crm/v4/associations/contacts/calls/batch/read', {
+          method: 'POST', headers: h,
+          body: JSON.stringify({ inputs: contactIdsToCheck.map(id => ({ id })) })
+        }),
+        fetch('https://api.hubapi.com/crm/v4/associations/contacts/communications/batch/read', {
+          method: 'POST', headers: h,
+          body: JSON.stringify({ inputs: contactIdsToCheck.map(id => ({ id })) })
+        })
+      ]);
+      const cCallAssoc = await cCallResp.json().catch(() => ({ results: [] }));
+      const cSmsAssoc = await cSmsResp.json().catch(() => ({ results: [] }));
+      if (cCallAssoc.results) {
+        for (const r of cCallAssoc.results) {
+          const ids = (r.to || []).map(x => x.toObjectId);
+          contactCallMap[r.from.id] = ids;
+          ids.forEach(id => { if (!allCallIds.includes(id)) allCallIds.push(id); });
+        }
+      }
+      if (cSmsAssoc.results) {
+        for (const r of cSmsAssoc.results) {
+          const ids = (r.to || []).map(x => x.toObjectId);
+          contactSmsMap[r.from.id] = ids;
+          ids.forEach(id => { if (!allSmsIds.includes(id)) allSmsIds.push(id); });
+        }
+      }
+    }
+
     // ── Step 4: Batch-read notes ──────────────────────────────────────────
     const noteMap = {};
     const noteIdsToFetch = [...new Set(allNoteIds)].slice(0, 150);
@@ -210,11 +244,16 @@ export default async function handler(req, res) {
       const notes = nIds.map(id => noteMap[id]).filter(Boolean);
       notes.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
-      const callIds = ticketCallMap[ticket.id] || [];
-      const calls = callIds.map(id => callDetailMap[id]).filter(Boolean);
-
-      const smsIds = ticketSmsMap[ticket.id] || [];
-      const smsMsgs = smsIds.map(id => smsDetailMap[id]).filter(Boolean);
+      // Merge ticket-level + contact-level calls (deduplicate by id)
+      const ticketCallIds = new Set(ticketCallMap[ticket.id] || []);
+      const ticketSmsIdSet = new Set(ticketSmsMap[ticket.id] || []);
+      // Add contact-level calls/SMS for all contacts on this ticket
+      for (const cId of cIds) {
+        (contactCallMap[cId] || []).forEach(id => ticketCallIds.add(id));
+        (contactSmsMap[cId] || []).forEach(id => ticketSmsIdSet.add(id));
+      }
+      const calls = [...ticketCallIds].map(id => callDetailMap[id]).filter(Boolean);
+      const smsMsgs = [...ticketSmsIdSet].map(id => smsDetailMap[id]).filter(Boolean);
 
       const allActivity = [...calls, ...smsMsgs];
       allActivity.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
