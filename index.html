@@ -1751,7 +1751,13 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
             <div style="font-size:1rem;font-weight:700;color:var(--g800);">🔶 Lead Management — 2nd Week</div>
             <div style="font-size:.74rem;color:var(--g500);margin-top:2px;">Your open Sales Call Required (2nd week) leads from HubSpot</div>
           </div>
-          <button onclick="fetchHSLeads()" style="padding:6px 14px;border:1.5px solid #ff7a59;border-radius:8px;background:#fff;color:#ff7a59;font-size:.78rem;font-weight:700;cursor:pointer;">↻ Refresh</button>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="display:flex;border:1.5px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+              <button id="av-hs-btn-kanban" onclick="setHSView('kanban')" style="padding:5px 12px;border:none;background:#ff7a59;color:#fff;font-size:.76rem;font-weight:700;cursor:pointer;">⊞ Kanban</button>
+              <button id="av-hs-btn-list" onclick="setHSView('list')" style="padding:5px 12px;border:none;background:#fff;color:#6b7280;font-size:.76rem;font-weight:700;cursor:pointer;">☰ List</button>
+            </div>
+            <button onclick="fetchHSLeads()" style="padding:6px 14px;border:1.5px solid #ff7a59;border-radius:8px;background:#fff;color:#ff7a59;font-size:.78rem;font-weight:700;cursor:pointer;">↻ Refresh</button>
+          </div>
         </div>
         <div id="av-hs-leads-body"><div style="color:var(--g400);font-size:.8rem;padding:16px 0;text-align:center;">Loading HubSpot leads…</div></div>
       </div><!-- /av-leadmgmt -->
@@ -2336,7 +2342,13 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
       <div style="font-size:1rem;font-weight:700;color:var(--g800);">🔶 Lead Management — 2nd Week</div>
       <div style="font-size:.74rem;color:var(--g500);margin-top:2px;">All open Sales Call Required (2nd week) leads from HubSpot, by agent</div>
     </div>
-    <button onclick="fetchHSLeads()" style="padding:6px 14px;border:1.5px solid #ff7a59;border-radius:8px;background:#fff;color:#ff7a59;font-size:.78rem;font-weight:700;cursor:pointer;">↻ Refresh</button>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div style="display:flex;border:1.5px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+        <button id="hs-btn-kanban" onclick="setHSView('kanban')" style="padding:5px 12px;border:none;background:#ff7a59;color:#fff;font-size:.76rem;font-weight:700;cursor:pointer;">⊞ Kanban</button>
+        <button id="hs-btn-list" onclick="setHSView('list')" style="padding:5px 12px;border:none;background:#fff;color:#6b7280;font-size:.76rem;font-weight:700;cursor:pointer;">☰ List</button>
+      </div>
+      <button onclick="fetchHSLeads()" style="padding:6px 14px;border:1.5px solid #ff7a59;border-radius:8px;background:#fff;color:#ff7a59;font-size:.78rem;font-weight:700;cursor:pointer;">↻ Refresh</button>
+    </div>
   </div>
   <div id="tl-hs-leads-body"><div style="color:var(--g400);font-size:.8rem;padding:16px 0;text-align:center;">Loading HubSpot leads…</div></div>
 </div>
@@ -4809,9 +4821,16 @@ const HS_TOKEN='';
 const HS_PIPELINE_SEG='736937559';
 const HS_STAGE_LABELS={'1072718881':'New','1072718882':'Assigned','1072718883':'In Progress','1072718884':'2nd Attempt','1072805486':'3rd Attempt','1072805487':'4th Attempt','1072805488':'5th Attempt','1161141150':'Declined (Follow-up)','1072805489':'24hr Callback'};
 const HS_STAGE_ATTEMPTS={'1072718881':0,'1072718882':0,'1072718883':1,'1072718884':1,'1072805486':2,'1072805487':3,'1072805488':4,'1161141150':1,'1072805489':1};
-const HS_OWNERS={'3817861':'Jimmy Barnachea','17052290':'Kristine Rivera','49682868':'Rayan Jaime','64681504':'Monica Bautista','66232384':'Mark Lim','75448319':'Luzielle Orbillo','75448329':'Mark Tadeo','75448337':'Jerome Manuit','75448338':'Christian Bolano','75448340':'Kimberly Santos','75448342':'Jeremiah Mendoza','75448346':'Robin Castillo','75448907':'John Adrian','75448908':'April Capulso','75624739':'Neil Bajande','76257948':'Gerlie Sarmiento','76257998':'Rose Tejedor','76258000':'Mary Sotto','76258005':'Catherine Gayoso','76258017':'King Martinez','76754051':'Vanessa Inocencio','76791020':'Jazz Karasig','76791092':'Jo Vincent Feraren','76791093':'Kristine Villanueva','77597264':'Arah Sacro','77597279':'Carlyn Ordona','77597297':'Allan Chua','77814217':'Dioreza Tomilloso','78073879':'Trixia Robles','78073906':'Angelo Mararac','78073945':'Joan Estarez','78073956':'Noemi Galon','78296623':'Ramille Borja','78296624':'Jacquelou Rondez','78653037':'Cristine Paguipolar','78708745':'John Babila','78708760':'Mary Opena','78928026':'Bernadette Espinas','78928079':'Mark Bautista','78973871':'Nenelyn Kuo','79004888':'Joy Espinar','79004894':'Regner Sol','79004895':'John De Leon','79190901':'Michael Aleta','79363109':'Ace Amantiad','79523705':'Rina Galang','79523733':'Princess Mamandis','79523738':'Janelle Casabuena','79523747':'Michael Santiago','79523753':'Loseta Labarro','79695298':'Jaydi Miranda','79870132':'Asher Balway','80071272':'Wilrose Menguito','80071316':'Racine Mercado','80225569':'Aaron Tuico','80225602':'Jenalynn Paya','80225605':'Nikka Tejana','80225613':'Jardene Petines','80225617':'Kimberly Sabandal','80225636':'MJ Flomentera','80422418':'Merven Panganiban','80422449':'Iris Neri','80564719':'Jondelle Miranda','80564753':'Jennifer Trinidad','80564786':'Odirose Amuyot','80564815':'Anna Pascual','80746376':'Kelly Cruz','80746379':'CJ Garces','80746403':'Supremo Cabalo','80746421':'Emilyn Buenafe','80746444':'Jann Adriano','80746448':'Jowee-Anne Barbastro','80746452':'Nicole Canlas','80746664':'Ian Ibañez','80922738':'Irene Virgo','80922767':'Kaile Laquindanum','80922772':'Erwin Garcia','80922782':'Richie Sabado','80922793':'Lynn Villahermosa','80922800':'Elvis Maste','80922823':'Roxanne Balcita','81103164':'Paulo Moreno','81284986':'Lara Hongayo','81285040':'Romeo Sandoval','81285041':'Kathrina Tabaquin','81285050':'Angelica Lorenzana','81463171':'Krizelle Taino','81488398':'Russell Cabang','81611466':'Princess Punzalan','81612598':'Jemy Morong','81786552':'Gyle Gelle','422514679':'(Unassigned)','81973079':'(Admin)'};
+const HS_OWNERS={'3817861':'Jimmy Barnachea','17052290':'Kristine Rivera','49682868':'Rayan Jaime','64681504':'Monica Bautista','66232384':'Mark Lim','75448319':'Luzielle Orbillo','75448329':'Mark Tadeo','75448337':'Jerome Manuit','75448338':'Christian Bolano','75448340':'Kimberly Santos','75448342':'Jeremiah Mendoza','75448346':'Robin Castillo','75448907':'John Adrian','75448908':'April Capulso','75624739':'Neil Bajande','76257948':'Gerlie Sarmiento','76257998':'Rose Tejedor','76258000':'Mary Sotto','76258005':'Catherine Gayoso','76258017':'King Martinez','76754051':'Vanessa Inocencio','76791020':'Jazz Karasig','76791092':'Jo Vincent Feraren','76791093':'Kristine Villanueva','77597264':'Arah Sacro','77597279':'Carlyn Ordona','77597297':'Allan Chua','77814217':'Dioreza Tomilloso','78073879':'Trixia Robles','78073906':'Angelo Mararac','78073945':'Joan Estarez','78073956':'Noemi Galon','78296623':'Ramille Borja','78296624':'Jacquelou Rondez','78653037':'Cristine Paguipolar','78708745':'John Babila','78708760':'Mary Opena','78928026':'Bernadette Espinas','78928079':'Mark Bautista','78973871':'Nenelyn Kuo','79004888':'Joy Espinar','79004894':'Regner Sol','79004895':'John De Leon','79190901':'Michael Aleta','79363109':'Ace Amantiad','79523705':'Rina Galang','79523733':'Princess Mamandis','79523738':'Janelle Casabuena','79523747':'Michael Santiago','79523753':'Loseta Labarro','79695298':'Jaydi Miranda','79870132':'Asher Balway','80071272':'Wilrose Menguito','80071316':'Racine Mercado','80225569':'Aaron Tuico','80225602':'Jenalynn Paya','80225605':'Nikka Tejana','80225613':'Jardene Petines','80225617':'Kimberly Sabandal','80225636':'MJ Flomentera','80422418':'Merven Panganiban','80422449':'Iris Neri','80564719':'Jondelle Miranda','80564753':'Jennifer Trinidad','80564786':'Odirose Amuyot','80564815':'Anna Pascual','80746376':'Kelly Cruz','80746379':'CJ Garces','80746403':'Supremo Cabalo','80746421':'Emilyn Buenafe','80746444':'Jann Adriano','80746448':'Jowee-Anne Barbastro','80746452':'Nicole Canlas','80746664':'Ian Ibañez','80922738':'Irene Virgo','80922767':'Kaile Laquindanum','80922772':'Erwin Garcia','80922782':'Richie Sabado','80922793':'Lynn Villahermosa','80922800':'Elvis Maste','80922823':'Roxanne Balcita','81103164':'Paulo Moreno','81284986':'Lara Hongayo','81285040':'Romeo Sandoval','81285041':'Kathrina Tabaquin','81285050':'Angelica Lorenzana','81463171':'Krizelle Taino','81488398':'Russell Cabang','81611466':'Princess Punzalan','81612598':'Jemy Morong','81786552':'Gyle Gelle',
+'89937192':'Bradd Peralta','89937222':'Melcah Paras','90256048':'Angelika Gonzales',
+'90528656':'Chester Banuta','90539166':'Cindy Balazuela','90848170':'Jennylyn Balagtas',
+'91127572':'Lance Dabu','91127578':'Edin Rivas','91456071':'Leslie Logan',
+'91456075':'Roxanne Hila','93916279':'Cheryl Sayon','93916660':'Darlyn Acuriza',
+'93916661':'Emmanuel Maturana',
+'422514679':'(Unassigned)','81973079':'(Admin)'};
 let _hsLeads=[];
 let _hsLeadsLoaded=false;
+let _hsViewMode='kanban'; // 'kanban' or 'list'
 
 async function fetchHSLeads(){
   const avEl=document.getElementById('av-hs-leads-body');
@@ -4874,9 +4893,22 @@ async function fetchHSLeads(){
   }
 }
 
+function setHSView(mode){
+  _hsViewMode=mode;
+  // Update toggle buttons in both views
+  const ON='background:#ff7a59;color:#fff;';
+  const OFF='background:#fff;color:#6b7280;';
+  ['hs-btn-kanban','av-hs-btn-kanban'].forEach(id=>{const b=document.getElementById(id);if(b)b.style.cssText=b.style.cssText.replace(/background:[^;]+;color:[^;]+;/,mode==='kanban'?ON:OFF);});
+  ['hs-btn-list','av-hs-btn-list'].forEach(id=>{const b=document.getElementById(id);if(b)b.style.cssText=b.style.cssText.replace(/background:[^;]+;color:[^;]+;/,mode==='list'?ON:OFF);});
+  renderHSLeads();
+}
+
 function renderHSLeads(){
   if(!_hsLeadsLoaded)return;
   const now=new Date();
+  const thStyle='padding:7px 10px;text-align:left;font-size:.7rem;font-weight:700;color:var(--g600);border-bottom:2px solid #e5e7eb;white-space:nowrap;';
+  const tdStyle='padding:7px 10px;font-size:.74rem;color:var(--g800);border-bottom:1px solid #f3f4f6;vertical-align:middle;';
+
   // ── AGENT VIEW ──
   const avEl=document.getElementById('av-hs-leads-body');
   if(avEl&&CU&&CU.isAgentView){
@@ -4884,7 +4916,35 @@ function renderHSLeads(){
     const myLeads=_hsLeads.filter(l=>l.ownerName.toLowerCase().includes(firstName));
     if(myLeads.length===0){
       avEl.innerHTML='<div style="color:var(--g400);font-size:.8rem;padding:6px 0;">No open 2nd week HubSpot leads assigned to you.</div>';
-    }else{
+    } else if(_hsViewMode==='list'){
+      // ── AGENT LIST VIEW ──
+      const sorted=[..._hsLeads.filter(l=>l.ownerName.toLowerCase().includes(firstName))].sort((a,b)=>(b.lacksCadence?1:0)-(a.lacksCadence?1:0)||(b.ageDays||0)-(a.ageDays||0));
+      avEl.innerHTML=`<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;background:#fff;border-radius:9px;box-shadow:var(--sh);overflow:hidden;">
+        <thead><tr>
+          <th style="${thStyle}">Contact</th>
+          <th style="${thStyle}">Phone</th>
+          <th style="${thStyle}">Stage</th>
+          <th style="${thStyle}">Age</th>
+          <th style="${thStyle}">Last Call</th>
+          <th style="${thStyle}">Status</th>
+        </tr></thead>
+        <tbody>${sorted.map(l=>{
+          const ageColor=l.ageBucket==='late'?'#ef4444':'#f97316';
+          const displayName=l.contactName||l.subject||'(no name)';
+          const contact=l.daysSinceContact!==null?`${l.daysSinceContact}d ago`:'Never';
+          const status=l.lacksCadence?'<span style="background:#fee2e2;color:#b91c1c;font-size:.65rem;font-weight:700;padding:2px 8px;border-radius:99px;">⚠️ Needs Call</span>':'<span style="background:#dcfce7;color:#166534;font-size:.65rem;font-weight:700;padding:2px 8px;border-radius:99px;">✅ Called</span>';
+          const rowBg=l.lacksCadence?'background:#fff8f8;':'';
+          return `<tr style="${rowBg}">
+            <td style="${tdStyle}font-weight:600;">${displayName}</td>
+            <td style="${tdStyle}color:var(--g600);">${l.contactPhone||'—'}</td>
+            <td style="${tdStyle}"><span style="font-size:.66rem;background:#fff3e0;color:#e65100;padding:2px 7px;border-radius:99px;font-weight:600;">${l.stageName}</span></td>
+            <td style="${tdStyle}font-weight:700;color:${ageColor};">${l.ageDays}d</td>
+            <td style="${tdStyle}color:var(--g500);">${contact}</td>
+            <td style="${tdStyle}">${status}</td>
+          </tr>`;
+        }).join('')}</tbody></table></div>`;
+    } else {
+      // ── AGENT KANBAN VIEW ──
       const w1=myLeads.filter(l=>l.ageBucket==='early');
       const w2=myLeads.filter(l=>l.ageBucket==='late');
       const renderCard=l=>{
@@ -4915,6 +4975,7 @@ function renderHSLeads(){
       avEl.innerHTML=html;
     }
   }
+
   // ── TL / OM VIEW ──
   const tlEl=document.getElementById('tl-hs-leads-body');
   if(tlEl&&CU&&!CU.isAgentView){
@@ -4922,25 +4983,56 @@ function renderHSLeads(){
       tlEl.innerHTML='<div style="color:var(--g400);font-size:.8rem;padding:8px 0;">No open 2nd week leads found.</div>';
       return;
     }
-    const byOwner={};
-    _hsLeads.forEach(l=>{
-      if(!byOwner[l.ownerName])byOwner[l.ownerName]={name:l.ownerName,leads:[],lackCount:0,maxAge:0};
-      byOwner[l.ownerName].leads.push(l);
-      if(l.lacksCadence)byOwner[l.ownerName].lackCount++;
-      if((l.ageDays||0)>byOwner[l.ownerName].maxAge)byOwner[l.ownerName].maxAge=l.ageDays||0;
-    });
-    const sorted=Object.values(byOwner).sort((a,b)=>b.lackCount-a.lackCount||b.maxAge-a.maxAge);
     const totalLack=_hsLeads.filter(l=>l.lacksCadence).length;
     const w1count=_hsLeads.filter(l=>l.ageBucket==='early').length;
     const w2count=_hsLeads.filter(l=>l.ageBucket==='late').length;
-    tlEl.innerHTML=`
-      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
-        <span style="font-size:.75rem;background:#f3f4f6;padding:4px 10px;border-radius:99px;color:var(--g700);">Total: <strong>${_hsLeads.length}</strong></span>
-        <span style="font-size:.75rem;background:#fee2e2;padding:4px 10px;border-radius:99px;color:#b91c1c;">⚠️ Lacking Cadence: <strong>${totalLack}</strong></span>
-        <span style="font-size:.75rem;background:#fff3e0;padding:4px 10px;border-radius:99px;color:#e65100;">Days 1–8: <strong>${w1count}</strong></span>
-        <span style="font-size:.75rem;background:#fee2e2;padding:4px 10px;border-radius:99px;color:#ef4444;">Days 9–15: <strong>${w2count}</strong></span>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:9px;">
+    const summaryBadges=`<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+      <span style="font-size:.75rem;background:#f3f4f6;padding:4px 10px;border-radius:99px;color:var(--g700);">Total: <strong>${_hsLeads.length}</strong></span>
+      <span style="font-size:.75rem;background:#fee2e2;padding:4px 10px;border-radius:99px;color:#b91c1c;">⚠️ Lacking Cadence: <strong>${totalLack}</strong></span>
+      <span style="font-size:.75rem;background:#fff3e0;padding:4px 10px;border-radius:99px;color:#e65100;">Days 1–8: <strong>${w1count}</strong></span>
+      <span style="font-size:.75rem;background:#fee2e2;padding:4px 10px;border-radius:99px;color:#ef4444;">Days 9–15: <strong>${w2count}</strong></span>
+    </div>`;
+
+    if(_hsViewMode==='list'){
+      // ── TL LIST VIEW — flat table of all leads ──
+      const sorted=[..._hsLeads].sort((a,b)=>(b.lacksCadence?1:0)-(a.lacksCadence?1:0)||(b.ageDays||0)-(a.ageDays||0));
+      tlEl.innerHTML=summaryBadges+`<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;background:#fff;border-radius:9px;box-shadow:var(--sh);overflow:hidden;">
+        <thead><tr>
+          <th style="${thStyle}">Contact</th>
+          <th style="${thStyle}">Phone</th>
+          <th style="${thStyle}">Agent</th>
+          <th style="${thStyle}">Stage</th>
+          <th style="${thStyle}">Age</th>
+          <th style="${thStyle}">Last Call</th>
+          <th style="${thStyle}">Status</th>
+        </tr></thead>
+        <tbody>${sorted.map(l=>{
+          const ageColor=l.ageBucket==='late'?'#ef4444':'#f97316';
+          const displayName=l.contactName||l.subject||'(no name)';
+          const contact=l.daysSinceContact!==null?`${l.daysSinceContact}d ago`:'Never';
+          const status=l.lacksCadence?'<span style="background:#fee2e2;color:#b91c1c;font-size:.65rem;font-weight:700;padding:2px 8px;border-radius:99px;">⚠️ Needs Call</span>':'<span style="background:#dcfce7;color:#166534;font-size:.65rem;font-weight:700;padding:2px 8px;border-radius:99px;">✅ Called</span>';
+          const rowBg=l.lacksCadence?'background:#fff8f8;':'';
+          return `<tr style="${rowBg}">
+            <td style="${tdStyle}font-weight:600;">${displayName}</td>
+            <td style="${tdStyle}color:var(--g600);">${l.contactPhone||'—'}</td>
+            <td style="${tdStyle}">${l.ownerName}</td>
+            <td style="${tdStyle}"><span style="font-size:.66rem;background:#fff3e0;color:#e65100;padding:2px 7px;border-radius:99px;font-weight:600;">${l.stageName}</span></td>
+            <td style="${tdStyle}font-weight:700;color:${ageColor};">${l.ageDays}d</td>
+            <td style="${tdStyle}color:var(--g500);">${contact}</td>
+            <td style="${tdStyle}">${status}</td>
+          </tr>`;
+        }).join('')}</tbody></table></div>`;
+    } else {
+      // ── TL KANBAN VIEW — agent summary cards ──
+      const byOwner={};
+      _hsLeads.forEach(l=>{
+        if(!byOwner[l.ownerName])byOwner[l.ownerName]={name:l.ownerName,leads:[],lackCount:0,maxAge:0};
+        byOwner[l.ownerName].leads.push(l);
+        if(l.lacksCadence)byOwner[l.ownerName].lackCount++;
+        if((l.ageDays||0)>byOwner[l.ownerName].maxAge)byOwner[l.ownerName].maxAge=l.ageDays||0;
+      });
+      const sorted=Object.values(byOwner).sort((a,b)=>b.lackCount-a.lackCount||b.maxAge-a.maxAge);
+      tlEl.innerHTML=summaryBadges+`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:9px;">
         ${sorted.map(a=>{
           const w1=a.leads.filter(l=>l.ageBucket==='early').length;
           const w2=a.leads.filter(l=>l.ageBucket==='late').length;
@@ -4952,6 +5044,7 @@ function renderHSLeads(){
           </div>`;
         }).join('')}
       </div>`;
+    }
   }
 }
 
