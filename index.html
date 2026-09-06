@@ -4964,6 +4964,32 @@ function setHSTeamFilter(val){
   _hsOwnerFilter=''; // reset owner when team changes
   renderHSLeads();
 }
+function switchCommTab(lid,tab){
+  ['msgs','calls'].forEach(t=>{
+    const panel=document.getElementById('comm-'+t+'-'+lid);
+    const btn=document.getElementById('comm-tab-'+t+'-'+lid);
+    if(panel)panel.style.display=t===tab?'block':'none';
+    if(btn){btn.style.color=t===tab?'#ff7a59':'#6b7280';btn.style.borderBottomColor=t===tab?'#ff7a59':'transparent';}
+  });
+}
+async function sendSMS(lid,phone){
+  const inp=document.getElementById('sms-inp-'+lid);
+  const msg=(inp?.value||'').trim();
+  if(!msg){inp?.focus();return;}
+  inp.disabled=true;
+  try{
+    // Wire to /api/aircall-sms when Aircall is connected
+    alert('SMS sending will be enabled once Aircall is connected.\n\nNumber: '+phone);
+  } finally{inp.disabled=false;inp.value='';}
+}
+function makeCall(phone,name){
+  if(window._aircallPhone){
+    window._aircallPhone.send('dial_number',{phone_number:phone});
+  } else {
+    navigator.clipboard?.writeText(phone).catch(()=>{});
+    alert('Aircall not connected yet.\n\nNumber copied to clipboard: '+phone+'\n\nConnect Aircall to enable one-click calling.');
+  }
+}
 
 function renderHSLeads(){
   if(!_hsLeadsLoaded)return;
@@ -5055,6 +5081,48 @@ function renderHSLeads(){
     </div>`;
   }
 
+  function commPanel(l,allCalls){
+    const pid=l.id;
+    const isSmsC=c=>c.type==='sms'||c.type==='message'||(c.type||'').toLowerCase().includes('sms');
+    const smsList=[...allCalls].filter(isSmsC).reverse();
+    const callList=allCalls.filter(c=>!isSmsC(c));
+    const ph=(l.contactPhone||'').replace(/'/g,"\\'");
+    const nm=((l.contactName||l.subject||'Lead').split(' ')[0]).replace(/'/g,"\\'");
+    const smsBubble=c=>{
+      const isOut=(c.direction||'').toUpperCase()!=='INBOUND';
+      const ts=c.timestamp?new Date(c.timestamp).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';
+      const body=(c.body||'').trim()||'(no message body)';
+      return `<div style="display:flex;flex-direction:column;align-items:${isOut?'flex-end':'flex-start'};margin-bottom:8px;">
+        <div style="max-width:78%;background:${isOut?'#ff7a59':'#f3f4f6'};color:${isOut?'#fff':'#111'};padding:8px 12px;border-radius:${isOut?'12px 12px 2px 12px':'12px 12px 12px 2px'};font-size:.75rem;line-height:1.5;">${body}</div>
+        <div style="font-size:.59rem;color:#9ca3af;margin-top:2px;">${isOut?'You · ':''}${ts}</div>
+      </div>`;
+    };
+    const TAB='padding:8px 16px;border:none;background:transparent;cursor:pointer;font-size:.7rem;font-weight:700;border-bottom:2px solid;';
+    return `<div style="border-top:1px solid #f0f0f0;">
+      <div style="display:flex;background:#f9fafb;border-bottom:1px solid #f0f0f0;">
+        <button id="comm-tab-msgs-${pid}" onclick="switchCommTab('${pid}','msgs')" style="${TAB}color:#ff7a59;border-bottom-color:#ff7a59;">💬 Messages (${smsList.length})</button>
+        <button id="comm-tab-calls-${pid}" onclick="switchCommTab('${pid}','calls')" style="${TAB}color:#6b7280;border-bottom-color:transparent;">📞 Calls (${callList.length})</button>
+      </div>
+      <div id="comm-msgs-${pid}" style="display:block;">
+        <div style="max-height:200px;overflow-y:auto;padding:12px;display:flex;flex-direction:column;">
+          ${smsList.length>0?smsList.map(smsBubble).join(''):'<div style="text-align:center;color:#9ca3af;font-size:.72rem;padding:18px 0;">No text messages yet</div>'}
+        </div>
+        <div style="padding:8px 10px;border-top:1px solid #f0f0f0;display:flex;gap:6px;align-items:center;background:#f9fafb;">
+          <input id="sms-inp-${pid}" type="text" placeholder="Type a message…" onkeydown="if(event.key==='Enter')sendSMS('${pid}','${ph}');" style="flex:1;font-size:.75rem;border:1px solid #e5e7eb;border-radius:8px;padding:7px 10px;outline:none;background:#fff;" />
+          <button onclick="sendSMS('${pid}','${ph}');" style="padding:7px 14px;background:#ff7a59;color:#fff;border:none;border-radius:8px;font-size:.72rem;font-weight:700;cursor:pointer;">Send</button>
+        </div>
+      </div>
+      <div id="comm-calls-${pid}" style="display:none;">
+        <div style="max-height:200px;overflow-y:auto;">
+          ${callList.length>0?callList.map(callHistoryItem).join(''):'<div style="padding:14px;text-align:center;color:#9ca3af;font-size:.72rem;">No calls recorded</div>'}
+        </div>
+        <div style="padding:8px 10px;border-top:1px solid #f0f0f0;background:#f9fafb;">
+          <button onclick="makeCall('${ph}','${nm}');" style="padding:7px 16px;background:#22c55e;color:#fff;border:none;border-radius:8px;font-size:.72rem;font-weight:700;cursor:pointer;">📞 Call ${nm}</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
   function stageDropdown(l){
     const opts=Object.entries(HS_STAGE_LABELS).map(([id,nm])=>`<option value="${id}"${l.stageId===id?' selected':''}>${nm}</option>`).join('');
     return `<select onchange="updateLeadStage('${l.id}',this.value,this)" style="font-size:.68rem;border:1px solid #e5e7eb;border-radius:6px;padding:3px 7px;background:#fff;color:var(--g700);cursor:pointer;">
@@ -5134,12 +5202,7 @@ function renderHSLeads(){
           ${stageDropdown(l)}
           <a href="https://app.hubspot.com/contacts/45809585/ticket/${l.id}" target="_blank" style="font-size:.67rem;color:#ff7a59;text-decoration:none;font-weight:600;border:1px solid #ff7a59;padding:3px 8px;border-radius:6px;">🔗 HubSpot</a>
         </div>
-        <div style="padding:10px 14px;">
-          <div style="font-size:.67rem;font-weight:700;color:#6b7280;margin-bottom:4px;">Call History (${allCalls.length})</div>
-          <div style="border:1px solid #f3f4f6;border-radius:6px;overflow:hidden;max-height:210px;overflow-y:auto;">
-            ${allCalls.length>0?allCalls.map(callHistoryItem).join(''):'<div style="padding:8px;color:#9ca3af;font-size:.69rem;">No calls recorded</div>'}
-          </div>
-        </div>`})()}
+        ${commPanel(l,allCalls)}`})()}
       </div>
     </div>`;
   }
@@ -5229,12 +5292,7 @@ function renderHSLeads(){
         ${stageDropdown(l)}
         <a href="https://app.hubspot.com/contacts/45809585/ticket/${l.id}" target="_blank" style="font-size:.67rem;color:#ff7a59;text-decoration:none;font-weight:600;border:1px solid #ff7a59;padding:3px 8px;border-radius:6px;">🔗 HubSpot</a>
       </div>
-      <div style="padding:10px 14px;">
-        <div style="font-size:.67rem;font-weight:700;color:#6b7280;margin-bottom:4px;">Call History (${allCalls.length})</div>
-        <div style="border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;max-height:180px;overflow-y:auto;background:#fff;">
-          ${allCalls.length>0?allCalls.map(callHistoryItem).join(''):'<div style="padding:8px;color:#9ca3af;font-size:.69rem;">No calls recorded</div>'}
-        </div>
-      </div>`})()}
+      ${commPanel(l,allCalls)}`})()}
     </td></tr>`;
   }
 
