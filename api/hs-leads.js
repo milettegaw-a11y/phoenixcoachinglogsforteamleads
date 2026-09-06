@@ -27,8 +27,8 @@ export default async function handler(req, res) {
 
     const ticketIds = tickets.map(t => t.id);
 
-    // ── Step 2: Get associations (contacts, notes, calls) in parallel ──
-    const [contactAssocResp, noteAssocResp, callAssocResp] = await Promise.all([
+    // ── Step 2: Get associations (contacts, notes, calls, SMS/communications) in parallel ──
+    const [contactAssocResp, noteAssocResp, callAssocResp, smsAssocResp] = await Promise.all([
       fetch('https://api.hubapi.com/crm/v4/associations/tickets/contacts/batch/read', {
         method: 'POST', headers: h,
         body: JSON.stringify({ inputs: ticketIds.map(id => ({ id })) })
@@ -40,12 +40,17 @@ export default async function handler(req, res) {
       fetch('https://api.hubapi.com/crm/v4/associations/tickets/calls/batch/read', {
         method: 'POST', headers: h,
         body: JSON.stringify({ inputs: ticketIds.map(id => ({ id })) })
+      }),
+      fetch('https://api.hubapi.com/crm/v4/associations/tickets/communications/batch/read', {
+        method: 'POST', headers: h,
+        body: JSON.stringify({ inputs: ticketIds.map(id => ({ id })) })
       })
     ]);
 
     const contactAssoc = await contactAssocResp.json();
     const noteAssoc = await noteAssocResp.json();
     const callAssoc = await callAssocResp.json();
+    const smsAssoc = await smsAssocResp.json().catch(() => ({ results: [] }));
 
     // Build contact map
     const ticketContactMap = {};
@@ -74,6 +79,17 @@ export default async function handler(req, res) {
         const ids = (r.to || []).map(x => x.toObjectId);
         ticketCallMap[r.from.id] = ids;
         allCallIds.push(...ids);
+      }
+    }
+
+    // Build SMS/communications map
+    const ticketSmsMap = {};
+    const allSmsIds = [];
+    if (smsAssoc.results) {
+      for (const r of smsAssoc.results) {
+        const ids = (r.to || []).map(x => x.toObjectId);
+        ticketSmsMap[r.from.id] = ids;
+        allSmsIds.push(...ids);
       }
     }
 
@@ -142,12 +158,43 @@ export default async function handler(req, res) {
             type: 'call',
             timestamp: p.hs_timestamp || '',
             status: p.hs_call_status || '',
-            connected: p.hs_call_status === 'COMPLETED',
+            connected: (p.hs_call_status || '').toUpperCase() === 'COMPLETED',
             body: (p.hs_call_body || '').replace(/<[^>]+>/g, '').trim(),
             direction: p.hs_call_direction || '',
             durationMs: parseInt(p.hs_call_duration || '0') || 0,
-            ownerId: p.hubspot_owner_id || '',
+            ownerId: String(p.hubspot_owner_id || ''),
             title: p.hs_call_title || ''
+          };
+        }
+      }
+    }
+
+    // ── Step 5b: Batch-read SMS/communications ────────────────────────────
+    const smsDetailMap = {};
+    const smsIdsToFetch = [...new Set(allSmsIds)].slice(0, 300);
+    if (smsIdsToFetch.length > 0) {
+      const sr = await fetch('https://api.hubapi.com/crm/v3/objects/communications/batch/read', {
+        method: 'POST', headers: h,
+        body: JSON.stringify({
+          properties: ['hs_timestamp', 'hs_communication_body', 'hs_communication_channel_type', 'hubspot_owner_id', 'hs_communication_logged_from'],
+          inputs: smsIdsToFetch.map(id => ({ id }))
+        })
+      });
+      const sd = await sr.json().catch(() => ({ results: [] }));
+      if (sd.results) {
+        for (const s of sd.results) {
+          const p = s.properties;
+          const channel = (p.hs_communication_channel_type || '').toUpperCase();
+          smsDetailMap[s.id] = {
+            type: channel === 'SMS' ? 'sms' : (channel || 'message'),
+            timestamp: p.hs_timestamp || '',
+            status: 'SENT',
+            connected: false,
+            body: (p.hs_communication_body || '').replace(/<[^>]+>/g, '').trim(),
+            direction: (p.hs_communication_logged_from || 'AGENT').toUpperCase() === 'CONTACT' ? 'INBOUND' : 'OUTBOUND',
+            durationMs: 0,
+            ownerId: String(p.hubspot_owner_id || ''),
+            title: channel || 'SMS'
           };
         }
       }
@@ -164,7 +211,12 @@ export default async function handler(req, res) {
 
       const callIds = ticketCallMap[ticket.id] || [];
       const calls = callIds.map(id => callDetailMap[id]).filter(Boolean);
-      calls.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+      const smsIds = ticketSmsMap[ticket.id] || [];
+      const smsMsgs = smsIds.map(id => smsDetailMap[id]).filter(Boolean);
+
+      const allActivity = [...calls, ...smsMsgs];
+      allActivity.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
       return {
         ...ticket,
@@ -172,7 +224,7 @@ export default async function handler(req, res) {
         contactPhone: contact?.phone || null,
         contactEmail: contact?.email || null,
         latestNote: notes[0] ? { body: notes[0].body, timestamp: notes[0].timestamp } : null,
-        calls: calls.slice(0, 25)
+        calls: allActivity.slice(0, 30)
       };
     });
 
