@@ -4967,18 +4967,25 @@ function renderHSLeads(){
     ${_hsDayFilter>0?`<span style="font-size:.7rem;color:#ff7a59;font-weight:600;">${activeDays.length} lead${activeDays.length!==1?'s':''} on Day ${_hsDayFilter}</span><button onclick="setHSDayFilter(0)" style="font-size:.68rem;border:none;background:#fee2e2;color:#b91c1c;border-radius:6px;padding:3px 8px;cursor:pointer;font-weight:600;">✕ Clear</button>`:''}
   </div>`;
 
+  // ── Visual helpers ──
+  const _AVATAR_COLORS=['#ff7a59','#6366f1','#10b981','#f59e0b','#ec4899','#14b8a6','#3b82f6','#8b5cf6'];
+  function ownerAvatarColor(name){let h=0;for(const c of (name||''))h=(h*31+c.charCodeAt(0))%_AVATAR_COLORS.length;return _AVATAR_COLORS[h];}
+  function ownerInitials(name){const pts=(name||'').trim().split(/\s+/);return pts.length>1?(pts[0][0]+pts[1][0]).toUpperCase():(name||'??').slice(0,2).toUpperCase();}
+  const _STAGE_COLORS={'1072718881':'#60a5fa','1072718882':'#60a5fa','1072718883':'#f97316','1072718884':'#f59e0b','1072805486':'#f59e0b','1072805487':'#f59e0b','1072805488':'#f59e0b','1161141150':'#a78bfa','1072805489':'#a78bfa','1072805490':'#22c55e','1072805491':'#6b7280','1072805492':'#6b7280','1072805493':'#6b7280','1072805494':'#6b7280','1072805495':'#6b7280'};
+  function stageColor(id){return _STAGE_COLORS[id]||'#9ca3af';}
+
   function cadenceBar(l){
     const pct=Math.min(100,l.cadencePct||0);
     const color=pct>=100?'#22c55e':pct>=50?'#f97316':'#ef4444';
     const expCalls=Math.max(0,(l.expectedContacts||1)-1);
     const label=`${l.dailyCallsMade||0}/${expCalls} calls · ${l.dailySmsCount||0}/1 SMS · ${pct}%`;
-    return `<div style="margin-top:5px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">
-        <span style="font-size:.61rem;color:var(--g500);font-weight:600;">Day ${l.ageDays} Cadence</span>
-        <span style="font-size:.61rem;font-weight:700;color:${color};">${label}</span>
+    return `<div style="margin-top:7px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+        <span style="font-size:.6rem;color:#9ca3af;font-weight:500;">Today's cadence</span>
+        <span style="font-size:.6rem;font-weight:700;color:${color};">${label}</span>
       </div>
-      <div style="height:5px;background:#e5e7eb;border-radius:99px;overflow:hidden;">
-        <div style="height:100%;width:${pct}%;background:${color};border-radius:99px;"></div>
+      <div style="height:4px;background:#f0f0f0;border-radius:99px;overflow:hidden;">
+        <div style="height:100%;width:${pct}%;background:${color};border-radius:99px;transition:width .3s;"></div>
       </div>
     </div>`;
   }
@@ -4987,7 +4994,7 @@ function renderHSLeads(){
     const ts=new Date(now2.getFullYear(),now2.getMonth(),now2.getDate());
     const te=new Date(ts.getTime()+86400000);
     const hasCalls=(l.calls||[]).some(c=>String(c.ownerId)===String(l.ownerId)&&c.type==='call'&&new Date(c.timestamp)>=ts&&new Date(c.timestamp)<te);
-    return `<div style="margin-top:5px;"><span style="font-size:.62rem;padding:2px 8px;border-radius:99px;font-weight:600;background:${hasCalls?'#dcfce7':'#fee2e2'};color:${hasCalls?'#166534':'#b91c1c'};">${hasCalls?'✅ Already Called':'📵 Not Called'}</span></div>`;
+    return `<div style="margin-top:7px;"><span style="font-size:.62rem;padding:2px 9px;border-radius:99px;font-weight:600;background:${hasCalls?'#dcfce7':'#fee2e2'};color:${hasCalls?'#15803d':'#b91c1c'};">${hasCalls?'✅ Called today':'Not called today'}</span></div>`;
   }
 
   function callHistoryItem(c){
@@ -5018,78 +5025,100 @@ function renderHSLeads(){
   }
 
   function renderLeadCard(l,showOwner){
-    const pct=Math.min(100,l.cadencePct||0);
-    const hasCalled3=(l.calls||[]).some(c=>String(c.ownerId)===String(l.ownerId)&&c.type==='call');
-    const borderColor=l.ageBucket==='3rd-week'?(hasCalled3?'#22c55e':'#ef4444'):(pct>=100?'#22c55e':'#f97316');
     const displayName=l.contactName||l.subject||'(no name)';
     const ownerCalls=(l.calls||[]).filter(c=>String(c.ownerId)===String(l.ownerId));
     const lastOwnerCall=ownerCalls[0]||null;
     const connected=lastOwnerCall&&(lastOwnerCall.connected||(lastOwnerCall.status||'').toUpperCase()==='COMPLETED');
-    const lastCallStr=lastOwnerCall?(connected?'✅ Connected':'⚠️ No Answer')+' · '+hsRelTime(lastOwnerCall.timestamp):'No calls yet';
+    const lastCallStr=lastOwnerCall?(connected?'✅ '+hsRelTime(lastOwnerCall.timestamp):'⚠️ '+hsRelTime(lastOwnerCall.timestamp)):'—';
     const allCalls=l.calls||[];
-    return `<div style="background:#fff;border-radius:9px;box-shadow:var(--sh);border-left:4px solid ${borderColor};margin-bottom:8px;">
-      <div style="padding:10px 13px;cursor:pointer;" onclick="toggleLeadDetail('${l.id}')">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+    const avatarBg=ownerAvatarColor(l.ownerName);
+    const initials=ownerInitials(l.ownerName);
+    const sdot=stageColor(l.stageId);
+    return `<div style="background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.06);border:1px solid #f0f0f0;margin-bottom:8px;">
+      <div style="padding:13px 14px;cursor:pointer;" onclick="toggleLeadDetail('${l.id}')">
+        <div style="display:flex;align-items:flex-start;gap:10px;">
           <div style="flex:1;min-width:0;">
-            <div style="font-size:.82rem;font-weight:700;color:var(--g800);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${displayName}</div>
-            <div style="font-size:.7rem;color:var(--g600);margin-bottom:3px;">📞 ${l.contactPhone||'No phone'}${showOwner?` &nbsp;·&nbsp; <strong>${l.ownerName}</strong>`:''}</div>
-            <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;">
-              <span style="font-size:.62rem;background:#fff3e0;color:#e65100;padding:2px 7px;border-radius:99px;font-weight:600;">${l.stageName}</span>
-              <span style="font-size:.62rem;font-weight:700;color:${borderColor};">Day ${l.ageDays}</span>
-              <span style="font-size:.62rem;color:var(--g500);">${lastCallStr}</span>
+            <div style="font-size:.84rem;font-weight:700;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${displayName}</div>
+            <div style="font-size:.69rem;color:#9ca3af;margin-top:2px;">${l.contactPhone||'No phone'}</div>
+            <div style="display:flex;align-items:center;gap:5px;margin-top:7px;">
+              <span style="width:7px;height:7px;background:${sdot};border-radius:50%;flex-shrink:0;display:inline-block;"></span>
+              <span style="font-size:.68rem;color:#6b7280;">${l.stageName}</span>
+              <span style="font-size:.63rem;color:#9ca3af;margin-left:4px;">${lastCallStr}</span>
             </div>
           </div>
-          <span style="font-size:.7rem;color:var(--g400);flex-shrink:0;">▼</span>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;">
+            <div style="width:30px;height:30px;background:${avatarBg};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:700;color:#fff;" title="${l.ownerName}">${initials}</div>
+            <span style="font-size:.64rem;font-weight:700;color:#ff7a59;background:#fff3e0;padding:2px 8px;border-radius:99px;">Day ${l.ageDays}</span>
+            ${showOwner?`<span style="font-size:.6rem;color:#9ca3af;">${l.ownerName.split(' ')[0]}</span>`:''}
+          </div>
         </div>
         ${l.ageBucket==='3rd-week'?calledBadge(l):cadenceBar(l)}
       </div>
-      <div id="ld-${l.id}" style="display:none;border-top:1px solid #f3f4f6;padding:10px 13px;">
+      <div id="ld-${l.id}" style="display:none;border-top:1px solid #f3f4f6;padding:10px 14px;">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
-          <span style="font-size:.68rem;font-weight:600;color:var(--g600);">Stage:</span>
+          <span style="font-size:.68rem;font-weight:600;color:#6b7280;">Stage:</span>
           ${stageDropdown(l)}
           <a href="https://app.hubspot.com/contacts/45809585/ticket/${l.id}" target="_blank" style="font-size:.67rem;color:#ff7a59;text-decoration:none;font-weight:600;border:1px solid #ff7a59;padding:3px 8px;border-radius:6px;">🔗 HubSpot</a>
         </div>
-        <div style="font-size:.67rem;font-weight:700;color:var(--g600);margin-bottom:4px;">Call History (${allCalls.length})</div>
+        <div style="font-size:.67rem;font-weight:700;color:#6b7280;margin-bottom:4px;">Call History (${allCalls.length})</div>
         <div style="border:1px solid #f3f4f6;border-radius:6px;overflow:hidden;max-height:210px;overflow-y:auto;">
-          ${allCalls.length>0?allCalls.map(callHistoryItem).join(''):'<div style="padding:8px;color:var(--g400);font-size:.69rem;">No calls recorded</div>'}
+          ${allCalls.length>0?allCalls.map(callHistoryItem).join(''):'<div style="padding:8px;color:#9ca3af;font-size:.69rem;">No calls recorded</div>'}
         </div>
       </div>
     </div>`;
   }
 
   function renderLeadRow(l,showOwner){
-    const TH='padding:7px 10px;text-align:left;font-size:.67rem;font-weight:700;color:var(--g600);border-bottom:2px solid #e5e7eb;white-space:nowrap;';
-    const TD='padding:7px 10px;font-size:.71rem;color:var(--g800);border-bottom:1px solid #f3f4f6;vertical-align:middle;';
+    const TD='padding:10px 12px;border-bottom:1px solid #f3f4f6;vertical-align:middle;';
     const pct=Math.min(100,l.cadencePct||0);
     const bc=pct>=100?'#22c55e':pct>=50?'#f97316':'#ef4444';
     const displayName=l.contactName||l.subject||'(no name)';
     const ownerCalls=(l.calls||[]).filter(c=>String(c.ownerId)===String(l.ownerId));
     const loc=ownerCalls[0]||null;
     const conn=loc&&(loc.connected||(loc.status||'').toUpperCase()==='COMPLETED');
-    const lcs=loc?(conn?'✅':'⚠️')+' '+hsRelTime(loc.timestamp):'—';
+    const lcs=loc?(conn?'✅ '+hsRelTime(loc.timestamp):'⚠️ '+hsRelTime(loc.timestamp)):'—';
     const allCalls=l.calls||[];
     const rowId='row-'+l.id;
-    return `<tr style="${pct<100?'background:#fff8f8;':''}cursor:pointer;" onclick="toggleLeadDetail('${rowId}')">
-      <td style="${TD}font-weight:600;">${displayName}</td>
-      <td style="${TD}color:var(--g600);">${l.contactPhone||'—'}</td>
-      ${showOwner?`<td style="${TD}">${l.ownerName}</td>`:''}
-      <td style="${TD}"><span style="font-size:.61rem;background:#fff3e0;color:#e65100;padding:2px 6px;border-radius:99px;font-weight:600;">${l.stageName}</span></td>
-      <td style="${TD}font-weight:700;color:${l.ageBucket==='3rd-week'?'#ef4444':'#f97316'};">Day ${l.ageDays}</td>
-      <td style="${TD}font-size:.67rem;color:var(--g600);">${lcs}</td>
+    const avatarBg=ownerAvatarColor(l.ownerName);
+    const initials=ownerInitials(l.ownerName);
+    const sdot=stageColor(l.stageId);
+    const hasCalled=l.ageBucket==='3rd-week'&&(l.calls||[]).some(c=>String(c.ownerId)===String(l.ownerId)&&c.type==='call');
+    return `<tr style="background:#fff;cursor:pointer;" onmouseenter="this.style.background='#fafafa'" onmouseleave="this.style.background='#fff'" onclick="toggleLeadDetail('${rowId}')">
       <td style="${TD}">
-        ${l.ageBucket==='3rd-week'?`<span style="font-size:.62rem;padding:2px 8px;border-radius:99px;font-weight:600;background:${(l.calls||[]).some(c=>String(c.ownerId)===String(l.ownerId)&&c.type==='call')?'#dcfce7':'#fee2e2'};color:${(l.calls||[]).some(c=>String(c.ownerId)===String(l.ownerId)&&c.type==='call')?'#166534':'#b91c1c'};">${(l.calls||[]).some(c=>String(c.ownerId)===String(l.ownerId)&&c.type==='call')?'✅ Called':'📵 Not Called'}</span>`:`<div style="display:flex;align-items:center;gap:5px;"><div style="flex:1;height:5px;background:#e5e7eb;border-radius:99px;overflow:hidden;min-width:45px;"><div style="height:100%;width:${pct}%;background:${bc};border-radius:99px;"></div></div><span style="font-size:.61rem;color:${bc};font-weight:700;">${pct}%</span></div>`}
+        <div style="font-size:.78rem;font-weight:600;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;">${displayName}</div>
+        <div style="font-size:.67rem;color:#9ca3af;margin-top:1px;">${l.contactPhone||'—'}</div>
+      </td>
+      <td style="${TD}">
+        <div style="display:flex;align-items:center;gap:5px;">
+          <span style="width:7px;height:7px;background:${sdot};border-radius:50%;flex-shrink:0;display:inline-block;"></span>
+          <span style="font-size:.68rem;color:#374151;">${l.stageName}</span>
+        </div>
+      </td>
+      ${showOwner?`<td style="${TD}">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div style="width:24px;height:24px;background:${avatarBg};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:700;color:#fff;flex-shrink:0;">${initials}</div>
+          <span style="font-size:.7rem;color:#374151;white-space:nowrap;">${l.ownerName.split(' ')[0]}</span>
+        </div>
+      </td>`:''}
+      <td style="${TD}"><span style="font-size:.72rem;font-weight:700;color:#ff7a59;">Day ${l.ageDays}</span></td>
+      <td style="${TD}font-size:.67rem;color:#6b7280;">${lcs}</td>
+      <td style="${TD}">
+        ${l.ageBucket==='3rd-week'
+          ?`<span style="font-size:.62rem;padding:2px 8px;border-radius:99px;font-weight:600;background:${hasCalled?'#dcfce7':'#fee2e2'};color:${hasCalled?'#166534':'#b91c1c'};">${hasCalled?'Called':'Not Called'}</span>`
+          :`<div style="display:flex;align-items:center;gap:5px;"><div style="flex:1;height:4px;background:#f0f0f0;border-radius:99px;overflow:hidden;min-width:45px;"><div style="height:100%;width:${pct}%;background:${bc};border-radius:99px;"></div></div><span style="font-size:.61rem;color:${bc};font-weight:700;">${pct}%</span></div>`
+        }
       </td>
     </tr>
-    <tr id="ld-${rowId}" style="display:none;"><td colspan="${showOwner?7:6}" style="padding:0;">
+    <tr id="ld-${rowId}" style="display:none;"><td colspan="${showOwner?6:5}" style="padding:0;">
       <div style="padding:10px 13px;background:#f9fafb;border-bottom:1px solid #f3f4f6;">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
-          <span style="font-size:.68rem;font-weight:600;color:var(--g600);">Stage:</span>
+          <span style="font-size:.68rem;font-weight:600;color:#6b7280;">Stage:</span>
           ${stageDropdown(l)}
           <a href="https://app.hubspot.com/contacts/45809585/ticket/${l.id}" target="_blank" style="font-size:.67rem;color:#ff7a59;text-decoration:none;font-weight:600;border:1px solid #ff7a59;padding:3px 8px;border-radius:6px;">🔗 HubSpot</a>
         </div>
-        <div style="font-size:.67rem;font-weight:700;color:var(--g600);margin-bottom:4px;">Call History (${allCalls.length})</div>
+        <div style="font-size:.67rem;font-weight:700;color:#6b7280;margin-bottom:4px;">Call History (${allCalls.length})</div>
         <div style="border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;max-height:180px;overflow-y:auto;background:#fff;">
-          ${allCalls.length>0?allCalls.map(callHistoryItem).join(''):'<div style="padding:8px;color:var(--g400);font-size:.69rem;">No calls recorded</div>'}
+          ${allCalls.length>0?allCalls.map(callHistoryItem).join(''):'<div style="padding:8px;color:#9ca3af;font-size:.69rem;">No calls recorded</div>'}
         </div>
       </div>
     </td></tr>`;
@@ -5098,28 +5127,33 @@ function renderHSLeads(){
   function renderSection(secId,title,icon,leads,showOwner,mode){
     const sorted=[...leads].sort((a,b)=>(a.cadencePct||0)-(b.cadencePct||0)||(b.ageDays||0)-(a.ageDays||0));
     const lacking=leads.filter(l=>(l.cadencePct||0)<100).length;
-    const TH='padding:7px 10px;text-align:left;font-size:.67rem;font-weight:700;color:var(--g600);border-bottom:2px solid #e5e7eb;white-space:nowrap;';
+    const TH='padding:9px 12px;text-align:left;font-size:.66rem;font-weight:700;color:#9ca3af;background:#f9fafb;border-bottom:1px solid #f0f0f0;white-space:nowrap;letter-spacing:.03em;text-transform:uppercase;';
     let body;
     if(mode==='list'){
-      body=`<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;background:#fff;border-radius:9px;box-shadow:var(--sh);overflow:hidden;">
-        <thead><tr>
-          <th style="${TH}">Name</th><th style="${TH}">Phone</th>
-          ${showOwner?`<th style="${TH}">Agent</th>`:''}
-          <th style="${TH}">Stage</th><th style="${TH}">Age</th><th style="${TH}">Last Call</th><th style="${TH}">Cadence</th>
-        </tr></thead>
-        <tbody>${sorted.map(l=>renderLeadRow(l,showOwner)).join('')}</tbody>
-      </table></div>`;
+      body=`<div style="overflow-x:auto;border:1px solid #f0f0f0;border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+        <table style="width:100%;border-collapse:collapse;background:#fff;">
+          <thead><tr>
+            <th style="${TH}">Contact</th>
+            <th style="${TH}">Stage</th>
+            ${showOwner?`<th style="${TH}">Agent</th>`:''}
+            <th style="${TH}">Day</th>
+            <th style="${TH}">Last Call</th>
+            <th style="${TH}">Cadence</th>
+          </tr></thead>
+          <tbody>${sorted.map(l=>renderLeadRow(l,showOwner)).join('')}</tbody>
+        </table>
+      </div>`;
     } else {
-      body=`<div>${sorted.map(l=>renderLeadCard(l,showOwner)).join('')}</div>`;
+      body=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px;">${sorted.map(l=>renderLeadCard(l,showOwner)).join('')}</div>`;
     }
-    return `<div style="margin-bottom:14px;">
-      <div onclick="toggleSection('${secId}')" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:9px 13px;background:#f9fafb;border-radius:9px;margin-bottom:6px;border:1px solid #e5e7eb;user-select:none;">
+    return `<div style="margin-bottom:22px;">
+      <div onclick="toggleSection('${secId}')" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:8px 0 10px;border-bottom:1px solid #f0f0f0;margin-bottom:10px;user-select:none;">
         <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">
-          <span style="font-size:.76rem;font-weight:700;color:var(--g800);">${icon} ${title}</span>
-          <span style="font-size:.67rem;background:#e5e7eb;color:var(--g600);padding:2px 8px;border-radius:99px;font-weight:600;">${leads.length} leads</span>
-          ${lacking>0?`<span style="font-size:.65rem;color:#ef4444;font-weight:600;">⚠️ ${lacking} need calls</span>`:'<span style="font-size:.65rem;color:#22c55e;font-weight:600;">✅ All on cadence</span>'}
+          <span style="font-size:.78rem;font-weight:700;color:#374151;">${icon} ${title}</span>
+          <span style="font-size:.66rem;background:#f3f4f6;color:#6b7280;padding:2px 9px;border-radius:99px;font-weight:600;">${leads.length}</span>
+          ${lacking>0?`<span style="font-size:.65rem;background:#fee2e2;color:#b91c1c;padding:2px 8px;border-radius:99px;font-weight:600;">⚠️ ${lacking} need calls</span>`:`<span style="font-size:.65rem;background:#dcfce7;color:#166534;padding:2px 8px;border-radius:99px;font-weight:600;">✅ On cadence</span>`}
         </div>
-        <span id="sect-arrow-${secId}" style="color:var(--g400);">▼</span>
+        <span id="sect-arrow-${secId}" style="color:#9ca3af;font-size:.75rem;">▼</span>
       </div>
       <div id="sect-body-${secId}">${body}</div>
     </div>`;
@@ -5153,11 +5187,23 @@ function renderHSLeads(){
     const w2=activeDays.filter(l=>l.ageBucket==='2nd-week');
     const w3=activeDays.filter(l=>l.ageBucket==='3rd-week');
     const totalLack=activeDays.filter(l=>(l.cadencePct||0)<100).length;
-    const summary=`<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
-      <span style="font-size:.72rem;background:#f3f4f6;padding:4px 10px;border-radius:99px;color:var(--g700);">Showing: <strong>${activeDays.length}</strong>${_hsDayFilter>0?` (Day ${_hsDayFilter} only)`:` of ${_hsLeads.length}`}</span>
-      <span style="font-size:.72rem;background:#fee2e2;padding:4px 10px;border-radius:99px;color:#b91c1c;">⚠️ Needs Call: <strong>${totalLack}</strong></span>
-      <span style="font-size:.72rem;background:#fff3e0;padding:4px 10px;border-radius:99px;color:#e65100;">Days 1–8: <strong>${w2.length}</strong></span>
-      <span style="font-size:.72rem;background:#fee2e2;padding:4px 10px;border-radius:99px;color:#ef4444;">Days 9–15: <strong>${w3.length}</strong></span>
+    const summary=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-bottom:20px;">
+      <div style="background:#fff;border:1px solid #f0f0f0;border-radius:10px;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+        <div style="font-size:1.5rem;font-weight:800;color:#ff7a59;line-height:1;">${activeDays.length}</div>
+        <div style="font-size:.67rem;color:#9ca3af;margin-top:4px;">Active${_hsDayFilter>0?` · Day ${_hsDayFilter}`:''}</div>
+      </div>
+      <div style="background:#fff;border:1px solid #f0f0f0;border-radius:10px;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+        <div style="font-size:1.5rem;font-weight:800;color:#ef4444;line-height:1;">${totalLack}</div>
+        <div style="font-size:.67rem;color:#9ca3af;margin-top:4px;">Need Call</div>
+      </div>
+      <div style="background:#fff;border:1px solid #f0f0f0;border-radius:10px;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+        <div style="font-size:1.5rem;font-weight:800;color:#f97316;line-height:1;">${w2.length}</div>
+        <div style="font-size:.67rem;color:#9ca3af;margin-top:4px;">Days 1–8</div>
+      </div>
+      <div style="background:#fff;border:1px solid #f0f0f0;border-radius:10px;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+        <div style="font-size:1.5rem;font-weight:800;color:#ef4444;line-height:1;">${w3.length}</div>
+        <div style="font-size:.67rem;color:#9ca3af;margin-top:4px;">Days 9–15</div>
+      </div>
     </div>`;
     let html=dayFilterHtml+summary;
     if(w2.length>0) html+=renderSection('tl-w2','2nd Week Leads — Days 1–8','📋',w2,true,_hsViewMode);
