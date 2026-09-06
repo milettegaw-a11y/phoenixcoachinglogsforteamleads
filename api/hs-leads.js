@@ -118,36 +118,94 @@ export default async function handler(req, res) {
       }
     }
 
-    // ── Step 3b: Fetch calls + SMS associated with contacts (not just tickets) ──
-    // HubSpot often logs calls/SMS on the contact record, not the ticket
+    // ── Step 3b: Search calls + SMS by owner (reliable alternative to association lookup) ──
+    // HubSpot association APIs for contacts→calls are unreliable; search directly by owner.
     const contactCallMap = {};  // contactId → [callIds]
     const contactSmsMap = {};   // contactId → [smsIds]
-    if (allContactIds.length > 0) {
-      const contactIdsToCheck = allContactIds.slice(0, 100);
-      const [cCallResp, cSmsResp] = await Promise.all([
-        fetch('https://api.hubapi.com/crm/v4/associations/contacts/calls/batch/read', {
+    const fifteenDaysAgo = Date.now() - (15 * 86400000);
+    const ticketOwnerIds = [...new Set(tickets.map(t => t.properties.hubspot_owner_id).filter(Boolean))];
+    if (ticketOwnerIds.length > 0) {
+      const ownerFilter = { propertyName: 'hubspot_owner_id', operator: 'IN', values: ticketOwnerIds };
+      const dateFilter  = { propertyName: 'hs_timestamp', operator: 'GTE', value: String(fifteenDaysAgo) };
+      const [searchCallResp, searchSmsResp] = await Promise.all([
+        fetch('https://api.hubapi.com/crm/v3/objects/calls/search', {
           method: 'POST', headers: h,
-          body: JSON.stringify({ inputs: contactIdsToCheck.map(id => ({ id })) })
+          body: JSON.stringify({ filterGroups: [{ filters: [ownerFilter, dateFilter] }],
+            properties: ['hs_timestamp','hs_call_status','hs_call_body','hs_call_direction','hs_call_duration','hubspot_owner_id','hs_call_title'],
+            limit: 100 })
         }),
-        fetch('https://api.hubapi.com/crm/v4/associations/contacts/communications/batch/read', {
+        fetch('https://api.hubapi.com/crm/v3/objects/communications/search', {
           method: 'POST', headers: h,
-          body: JSON.stringify({ inputs: contactIdsToCheck.map(id => ({ id })) })
+          body: JSON.stringify({ filterGroups: [{ filters: [ownerFilter, dateFilter] }],
+            properties: ['hs_timestamp','hs_communication_body','hs_communication_channel_type','hubspot_owner_id','hs_communication_logged_from'],
+            limit: 100 })
         })
       ]);
-      const cCallAssoc = await cCallResp.json().catch(() => ({ results: [] }));
-      const cSmsAssoc = await cSmsResp.json().catch(() => ({ results: [] }));
-      if (cCallAssoc.results) {
-        for (const r of cCallAssoc.results) {
-          const ids = (r.to || []).map(x => x.toObjectId);
-          contactCallMap[r.from.id] = ids;
-          ids.forEach(id => { if (!allCallIds.includes(id)) allCallIds.push(id); });
+      const searchCallData = await searchCallResp.json().catch(() => ({ results: [] }));
+      const searchSmsData  = await searchSmsResp.json().catch(() => ({ results: [] }));
+
+      // Store details and collect IDs for contact reverse-lookup
+      const newCallIds = [];
+      for (const c of (searchCallData.results || [])) {
+        const p = c.properties;
+        // Merge into callDetailMap (may already exist from ticket association)
+        if (!allCallIds.includes(c.id)) allCallIds.push(c.id);
+        newCallIds.push(c.id);
+        // Pre-populate detail map (Step 5 will overwrite with same data — fine)
+        const callDetailMapEntry = {
+          type: 'call', timestamp: p.hs_timestamp || '',
+          status: p.hs_call_status || '',
+          connected: (p.hs_call_status || '').toUpperCase() === 'COMPLETED',
+          body: (p.hs_call_body || '').replace(/<[^>]+>/g, '').trim(),
+          direction: p.hs_call_direction || '',
+          durationMs: parseInt(p.hs_call_duration || '0') || 0,
+          ownerId: String(p.hubspot_owner_id || ''), title: p.hs_call_title || ''
+        };
+        // We'll store these in a temp map keyed by ID to merge in Step 5
+        allCallIds._detailCache = allCallIds._detailCache || {};
+        allCallIds._detailCache[c.id] = callDetailMapEntry;
+      }
+      const newSmsIds = [];
+      for (const s of (searchSmsData.results || [])) {
+        const p = s.properties;
+        if (!allSmsIds.includes(s.id)) allSmsIds.push(s.id);
+        newSmsIds.push(s.id);
+        allSmsIds._detailCache = allSmsIds._detailCache || {};
+        const channel = (p.hs_communication_channel_type || '').toUpperCase();
+        allSmsIds._detailCache[s.id] = {
+          type: channel === 'SMS' ? 'sms' : (channel || 'message'), timestamp: p.hs_timestamp || '',
+          status: 'SENT', connected: false,
+          body: (p.hs_communication_body || '').replace(/<[^>]+>/g, '').trim(),
+          direction: (p.hs_communication_logged_from || 'AGENT').toUpperCase() === 'CONTACT' ? 'INBOUND' : 'OUTBOUND',
+          durationMs: 0, ownerId: String(p.hubspot_owner_id || ''), title: channel || 'SMS'
+        };
+      }
+
+      // Reverse-associate: calls → contacts, SMS → contacts
+      const [callContactResp, smsContactResp] = await Promise.all([
+        newCallIds.length > 0 ? fetch('https://api.hubapi.com/crm/v4/associations/calls/contacts/batch/read', {
+          method: 'POST', headers: h,
+          body: JSON.stringify({ inputs: newCallIds.slice(0, 100).map(id => ({ id })) })
+        }) : Promise.resolve(null),
+        newSmsIds.length > 0 ? fetch('https://api.hubapi.com/crm/v4/associations/communications/contacts/batch/read', {
+          method: 'POST', headers: h,
+          body: JSON.stringify({ inputs: newSmsIds.slice(0, 100).map(id => ({ id })) })
+        }) : Promise.resolve(null)
+      ]);
+      const callContactData = callContactResp ? await callContactResp.json().catch(() => ({ results: [] })) : { results: [] };
+      const smsContactData  = smsContactResp  ? await smsContactResp.json().catch(() => ({ results: [] }))  : { results: [] };
+      for (const r of (callContactData.results || [])) {
+        for (const to of (r.to || [])) {
+          const cId = String(to.toObjectId);
+          if (!contactCallMap[cId]) contactCallMap[cId] = [];
+          if (!contactCallMap[cId].includes(r.from.id)) contactCallMap[cId].push(r.from.id);
         }
       }
-      if (cSmsAssoc.results) {
-        for (const r of cSmsAssoc.results) {
-          const ids = (r.to || []).map(x => x.toObjectId);
-          contactSmsMap[r.from.id] = ids;
-          ids.forEach(id => { if (!allSmsIds.includes(id)) allSmsIds.push(id); });
+      for (const r of (smsContactData.results || [])) {
+        for (const to of (r.to || [])) {
+          const cId = String(to.toObjectId);
+          if (!contactSmsMap[cId]) contactSmsMap[cId] = [];
+          if (!contactSmsMap[cId].includes(r.from.id)) contactSmsMap[cId].push(r.from.id);
         }
       }
     }
@@ -175,7 +233,7 @@ export default async function handler(req, res) {
     }
 
     // ── Step 5: Batch-read calls ──────────────────────────────────────────
-    const callDetailMap = {};
+    const callDetailMap = Object.assign({}, allCallIds._detailCache || {});
     const callIdsToFetch = [...new Set(allCallIds)].slice(0, 300);
     if (callIdsToFetch.length > 0) {
       const cr = await fetch('https://api.hubapi.com/crm/v3/objects/calls/batch/read', {
@@ -205,7 +263,7 @@ export default async function handler(req, res) {
     }
 
     // ── Step 5b: Batch-read SMS/communications ────────────────────────────
-    const smsDetailMap = {};
+    const smsDetailMap = Object.assign({}, allSmsIds._detailCache || {});
     const smsIdsToFetch = [...new Set(allSmsIds)].slice(0, 300);
     if (smsIdsToFetch.length > 0) {
       const sr = await fetch('https://api.hubapi.com/crm/v3/objects/communications/batch/read', {
@@ -247,10 +305,11 @@ export default async function handler(req, res) {
       // Merge ticket-level + contact-level calls (deduplicate by id)
       const ticketCallIds = new Set(ticketCallMap[ticket.id] || []);
       const ticketSmsIdSet = new Set(ticketSmsMap[ticket.id] || []);
-      // Add contact-level calls/SMS for all contacts on this ticket
+      // Add contact-level calls/SMS (from owner search + reverse-association)
       for (const cId of cIds) {
-        (contactCallMap[cId] || []).forEach(id => ticketCallIds.add(id));
-        (contactSmsMap[cId] || []).forEach(id => ticketSmsIdSet.add(id));
+        const cIdStr = String(cId);
+        (contactCallMap[cIdStr] || []).forEach(id => ticketCallIds.add(id));
+        (contactSmsMap[cIdStr] || []).forEach(id => ticketSmsIdSet.add(id));
       }
       const calls = [...ticketCallIds].map(id => callDetailMap[id]).filter(Boolean);
       const smsMsgs = [...ticketSmsIdSet].map(id => smsDetailMap[id]).filter(Boolean);
