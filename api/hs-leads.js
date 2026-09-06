@@ -232,8 +232,8 @@ export default async function handler(req, res) {
     }
 
     // PATH C: Reverse-associate found IDs → contacts AND → tickets
-    const dedupeCallIds = [...new Set(newCallIds)].slice(0, 400);
-    const dedupeSmsIds  = [...new Set(newSmsIds)].slice(0, 400);
+    const dedupeCallIds = [...new Set(newCallIds)].slice(0, 1000);
+    const dedupeSmsIds  = [...new Set(newSmsIds)].slice(0, 1000);
     const [callContactResp, callTicketResp, smsContactResp, smsTicketResp] = await Promise.all([
       dedupeCallIds.length > 0 ? hsFetch('https://api.hubapi.com/crm/v4/associations/calls/contacts/batch/read', {
         method: 'POST', headers: h, body: JSON.stringify({ inputs: dedupeCallIds.map(id => ({ id })) })

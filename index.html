@@ -4919,9 +4919,11 @@ async function fetchHSLeads(){
     _hsLeads=allResults.map(t=>{
       const p=t.properties;
       // Age is counted from this ticket's own createdate (the "Sales Call Required (2nd week lead)" ticket).
-      const created=p.createdate?new Date(p.createdate):null;
+      // NOTE: p.createdate is an epoch-ms STRING from HubSpot (e.g. "1705363200000"), not an ISO string.
+      // new Date("1705363200000") returns Invalid Date — must use hsTs() to parse correctly.
+      const createdMs=hsTs(p.createdate);
       // Day 1 = today; +1 so created today = day 1, yesterday = day 2, etc.
-      const ageDays=created?Math.max(1,Math.floor((now-created)/86400000)+1):1;
+      const ageDays=createdMs?Math.max(1,Math.floor((now-createdMs)/86400000)+1):1;
       const ownerId=p.hubspot_owner_id;
       const ownerName=HS_OWNERS[ownerId]||'Owner #'+ownerId;
       const stageId=p.hs_pipeline_stage;
