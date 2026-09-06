@@ -5055,8 +5055,7 @@ async function loadEmailTab(lid,contactId){
     const d=await r.json();
     const emails=d.emails||[];
     if(emails.length===0){body.innerHTML='<div style="padding:14px;text-align:center;color:#9ca3af;font-size:.72rem;">No emails found in HubSpot</div>';_emailLoaded[lid]=true;return;}
-    const fmt=ts=>ts?new Date(ts).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';
-    const emailRow=e=>{
+    const fmt=ts=>{const ms=hsTs(ts);return ms?new Date(ms).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';};    const emailRow=e=>{
       const isIn=(e.direction||'').toUpperCase()==='INBOUND';
       const bg=isIn?'#f0fdf4':'#f8f9fa';
       const badge=isIn?'<span style="background:#dcfce7;color:#166534;font-size:.55rem;font-weight:700;padding:1px 6px;border-radius:99px;margin-left:5px;">Reply</span>':'<span style="background:#e0e7ff;color:#3730a3;font-size:.55rem;font-weight:700;padding:1px 6px;border-radius:99px;margin-left:5px;">Sent</span>';
@@ -5157,15 +5156,15 @@ function renderHSLeads(){
     </div>`;
   }
   function calledBadge(l){
-    const now2=new Date();
-    const ts=new Date(now2.getFullYear(),now2.getMonth(),now2.getDate());
-    const te=new Date(ts.getTime()+86400000);
-    const hasCalls=(l.calls||[]).some(c=>String(c.ownerId)===String(l.ownerId)&&c.type==='call'&&new Date(c.timestamp)>=ts&&new Date(c.timestamp)<te);
-    return `<div style="margin-top:7px;"><span style="font-size:.62rem;padding:2px 9px;border-radius:99px;font-weight:600;background:${hasCalls?'#dcfce7':'#fee2e2'};color:${hasCalls?'#15803d':'#b91c1c'};">${hasCalls?'✅ Called today':'Not called today'}</span></div>`;
+    // Days 9-15: check if ANY owner call exists on this lead (not just today)
+    const hasCalls=(l.calls||[]).some(c=>String(c.ownerId)===String(l.ownerId)&&c.type==='call');
+    const lastOwnerCall=(l.calls||[]).find(c=>String(c.ownerId)===String(l.ownerId)&&c.type==='call');
+    const lastStr=lastOwnerCall?hsRelTime(lastOwnerCall.timestamp):'';
+    return `<div style="margin-top:7px;"><span style="font-size:.62rem;padding:2px 9px;border-radius:99px;font-weight:600;background:${hasCalls?'#dcfce7':'#fee2e2'};color:${hasCalls?'#15803d':'#b91c1c'};">${hasCalls?'✅ Called · '+lastStr:'⚠️ Needs to be contacted'}</span></div>`;
   }
 
   function callHistoryItem(c){
-    const ts=c.timestamp?new Date(c.timestamp).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';
+    const ts=c.timestamp?(()=>{const ms=hsTs(c.timestamp);return ms?new Date(ms).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):''})():'';
     const isSms=c.type==='sms'||c.type==='message'||(c.type||'').toLowerCase().includes('sms');
     const connected=!isSms&&(c.connected||(c.status||'').toUpperCase()==='COMPLETED');
     const dir=(c.direction||'').toUpperCase()==='INBOUND'?'📨 In':'📤 Out';
@@ -5194,7 +5193,7 @@ function renderHSLeads(){
     const cid=l.contactId||'';
     const smsBubble=c=>{
       const isOut=(c.direction||'').toUpperCase()!=='INBOUND';
-      const ts=c.timestamp?new Date(c.timestamp).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';
+      const ts=c.timestamp?(()=>{const ms=hsTs(c.timestamp);return ms?new Date(ms).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):''})():'';
       const body=(c.body||'').trim()||'(no message body)';
       return `<div style="display:flex;flex-direction:column;align-items:${isOut?'flex-end':'flex-start'};margin-bottom:8px;">
         <div style="max-width:78%;background:${isOut?'#ff7a59':'#f3f4f6'};color:${isOut?'#fff':'#111'};padding:8px 12px;border-radius:${isOut?'12px 12px 2px 12px':'12px 12px 12px 2px'};font-size:.75rem;line-height:1.5;">${body}</div>
@@ -5392,7 +5391,7 @@ function renderHSLeads(){
       <td style="${TD}font-size:.67rem;color:#6b7280;">${lcs}</td>
       <td style="${TD}">
         ${l.ageBucket==='3rd-week'
-          ?`<span style="font-size:.62rem;padding:2px 8px;border-radius:99px;font-weight:600;background:${hasCalled?'#dcfce7':'#fee2e2'};color:${hasCalled?'#166534':'#b91c1c'};">${hasCalled?'Called':'Not Called'}</span>`
+          ?`<span style="font-size:.62rem;padding:2px 8px;border-radius:99px;font-weight:600;background:${hasCalled?'#dcfce7':'#fee2e2'};color:${hasCalled?'#166534':'#b91c1c'};">${hasCalled?'✅ Called':'⚠️ Needs to be contacted'}</span>`
           :`<div style="display:flex;align-items:center;gap:5px;"><div style="flex:1;height:4px;background:#f0f0f0;border-radius:99px;overflow:hidden;min-width:45px;"><div style="height:100%;width:${pct}%;background:${bc};border-radius:99px;"></div></div><span style="font-size:.61rem;color:${bc};font-weight:700;">${pct}%</span></div>`
         }
       </td>
