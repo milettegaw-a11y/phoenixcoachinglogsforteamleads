@@ -175,11 +175,11 @@ html[data-theme="rose"] .sb-notif{background:#bf3060;color:#fce7ef;}
 html[data-theme="rose"] #topbar{box-shadow:0 2px 0 rgba(191,48,96,.45),0 4px 16px rgba(0,0,0,.1);}
 
 /* ── CONTENT ── */
-#content{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--content-bg);margin:10px 10px 10px 0;border-radius:16px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.35),0 4px 12px rgba(0,0,0,.2);}
+#content{flex:1;display:flex;flex-direction:column;min-width:0;background:#f7f8fa;margin:10px 10px 10px 0;border-radius:16px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.35),0 4px 12px rgba(0,0,0,.2);}
 
 /* ── TOP BAR ── */
-#topbar{background:var(--topbar-bg);padding:14px 24px;border-bottom:none;box-shadow:0 2px 0 rgba(94,138,80,.45),0 4px 16px rgba(0,0,0,.1);display:flex;align-items:center;justify-content:space-between;gap:14px;border-radius:16px 16px 0 0;}
-.tb-title{font-size:1rem;font-weight:600;color:var(--topbar-title);}
+#topbar{background:#ffffff;padding:14px 24px;border-bottom:1px solid #e5e7eb;box-shadow:0 1px 0 #f0f0f0;display:flex;align-items:center;justify-content:space-between;gap:14px;border-radius:16px 16px 0 0;}
+.tb-title{font-size:1rem;font-weight:600;color:#111827;}
 .tb-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
 
 /* ── MAIN ── */
@@ -5054,16 +5054,54 @@ function renderHSLeads(){
         </div>
         ${l.ageBucket==='3rd-week'?calledBadge(l):cadenceBar(l)}
       </div>
-      <div id="ld-${l.id}" style="display:none;border-top:1px solid #f3f4f6;padding:10px 14px;">
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
-          <span style="font-size:.68rem;font-weight:600;color:#6b7280;">Stage:</span>
+      <div id="ld-${l.id}" style="display:none;border-top:1px solid #f0f0f0;background:#fff;border-radius:0 0 10px 10px;">
+        ${(()=>{const _pct=Math.min(100,l.cadencePct||0);const _bc=_pct>=100?'#22c55e':_pct>=50?'#f97316':'#ef4444';const LABEL='font-size:.56rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;margin-bottom:3px;';const VAL='font-size:.8rem;color:#374151;';return `<div style="display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #f0f0f0;">
+          <div style="padding:11px 14px;border-right:1px solid #f0f0f0;border-bottom:1px solid #f0f0f0;">
+            <div style="${LABEL}">Contact</div>
+            <div style="${VAL}font-weight:600;color:#111;">${displayName}</div>
+          </div>
+          <div style="padding:11px 14px;border-bottom:1px solid #f0f0f0;">
+            <div style="${LABEL}">Owner</div>
+            <div style="${VAL}">${l.ownerName||'—'}</div>
+          </div>
+          <div style="padding:11px 14px;border-right:1px solid #f0f0f0;border-bottom:1px solid #f0f0f0;">
+            <div style="${LABEL}">Phone</div>
+            <div style="${VAL}">${l.contactPhone||'—'}</div>
+          </div>
+          <div style="padding:11px 14px;border-bottom:1px solid #f0f0f0;">
+            <div style="${LABEL}">Stage</div>
+            <div style="display:flex;align-items:center;gap:5px;">
+              <span style="width:7px;height:7px;background:${stageColor(l.stageId)};border-radius:50%;flex-shrink:0;display:inline-block;"></span>
+              <span style="${VAL}">${l.stageName||'—'}</span>
+            </div>
+          </div>
+          <div style="padding:11px 14px;border-right:1px solid #f0f0f0;border-bottom:1px solid #f0f0f0;">
+            <div style="${LABEL}">Email</div>
+            <div style="${VAL}font-size:.72rem;word-break:break-all;">${l.contactEmail||'—'}</div>
+          </div>
+          <div style="padding:11px 14px;border-bottom:1px solid #f0f0f0;">
+            <div style="${LABEL}">Day</div>
+            <div style="${VAL}font-weight:700;color:#ff7a59;">Day ${l.ageDays||1}</div>
+          </div>
+          <div style="padding:11px 14px;border-right:1px solid #f0f0f0;">
+            <div style="${LABEL}">Last Call</div>
+            <div style="${VAL}font-size:.75rem;">${lastCallStr}</div>
+          </div>
+          <div style="padding:11px 14px;">
+            <div style="${LABEL}">Cadence</div>
+            <div style="${VAL}font-weight:700;color:${_bc};">${_pct}%</div>
+          </div>
+        </div>
+        <div style="padding:10px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #f0f0f0;">
           ${stageDropdown(l)}
           <a href="https://app.hubspot.com/contacts/45809585/ticket/${l.id}" target="_blank" style="font-size:.67rem;color:#ff7a59;text-decoration:none;font-weight:600;border:1px solid #ff7a59;padding:3px 8px;border-radius:6px;">🔗 HubSpot</a>
         </div>
-        <div style="font-size:.67rem;font-weight:700;color:#6b7280;margin-bottom:4px;">Call History (${allCalls.length})</div>
-        <div style="border:1px solid #f3f4f6;border-radius:6px;overflow:hidden;max-height:210px;overflow-y:auto;">
-          ${allCalls.length>0?allCalls.map(callHistoryItem).join(''):'<div style="padding:8px;color:#9ca3af;font-size:.69rem;">No calls recorded</div>'}
-        </div>
+        <div style="padding:10px 14px;">
+          <div style="font-size:.67rem;font-weight:700;color:#6b7280;margin-bottom:4px;">Call History (${allCalls.length})</div>
+          <div style="border:1px solid #f3f4f6;border-radius:6px;overflow:hidden;max-height:210px;overflow-y:auto;">
+            ${allCalls.length>0?allCalls.map(callHistoryItem).join(''):'<div style="padding:8px;color:#9ca3af;font-size:.69rem;">No calls recorded</div>'}
+          </div>
+        </div>`})()}
       </div>
     </div>`;
   }
@@ -5109,18 +5147,56 @@ function renderHSLeads(){
         }
       </td>
     </tr>
-    <tr id="ld-${rowId}" style="display:none;"><td colspan="${showOwner?6:5}" style="padding:0;">
-      <div style="padding:10px 13px;background:#f9fafb;border-bottom:1px solid #f3f4f6;">
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
-          <span style="font-size:.68rem;font-weight:600;color:#6b7280;">Stage:</span>
-          ${stageDropdown(l)}
-          <a href="https://app.hubspot.com/contacts/45809585/ticket/${l.id}" target="_blank" style="font-size:.67rem;color:#ff7a59;text-decoration:none;font-weight:600;border:1px solid #ff7a59;padding:3px 8px;border-radius:6px;">🔗 HubSpot</a>
+    <tr id="ld-${rowId}" style="display:none;"><td colspan="${showOwner?6:5}" style="padding:0;background:#fff;">
+      ${(()=>{const _pct2=Math.min(100,l.cadencePct||0);const _bc2=_pct2>=100?'#22c55e':_pct2>=50?'#f97316':'#ef4444';const LBL='font-size:.56rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;margin-bottom:3px;';const V='font-size:.78rem;color:#374151;';return `<div style="display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid #f0f0f0;">
+        <div style="padding:10px 14px;border-right:1px solid #f0f0f0;">
+          <div style="${LBL}">Contact</div>
+          <div style="${V}font-weight:600;color:#111;">${displayName}</div>
         </div>
+        <div style="padding:10px 14px;border-right:1px solid #f0f0f0;">
+          <div style="${LBL}">Phone</div>
+          <div style="${V}">${l.contactPhone||'—'}</div>
+        </div>
+        <div style="padding:10px 14px;border-right:1px solid #f0f0f0;">
+          <div style="${LBL}">Email</div>
+          <div style="${V}font-size:.72rem;word-break:break-all;">${l.contactEmail||'—'}</div>
+        </div>
+        <div style="padding:10px 14px;">
+          <div style="${LBL}">Owner</div>
+          <div style="${V}">${l.ownerName||'—'}</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid #f0f0f0;">
+        <div style="padding:10px 14px;border-right:1px solid #f0f0f0;">
+          <div style="${LBL}">Stage</div>
+          <div style="display:flex;align-items:center;gap:5px;">
+            <span style="width:7px;height:7px;background:${stageColor(l.stageId)};border-radius:50%;flex-shrink:0;display:inline-block;"></span>
+            <span style="${V}">${l.stageName||'—'}</span>
+          </div>
+        </div>
+        <div style="padding:10px 14px;border-right:1px solid #f0f0f0;">
+          <div style="${LBL}">Day</div>
+          <div style="${V}font-weight:700;color:#ff7a59;">Day ${l.ageDays||1}</div>
+        </div>
+        <div style="padding:10px 14px;border-right:1px solid #f0f0f0;">
+          <div style="${LBL}">Last Call</div>
+          <div style="${V}">${lcs}</div>
+        </div>
+        <div style="padding:10px 14px;">
+          <div style="${LBL}">Cadence</div>
+          <div style="${V}font-weight:700;color:${_bc2};">${_pct2}%</div>
+        </div>
+      </div>
+      <div style="padding:10px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #f0f0f0;background:#f9fafb;">
+        ${stageDropdown(l)}
+        <a href="https://app.hubspot.com/contacts/45809585/ticket/${l.id}" target="_blank" style="font-size:.67rem;color:#ff7a59;text-decoration:none;font-weight:600;border:1px solid #ff7a59;padding:3px 8px;border-radius:6px;">🔗 HubSpot</a>
+      </div>
+      <div style="padding:10px 14px;">
         <div style="font-size:.67rem;font-weight:700;color:#6b7280;margin-bottom:4px;">Call History (${allCalls.length})</div>
         <div style="border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;max-height:180px;overflow-y:auto;background:#fff;">
           ${allCalls.length>0?allCalls.map(callHistoryItem).join(''):'<div style="padding:8px;color:#9ca3af;font-size:.69rem;">No calls recorded</div>'}
         </div>
-      </div>
+      </div>`})()}
     </td></tr>`;
   }
 
@@ -5162,9 +5238,9 @@ function renderHSLeads(){
   // ── AGENT VIEW ──
   const avEl=document.getElementById('av-hs-leads-body');
   if(avEl&&CU&&CU.isAgentView){
-    const firstName=(CU.agentName||'').split(' ')[0].toLowerCase();
-    const myLeads=activeDays.filter(l=>l.ownerName.toLowerCase().includes(firstName));
-    if(_hsLeads.filter(l=>l.ownerName.toLowerCase().includes(firstName)).length===0){
+    const myAgentName=(CU.agentName||'').toLowerCase();
+    const myLeads=activeDays.filter(l=>l.ownerName.toLowerCase()===myAgentName);
+    if(_hsLeads.filter(l=>l.ownerName.toLowerCase()===myAgentName).length===0){
       avEl.innerHTML='<div style="color:var(--g400);font-size:.8rem;padding:6px 0;">No leads assigned to you in the last 15 days.</div>';
     } else {
       const w2=myLeads.filter(l=>l.ageBucket==='2nd-week');
