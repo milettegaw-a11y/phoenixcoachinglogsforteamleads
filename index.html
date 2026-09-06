@@ -4912,10 +4912,11 @@ async function fetchHSLeads(){
       const stageId=p.hs_pipeline_stage;
       const stageName=HS_STAGE_LABELS[stageId]||'Stage '+stageId;
       const attempts=HS_STAGE_ATTEMPTS[stageId]??0;
-      // Cadence: per-day expected vs actual (calls + SMS) on this specific day only
-      const dayStart=created?new Date(created.getTime()+(ageDays-1)*86400000):null;
+      // Cadence: only count calls/SMS made TODAY (midnight to midnight, agent's local time)
+      const todayStart=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+      const todayEnd=new Date(todayStart.getTime()+86400000);
       const allActivity=t.calls||[];
-      const dailyOwnerAct=dayStart?allActivity.filter(c=>String(c.ownerId)===String(ownerId)&&c.timestamp&&new Date(c.timestamp)>=dayStart):[];
+      const dailyOwnerAct=allActivity.filter(c=>String(c.ownerId)===String(ownerId)&&c.timestamp&&new Date(c.timestamp)>=todayStart&&new Date(c.timestamp)<todayEnd);
       const dailyCallsMade=dailyOwnerAct.filter(c=>c.type==='call').length;
       const dailySmsCount=dailyOwnerAct.filter(c=>c.type==='sms'||c.type==='message').length;
       const expectedCalls=HS_CADENCE[Math.min(ageDays,15)]||0;
@@ -4926,7 +4927,7 @@ async function fetchHSLeads(){
       const ageBucket=ageDays<=8?'2nd-week':'3rd-week';
       return {id:t.id,subject:p.subject||'(no name)',ownerId,ownerName,stageId,stageName,attempts,ageDays,lacksCadence,cadencePct,actualContacts,expectedContacts,dailyCallsMade,dailySmsCount,ageBucket,contactName:t.contactName||null,contactPhone:t.contactPhone||null,contactEmail:t.contactEmail||null,contactLifecycle:t.contactLifecycle||null,latestNote:t.latestNote||null,calls:t.calls||[]};
     }).filter(l=>HS_ALLOWED_NAMES.has(l.ownerName.toLowerCase()))
-      .filter(l=>(l.subject||'').toLowerCase().includes('2nd week lead'))
+      .filter(l=>(l.subject||'').toLowerCase().includes('2nd week'))
       .filter(l=>l.ageDays>=8||!closedStages.includes(l.stageId))
       .filter(l=>{const lc=(l.contactLifecycle||'').toLowerCase();return!lc||(lc!=='other'&&lc!=='customer');});
     _hsLeadsLoaded=true;
@@ -4982,7 +4983,10 @@ function renderHSLeads(){
     </div>`;
   }
   function calledBadge(l){
-    const hasCalls=(l.calls||[]).some(c=>String(c.ownerId)===String(l.ownerId)&&c.type==='call');
+    const now2=new Date();
+    const ts=new Date(now2.getFullYear(),now2.getMonth(),now2.getDate());
+    const te=new Date(ts.getTime()+86400000);
+    const hasCalls=(l.calls||[]).some(c=>String(c.ownerId)===String(l.ownerId)&&c.type==='call'&&new Date(c.timestamp)>=ts&&new Date(c.timestamp)<te);
     return `<div style="margin-top:5px;"><span style="font-size:.62rem;padding:2px 8px;border-radius:99px;font-weight:600;background:${hasCalls?'#dcfce7':'#fee2e2'};color:${hasCalls?'#166534':'#b91c1c'};">${hasCalls?'✅ Already Called':'📵 Not Called'}</span></div>`;
   }
 
