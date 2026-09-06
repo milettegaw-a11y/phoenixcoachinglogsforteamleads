@@ -5130,6 +5130,63 @@ function renderHSLeads(){
     </select>`;
   }
 
+  // ── Right-side lead panel ──────────────────────────────────────────────
+  window.openLeadPanel=function(lid){
+    const l=_hsLeads.find(x=>x.id===lid||x.id==lid);
+    if(!l)return;
+    const allCalls=l.calls||[];
+    const ownerCalls=allCalls.filter(c=>String(c.ownerId)===String(l.ownerId));
+    const connectedCalls=ownerCalls.filter(c=>c.connected||(c.status||'').toUpperCase()==='COMPLETED');
+    const isSmsC=c=>c.type==='sms'||c.type==='message'||(c.type||'').toLowerCase().includes('sms');
+    const smsCnt=allCalls.filter(isSmsC).length;
+    const lastOC=ownerCalls[0]||null;
+    const lastConnStr=lastOC?(lastOC.connected||(lastOC.status||'').toUpperCase()==='COMPLETED'?'✅ '+hsRelTime(lastOC.timestamp):'⚠️ '+hsRelTime(lastOC.timestamp)):'No calls yet';
+    const displayName=l.contactName||l.subject||'(no name)';
+    const _pct=Math.min(100,l.cadencePct||0);
+    const _bc=_pct>=100?'#22c55e':_pct>=50?'#f97316':'#ef4444';
+    const LABEL='font-size:.56rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;margin-bottom:3px;';
+    const VAL='font-size:.8rem;color:#374151;';
+    const noteHtml=l.latestNote?`<div style="margin-top:8px;padding:9px 11px;background:#fffbeb;border-left:3px solid #f59e0b;border-radius:4px;font-size:.72rem;color:#78350f;line-height:1.5;">${(l.latestNote.length>260?l.latestNote.slice(0,260)+'…':l.latestNote).replace(/</g,'&lt;')}</div>`:'<div style="margin-top:6px;font-size:.7rem;color:#9ca3af;font-style:italic;">No HubSpot notes found.</div>';
+    const summaryHtml=`<div style="padding:12px 14px;background:#f9fafb;border-bottom:1px solid #f0f0f0;">
+      <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#9ca3af;margin-bottom:8px;">Conversation Summary</div>
+      <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;">
+        <div style="text-align:center;"><div style="font-size:1.3rem;font-weight:800;color:#3b82f6;line-height:1;">${ownerCalls.length}</div><div style="font-size:.58rem;color:#9ca3af;margin-top:2px;">Calls Made</div></div>
+        <div style="text-align:center;"><div style="font-size:1.3rem;font-weight:800;color:#22c55e;line-height:1;">${connectedCalls.length}</div><div style="font-size:.58rem;color:#9ca3af;margin-top:2px;">Connected</div></div>
+        <div style="text-align:center;"><div style="font-size:1.3rem;font-weight:800;color:#8b5cf6;line-height:1;">${smsCnt}</div><div style="font-size:.58rem;color:#9ca3af;margin-top:2px;">SMS Sent</div></div>
+        <div style="flex:1;min-width:90px;padding-left:10px;border-left:1px solid #e5e7eb;">
+          <div style="font-size:.58rem;color:#9ca3af;margin-bottom:2px;">Last Contact</div>
+          <div style="font-size:.68rem;font-weight:600;color:#374151;">${lastConnStr}</div>
+        </div>
+      </div>
+      <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#9ca3af;margin-top:10px;margin-bottom:2px;">Latest Note</div>
+      ${noteHtml}
+    </div>`;
+    const gridHtml=`<div style="display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #f0f0f0;">
+      <div style="padding:10px 14px;border-right:1px solid #f0f0f0;border-bottom:1px solid #f0f0f0;"><div style="${LABEL}">Contact</div><div style="${VAL}font-weight:600;color:#111;">${displayName}</div></div>
+      <div style="padding:10px 14px;border-bottom:1px solid #f0f0f0;"><div style="${LABEL}">Owner</div><div style="${VAL}">${l.ownerName||'—'}</div></div>
+      <div style="padding:10px 14px;border-right:1px solid #f0f0f0;border-bottom:1px solid #f0f0f0;"><div style="${LABEL}">Phone</div><div style="${VAL}">${l.contactPhone||'—'}</div></div>
+      <div style="padding:10px 14px;border-bottom:1px solid #f0f0f0;"><div style="${LABEL}">Stage</div><div style="display:flex;align-items:center;gap:5px;"><span style="width:7px;height:7px;background:${stageColor(l.stageId)};border-radius:50%;flex-shrink:0;display:inline-block;"></span><span style="${VAL}">${l.stageName||'—'}</span></div></div>
+      <div style="padding:10px 14px;border-right:1px solid #f0f0f0;border-bottom:1px solid #f0f0f0;"><div style="${LABEL}">Email</div><div style="${VAL}font-size:.72rem;word-break:break-all;">${l.contactEmail||'—'}</div></div>
+      <div style="padding:10px 14px;border-bottom:1px solid #f0f0f0;"><div style="${LABEL}">Day</div><div style="${VAL}font-weight:700;color:#ff7a59;">Day ${l.ageDays||1}</div></div>
+      <div style="padding:10px 14px;border-right:1px solid #f0f0f0;"><div style="${LABEL}">Last Call</div><div style="${VAL}font-size:.75rem;">${lastConnStr}</div></div>
+      <div style="padding:10px 14px;"><div style="${LABEL}">Cadence</div><div style="${VAL}font-weight:700;color:${_bc};">${_pct}%</div></div>
+    </div>`;
+    const actionsHtml=`<div style="padding:10px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #f0f0f0;">${stageDropdown(l)}<a href="https://app.hubspot.com/contacts/45809585/ticket/${l.id}" target="_blank" style="font-size:.67rem;color:#ff7a59;text-decoration:none;font-weight:600;border:1px solid #ff7a59;padding:3px 8px;border-radius:6px;">🔗 HubSpot</a></div>`;
+    document.getElementById('lead-panel-name').textContent=displayName;
+    document.getElementById('lead-panel-sub').textContent=(l.contactPhone||'')+(l.stageName?' · '+l.stageName:'');
+    document.getElementById('lead-panel-body').innerHTML=summaryHtml+gridHtml+actionsHtml+commPanel(l,allCalls);
+    document.getElementById('lead-panel-overlay').style.display='block';
+    const panel=document.getElementById('lead-side-panel');
+    panel.style.display='flex';
+    panel.scrollTop=0;
+  };
+  window.closeLeadPanel=function(){
+    document.getElementById('lead-panel-overlay').style.display='none';
+    document.getElementById('lead-side-panel').style.display='none';
+  };
+  // Escape key closes panel
+  document.onkeydown=document.onkeydown||function(e){if(e.key==='Escape')window.closeLeadPanel&&window.closeLeadPanel();};
+
   function renderLeadCard(l,showOwner){
     const displayName=l.contactName||l.subject||'(no name)';
     const ownerCalls=(l.calls||[]).filter(c=>String(c.ownerId)===String(l.ownerId));
@@ -5141,7 +5198,7 @@ function renderHSLeads(){
     const initials=ownerInitials(l.ownerName);
     const sdot=stageColor(l.stageId);
     return `<div style="background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.06);border:1px solid #f0f0f0;margin-bottom:8px;">
-      <div style="padding:13px 14px;cursor:pointer;" onclick="toggleLeadDetail('${l.id}')">
+      <div style="padding:13px 14px;cursor:pointer;" onclick="openLeadPanel('${l.id}')">
         <div style="display:flex;align-items:flex-start;gap:10px;">
           <div style="flex:1;min-width:0;">
             <div style="font-size:.84rem;font-weight:700;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${displayName}</div>
@@ -5159,50 +5216,6 @@ function renderHSLeads(){
           </div>
         </div>
         ${l.ageBucket==='3rd-week'?calledBadge(l):cadenceBar(l)}
-      </div>
-      <div id="ld-${l.id}" style="display:none;border-top:1px solid #f0f0f0;background:#fff;border-radius:0 0 10px 10px;">
-        ${(()=>{const _pct=Math.min(100,l.cadencePct||0);const _bc=_pct>=100?'#22c55e':_pct>=50?'#f97316':'#ef4444';const LABEL='font-size:.56rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;margin-bottom:3px;';const VAL='font-size:.8rem;color:#374151;';return `<div style="display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #f0f0f0;">
-          <div style="padding:11px 14px;border-right:1px solid #f0f0f0;border-bottom:1px solid #f0f0f0;">
-            <div style="${LABEL}">Contact</div>
-            <div style="${VAL}font-weight:600;color:#111;">${displayName}</div>
-          </div>
-          <div style="padding:11px 14px;border-bottom:1px solid #f0f0f0;">
-            <div style="${LABEL}">Owner</div>
-            <div style="${VAL}">${l.ownerName||'—'}</div>
-          </div>
-          <div style="padding:11px 14px;border-right:1px solid #f0f0f0;border-bottom:1px solid #f0f0f0;">
-            <div style="${LABEL}">Phone</div>
-            <div style="${VAL}">${l.contactPhone||'—'}</div>
-          </div>
-          <div style="padding:11px 14px;border-bottom:1px solid #f0f0f0;">
-            <div style="${LABEL}">Stage</div>
-            <div style="display:flex;align-items:center;gap:5px;">
-              <span style="width:7px;height:7px;background:${stageColor(l.stageId)};border-radius:50%;flex-shrink:0;display:inline-block;"></span>
-              <span style="${VAL}">${l.stageName||'—'}</span>
-            </div>
-          </div>
-          <div style="padding:11px 14px;border-right:1px solid #f0f0f0;border-bottom:1px solid #f0f0f0;">
-            <div style="${LABEL}">Email</div>
-            <div style="${VAL}font-size:.72rem;word-break:break-all;">${l.contactEmail||'—'}</div>
-          </div>
-          <div style="padding:11px 14px;border-bottom:1px solid #f0f0f0;">
-            <div style="${LABEL}">Day</div>
-            <div style="${VAL}font-weight:700;color:#ff7a59;">Day ${l.ageDays||1}</div>
-          </div>
-          <div style="padding:11px 14px;border-right:1px solid #f0f0f0;">
-            <div style="${LABEL}">Last Call</div>
-            <div style="${VAL}font-size:.75rem;">${lastCallStr}</div>
-          </div>
-          <div style="padding:11px 14px;">
-            <div style="${LABEL}">Cadence</div>
-            <div style="${VAL}font-weight:700;color:${_bc};">${_pct}%</div>
-          </div>
-        </div>
-        <div style="padding:10px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #f0f0f0;">
-          ${stageDropdown(l)}
-          <a href="https://app.hubspot.com/contacts/45809585/ticket/${l.id}" target="_blank" style="font-size:.67rem;color:#ff7a59;text-decoration:none;font-weight:600;border:1px solid #ff7a59;padding:3px 8px;border-radius:6px;">🔗 HubSpot</a>
-        </div>
-        ${commPanel(l,allCalls)}`})()}
       </div>
     </div>`;
   }
@@ -5222,7 +5235,7 @@ function renderHSLeads(){
     const initials=ownerInitials(l.ownerName);
     const sdot=stageColor(l.stageId);
     const hasCalled=l.ageBucket==='3rd-week'&&(l.calls||[]).some(c=>String(c.ownerId)===String(l.ownerId)&&c.type==='call');
-    return `<tr style="background:#fff;cursor:pointer;" onmouseenter="this.style.background='#fafafa'" onmouseleave="this.style.background='#fff'" onclick="toggleLeadDetail('${rowId}')">
+    return `<tr style="background:#fff;cursor:pointer;" onmouseenter="this.style.background='#fafafa'" onmouseleave="this.style.background='#fff'" onclick="openLeadPanel('${l.id}')">
       <td style="${TD}">
         <div style="font-size:.78rem;font-weight:600;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;">${displayName}</div>
         <div style="font-size:.67rem;color:#9ca3af;margin-top:1px;">${l.contactPhone||'—'}</div>
@@ -5247,53 +5260,7 @@ function renderHSLeads(){
           :`<div style="display:flex;align-items:center;gap:5px;"><div style="flex:1;height:4px;background:#f0f0f0;border-radius:99px;overflow:hidden;min-width:45px;"><div style="height:100%;width:${pct}%;background:${bc};border-radius:99px;"></div></div><span style="font-size:.61rem;color:${bc};font-weight:700;">${pct}%</span></div>`
         }
       </td>
-    </tr>
-    <tr id="ld-${rowId}" style="display:none;"><td colspan="${showOwner?6:5}" style="padding:0;background:#fff;">
-      ${(()=>{const _pct2=Math.min(100,l.cadencePct||0);const _bc2=_pct2>=100?'#22c55e':_pct2>=50?'#f97316':'#ef4444';const LBL='font-size:.56rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;margin-bottom:3px;';const V='font-size:.78rem;color:#374151;';return `<div style="display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid #f0f0f0;">
-        <div style="padding:10px 14px;border-right:1px solid #f0f0f0;">
-          <div style="${LBL}">Contact</div>
-          <div style="${V}font-weight:600;color:#111;">${displayName}</div>
-        </div>
-        <div style="padding:10px 14px;border-right:1px solid #f0f0f0;">
-          <div style="${LBL}">Phone</div>
-          <div style="${V}">${l.contactPhone||'—'}</div>
-        </div>
-        <div style="padding:10px 14px;border-right:1px solid #f0f0f0;">
-          <div style="${LBL}">Email</div>
-          <div style="${V}font-size:.72rem;word-break:break-all;">${l.contactEmail||'—'}</div>
-        </div>
-        <div style="padding:10px 14px;">
-          <div style="${LBL}">Owner</div>
-          <div style="${V}">${l.ownerName||'—'}</div>
-        </div>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid #f0f0f0;">
-        <div style="padding:10px 14px;border-right:1px solid #f0f0f0;">
-          <div style="${LBL}">Stage</div>
-          <div style="display:flex;align-items:center;gap:5px;">
-            <span style="width:7px;height:7px;background:${stageColor(l.stageId)};border-radius:50%;flex-shrink:0;display:inline-block;"></span>
-            <span style="${V}">${l.stageName||'—'}</span>
-          </div>
-        </div>
-        <div style="padding:10px 14px;border-right:1px solid #f0f0f0;">
-          <div style="${LBL}">Day</div>
-          <div style="${V}font-weight:700;color:#ff7a59;">Day ${l.ageDays||1}</div>
-        </div>
-        <div style="padding:10px 14px;border-right:1px solid #f0f0f0;">
-          <div style="${LBL}">Last Call</div>
-          <div style="${V}">${lcs}</div>
-        </div>
-        <div style="padding:10px 14px;">
-          <div style="${LBL}">Cadence</div>
-          <div style="${V}font-weight:700;color:${_bc2};">${_pct2}%</div>
-        </div>
-      </div>
-      <div style="padding:10px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #f0f0f0;background:#f9fafb;">
-        ${stageDropdown(l)}
-        <a href="https://app.hubspot.com/contacts/45809585/ticket/${l.id}" target="_blank" style="font-size:.67rem;color:#ff7a59;text-decoration:none;font-weight:600;border:1px solid #ff7a59;padding:3px 8px;border-radius:6px;">🔗 HubSpot</a>
-      </div>
-      ${commPanel(l,allCalls)}`})()}
-    </td></tr>`;
+    </tr>`;
   }
 
   function renderSection(secId,title,icon,leads,showOwner,mode){
@@ -10564,5 +10531,17 @@ document.addEventListener('keydown', function(e) {
   </div>
 </div>
 
+<!-- ── LEAD SIDE PANEL ── -->
+<div id="lead-panel-overlay" onclick="closeLeadPanel()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:998;transition:opacity .2s;"></div>
+<div id="lead-side-panel" style="display:none;position:fixed;top:0;right:0;width:420px;max-width:100vw;height:100vh;background:#fff;z-index:999;box-shadow:-6px 0 32px rgba(0,0,0,.18);flex-direction:column;overflow:hidden;">
+  <div id="lead-panel-header" style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid #f0f0f0;background:#fff;flex-shrink:0;">
+    <div>
+      <div id="lead-panel-name" style="font-size:.95rem;font-weight:700;color:#111;"></div>
+      <div id="lead-panel-sub" style="font-size:.72rem;color:#9ca3af;margin-top:2px;"></div>
+    </div>
+    <button onclick="closeLeadPanel()" style="background:none;border:none;font-size:1.2rem;color:#9ca3af;cursor:pointer;padding:4px 8px;border-radius:6px;line-height:1;">✕</button>
+  </div>
+  <div id="lead-panel-body" style="flex:1;overflow-y:auto;"></div>
+</div>
 </body>
 </html>
