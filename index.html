@@ -4880,7 +4880,6 @@ async function fetchHSLeads(){
       const fifteenDaysAgo=Date.now()-(15*86400000);
       const filters=[
         {propertyName:'hs_pipeline',operator:'EQ',value:HS_PIPELINE_SEG},
-        {propertyName:'hs_pipeline_stage',operator:'NOT_IN',values:closedStages},
         {propertyName:'createdate',operator:'GTE',value:String(fifteenDaysAgo)}
       ];
       if(allowedOwnerIds.length>0)filters.push({propertyName:'hubspot_owner_id',operator:'IN',values:allowedOwnerIds});
@@ -4912,16 +4911,22 @@ async function fetchHSLeads(){
       const stageId=p.hs_pipeline_stage;
       const stageName=HS_STAGE_LABELS[stageId]||'Stage '+stageId;
       const attempts=HS_STAGE_ATTEMPTS[stageId]??0;
-      // Cadence: expected contacts cumulative through today vs actual owner calls
-      const ownerCalls=(t.calls||[]).filter(c=>c.ownerId===ownerId);
-      const expectedContacts=hsGetCumulativeExpected(ageDays);
-      const actualContacts=ownerCalls.length;
+      // Cadence: per-day expected vs actual (calls + SMS) on this specific day only
+      const dayStart=created?new Date(created.getTime()+(ageDays-1)*86400000):null;
+      const allActivity=t.calls||[];
+      const dailyOwnerAct=dayStart?allActivity.filter(c=>String(c.ownerId)===String(ownerId)&&c.timestamp&&new Date(c.timestamp)>=dayStart):[];
+      const dailyCallsMade=dailyOwnerAct.filter(c=>c.type==='call').length;
+      const dailySmsCount=dailyOwnerAct.filter(c=>c.type==='sms'||c.type==='message').length;
+      const expectedCalls=HS_CADENCE[Math.min(ageDays,15)]||0;
+      const expectedContacts=expectedCalls+1; // +1 for daily SMS requirement
+      const actualContacts=dailyCallsMade+dailySmsCount;
       const cadencePct=expectedContacts>0?Math.min(100,Math.round(actualContacts/expectedContacts*100)):100;
       const lacksCadence=cadencePct<100;
       const ageBucket=ageDays<=8?'2nd-week':'3rd-week';
-      return {id:t.id,subject:p.subject||'(no name)',ownerId,ownerName,stageId,stageName,attempts,ageDays,lacksCadence,cadencePct,actualContacts,expectedContacts,ageBucket,contactName:t.contactName||null,contactPhone:t.contactPhone||null,contactEmail:t.contactEmail||null,contactLifecycle:t.contactLifecycle||null,latestNote:t.latestNote||null,calls:t.calls||[]};
+      return {id:t.id,subject:p.subject||'(no name)',ownerId,ownerName,stageId,stageName,attempts,ageDays,lacksCadence,cadencePct,actualContacts,expectedContacts,dailyCallsMade,dailySmsCount,ageBucket,contactName:t.contactName||null,contactPhone:t.contactPhone||null,contactEmail:t.contactEmail||null,contactLifecycle:t.contactLifecycle||null,latestNote:t.latestNote||null,calls:t.calls||[]};
     }).filter(l=>HS_ALLOWED_NAMES.has(l.ownerName.toLowerCase()))
-      .filter(l=>!l.contactLifecycle||(l.contactLifecycle||'').toLowerCase()!=='other');
+      .filter(l=>l.ageDays>=8||!closedStages.includes(l.stageId))
+      .filter(l=>{const lc=(l.contactLifecycle||'').toLowerCase();return!lc||(lc!=='other'&&lc!=='customer');});
     _hsLeadsLoaded=true;
     renderHSLeads();
   }catch(e){
@@ -4962,15 +4967,21 @@ function renderHSLeads(){
   function cadenceBar(l){
     const pct=Math.min(100,l.cadencePct||0);
     const color=pct>=100?'#22c55e':pct>=50?'#f97316':'#ef4444';
+    const expCalls=Math.max(0,(l.expectedContacts||1)-1);
+    const label=`${l.dailyCallsMade||0}/${expCalls} calls · ${l.dailySmsCount||0}/1 SMS · ${pct}%`;
     return `<div style="margin-top:5px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">
-        <span style="font-size:.61rem;color:var(--g500);font-weight:600;">Cadence</span>
-        <span style="font-size:.61rem;font-weight:700;color:${color};">${l.actualContacts||0}/${l.expectedContacts||0} calls &nbsp;${pct}%</span>
+        <span style="font-size:.61rem;color:var(--g500);font-weight:600;">Day ${l.ageDays} Cadence</span>
+        <span style="font-size:.61rem;font-weight:700;color:${color};">${label}</span>
       </div>
       <div style="height:5px;background:#e5e7eb;border-radius:99px;overflow:hidden;">
         <div style="height:100%;width:${pct}%;background:${color};border-radius:99px;"></div>
       </div>
     </div>`;
+  }
+  function calledBadge(l){
+    const hasCalls=(l.calls||[]).some(c=>String(c.ownerId)===String(l.ownerId)&&c.type==='call');
+    return `<div style="margin-top:5px;"><span style="font-size:.62rem;padding:2px 8px;border-radius:99px;font-weight:600;background:${hasCalls?'#dcfce7':'#fee2e2'};color:${hasCalls?'#166534':'#b91c1c'};">${hasCalls?'✅ Already Called':'📵 Not Called'}</span></div>`;
   }
 
   function callHistoryItem(c){
@@ -5002,7 +5013,8 @@ function renderHSLeads(){
 
   function renderLeadCard(l,showOwner){
     const pct=Math.min(100,l.cadencePct||0);
-    const borderColor=pct>=100?'#22c55e':(l.ageBucket==='3rd-week'?'#ef4444':'#f97316');
+    const hasCalled3=(l.calls||[]).some(c=>String(c.ownerId)===String(l.ownerId)&&c.type==='call');
+    const borderColor=l.ageBucket==='3rd-week'?(hasCalled3?'#22c55e':'#ef4444'):(pct>=100?'#22c55e':'#f97316');
     const displayName=l.contactName||l.subject||'(no name)';
     const ownerCalls=(l.calls||[]).filter(c=>String(c.ownerId)===String(l.ownerId));
     const lastOwnerCall=ownerCalls[0]||null;
@@ -5023,7 +5035,7 @@ function renderHSLeads(){
           </div>
           <span style="font-size:.7rem;color:var(--g400);flex-shrink:0;">▼</span>
         </div>
-        ${cadenceBar(l)}
+        ${l.ageBucket==='3rd-week'?calledBadge(l):cadenceBar(l)}
       </div>
       <div id="ld-${l.id}" style="display:none;border-top:1px solid #f3f4f6;padding:10px 13px;">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
@@ -5059,10 +5071,7 @@ function renderHSLeads(){
       <td style="${TD}font-weight:700;color:${l.ageBucket==='3rd-week'?'#ef4444':'#f97316'};">Day ${l.ageDays}</td>
       <td style="${TD}font-size:.67rem;color:var(--g600);">${lcs}</td>
       <td style="${TD}">
-        <div style="display:flex;align-items:center;gap:5px;">
-          <div style="flex:1;height:5px;background:#e5e7eb;border-radius:99px;overflow:hidden;min-width:45px;"><div style="height:100%;width:${pct}%;background:${bc};border-radius:99px;"></div></div>
-          <span style="font-size:.61rem;color:${bc};font-weight:700;">${pct}%</span>
-        </div>
+        ${l.ageBucket==='3rd-week'?`<span style="font-size:.62rem;padding:2px 8px;border-radius:99px;font-weight:600;background:${(l.calls||[]).some(c=>String(c.ownerId)===String(l.ownerId)&&c.type==='call')?'#dcfce7':'#fee2e2'};color:${(l.calls||[]).some(c=>String(c.ownerId)===String(l.ownerId)&&c.type==='call')?'#166534':'#b91c1c'};">${(l.calls||[]).some(c=>String(c.ownerId)===String(l.ownerId)&&c.type==='call')?'✅ Called':'📵 Not Called'}</span>`:`<div style="display:flex;align-items:center;gap:5px;"><div style="flex:1;height:5px;background:#e5e7eb;border-radius:99px;overflow:hidden;min-width:45px;"><div style="height:100%;width:${pct}%;background:${bc};border-radius:99px;"></div></div><span style="font-size:.61rem;color:${bc};font-weight:700;">${pct}%</span></div>`}
       </td>
     </tr>
     <tr id="ld-${rowId}" style="display:none;"><td colspan="${showOwner?7:6}" style="padding:0;">
