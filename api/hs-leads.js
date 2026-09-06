@@ -139,7 +139,8 @@ export default async function handler(req, res) {
     const contactSmsMap = {};       // contactId → [smsIds]
     const ticketDirectCallMap = {}; // ticketId  → [callIds] (call linked directly to ticket)
     const ticketDirectSmsMap = {};  // ticketId  → [smsIds]
-    const fifteenDaysAgo = Date.now() - (15 * 86400000);
+    const fifteenDaysAgo = Date.now() - (15 * 86400000); // ticket age filter (unchanged)
+    const ninetyDaysAgo  = Date.now() - (90 * 86400000); // call history search window
     const ticketOwnerIds = [...new Set(tickets.map(t => t.properties.hubspot_owner_id).filter(Boolean))];
 
     // PATH A: Search calls + SMS by owner+date
@@ -147,21 +148,21 @@ export default async function handler(req, res) {
     let newSmsIds = [];
     if (ticketOwnerIds.length > 0) {
       const ownerFilter = { propertyName: 'hubspot_owner_id', operator: 'IN', values: ticketOwnerIds };
-      const dateFilter  = { propertyName: 'hs_timestamp', operator: 'GTE', value: String(fifteenDaysAgo) };
+      const dateFilter  = { propertyName: 'hs_timestamp', operator: 'GTE', value: String(ninetyDaysAgo) };
       const [searchCallResp, searchSmsResp] = await Promise.all([
         hsFetch('https://api.hubapi.com/crm/v3/objects/calls/search', {
           method: 'POST', headers: h,
           body: JSON.stringify({ filterGroups: [{ filters: [ownerFilter, dateFilter] }],
             properties: ['hs_timestamp','hs_call_status','hs_call_body','hs_call_direction','hs_call_duration','hubspot_owner_id','hs_call_title'],
             sorts: [{ propertyName: 'hs_timestamp', direction: 'DESCENDING' }],
-            limit: 200 })
+            limit: 500 })
         }),
         hsFetch('https://api.hubapi.com/crm/v3/objects/communications/search', {
           method: 'POST', headers: h,
           body: JSON.stringify({ filterGroups: [{ filters: [ownerFilter, dateFilter] }],
             properties: ['hs_timestamp','hs_communication_body','hs_communication_channel_type','hubspot_owner_id','hs_communication_logged_from'],
             sorts: [{ propertyName: 'hs_timestamp', direction: 'DESCENDING' }],
-            limit: 200 })
+            limit: 500 })
         })
       ]);
       const searchCallData = await searchCallResp.json().catch(() => ({ results: [] }));
@@ -401,7 +402,7 @@ export default async function handler(req, res) {
         contactLifecycle: contact?.lifecycle || null,
         contactCreatedate: contact?.createdate || null,
         latestNote: notes[0] ? { body: notes[0].body, timestamp: notes[0].timestamp } : null,
-        calls: allActivity.slice(0, 50)
+        calls: allActivity.slice(0, 300)
       };
     });
 
