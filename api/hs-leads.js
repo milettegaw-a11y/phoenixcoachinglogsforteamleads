@@ -9,6 +9,17 @@ export default async function handler(req, res) {
   const HS_TOKEN = process.env.HS_TOKEN;
   if (!HS_TOKEN) return res.status(500).json({ error: 'HS_TOKEN not configured in Vercel environment variables' });
 
+  // Retry helper — waits on 429 (rate limit) up to 2 times before giving up
+  const hsFetch = async (url, opts) => {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const r = await fetch(url, opts);
+      if (r.status !== 429) return r;
+      const wait = parseInt(r.headers.get('Retry-After') || '1', 10) * 1000;
+      await new Promise(resolve => setTimeout(resolve, wait || 1000));
+    }
+    return { ok: false, status: 429, json: async () => ({ error: 'HubSpot rate limit — please retry in a moment' }) };
+  };
+
   const h = {
     'Authorization': 'Bearer ' + HS_TOKEN,
     'Content-Type': 'application/json'
@@ -16,7 +27,7 @@ export default async function handler(req, res) {
 
   try {
     // ── Step 1: Search tickets ──────────────────────────────────────────
-    const ticketResp = await fetch('https://api.hubapi.com/crm/v3/objects/tickets/search', {
+    const ticketResp = await hsFetch('https://api.hubapi.com/crm/v3/objects/tickets/search', {
       method: 'POST', headers: h, body: JSON.stringify(req.body)
     });
     const ticketData = await ticketResp.json();
@@ -29,19 +40,19 @@ export default async function handler(req, res) {
 
     // ── Step 2: Get associations (contacts, notes, calls, SMS/communications) in parallel ──
     const [contactAssocResp, noteAssocResp, callAssocResp, smsAssocResp] = await Promise.all([
-      fetch('https://api.hubapi.com/crm/v4/associations/tickets/contacts/batch/read', {
+      hsFetch('https://api.hubapi.com/crm/v4/associations/tickets/contacts/batch/read', {
         method: 'POST', headers: h,
         body: JSON.stringify({ inputs: ticketIds.map(id => ({ id })) })
       }),
-      fetch('https://api.hubapi.com/crm/v4/associations/tickets/notes/batch/read', {
+      hsFetch('https://api.hubapi.com/crm/v4/associations/tickets/notes/batch/read', {
         method: 'POST', headers: h,
         body: JSON.stringify({ inputs: ticketIds.map(id => ({ id })) })
       }),
-      fetch('https://api.hubapi.com/crm/v4/associations/tickets/calls/batch/read', {
+      hsFetch('https://api.hubapi.com/crm/v4/associations/tickets/calls/batch/read', {
         method: 'POST', headers: h,
         body: JSON.stringify({ inputs: ticketIds.map(id => ({ id })) })
       }),
-      fetch('https://api.hubapi.com/crm/v4/associations/tickets/communications/batch/read', {
+      hsFetch('https://api.hubapi.com/crm/v4/associations/tickets/communications/batch/read', {
         method: 'POST', headers: h,
         body: JSON.stringify({ inputs: ticketIds.map(id => ({ id })) })
       })
@@ -97,7 +108,7 @@ export default async function handler(req, res) {
     const allContactIds = [...new Set(Object.values(ticketContactMap).flat())];
     const contactMap = {};
     if (allContactIds.length > 0) {
-      const cr = await fetch('https://api.hubapi.com/crm/v3/objects/contacts/batch/read', {
+      const cr = await hsFetch('https://api.hubapi.com/crm/v3/objects/contacts/batch/read', {
         method: 'POST', headers: h,
         body: JSON.stringify({
           properties: ['firstname', 'lastname', 'phone', 'mobilephone', 'email', 'lifecyclestage', 'createdate'],
@@ -138,13 +149,13 @@ export default async function handler(req, res) {
       const ownerFilter = { propertyName: 'hubspot_owner_id', operator: 'IN', values: ticketOwnerIds };
       const dateFilter  = { propertyName: 'hs_timestamp', operator: 'GTE', value: String(fifteenDaysAgo) };
       const [searchCallResp, searchSmsResp] = await Promise.all([
-        fetch('https://api.hubapi.com/crm/v3/objects/calls/search', {
+        hsFetch('https://api.hubapi.com/crm/v3/objects/calls/search', {
           method: 'POST', headers: h,
           body: JSON.stringify({ filterGroups: [{ filters: [ownerFilter, dateFilter] }],
             properties: ['hs_timestamp','hs_call_status','hs_call_body','hs_call_direction','hs_call_duration','hubspot_owner_id','hs_call_title'],
             limit: 100 })
         }),
-        fetch('https://api.hubapi.com/crm/v3/objects/communications/search', {
+        hsFetch('https://api.hubapi.com/crm/v3/objects/communications/search', {
           method: 'POST', headers: h,
           body: JSON.stringify({ filterGroups: [{ filters: [ownerFilter, dateFilter] }],
             properties: ['hs_timestamp','hs_communication_body','hs_communication_channel_type','hubspot_owner_id','hs_communication_logged_from'],
@@ -186,11 +197,11 @@ export default async function handler(req, res) {
     // PATH B: Contact→calls/SMS forward association (using contacts we already fetched)
     if (allContactIds.length > 0) {
       const [ctCallAssocResp, ctSmsAssocResp] = await Promise.all([
-        fetch('https://api.hubapi.com/crm/v4/associations/contacts/calls/batch/read', {
+        hsFetch('https://api.hubapi.com/crm/v4/associations/contacts/calls/batch/read', {
           method: 'POST', headers: h,
           body: JSON.stringify({ inputs: allContactIds.slice(0, 100).map(id => ({ id: String(id) })) })
         }),
-        fetch('https://api.hubapi.com/crm/v4/associations/contacts/communications/batch/read', {
+        hsFetch('https://api.hubapi.com/crm/v4/associations/contacts/communications/batch/read', {
           method: 'POST', headers: h,
           body: JSON.stringify({ inputs: allContactIds.slice(0, 100).map(id => ({ id: String(id) })) })
         })
@@ -221,16 +232,16 @@ export default async function handler(req, res) {
     const dedupeCallIds = [...new Set(newCallIds)].slice(0, 100);
     const dedupeSmsIds  = [...new Set(newSmsIds)].slice(0, 100);
     const [callContactResp, callTicketResp, smsContactResp, smsTicketResp] = await Promise.all([
-      dedupeCallIds.length > 0 ? fetch('https://api.hubapi.com/crm/v4/associations/calls/contacts/batch/read', {
+      dedupeCallIds.length > 0 ? hsFetch('https://api.hubapi.com/crm/v4/associations/calls/contacts/batch/read', {
         method: 'POST', headers: h, body: JSON.stringify({ inputs: dedupeCallIds.map(id => ({ id })) })
       }) : Promise.resolve(null),
-      dedupeCallIds.length > 0 ? fetch('https://api.hubapi.com/crm/v4/associations/calls/tickets/batch/read', {
+      dedupeCallIds.length > 0 ? hsFetch('https://api.hubapi.com/crm/v4/associations/calls/tickets/batch/read', {
         method: 'POST', headers: h, body: JSON.stringify({ inputs: dedupeCallIds.map(id => ({ id })) })
       }) : Promise.resolve(null),
-      dedupeSmsIds.length > 0 ? fetch('https://api.hubapi.com/crm/v4/associations/communications/contacts/batch/read', {
+      dedupeSmsIds.length > 0 ? hsFetch('https://api.hubapi.com/crm/v4/associations/communications/contacts/batch/read', {
         method: 'POST', headers: h, body: JSON.stringify({ inputs: dedupeSmsIds.map(id => ({ id })) })
       }) : Promise.resolve(null),
-      dedupeSmsIds.length > 0 ? fetch('https://api.hubapi.com/crm/v4/associations/communications/tickets/batch/read', {
+      dedupeSmsIds.length > 0 ? hsFetch('https://api.hubapi.com/crm/v4/associations/communications/tickets/batch/read', {
         method: 'POST', headers: h, body: JSON.stringify({ inputs: dedupeSmsIds.map(id => ({ id })) })
       }) : Promise.resolve(null)
     ]);
@@ -272,7 +283,7 @@ export default async function handler(req, res) {
     const noteMap = {};
     const noteIdsToFetch = [...new Set(allNoteIds)].slice(0, 150);
     if (noteIdsToFetch.length > 0) {
-      const nr = await fetch('https://api.hubapi.com/crm/v3/objects/notes/batch/read', {
+      const nr = await hsFetch('https://api.hubapi.com/crm/v3/objects/notes/batch/read', {
         method: 'POST', headers: h,
         body: JSON.stringify({
           properties: ['hs_note_body', 'hs_timestamp', 'createdate'],
@@ -294,7 +305,7 @@ export default async function handler(req, res) {
     const callDetailMap = Object.assign({}, allCallIds._detailCache || {});
     const callIdsToFetch = [...new Set(allCallIds)].slice(0, 300);
     if (callIdsToFetch.length > 0) {
-      const cr = await fetch('https://api.hubapi.com/crm/v3/objects/calls/batch/read', {
+      const cr = await hsFetch('https://api.hubapi.com/crm/v3/objects/calls/batch/read', {
         method: 'POST', headers: h,
         body: JSON.stringify({
           properties: ['hs_timestamp', 'hs_call_status', 'hs_call_body', 'hs_call_direction', 'hs_call_duration', 'hubspot_owner_id', 'hs_call_title'],
@@ -324,7 +335,7 @@ export default async function handler(req, res) {
     const smsDetailMap = Object.assign({}, allSmsIds._detailCache || {});
     const smsIdsToFetch = [...new Set(allSmsIds)].slice(0, 300);
     if (smsIdsToFetch.length > 0) {
-      const sr = await fetch('https://api.hubapi.com/crm/v3/objects/communications/batch/read', {
+      const sr = await hsFetch('https://api.hubapi.com/crm/v3/objects/communications/batch/read', {
         method: 'POST', headers: h,
         body: JSON.stringify({
           properties: ['hs_timestamp', 'hs_communication_body', 'hs_communication_channel_type', 'hubspot_owner_id', 'hs_communication_logged_from'],
