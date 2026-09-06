@@ -4978,12 +4978,66 @@ function setHSSearch(val){
   renderHSLeads();
 }
 function switchCommTab(lid,tab){
-  ['msgs','calls','email'].forEach(t=>{
+  ['msgs','calls','email','notes'].forEach(t=>{
     const panel=document.getElementById('comm-'+t+'-'+lid);
     const btn=document.getElementById('comm-tab-'+t+'-'+lid);
     if(panel)panel.style.display=t===tab?'block':'none';
     if(btn){btn.style.color=t===tab?'#ff7a59':'#6b7280';btn.style.borderBottomColor=t===tab?'#ff7a59':'transparent';}
   });
+}
+const _notesLoaded={};
+async function loadNotesTab(lid){
+  if(_notesLoaded[lid])return;
+  const container=document.getElementById('comm-notes-list-'+lid);
+  if(!container)return;
+  container.innerHTML='<div style="padding:10px;text-align:center;color:#9ca3af;font-size:.72rem;">Loading notes…</div>';
+  try{
+    const snap=await FSB.collection('internal_notes').doc(lid).collection('notes').orderBy('ts','desc').limit(50).get();
+    if(snap.empty){container.innerHTML='<div style="padding:14px;text-align:center;color:#9ca3af;font-size:.72rem;">No notes yet — be the first to add one.</div>';_notesLoaded[lid]=true;return;}
+    const fmt=ts=>ts&&ts.toDate?ts.toDate().toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';
+    container.innerHTML=snap.docs.map(d=>{const n=d.data();return`<div style="padding:8px 12px;border-bottom:1px solid #f5f5f5;"><div style="font-size:.67rem;color:#9ca3af;margin-bottom:3px;">${n.author||'Agent'} · ${fmt(n.ts)}</div><div style="font-size:.75rem;color:#374151;line-height:1.5;white-space:pre-wrap;">${(n.text||'').replace(/</g,'&lt;')}</div></div>`;}).join('');
+    _notesLoaded[lid]=true;
+  }catch(e){container.innerHTML='<div style="padding:10px;text-align:center;color:#ef4444;font-size:.72rem;">Error loading notes: '+e.message+'</div>';}
+}
+async function saveInternalNote(lid){
+  const inp=document.getElementById('notes-inp-'+lid);
+  if(!inp)return;
+  const text=(inp.value||'').trim();
+  if(!text)return;
+  const btn=document.getElementById('notes-save-btn-'+lid);
+  if(btn)btn.disabled=true;
+  try{
+    await FSB.collection('internal_notes').doc(lid).collection('notes').add({text,author:CU&&CU.email?CU.email.split('@')[0]:CU&&CU.agentName?CU.agentName:'Agent',ts:firebase.firestore.FieldValue.serverTimestamp()});
+    inp.value='';
+    _notesLoaded[lid]=false;
+    await loadNotesTab(lid);
+  }catch(e){alert('Failed to save note: '+e.message);}
+  finally{if(btn)btn.disabled=false;}
+}
+async function saveContactEdit(lid,contactId){
+  if(!contactId){alert('No contact ID — cannot update HubSpot.');return;}
+  const name=(document.getElementById('cedit-name-'+lid)||{}).value||'';
+  const phone=(document.getElementById('cedit-phone-'+lid)||{}).value||'';
+  const email=(document.getElementById('cedit-email-'+lid)||{}).value||'';
+  const status=document.getElementById('cedit-status-'+lid);
+  if(status)status.textContent='Saving…';
+  try{
+    const r=await fetch('/api/hs-contact-update',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({contactId,name,phone,email})});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.message||d.error||'Update failed');
+    // Update in-memory lead object so panel refreshes correctly
+    const l=_hsLeads.find(x=>x.id===lid||x.id==lid);
+    if(l){
+      const parts=(name||'').trim().split(/\s+/).filter(Boolean);
+      if(name)l.contactName=name;
+      if(phone)l.contactPhone=phone;
+      if(email)l.contactEmail=email;
+    }
+    if(status){status.textContent='✅ Saved!';setTimeout(()=>{status.textContent='';},3000);}
+  }catch(e){
+    if(status)status.textContent='';
+    alert('Error: '+e.message);
+  }
 }
 const _emailLoaded={};
 async function loadEmailTab(lid,contactId){
@@ -5149,6 +5203,7 @@ function renderHSLeads(){
         <button id="comm-tab-msgs-${pid}" onclick="switchCommTab('${pid}','msgs')" style="${TAB}color:#ff7a59;border-bottom-color:#ff7a59;">💬 SMS (${smsList.length})</button>
         <button id="comm-tab-calls-${pid}" onclick="switchCommTab('${pid}','calls')" style="${TAB}color:#6b7280;border-bottom-color:transparent;">📞 Calls (${callList.length})</button>
         <button id="comm-tab-email-${pid}" onclick="switchCommTab('${pid}','email');loadEmailTab('${pid}','${cid}');" style="${TAB}color:#6b7280;border-bottom-color:transparent;">✉️ Email</button>
+        <button id="comm-tab-notes-${pid}" onclick="switchCommTab('${pid}','notes');loadNotesTab('${pid}');" style="${TAB}color:#6b7280;border-bottom-color:transparent;">📝 Notes</button>
       </div>
       <div id="comm-msgs-${pid}" style="display:block;">
         <div style="max-height:200px;overflow-y:auto;padding:12px;display:flex;flex-direction:column;">
@@ -5170,6 +5225,15 @@ function renderHSLeads(){
       <div id="comm-email-${pid}" style="display:none;">
         <div id="comm-email-body-${pid}" style="max-height:260px;overflow-y:auto;padding:10px 12px;">
           <div style="text-align:center;color:#9ca3af;font-size:.72rem;padding:18px 0;">Click the Email tab to load email history</div>
+        </div>
+      </div>
+      <div id="comm-notes-${pid}" style="display:none;flex-direction:column;">
+        <div id="comm-notes-list-${pid}" style="max-height:200px;overflow-y:auto;">
+          <div style="padding:14px;text-align:center;color:#9ca3af;font-size:.72rem;">Loading notes…</div>
+        </div>
+        <div style="padding:8px 10px;border-top:1px solid #f0f0f0;background:#f9fafb;display:flex;flex-direction:column;gap:6px;">
+          <textarea id="notes-inp-${pid}" placeholder="Type an internal note… (not shared to HubSpot)" style="width:100%;font-size:.75rem;border:1px solid #e5e7eb;border-radius:8px;padding:7px 10px;outline:none;background:#fff;resize:vertical;min-height:60px;box-sizing:border-box;font-family:inherit;"></textarea>
+          <button id="notes-save-btn-${pid}" onclick="saveInternalNote('${pid}');" style="align-self:flex-end;padding:7px 18px;background:#ff7a59;color:#fff;border:none;border-radius:8px;font-size:.72rem;font-weight:700;cursor:pointer;">Save Note</button>
         </div>
       </div>
     </div>`;
@@ -5222,6 +5286,22 @@ function renderHSLeads(){
       <div style="padding:10px 14px;border-bottom:1px solid #f0f0f0;"><div style="${LABEL}">Day</div><div style="${VAL}font-weight:700;color:#ff7a59;">Day ${l.ageDays||1}</div></div>
       <div style="padding:10px 14px;border-right:1px solid #f0f0f0;"><div style="${LABEL}">Last Call</div><div style="${VAL}font-size:.75rem;">${lastConnStr}</div></div>
       <div style="padding:10px 14px;"><div style="${LABEL}">Cadence</div><div style="${VAL}font-weight:700;color:${_bc};">${_pct}%</div></div>
+      <div id="contact-edit-form-${l.id}" style="display:none;grid-column:1/-1;padding:12px 14px;background:#f9fafb;border-top:1px solid #f0f0f0;gap:8px;flex-direction:column;">
+        <div style="font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;margin-bottom:4px;">Edit Contact Info — syncs to HubSpot</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:120px;"><label style="font-size:.63rem;color:#9ca3af;font-weight:600;">Full Name</label><input id="cedit-name-${l.id}" type="text" value="${(displayName||'').replace(/"/g,'&quot;')}" style="width:100%;font-size:.75rem;border:1px solid #e5e7eb;border-radius:6px;padding:5px 8px;margin-top:2px;outline:none;box-sizing:border-box;" /></div>
+          <div style="flex:1;min-width:120px;"><label style="font-size:.63rem;color:#9ca3af;font-weight:600;">Phone</label><input id="cedit-phone-${l.id}" type="tel" value="${(l.contactPhone||'').replace(/"/g,'&quot;')}" style="width:100%;font-size:.75rem;border:1px solid #e5e7eb;border-radius:6px;padding:5px 8px;margin-top:2px;outline:none;box-sizing:border-box;" /></div>
+          <div style="flex:1;min-width:160px;"><label style="font-size:.63rem;color:#9ca3af;font-weight:600;">Email</label><input id="cedit-email-${l.id}" type="email" value="${(l.contactEmail||'').replace(/"/g,'&quot;')}" style="width:100%;font-size:.75rem;border:1px solid #e5e7eb;border-radius:6px;padding:5px 8px;margin-top:2px;outline:none;box-sizing:border-box;" /></div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:4px;">
+          <button onclick="saveContactEdit('${l.id}','${l.contactId||''}')" style="padding:6px 16px;background:#ff7a59;color:#fff;border:none;border-radius:7px;font-size:.72rem;font-weight:700;cursor:pointer;">Save to HubSpot</button>
+          <button onclick="document.getElementById('contact-edit-form-${l.id}').style.display='none';" style="padding:6px 14px;background:#f3f4f6;color:#374151;border:none;border-radius:7px;font-size:.72rem;font-weight:600;cursor:pointer;">Cancel</button>
+          <span id="cedit-status-${l.id}" style="font-size:.7rem;color:#22c55e;align-self:center;"></span>
+        </div>
+      </div>
+      <div style="grid-column:1/-1;padding:8px 14px;display:flex;justify-content:flex-end;border-top:1px solid #f0f0f0;background:#fafafa;">
+        <button title="Edit contact info" onclick="const f=document.getElementById('contact-edit-form-${l.id}');f.style.display=f.style.display==='none'?'flex':'none';" style="background:none;border:none;cursor:pointer;font-size:1rem;color:#9ca3af;padding:2px 6px;" >✏️</button>
+      </div>
     </div>`;
     const actionsHtml=`<div style="padding:10px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #f0f0f0;">${stageDropdown(l)}<a href="https://app.hubspot.com/contacts/45809585/ticket/${l.id}" target="_blank" style="font-size:.67rem;color:#ff7a59;text-decoration:none;font-weight:600;border:1px solid #ff7a59;padding:3px 8px;border-radius:6px;">🔗 HubSpot</a></div>`;
     document.getElementById('lead-panel-name').textContent=displayName;
@@ -5365,7 +5445,7 @@ function renderHSLeads(){
       const myAvgCad=Math.round(myLeads.reduce((s,l)=>s+(l.cadencePct||0),0)/Math.max(1,myLeads.length));
       const myCadColor=myAvgCad>=100?'#22c55e':myAvgCad>=50?'#f97316':'#ef4444';
       const CARD='background:#fff;border:1px solid #f0f0f0;border-radius:12px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.05);';
-      const avSummary=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:22px;">
+      const avSummary=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:22px;">
         <div style="${CARD}">
           <div style="font-size:2rem;font-weight:800;color:#3b82f6;line-height:1;">${myLeads.length}</div>
           <div style="font-size:.75rem;color:#9ca3af;margin-top:6px;font-weight:500;">Active Leads${_hsDayFilter>0?` · Day ${_hsDayFilter}`:''}</div>
@@ -5400,7 +5480,7 @@ function renderHSLeads(){
     const avgCadPct=Math.round(activeDays.reduce((s,l)=>s+(l.cadencePct||0),0)/Math.max(1,activeDays.length));
     const cadColor=avgCadPct>=100?'#22c55e':avgCadPct>=50?'#f97316':'#ef4444';
     const CARD='background:#fff;border:1px solid #f0f0f0;border-radius:12px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.05);';
-    const summary=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:22px;">
+    const summary=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:22px;">
       <div style="${CARD}">
         <div style="font-size:2rem;font-weight:800;color:#3b82f6;line-height:1;">${activeDays.length}</div>
         <div style="font-size:.75rem;color:#9ca3af;margin-top:6px;font-weight:500;">Active Leads${_hsDayFilter>0?` · Day ${_hsDayFilter}`:''}</div>
