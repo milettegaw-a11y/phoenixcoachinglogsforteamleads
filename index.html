@@ -777,6 +777,7 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
       <div class="sb-sub-item agent-hide" id="om-sub-cl-dash" onclick="switchOM('cl');omShowCLTab('dashboard')"><span class="sb-icon">📊</span><span>Dashboard</span></div>
       <div class="sb-item" data-tab="actions" onclick="switchOM('actions')"><span class="sb-icon">⚡</span><span>Action Items</span><span id="nav-badge-actions" class="sb-notif" style="display:none"></span></div>
       <div class="sb-item agent-hide" data-tab="leads" onclick="switchOM('leads')"><span class="sb-icon">📞</span><span>Lead Follow-Ups</span><span id="nav-badge-om-leads" class="sb-notif" style="display:none"></span></div>
+      <div class="sb-item agent-hide" data-tab="leadmgmt" onclick="switchOM('leadmgmt')"><span class="sb-icon">🔶</span><span>Lead Management</span></div>
       <div class="sb-divider"></div>
       <div class="sb-section-lbl">RESOURCES</div>
       <div class="sb-item agent-hide" onclick="openDocsModal()"><span class="sb-icon">📁</span><span>Documents</span></div>
@@ -809,6 +810,7 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
       <div class="sb-sub-item" id="tl-sub-cl-dash" onclick="tlShowView('cl');tlShowCLTab('dashboard')"><span class="sb-icon">📊</span><span>Dashboard</span></div>
       <div class="sb-item" id="tl-nav-actions" onclick="tlShowView('actions')"><span class="sb-icon">⚡</span><span>Action Items</span><span id="nav-badge-tl-actions" class="sb-notif" style="display:none"></span></div>
       <div class="sb-item" id="tl-nav-leads" onclick="tlShowView('leads')"><span class="sb-icon">📞</span><span>Lead Follow-Ups</span><span id="nav-badge-tl-leads" class="sb-notif" style="display:none"></span></div>
+      <div class="sb-item" id="tl-nav-leadmgmt" onclick="tlShowView('leadmgmt')"><span class="sb-icon">🔶</span><span>Lead Management</span></div>
       <div class="sb-divider"></div>
       <div class="sb-section-lbl">RESOURCES</div>
       <div class="sb-item" onclick="openDocsModal()"><span class="sb-icon">📁</span><span>Documents</span></div>
@@ -832,6 +834,7 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
       <div class="sb-divider"></div>
       <div class="sb-item" data-tab="attendance" onclick="switchAgentTab('attendance')"><span class="sb-icon">📅</span><span>My Attendance</span><span id="nav-badge-att" class="sb-notif" style="display:none"></span></div>
       <div class="sb-item" data-tab="leads" onclick="switchAgentTab('leads')"><span class="sb-icon">📞</span><span>Lead Follow-Up</span><span id="nav-badge-leads" class="sb-notif" style="display:none"></span></div>
+      <div class="sb-item" data-tab="leadmgmt" onclick="switchAgentTab('leadmgmt')"><span class="sb-icon">🔶</span><span>Lead Management</span></div>
       <div class="sb-item" data-tab="kb" onclick="switchAgentTab('kb')"><span class="sb-icon">📖</span><span>Knowledge Base</span></div>
       <div class="sb-divider"></div>
       <div class="sb-item" data-tab="library" onclick="switchAgentTab('library')"><span class="sb-icon">🎵</span><span>Call Library</span></div>
@@ -1741,6 +1744,18 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
         <div id="lead-list" style="display:flex;flex-direction:column;gap:10px;"></div>
       </div><!-- /av-leads -->
 
+      <!-- ── LEAD MANAGEMENT (HubSpot 2nd Week) ── -->
+      <div id="av-leadmgmt" class="av-section" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+          <div>
+            <div style="font-size:1rem;font-weight:700;color:var(--g800);">🔶 Lead Management — 2nd Week</div>
+            <div style="font-size:.74rem;color:var(--g500);margin-top:2px;">Your open Sales Call Required (2nd week) leads from HubSpot</div>
+          </div>
+          <button onclick="fetchHSLeads()" style="padding:6px 14px;border:1.5px solid #ff7a59;border-radius:8px;background:#fff;color:#ff7a59;font-size:.78rem;font-weight:700;cursor:pointer;">↻ Refresh</button>
+        </div>
+        <div id="av-hs-leads-body"><div style="color:var(--g400);font-size:.8rem;padding:16px 0;text-align:center;">Loading HubSpot leads…</div></div>
+      </div><!-- /av-leadmgmt -->
+
       <!-- CALL LIBRARY -->
       <div id="av-lib" class="av-section" style="display:none;padding:16px;">
         <div style="margin-bottom:20px;">
@@ -2312,6 +2327,18 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
       <button onclick="saveCalEvent()" style="padding:8px 18px;background:var(--yellow-dk);color:#fff;border:none;border-radius:8px;font-family:inherit;font-size:.85rem;font-weight:700;cursor:pointer;">Save Event</button>
     </div>
   </div>
+</div>
+
+<!-- LEAD MANAGEMENT VIEW (TL/OM) — HubSpot 2nd Week Leads -->
+<div id="v-leadmgmt-tl" class="view">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+    <div>
+      <div style="font-size:1rem;font-weight:700;color:var(--g800);">🔶 Lead Management — 2nd Week</div>
+      <div style="font-size:.74rem;color:var(--g500);margin-top:2px;">All open Sales Call Required (2nd week) leads from HubSpot, by agent</div>
+    </div>
+    <button onclick="fetchHSLeads()" style="padding:6px 14px;border:1.5px solid #ff7a59;border-radius:8px;background:#fff;color:#ff7a59;font-size:.78rem;font-weight:700;cursor:pointer;">↻ Refresh</button>
+  </div>
+  <div id="tl-hs-leads-body"><div style="color:var(--g400);font-size:.8rem;padding:16px 0;text-align:center;">Loading HubSpot leads…</div></div>
 </div>
 
 <!-- ACTION ITEMS VIEW -->
@@ -4777,6 +4804,153 @@ function renderTodoList(){
 
 /* ── LEADS (Firestore) ── */
 let _leadItems=[];
+/* ── HUBSPOT 2ND WEEK LEADS ── */
+const HS_TOKEN='pat-na1-445262ca-4830-40e1-a837-3c0bc31d7c1c';
+const HS_PIPELINE_SEG='736937559';
+const HS_STAGE_LABELS={'1072718881':'New','1072718882':'Assigned','1072718883':'In Progress','1072718884':'2nd Attempt','1072805486':'3rd Attempt','1072805487':'4th Attempt','1072805488':'5th Attempt','1161141150':'Declined (Follow-up)','1072805489':'24hr Callback'};
+const HS_STAGE_ATTEMPTS={'1072718881':0,'1072718882':0,'1072718883':1,'1072718884':1,'1072805486':2,'1072805487':3,'1072805488':4,'1161141150':1,'1072805489':1};
+const HS_OWNERS={'3817861':'Jimmy Barnachea','17052290':'Kristine Rivera','49682868':'Rayan Jaime','64681504':'Monica Bautista','66232384':'Mark Lim','75448319':'Luzielle Orbillo','75448329':'Mark Tadeo','75448337':'Jerome Manuit','75448338':'Christian Bolano','75448340':'Kimberly Santos','75448342':'Jeremiah Mendoza','75448346':'Robin Castillo','75448907':'John Adrian','75448908':'April Capulso','75624739':'Neil Bajande','76257948':'Gerlie Sarmiento','76257998':'Rose Tejedor','76258000':'Mary Sotto','76258005':'Catherine Gayoso','76258017':'King Martinez','76754051':'Vanessa Inocencio','76791020':'Jazz Karasig','76791092':'Jo Vincent Feraren','76791093':'Kristine Villanueva','77597264':'Arah Sacro','77597279':'Carlyn Ordona','77597297':'Allan Chua','77814217':'Dioreza Tomilloso','78073879':'Trixia Robles','78073906':'Angelo Mararac','78073945':'Joan Estarez','78073956':'Noemi Galon','78296623':'Ramille Borja','78296624':'Jacquelou Rondez','78653037':'Cristine Paguipolar','78708745':'John Babila','78708760':'Mary Opena','78928026':'Bernadette Espinas','78928079':'Mark Bautista','78973871':'Nenelyn Kuo','79004888':'Joy Espinar','79004894':'Regner Sol','79004895':'John De Leon','79190901':'Michael Aleta','79363109':'Ace Amantiad','79523705':'Rina Galang','79523733':'Princess Mamandis','79523738':'Janelle Casabuena','79523747':'Michael Santiago','79523753':'Loseta Labarro','79695298':'Jaydi Miranda','79870132':'Asher Balway','80071272':'Wilrose Menguito','80071316':'Racine Mercado','80225569':'Aaron Tuico','80225602':'Jenalynn Paya','80225605':'Nikka Tejana','80225613':'Jardene Petines','80225617':'Kimberly Sabandal','80225636':'MJ Flomentera','80422418':'Merven Panganiban','80422449':'Iris Neri','80564719':'Jondelle Miranda','80564753':'Jennifer Trinidad','80564786':'Odirose Amuyot','80564815':'Anna Pascual','80746376':'Kelly Cruz','80746379':'CJ Garces','80746403':'Supremo Cabalo','80746421':'Emilyn Buenafe','80746444':'Jann Adriano','80746448':'Jowee-Anne Barbastro','80746452':'Nicole Canlas','80746664':'Ian Ibañez','80922738':'Irene Virgo','80922767':'Kaile Laquindanum','80922772':'Erwin Garcia','80922782':'Richie Sabado','80922793':'Lynn Villahermosa','80922800':'Elvis Maste','80922823':'Roxanne Balcita','81103164':'Paulo Moreno','81284986':'Lara Hongayo','81285040':'Romeo Sandoval','81285041':'Kathrina Tabaquin','81285050':'Angelica Lorenzana','81463171':'Krizelle Taino','81488398':'Russell Cabang','81611466':'Princess Punzalan','81612598':'Jemy Morong','81786552':'Gyle Gelle','422514679':'(Unassigned)','81973079':'(Admin)'};
+let _hsLeads=[];
+let _hsLeadsLoaded=false;
+
+async function fetchHSLeads(){
+  const avEl=document.getElementById('av-hs-leads-body');
+  const tlEl=document.getElementById('tl-hs-leads-body');
+  const loading='<div style="color:var(--g400);font-size:.8rem;padding:8px 0;">Loading HubSpot leads…</div>';
+  if(avEl)avEl.innerHTML=loading;
+  if(tlEl)tlEl.innerHTML=loading;
+  const closedStages=['1072805490','1072805491','1072805492','1072805493','1072805494','1072805495'];
+  const now=new Date();
+  try{
+    // Fetch up to 200 tickets (paginate if needed)
+    let allResults=[];
+    let after=undefined;
+    do{
+      const body={
+        filterGroups:[{filters:[
+          {propertyName:'hs_pipeline',operator:'EQ',value:HS_PIPELINE_SEG},
+          {propertyName:'subject',operator:'CONTAINS_TOKEN',value:'2nd week'},
+          {propertyName:'hs_pipeline_stage',operator:'NOT_IN',values:closedStages}
+        ]}],
+        properties:['subject','hs_pipeline_stage','hubspot_owner_id','createdate','hs_lastcontacted','hs_lastactivitydate'],
+        limit:100,
+        sorts:[{propertyName:'createdate',direction:'DESCENDING'}]
+      };
+      if(after)body.after=after;
+      const resp=await fetch('https://api.hubapi.com/crm/v3/objects/tickets/search',{
+        method:'POST',
+        headers:{'Authorization':'Bearer '+HS_TOKEN,'Content-Type':'application/json'},
+        body:JSON.stringify(body)
+      });
+      if(!resp.ok)throw new Error('HubSpot API error '+resp.status);
+      const data=await resp.json();
+      allResults=allResults.concat(data.results||[]);
+      after=data.paging?.next?.after;
+    }while(after&&allResults.length<200);
+
+    _hsLeads=allResults.map(t=>{
+      const p=t.properties;
+      const created=p.createdate?new Date(p.createdate):null;
+      const ageDays=created?Math.floor((now-created)/86400000):null;
+      const ownerId=p.hubspot_owner_id;
+      const ownerName=HS_OWNERS[ownerId]||'Owner #'+ownerId;
+      const stageId=p.hs_pipeline_stage;
+      const stageName=HS_STAGE_LABELS[stageId]||'Stage '+stageId;
+      const attempts=HS_STAGE_ATTEMPTS[stageId]??0;
+      const lastContacted=p.hs_lastcontacted?new Date(p.hs_lastcontacted):null;
+      const daysSinceContact=lastContacted?Math.floor((now-lastContacted)/86400000):null;
+      // Lacking cadence = never contacted OR last contact 2+ days ago
+      const lacksCadence=(daysSinceContact===null&&ageDays>=2)||(daysSinceContact!==null&&daysSinceContact>=2);
+      // Age bucket from ticket createdate: days 1-8 = early (less urgent), days 9-15 = late (more urgent)
+      const ageBucket=ageDays<=8?'early':'late';
+      return {id:t.id,subject:p.subject||'(no name)',ownerId,ownerName,stageId,stageName,attempts,ageDays,daysSinceContact,lacksCadence,ageBucket,url:t.url||''};
+    });
+    _hsLeadsLoaded=true;
+    renderHSLeads();
+  }catch(e){
+    const msg=`<div style="color:#ef4444;font-size:.8rem;padding:8px 0;">⚠️ Error: ${e.message}</div>`;
+    if(avEl)avEl.innerHTML=msg;
+    if(tlEl)tlEl.innerHTML=msg;
+  }
+}
+
+function renderHSLeads(){
+  if(!_hsLeadsLoaded)return;
+  const now=new Date();
+  // ── AGENT VIEW ──
+  const avEl=document.getElementById('av-hs-leads-body');
+  if(avEl&&CU&&CU.isAgentView){
+    const firstName=(CU.agentName||'').split(' ')[0].toLowerCase();
+    const myLeads=_hsLeads.filter(l=>l.ownerName.toLowerCase().includes(firstName));
+    if(myLeads.length===0){
+      avEl.innerHTML='<div style="color:var(--g400);font-size:.8rem;padding:6px 0;">No open 2nd week HubSpot leads assigned to you.</div>';
+    }else{
+      const w1=myLeads.filter(l=>l.ageBucket==='early');
+      const w2=myLeads.filter(l=>l.ageBucket==='late');
+      const renderCard=l=>{
+        const ageColor=l.ageBucket==='late'?'#ef4444':'#f97316';
+        const cadBadge=l.lacksCadence?'<span style="background:#fee2e2;color:#b91c1c;font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:99px;margin-left:6px;">⚠️ Needs Call</span>':'<span style="background:#dcfce7;color:#166534;font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:99px;margin-left:6px;">✅ Called</span>';
+        const contactInfo=l.daysSinceContact!==null?`Last call: ${l.daysSinceContact}d ago`:'Never called';
+        return `<div style="background:#fff;border-radius:9px;padding:11px 13px;box-shadow:var(--sh);border-left:4px solid ${l.lacksCadence?'#ef4444':'#22c55e'};margin-bottom:7px;">
+          <div style="display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap;">
+            <div style="flex:1;min-width:130px;">
+              <div style="font-size:.83rem;font-weight:700;color:var(--g800);margin-bottom:3px;">${l.subject}${cadBadge}</div>
+              <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-top:4px;">
+                <span style="font-size:.68rem;background:#fff3e0;color:#e65100;padding:2px 7px;border-radius:99px;font-weight:600;">${l.stageName}</span>
+                <span style="font-size:.68rem;color:${ageColor};font-weight:700;">${l.ageDays}d old</span>
+                <span style="font-size:.68rem;color:var(--g500);">${contactInfo}</span>
+              </div>
+            </div>
+            <a href="${l.url}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;padding:5px 10px;background:#ff7a59;color:#fff;border-radius:6px;font-size:.7rem;font-weight:700;text-decoration:none;flex-shrink:0;">🔗 Open</a>
+          </div>
+        </div>`;
+      };
+      let html='';
+      if(w2.length>0) html+=`<div style="font-size:.72rem;font-weight:700;color:#ef4444;margin-bottom:5px;">⏰ Days 9–15 (Urgent)</div>${w2.map(renderCard).join('')}`;
+      if(w1.length>0) html+=`<div style="font-size:.72rem;font-weight:700;color:#f97316;margin-bottom:5px;${w2.length?'margin-top:12px;':''}">📋 Days 1–8</div>${w1.map(renderCard).join('')}`;
+      avEl.innerHTML=html;
+    }
+  }
+  // ── TL / OM VIEW ──
+  const tlEl=document.getElementById('tl-hs-leads-body');
+  if(tlEl&&CU&&!CU.isAgentView){
+    if(_hsLeads.length===0){
+      tlEl.innerHTML='<div style="color:var(--g400);font-size:.8rem;padding:8px 0;">No open 2nd week leads found.</div>';
+      return;
+    }
+    const byOwner={};
+    _hsLeads.forEach(l=>{
+      if(!byOwner[l.ownerName])byOwner[l.ownerName]={name:l.ownerName,leads:[],lackCount:0,maxAge:0};
+      byOwner[l.ownerName].leads.push(l);
+      if(l.lacksCadence)byOwner[l.ownerName].lackCount++;
+      if((l.ageDays||0)>byOwner[l.ownerName].maxAge)byOwner[l.ownerName].maxAge=l.ageDays||0;
+    });
+    const sorted=Object.values(byOwner).sort((a,b)=>b.lackCount-a.lackCount||b.maxAge-a.maxAge);
+    const totalLack=_hsLeads.filter(l=>l.lacksCadence).length;
+    const w1count=_hsLeads.filter(l=>l.ageBucket==='early').length;
+    const w2count=_hsLeads.filter(l=>l.ageBucket==='late').length;
+    tlEl.innerHTML=`
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+        <span style="font-size:.75rem;background:#f3f4f6;padding:4px 10px;border-radius:99px;color:var(--g700);">Total: <strong>${_hsLeads.length}</strong></span>
+        <span style="font-size:.75rem;background:#fee2e2;padding:4px 10px;border-radius:99px;color:#b91c1c;">⚠️ Lacking Cadence: <strong>${totalLack}</strong></span>
+        <span style="font-size:.75rem;background:#fff3e0;padding:4px 10px;border-radius:99px;color:#e65100;">Days 1–8: <strong>${w1count}</strong></span>
+        <span style="font-size:.75rem;background:#fee2e2;padding:4px 10px;border-radius:99px;color:#ef4444;">Days 9–15: <strong>${w2count}</strong></span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:9px;">
+        ${sorted.map(a=>{
+          const w1=a.leads.filter(l=>l.ageBucket==='early').length;
+          const w2=a.leads.filter(l=>l.ageBucket==='late').length;
+          return `<div style="background:#fff;border-radius:9px;padding:11px 13px;box-shadow:var(--sh);border-left:4px solid ${a.lackCount>0?(a.maxAge>=9?'#ef4444':'#f97316'):'#22c55e'};">
+            <div style="font-size:.8rem;font-weight:700;color:var(--g800);margin-bottom:4px;">${a.name}</div>
+            <div style="font-size:.7rem;color:var(--g600);">${a.leads.length} lead${a.leads.length!==1?'s':''} &nbsp;·&nbsp; ${w1>0?`<span style='color:#f97316'>${w1} d1-8</span>`:''}${w1>0&&w2>0?' ':''} ${w2>0?`<span style='color:#ef4444'>${w2} d9-15</span>`:''}</div>
+            ${a.lackCount>0?`<div style="font-size:.69rem;color:#ef4444;font-weight:600;margin-top:3px;">⚠️ ${a.lackCount} need a call</div>`:`<div style="font-size:.69rem;color:#22c55e;margin-top:3px;">✅ Cadence OK</div>`}
+            <div style="font-size:.65rem;color:var(--g400);margin-top:3px;">Oldest: ${a.maxAge}d</div>
+          </div>`;
+        }).join('')}
+      </div>`;
+  }
+}
+
 let _leadUnsub=null;
 
 /* ── ACTION ITEMS ── */
@@ -5000,9 +5174,9 @@ function toggleSbSub(id){
 
 function switchOM(tab){
   document.querySelectorAll('#om-nav .sb-item').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
-  const titles={dash:'Coaching Dashboard',coaching:'Coaching Logs',nte:'NTE Logs',ft:'Follow Through',cl:'Call Listening',attendance:'Attendance Points',ranking:'Agent Ranking',pwreset:'Reset Passwords',kb:'Knowledge Base',suggestions:'Suggestions & Reports',calendar:'Team Calendar',actions:'Action Items',leads:'Lead Follow-Ups',onboard:'Onboarding / Offboarding'};
+  const titles={dash:'Coaching Dashboard',coaching:'Coaching Logs',nte:'NTE Logs',ft:'Follow Through',cl:'Call Listening',attendance:'Attendance Points',ranking:'Agent Ranking',pwreset:'Reset Passwords',kb:'Knowledge Base',suggestions:'Suggestions & Reports',calendar:'Team Calendar',actions:'Action Items',leads:'Lead Follow-Ups',leadmgmt:'Lead Management',onboard:'Onboarding / Offboarding'};
   const el=document.getElementById('tb-title'); if(el) el.textContent=titles[tab]||'';
-  const map={dash:'v-om-dash',coaching:'v-om-c',nte:'v-om-n',ft:'v-om-f',cl:'v-om-cl',attendance:'v-om-attendance',ranking:'v-ranking',pwreset:'v-om-pwreset',kb:'v-kb',suggestions:'v-om-suggestions',calendar:'v-cal',actions:'v-actions',leads:'v-leads-tl',onboard:'v-onboard'};
+  const map={dash:'v-om-dash',coaching:'v-om-c',nte:'v-om-n',ft:'v-om-f',cl:'v-om-cl',attendance:'v-om-attendance',ranking:'v-ranking',pwreset:'v-om-pwreset',kb:'v-kb',suggestions:'v-om-suggestions',calendar:'v-cal',actions:'v-actions',leads:'v-leads-tl',leadmgmt:'v-leadmgmt-tl',onboard:'v-onboard'};
   showView(map[tab]||'v-om-dash');
   populateAllFilters();
   if(tab==='dash')renderOMDash();
@@ -5018,6 +5192,7 @@ function switchOM(tab){
   if(tab==='calendar')renderCalendar();
   if(tab==='actions'){subscribeActionItems();renderActionItems();}
   if(tab==='leads'){subscribeLeads();renderLeads();}
+  if(tab==='leadmgmt')fetchHSLeads();
   if(tab==='onboard'){subscribeOnboard();renderOnboardDash();}
 }
 
@@ -5694,9 +5869,9 @@ function clearFilters(){
 
 // Switch TL nav views (Dashboard / Coaching Logs / Attendance Points)
 function tlShowView(tab){
-  const viewMap={dashboard:'v-tl',logs:'v-tl-logs',nte:'v-om-n',attendance:'v-tl-attendance',ranking:'v-ranking',kb:'v-kb',calendar:'v-cal',actions:'v-actions',leads:'v-leads-tl',onboard:'v-onboard',cl:'v-tl-cl'};
+  const viewMap={dashboard:'v-tl',logs:'v-tl-logs',nte:'v-om-n',attendance:'v-tl-attendance',ranking:'v-ranking',kb:'v-kb',calendar:'v-cal',actions:'v-actions',leads:'v-leads-tl',leadmgmt:'v-leadmgmt-tl',onboard:'v-onboard',cl:'v-tl-cl'};
   showView(viewMap[tab]||'v-tl');
-  ['dash','logs','nte','attendance','ranking','kb','calendar','actions','leads','onboard','cl'].forEach(t=>{
+  ['dash','logs','nte','attendance','ranking','kb','calendar','actions','leads','leadmgmt','onboard','cl'].forEach(t=>{
     const el=document.getElementById('tl-nav-'+t);
     if(el) el.classList.toggle('active',t===tab||(t==='dash'&&tab==='dashboard'));
   });
@@ -5708,6 +5883,7 @@ function tlShowView(tab){
   if(tab==='calendar') renderCalendar();
   if(tab==='actions'){subscribeActionItems();renderActionItems();}
   if(tab==='leads'){subscribeLeads();renderLeads();}
+  if(tab==='leadmgmt')fetchHSLeads();
   if(tab==='onboard'){subscribeOnboard();renderOnboardDash();}
   if(tab==='cl') renderCLLogs();
 }
@@ -8396,11 +8572,12 @@ function onEmailInput(){
 function switchAgentTab(tab){
   document.querySelectorAll('#agent-nav .sb-item').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
   document.querySelectorAll('.av-section').forEach(s=>s.style.display='none');
-  const map={coaching:'av-coaching',nte:'av-nte',ft:'av-ft',perf:'av-perf',clhist:'av-cl-hist',calc:'av-calc',attendance:'av-attendance',leads:'av-leads',library:'av-lib',kb:'__kb__'};
+  const map={coaching:'av-coaching',nte:'av-nte',ft:'av-ft',perf:'av-perf',clhist:'av-cl-hist',calc:'av-calc',attendance:'av-attendance',leads:'av-leads',leadmgmt:'av-leadmgmt',library:'av-lib',kb:'__kb__'};
   const secId=map[tab];
   if(secId==='__kb__'){showView('v-kb');renderAll();}else{showView('v-agent');if(secId){const sec=document.getElementById(secId);if(sec)sec.style.display='';}}
   if(tab==='leads'){if(!_leadUnsub)subscribeLeads();else renderLeads();}
-  const titles={coaching:'My Coaching',nte:'My NTE',ft:'My Follow Through',perf:'My Performance',clhist:'My Call History',calc:'Phoenix Calculator',attendance:'My Attendance',leads:'Lead Follow-Up',library:'Call Library 🎵',kb:'Knowledge Base'};
+  if(tab==='leadmgmt')fetchHSLeads();
+  const titles={coaching:'My Coaching',nte:'My NTE',ft:'My Follow Through',perf:'My Performance',clhist:'My Call History',calc:'Phoenix Calculator',attendance:'My Attendance',leads:'Lead Follow-Up',leadmgmt:'Lead Management',library:'Call Library 🎵',kb:'Knowledge Base'};
   const el=document.getElementById('tb-title'); if(el) el.textContent=titles[tab]||'';
   if(tab==='perf') renderAgentPerf();
   if(tab==='calc') avCalcInit();
@@ -9937,5 +10114,3 @@ document.addEventListener('keydown', function(e) {
 
 </body>
 </html>
-
-
