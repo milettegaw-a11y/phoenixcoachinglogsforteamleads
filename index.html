@@ -4903,10 +4903,8 @@ async function fetchHSLeads(){
 
     _hsLeads=allResults.map(t=>{
       const p=t.properties;
-      // Prefer the associated contact's createdate — the ticket was created when the lead entered
-      // the 2nd-week pipeline (day 7–8), so ticket.createdate would show "Day 8" even if it's Day 15.
-      // The contact's createdate reflects when the lead actually entered the system.
-      const created=t.contactCreatedate?new Date(t.contactCreatedate):(p.createdate?new Date(p.createdate):null);
+      // Age is counted from this ticket's own createdate (the "Sales Call Required (2nd week lead)" ticket).
+      const created=p.createdate?new Date(p.createdate):null;
       // Day 1 = today; +1 so created today = day 1, yesterday = day 2, etc.
       const ageDays=created?Math.max(1,Math.floor((now-created)/86400000)+1):1;
       const ownerId=p.hubspot_owner_id;
@@ -4928,6 +4926,7 @@ async function fetchHSLeads(){
       const ageBucket=ageDays<=8?'2nd-week':'3rd-week';
       return {id:t.id,subject:p.subject||'(no name)',ownerId,ownerName,stageId,stageName,attempts,ageDays,lacksCadence,cadencePct,actualContacts,expectedContacts,dailyCallsMade,dailySmsCount,ageBucket,contactName:t.contactName||null,contactPhone:t.contactPhone||null,contactEmail:t.contactEmail||null,contactLifecycle:t.contactLifecycle||null,latestNote:t.latestNote||null,calls:t.calls||[]};
     }).filter(l=>HS_ALLOWED_NAMES.has(l.ownerName.toLowerCase()))
+      .filter(l=>(l.subject||'').toLowerCase().includes('2nd week lead'))
       .filter(l=>l.ageDays>=8||!closedStages.includes(l.stageId))
       .filter(l=>{const lc=(l.contactLifecycle||'').toLowerCase();return!lc||(lc!=='other'&&lc!=='customer');});
     _hsLeadsLoaded=true;
