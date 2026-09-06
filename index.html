@@ -4832,6 +4832,9 @@ let _hsLeads=[];
 let _hsLeadsLoaded=false;
 let _hsViewMode='kanban'; // 'kanban' or 'list'
 let _hsDayFilter=0; // 0 = All days
+// Only show leads assigned to these four teams
+const HS_ALLOWED_TEAMS=new Set(['Team Jhay Oglimen','Team Jumz Delacruz','Team Florence Llait','Team Jersey Deguzman']);
+const HS_ALLOWED_NAMES=new Set(AGENTS.filter(a=>HS_ALLOWED_TEAMS.has(a.tl)).map(a=>a.name.toLowerCase()));
 // Cadence plan: expected contacts per day (index = day number, 0 = unused)
 // Day 1=3, Day 2=3, Day 3=0(rest), Day 4=3, Day 5=3, Day 6=1, Day 7=3, Day 8=1
 // Days 9-15 (3rd week): 1 per day
@@ -4914,7 +4917,7 @@ async function fetchHSLeads(){
       const lacksCadence=cadencePct<100;
       const ageBucket=ageDays<=8?'2nd-week':'3rd-week';
       return {id:t.id,subject:p.subject||'(no name)',ownerId,ownerName,stageId,stageName,attempts,ageDays,lacksCadence,cadencePct,actualContacts,expectedContacts,ageBucket,contactName:t.contactName||null,contactPhone:t.contactPhone||null,contactEmail:t.contactEmail||null,latestNote:t.latestNote||null,calls:t.calls||[]};
-    });
+    }).filter(l=>HS_ALLOWED_NAMES.has(l.ownerName.toLowerCase()));
     _hsLeadsLoaded=true;
     renderHSLeads();
   }catch(e){
