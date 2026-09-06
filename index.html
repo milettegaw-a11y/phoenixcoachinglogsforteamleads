@@ -1751,11 +1751,12 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
             <div style="font-size:1rem;font-weight:700;color:var(--g800);">🔶 Lead Management — 2nd Week</div>
             <div style="font-size:.74rem;color:var(--g500);margin-top:2px;">Your open Sales Call Required (2nd week) leads from HubSpot</div>
           </div>
-          <div style="display:flex;align-items:center;gap:8px;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
             <div style="display:flex;border:1.5px solid #e5e7eb;border-radius:8px;overflow:hidden;">
-              <button id="av-hs-btn-kanban" onclick="setHSView('kanban')" style="padding:5px 12px;border:none;background:#ff7a59;color:#fff;font-size:.76rem;font-weight:700;cursor:pointer;">⊞ Kanban</button>
-              <button id="av-hs-btn-list" onclick="setHSView('list')" style="padding:5px 12px;border:none;background:#fff;color:#6b7280;font-size:.76rem;font-weight:700;cursor:pointer;">☰ List</button>
+              <button id="av-hs-btn-kanban" onclick="setHSView('kanban')" title="Kanban" style="padding:5px 12px;border:none;background:#ff7a59;color:#fff;font-size:.95rem;font-weight:700;cursor:pointer;">⊞</button>
+              <button id="av-hs-btn-list" onclick="setHSView('list')" title="List" style="padding:5px 12px;border:none;background:#fff;color:#6b7280;font-size:.95rem;font-weight:700;cursor:pointer;">☰</button>
             </div>
+            <select id="av-hs-owner-filter" onchange="setHSOwnerFilter(this.value)" style="font-size:.72rem;border:1.5px solid #e5e7eb;border-radius:8px;padding:5px 10px;background:#fff;color:#374151;cursor:pointer;"></select>
             <button onclick="fetchHSLeads()" style="padding:6px 14px;border:1.5px solid #ff7a59;border-radius:8px;background:#fff;color:#ff7a59;font-size:.78rem;font-weight:700;cursor:pointer;">↻ Refresh</button>
           </div>
         </div>
@@ -2342,11 +2343,13 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
       <div style="font-size:1rem;font-weight:700;color:var(--g800);">🔶 Lead Management — 2nd Week</div>
       <div style="font-size:.74rem;color:var(--g500);margin-top:2px;">All open Sales Call Required (2nd week) leads from HubSpot, by agent</div>
     </div>
-    <div style="display:flex;align-items:center;gap:8px;">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
       <div style="display:flex;border:1.5px solid #e5e7eb;border-radius:8px;overflow:hidden;">
-        <button id="hs-btn-kanban" onclick="setHSView('kanban')" style="padding:5px 12px;border:none;background:#ff7a59;color:#fff;font-size:.76rem;font-weight:700;cursor:pointer;">⊞ Kanban</button>
-        <button id="hs-btn-list" onclick="setHSView('list')" style="padding:5px 12px;border:none;background:#fff;color:#6b7280;font-size:.76rem;font-weight:700;cursor:pointer;">☰ List</button>
+        <button id="hs-btn-kanban" onclick="setHSView('kanban')" title="Kanban" style="padding:5px 12px;border:none;background:#ff7a59;color:#fff;font-size:.95rem;font-weight:700;cursor:pointer;">⊞</button>
+        <button id="hs-btn-list" onclick="setHSView('list')" title="List" style="padding:5px 12px;border:none;background:#fff;color:#6b7280;font-size:.95rem;font-weight:700;cursor:pointer;">☰</button>
       </div>
+      <select id="hs-team-filter" onchange="setHSTeamFilter(this.value)" style="font-size:.72rem;border:1.5px solid #e5e7eb;border-radius:8px;padding:5px 10px;background:#fff;color:#374151;cursor:pointer;"><option value="">All Teams</option></select>
+      <select id="hs-owner-filter" onchange="setHSOwnerFilter(this.value)" style="font-size:.72rem;border:1.5px solid #e5e7eb;border-radius:8px;padding:5px 10px;background:#fff;color:#374151;cursor:pointer;"><option value="">All Owners</option></select>
       <button onclick="fetchHSLeads()" style="padding:6px 14px;border:1.5px solid #ff7a59;border-radius:8px;background:#fff;color:#ff7a59;font-size:.78rem;font-weight:700;cursor:pointer;">↻ Refresh</button>
     </div>
   </div>
@@ -4832,6 +4835,8 @@ let _hsLeads=[];
 let _hsLeadsLoaded=false;
 let _hsViewMode='kanban'; // 'kanban' or 'list'
 let _hsDayFilter=0; // 0 = All days
+let _hsOwnerFilter=''; // '' = all owners
+let _hsTeamFilter=''; // '' = all teams
 // Only show leads assigned to these four teams
 const HS_ALLOWED_TEAMS=new Set(['Team Jhay Oglimen','Team Jumz Delacruz','Team Florence Llait','Team Jersey Deguzman']);
 const HS_ALLOWED_NAMES=new Set(AGENTS.filter(a=>HS_ALLOWED_TEAMS.has(a.tl)).map(a=>a.name.toLowerCase()));
@@ -4950,12 +4955,45 @@ function setHSDayFilter(day){
   _hsDayFilter=parseInt(day)||0;
   renderHSLeads();
 }
+function setHSOwnerFilter(val){
+  _hsOwnerFilter=val;
+  renderHSLeads();
+}
+function setHSTeamFilter(val){
+  _hsTeamFilter=val;
+  _hsOwnerFilter=''; // reset owner when team changes
+  renderHSLeads();
+}
 
 function renderHSLeads(){
   if(!_hsLeadsLoaded)return;
 
-  // Apply day filter
-  const activeDays=_hsDayFilter>0?[..._hsLeads].filter(l=>l.ageDays===_hsDayFilter):_hsLeads;
+  // Apply day filter + owner/team filters (TL/OM view)
+  let activeDays=_hsDayFilter>0?[..._hsLeads].filter(l=>l.ageDays===_hsDayFilter):[..._hsLeads];
+  if(_hsTeamFilter) activeDays=activeDays.filter(l=>{const ag=rosterAgents.find(a=>a.name===l.ownerName);return ag&&ag.tl===_hsTeamFilter;});
+  if(_hsOwnerFilter) activeDays=activeDays.filter(l=>l.ownerName===_hsOwnerFilter);
+
+  // Populate TL/OM owner + team dropdowns
+  const tlOwnerSel=document.getElementById('hs-owner-filter');
+  if(tlOwnerSel){
+    const uniqueOwners=[...new Set(_hsLeads.map(l=>l.ownerName).filter(Boolean))].sort();
+    const filtered=_hsTeamFilter?_hsLeads.filter(l=>{const ag=rosterAgents.find(a=>a.name===l.ownerName);return ag&&ag.tl===_hsTeamFilter;}):_hsLeads;
+    const filteredOwners=[...new Set(filtered.map(l=>l.ownerName).filter(Boolean))].sort();
+    tlOwnerSel.innerHTML='<option value="">All Owners</option>'+filteredOwners.map(n=>`<option value="${n}"${_hsOwnerFilter===n?' selected':''}>${n}</option>`).join('');
+  }
+  const tlTeamSel=document.getElementById('hs-team-filter');
+  if(tlTeamSel){
+    const teams=[...HS_ALLOWED_TEAMS].sort();
+    tlTeamSel.innerHTML='<option value="">All Teams</option>'+teams.map(t=>`<option value="${t}"${_hsTeamFilter===t?' selected':''}>${t}</option>`).join('');
+  }
+
+  // Populate agent owner dropdown (shows only their name, locked)
+  const avOwnerSel=document.getElementById('av-hs-owner-filter');
+  if(avOwnerSel&&CU&&CU.isAgentView){
+    avOwnerSel.innerHTML=`<option value="${CU.agentName}">${CU.agentName}</option>`;
+    avOwnerSel.disabled=true;
+    avOwnerSel.style.opacity='0.7';
+  }
 
   // Day filter dropdown HTML
   const dayOpts='<option value="0">All Days</option>'+Array.from({length:15},(_,i)=>`<option value="${i+1}"${_hsDayFilter===i+1?' selected':''}>Day ${i+1}</option>`).join('');
@@ -5245,7 +5283,25 @@ function renderHSLeads(){
     } else {
       const w2=myLeads.filter(l=>l.ageBucket==='2nd-week');
       const w3=myLeads.filter(l=>l.ageBucket==='3rd-week');
-      let html=dayFilterHtml;
+      const myTotalLack=myLeads.filter(l=>(l.cadencePct||0)<100).length;
+      const myAvgCad=Math.round(myLeads.reduce((s,l)=>s+(l.cadencePct||0),0)/Math.max(1,myLeads.length));
+      const myCadColor=myAvgCad>=100?'#22c55e':myAvgCad>=50?'#f97316':'#ef4444';
+      const CARD='background:#fff;border:1px solid #f0f0f0;border-radius:12px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.05);';
+      const avSummary=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:22px;">
+        <div style="${CARD}">
+          <div style="font-size:2rem;font-weight:800;color:#3b82f6;line-height:1;">${myLeads.length}</div>
+          <div style="font-size:.75rem;color:#9ca3af;margin-top:6px;font-weight:500;">Active Leads${_hsDayFilter>0?` · Day ${_hsDayFilter}`:''}</div>
+        </div>
+        <div style="${CARD}">
+          <div style="font-size:2rem;font-weight:800;color:#ef4444;line-height:1;">${myTotalLack}</div>
+          <div style="font-size:.75rem;color:#9ca3af;margin-top:6px;font-weight:500;">Needs Contact</div>
+        </div>
+        <div style="${CARD}">
+          <div style="font-size:2rem;font-weight:800;color:${myCadColor};line-height:1;">${myAvgCad}%</div>
+          <div style="font-size:.75rem;color:#9ca3af;margin-top:6px;font-weight:500;">Avg Cadence</div>
+        </div>
+      </div>`;
+      let html=dayFilterHtml+avSummary;
       if(w2.length>0) html+=renderSection('av-w2','2nd Week Leads — Days 1–8','📋',w2,false,_hsViewMode);
       if(w3.length>0) html+=renderSection('av-w3','3rd Week Leads — Days 9–15','⏰',w3,false,_hsViewMode);
       if(w2.length===0&&w3.length===0) html+='<div style="color:var(--g400);font-size:.8rem;padding:6px 0;">No leads on Day '+_hsDayFilter+' for you.</div>';
@@ -5263,22 +5319,21 @@ function renderHSLeads(){
     const w2=activeDays.filter(l=>l.ageBucket==='2nd-week');
     const w3=activeDays.filter(l=>l.ageBucket==='3rd-week');
     const totalLack=activeDays.filter(l=>(l.cadencePct||0)<100).length;
-    const summary=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-bottom:20px;">
-      <div style="background:#fff;border:1px solid #f0f0f0;border-radius:10px;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.04);">
-        <div style="font-size:1.5rem;font-weight:800;color:#ff7a59;line-height:1;">${activeDays.length}</div>
-        <div style="font-size:.67rem;color:#9ca3af;margin-top:4px;">Active${_hsDayFilter>0?` · Day ${_hsDayFilter}`:''}</div>
+    const avgCadPct=Math.round(activeDays.reduce((s,l)=>s+(l.cadencePct||0),0)/Math.max(1,activeDays.length));
+    const cadColor=avgCadPct>=100?'#22c55e':avgCadPct>=50?'#f97316':'#ef4444';
+    const CARD='background:#fff;border:1px solid #f0f0f0;border-radius:12px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.05);';
+    const summary=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:22px;">
+      <div style="${CARD}">
+        <div style="font-size:2rem;font-weight:800;color:#3b82f6;line-height:1;">${activeDays.length}</div>
+        <div style="font-size:.75rem;color:#9ca3af;margin-top:6px;font-weight:500;">Active Leads${_hsDayFilter>0?` · Day ${_hsDayFilter}`:''}</div>
       </div>
-      <div style="background:#fff;border:1px solid #f0f0f0;border-radius:10px;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.04);">
-        <div style="font-size:1.5rem;font-weight:800;color:#ef4444;line-height:1;">${totalLack}</div>
-        <div style="font-size:.67rem;color:#9ca3af;margin-top:4px;">Need Call</div>
+      <div style="${CARD}">
+        <div style="font-size:2rem;font-weight:800;color:#ef4444;line-height:1;">${totalLack}</div>
+        <div style="font-size:.75rem;color:#9ca3af;margin-top:6px;font-weight:500;">Needs Contact</div>
       </div>
-      <div style="background:#fff;border:1px solid #f0f0f0;border-radius:10px;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.04);">
-        <div style="font-size:1.5rem;font-weight:800;color:#f97316;line-height:1;">${w2.length}</div>
-        <div style="font-size:.67rem;color:#9ca3af;margin-top:4px;">Days 1–8</div>
-      </div>
-      <div style="background:#fff;border:1px solid #f0f0f0;border-radius:10px;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.04);">
-        <div style="font-size:1.5rem;font-weight:800;color:#ef4444;line-height:1;">${w3.length}</div>
-        <div style="font-size:.67rem;color:#9ca3af;margin-top:4px;">Days 9–15</div>
+      <div style="${CARD}">
+        <div style="font-size:2rem;font-weight:800;color:${cadColor};line-height:1;">${avgCadPct}%</div>
+        <div style="font-size:.75rem;color:#9ca3af;margin-top:6px;font-weight:500;">Avg Cadence</div>
       </div>
     </div>`;
     let html=dayFilterHtml+summary;
