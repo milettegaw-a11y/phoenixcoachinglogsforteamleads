@@ -391,6 +391,7 @@ export default async function handler(req, res) {
 
       return {
         ...ticket,
+        contactId: cIds[0] ? String(cIds[0]) : null,
         contactName: contact?.name || null,
         contactPhone: contact?.phone || null,
         contactEmail: contact?.email || null,

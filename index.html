@@ -4936,7 +4936,7 @@ async function fetchHSLeads(){
       const cadencePct=expectedContacts>0?Math.min(100,Math.round(actualContacts/expectedContacts*100)):100;
       const lacksCadence=cadencePct<100;
       const ageBucket=ageDays<=8?'2nd-week':'3rd-week';
-      return {id:t.id,subject:p.subject||'(no name)',ownerId,ownerName,stageId,stageName,attempts,ageDays,lacksCadence,cadencePct,actualContacts,expectedContacts,dailyCallsMade,dailySmsCount,ageBucket,contactName:t.contactName||null,contactPhone:t.contactPhone||null,contactEmail:t.contactEmail||null,contactLifecycle:t.contactLifecycle||null,latestNote:t.latestNote||null,calls:t.calls||[]};
+      return {id:t.id,subject:p.subject||'(no name)',ownerId,ownerName,stageId,stageName,attempts,ageDays,lacksCadence,cadencePct,actualContacts,expectedContacts,dailyCallsMade,dailySmsCount,ageBucket,contactId:t.contactId||null,contactName:t.contactName||null,contactPhone:t.contactPhone||null,contactEmail:t.contactEmail||null,contactLifecycle:t.contactLifecycle||null,latestNote:t.latestNote||null,calls:t.calls||[]};
     }).filter(l=>HS_ALLOWED_NAMES.has(l.ownerName.toLowerCase()))
       .filter(l=>(l.subject||'').toLowerCase().includes('2nd week'))
       .filter(l=>l.ageDays>=8||!closedStages.includes(l.stageId))
@@ -4971,12 +4971,43 @@ function setHSTeamFilter(val){
   renderHSLeads();
 }
 function switchCommTab(lid,tab){
-  ['msgs','calls'].forEach(t=>{
+  ['msgs','calls','email'].forEach(t=>{
     const panel=document.getElementById('comm-'+t+'-'+lid);
     const btn=document.getElementById('comm-tab-'+t+'-'+lid);
     if(panel)panel.style.display=t===tab?'block':'none';
     if(btn){btn.style.color=t===tab?'#ff7a59':'#6b7280';btn.style.borderBottomColor=t===tab?'#ff7a59':'transparent';}
   });
+}
+const _emailLoaded={};
+async function loadEmailTab(lid,contactId){
+  if(_emailLoaded[lid])return; // already loaded
+  const body=document.getElementById('comm-email-body-'+lid);
+  if(!body)return;
+  if(!contactId){body.innerHTML='<div style="padding:14px;text-align:center;color:#9ca3af;font-size:.72rem;">No contact ID — cannot load emails.</div>';return;}
+  body.innerHTML='<div style="padding:14px;text-align:center;color:#9ca3af;font-size:.72rem;">Loading emails…</div>';
+  try{
+    const r=await fetch('/api/hs-emails?contactId='+encodeURIComponent(contactId));
+    const d=await r.json();
+    const emails=d.emails||[];
+    if(emails.length===0){body.innerHTML='<div style="padding:14px;text-align:center;color:#9ca3af;font-size:.72rem;">No emails found in HubSpot</div>';_emailLoaded[lid]=true;return;}
+    const fmt=ts=>ts?new Date(ts).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';
+    const emailRow=e=>{
+      const isIn=(e.direction||'').toUpperCase()==='INBOUND';
+      const bg=isIn?'#f0fdf4':'#f8f9fa';
+      const badge=isIn?'<span style="background:#dcfce7;color:#166534;font-size:.55rem;font-weight:700;padding:1px 6px;border-radius:99px;margin-left:5px;">Reply</span>':'<span style="background:#e0e7ff;color:#3730a3;font-size:.55rem;font-weight:700;padding:1px 6px;border-radius:99px;margin-left:5px;">Sent</span>';
+      const truncBody=e.body.length>180?e.body.slice(0,180)+'…':e.body;
+      return `<div style="padding:10px 12px;border-bottom:1px solid #f0f0f0;background:${bg};">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
+          <div style="font-size:.72rem;font-weight:700;color:#111;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e.subject}${badge}</div>
+          <div style="font-size:.6rem;color:#9ca3af;flex-shrink:0;margin-left:8px;">${fmt(e.timestamp)}</div>
+        </div>
+        <div style="font-size:.7rem;color:#6b7280;line-height:1.4;">${truncBody}</div>
+        ${e.fromEmail?`<div style="font-size:.59rem;color:#9ca3af;margin-top:3px;">${isIn?'From':'To'}: ${isIn?e.fromEmail:e.toEmail||'—'}</div>`:''}
+      </div>`;
+    };
+    body.innerHTML=emails.map(emailRow).join('');
+    _emailLoaded[lid]=true;
+  }catch(ex){body.innerHTML='<div style="padding:14px;text-align:center;color:#ef4444;font-size:.72rem;">Failed to load emails: '+ex.message+'</div>';}
 }
 async function sendSMS(lid,phone){
   const inp=document.getElementById('sms-inp-'+lid);
@@ -5094,6 +5125,7 @@ function renderHSLeads(){
     const callList=allCalls.filter(c=>!isSmsC(c));
     const ph=(l.contactPhone||'').replace(/'/g,"\\'");
     const nm=((l.contactName||l.subject||'Lead').split(' ')[0]).replace(/'/g,"\\'");
+    const cid=l.contactId||'';
     const smsBubble=c=>{
       const isOut=(c.direction||'').toUpperCase()!=='INBOUND';
       const ts=c.timestamp?new Date(c.timestamp).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';
@@ -5103,11 +5135,12 @@ function renderHSLeads(){
         <div style="font-size:.59rem;color:#9ca3af;margin-top:2px;">${isOut?'You · ':''}${ts}</div>
       </div>`;
     };
-    const TAB='padding:8px 16px;border:none;background:transparent;cursor:pointer;font-size:.7rem;font-weight:700;border-bottom:2px solid;';
+    const TAB='padding:8px 12px;border:none;background:transparent;cursor:pointer;font-size:.68rem;font-weight:700;border-bottom:2px solid;white-space:nowrap;';
     return `<div style="border-top:1px solid #f0f0f0;">
-      <div style="display:flex;background:#f9fafb;border-bottom:1px solid #f0f0f0;">
-        <button id="comm-tab-msgs-${pid}" onclick="switchCommTab('${pid}','msgs')" style="${TAB}color:#ff7a59;border-bottom-color:#ff7a59;">💬 Messages (${smsList.length})</button>
+      <div style="display:flex;background:#f9fafb;border-bottom:1px solid #f0f0f0;overflow-x:auto;">
+        <button id="comm-tab-msgs-${pid}" onclick="switchCommTab('${pid}','msgs')" style="${TAB}color:#ff7a59;border-bottom-color:#ff7a59;">💬 SMS (${smsList.length})</button>
         <button id="comm-tab-calls-${pid}" onclick="switchCommTab('${pid}','calls')" style="${TAB}color:#6b7280;border-bottom-color:transparent;">📞 Calls (${callList.length})</button>
+        <button id="comm-tab-email-${pid}" onclick="switchCommTab('${pid}','email');loadEmailTab('${pid}','${cid}');" style="${TAB}color:#6b7280;border-bottom-color:transparent;">✉️ Email</button>
       </div>
       <div id="comm-msgs-${pid}" style="display:block;">
         <div style="max-height:200px;overflow-y:auto;padding:12px;display:flex;flex-direction:column;">
@@ -5124,6 +5157,11 @@ function renderHSLeads(){
         </div>
         <div style="padding:8px 10px;border-top:1px solid #f0f0f0;background:#f9fafb;">
           <button onclick="makeCall('${ph}','${nm}');" style="padding:7px 16px;background:#22c55e;color:#fff;border:none;border-radius:8px;font-size:.72rem;font-weight:700;cursor:pointer;">📞 Call ${nm}</button>
+        </div>
+      </div>
+      <div id="comm-email-${pid}" style="display:none;">
+        <div id="comm-email-body-${pid}" style="max-height:260px;overflow-y:auto;padding:10px 12px;">
+          <div style="text-align:center;color:#9ca3af;font-size:.72rem;padding:18px 0;">Click the Email tab to load email history</div>
         </div>
       </div>
     </div>`;
