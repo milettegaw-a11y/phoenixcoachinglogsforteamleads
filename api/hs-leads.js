@@ -153,13 +153,15 @@ export default async function handler(req, res) {
           method: 'POST', headers: h,
           body: JSON.stringify({ filterGroups: [{ filters: [ownerFilter, dateFilter] }],
             properties: ['hs_timestamp','hs_call_status','hs_call_body','hs_call_direction','hs_call_duration','hubspot_owner_id','hs_call_title'],
-            limit: 100 })
+            sorts: [{ propertyName: 'hs_timestamp', direction: 'DESCENDING' }],
+            limit: 200 })
         }),
         hsFetch('https://api.hubapi.com/crm/v3/objects/communications/search', {
           method: 'POST', headers: h,
           body: JSON.stringify({ filterGroups: [{ filters: [ownerFilter, dateFilter] }],
             properties: ['hs_timestamp','hs_communication_body','hs_communication_channel_type','hubspot_owner_id','hs_communication_logged_from'],
-            limit: 100 })
+            sorts: [{ propertyName: 'hs_timestamp', direction: 'DESCENDING' }],
+            limit: 200 })
         })
       ]);
       const searchCallData = await searchCallResp.json().catch(() => ({ results: [] }));
@@ -199,11 +201,11 @@ export default async function handler(req, res) {
       const [ctCallAssocResp, ctSmsAssocResp] = await Promise.all([
         hsFetch('https://api.hubapi.com/crm/v4/associations/contacts/calls/batch/read', {
           method: 'POST', headers: h,
-          body: JSON.stringify({ inputs: allContactIds.slice(0, 100).map(id => ({ id: String(id) })) })
+          body: JSON.stringify({ inputs: allContactIds.slice(0, 500).map(id => ({ id: String(id) })) })
         }),
         hsFetch('https://api.hubapi.com/crm/v4/associations/contacts/communications/batch/read', {
           method: 'POST', headers: h,
-          body: JSON.stringify({ inputs: allContactIds.slice(0, 100).map(id => ({ id: String(id) })) })
+          body: JSON.stringify({ inputs: allContactIds.slice(0, 500).map(id => ({ id: String(id) })) })
         })
       ]);
       const ctCallData = await ctCallAssocResp.json().catch(() => ({ results: [] }));
@@ -229,8 +231,8 @@ export default async function handler(req, res) {
     }
 
     // PATH C: Reverse-associate found IDs → contacts AND → tickets
-    const dedupeCallIds = [...new Set(newCallIds)].slice(0, 100);
-    const dedupeSmsIds  = [...new Set(newSmsIds)].slice(0, 100);
+    const dedupeCallIds = [...new Set(newCallIds)].slice(0, 400);
+    const dedupeSmsIds  = [...new Set(newSmsIds)].slice(0, 400);
     const [callContactResp, callTicketResp, smsContactResp, smsTicketResp] = await Promise.all([
       dedupeCallIds.length > 0 ? hsFetch('https://api.hubapi.com/crm/v4/associations/calls/contacts/batch/read', {
         method: 'POST', headers: h, body: JSON.stringify({ inputs: dedupeCallIds.map(id => ({ id })) })
@@ -303,7 +305,7 @@ export default async function handler(req, res) {
 
     // ── Step 5: Batch-read calls ──────────────────────────────────────────
     const callDetailMap = Object.assign({}, allCallIds._detailCache || {});
-    const callIdsToFetch = [...new Set(allCallIds)].slice(0, 300);
+    const callIdsToFetch = [...new Set(allCallIds)].slice(0, 1000);
     if (callIdsToFetch.length > 0) {
       const cr = await hsFetch('https://api.hubapi.com/crm/v3/objects/calls/batch/read', {
         method: 'POST', headers: h,
@@ -333,7 +335,7 @@ export default async function handler(req, res) {
 
     // ── Step 5b: Batch-read SMS/communications ────────────────────────────
     const smsDetailMap = Object.assign({}, allSmsIds._detailCache || {});
-    const smsIdsToFetch = [...new Set(allSmsIds)].slice(0, 300);
+    const smsIdsToFetch = [...new Set(allSmsIds)].slice(0, 1000);
     if (smsIdsToFetch.length > 0) {
       const sr = await hsFetch('https://api.hubapi.com/crm/v3/objects/communications/batch/read', {
         method: 'POST', headers: h,
@@ -398,7 +400,7 @@ export default async function handler(req, res) {
         contactLifecycle: contact?.lifecycle || null,
         contactCreatedate: contact?.createdate || null,
         latestNote: notes[0] ? { body: notes[0].body, timestamp: notes[0].timestamp } : null,
-        calls: allActivity.slice(0, 30)
+        calls: allActivity.slice(0, 50)
       };
     });
 

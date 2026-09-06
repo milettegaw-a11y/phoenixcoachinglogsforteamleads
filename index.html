@@ -1752,6 +1752,7 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
             <div style="font-size:.74rem;color:var(--g500);margin-top:2px;">Your open Sales Call Required (2nd week) leads from HubSpot</div>
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <input type="text" id="av-hs-search" placeholder="🔍 Search lead name…" oninput="setHSSearch(this.value)" style="font-size:.72rem;border:1.5px solid #e5e7eb;border-radius:8px;padding:5px 10px;background:#fff;color:#374151;min-width:140px;outline:none;" />
             <div style="display:flex;border:1.5px solid #e5e7eb;border-radius:8px;overflow:hidden;">
               <button id="av-hs-btn-kanban" onclick="setHSView('kanban')" title="Kanban" style="padding:5px 12px;border:none;background:#ff7a59;color:#fff;font-size:.95rem;font-weight:700;cursor:pointer;">⊞</button>
               <button id="av-hs-btn-list" onclick="setHSView('list')" title="List" style="padding:5px 12px;border:none;background:#fff;color:#6b7280;font-size:.95rem;font-weight:700;cursor:pointer;">☰</button>
@@ -2344,6 +2345,7 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
       <div style="font-size:.74rem;color:var(--g500);margin-top:2px;">All open Sales Call Required (2nd week) leads from HubSpot, by agent</div>
     </div>
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <input type="text" id="hs-search" placeholder="🔍 Search lead name…" oninput="setHSSearch(this.value)" style="font-size:.72rem;border:1.5px solid #e5e7eb;border-radius:8px;padding:5px 10px;background:#fff;color:#374151;min-width:140px;outline:none;" />
       <div style="display:flex;border:1.5px solid #e5e7eb;border-radius:8px;overflow:hidden;">
         <button id="hs-btn-kanban" onclick="setHSView('kanban')" title="Kanban" style="padding:5px 12px;border:none;background:#ff7a59;color:#fff;font-size:.95rem;font-weight:700;cursor:pointer;">⊞</button>
         <button id="hs-btn-list" onclick="setHSView('list')" title="List" style="padding:5px 12px;border:none;background:#fff;color:#6b7280;font-size:.95rem;font-weight:700;cursor:pointer;">☰</button>
@@ -4843,6 +4845,7 @@ let _hsViewMode='kanban'; // 'kanban' or 'list'
 let _hsDayFilter=0; // 0 = All days
 let _hsOwnerFilter=''; // '' = all owners
 let _hsTeamFilter=''; // '' = all teams
+let _hsLeadSearch=''; // '' = no search filter
 // Only show leads assigned to these four teams
 const HS_ALLOWED_TEAMS=new Set(['Team Jhay Oglimen','Team Jumz Delacruz','Team Florence Llait','Team Jersey Deguzman']);
 const HS_ALLOWED_NAMES=new Set(AGENTS.filter(a=>HS_ALLOWED_TEAMS.has(a.tl)).map(a=>a.name.toLowerCase()));
@@ -4970,6 +4973,10 @@ function setHSTeamFilter(val){
   _hsOwnerFilter=''; // reset owner when team changes
   renderHSLeads();
 }
+function setHSSearch(val){
+  _hsLeadSearch=(val||'').trim();
+  renderHSLeads();
+}
 function switchCommTab(lid,tab){
   ['msgs','calls','email'].forEach(t=>{
     const panel=document.getElementById('comm-'+t+'-'+lid);
@@ -5035,6 +5042,7 @@ function renderHSLeads(){
   let activeDays=_hsDayFilter>0?[..._hsLeads].filter(l=>l.ageDays===_hsDayFilter):[..._hsLeads];
   if(_hsTeamFilter) activeDays=activeDays.filter(l=>{const ag=rosterAgents.find(a=>a.name===l.ownerName);return ag&&ag.tl===_hsTeamFilter;});
   if(_hsOwnerFilter) activeDays=activeDays.filter(l=>l.ownerName===_hsOwnerFilter);
+  if(_hsLeadSearch){const q=_hsLeadSearch.toLowerCase();activeDays=activeDays.filter(l=>(l.contactName||'').toLowerCase().includes(q)||(l.subject||'').toLowerCase().includes(q)||(l.contactPhone||'').includes(q));}
 
   // Populate TL/OM owner + team dropdowns
   const tlOwnerSel=document.getElementById('hs-owner-filter');
@@ -5308,7 +5316,8 @@ function renderHSLeads(){
   }
 
   function renderSection(secId,title,icon,leads,showOwner,mode){
-    const sorted=[...leads].sort((a,b)=>(a.cadencePct||0)-(b.cadencePct||0)||(b.ageDays||0)-(a.ageDays||0));
+    const getLastCallMs=l=>{const oc=(l.calls||[]).filter(c=>String(c.ownerId)===String(l.ownerId)&&c.type==='call');return oc[0]?new Date(oc[0].timestamp).getTime():0;};
+    const sorted=[...leads].sort((a,b)=>{const aMs=getLastCallMs(a),bMs=getLastCallMs(b);if(!aMs&&!bMs)return(a.cadencePct||0)-(b.cadencePct||0);if(!aMs)return -1;if(!bMs)return 1;return aMs-bMs;});
     const lacking=leads.filter(l=>(l.cadencePct||0)<100).length;
     const TH='padding:9px 12px;text-align:left;font-size:.66rem;font-weight:700;color:#9ca3af;background:#f9fafb;border-bottom:1px solid #f0f0f0;white-space:nowrap;letter-spacing:.03em;text-transform:uppercase;';
     let body;
