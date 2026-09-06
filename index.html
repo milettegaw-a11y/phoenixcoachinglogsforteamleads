@@ -4880,7 +4880,6 @@ async function fetchHSLeads(){
       const fifteenDaysAgo=Date.now()-(15*86400000);
       const filters=[
         {propertyName:'hs_pipeline',operator:'EQ',value:HS_PIPELINE_SEG},
-        {propertyName:'subject',operator:'CONTAINS_TOKEN',value:'2nd week'},
         {propertyName:'hs_pipeline_stage',operator:'NOT_IN',values:closedStages},
         {propertyName:'createdate',operator:'GTE',value:String(fifteenDaysAgo)}
       ];
