@@ -4854,7 +4854,8 @@ const HS_ALLOWED_NAMES=new Set(AGENTS.filter(a=>HS_ALLOWED_TEAMS.has(a.tl)).map(
 // Days 9-15 (3rd week): 1 per day
 const HS_CADENCE=[0,3,3,0,3,3,1,3,1,1,1,1,1,1,1,1];
 function hsGetCumulativeExpected(day){let t=0;for(let d=1;d<=Math.min(day,15);d++)t+=HS_CADENCE[d]||0;return t;}
-function hsRelTime(dt){const s=Math.floor((Date.now()-new Date(dt))/1000);if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
+function hsTs(dt){if(!dt)return 0;const n=Number(dt);return isNaN(n)?new Date(dt).getTime():n;}
+function hsRelTime(dt){const ms=hsTs(dt);if(!ms||isNaN(ms))return '?';const s=Math.floor((Date.now()-ms)/1000);if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
 function hsFormatDur(ms){if(!ms)return '';const m=Math.round(ms/60000);return m+'m';}
 function toggleSection(id){const b=document.getElementById('sect-body-'+id),a=document.getElementById('sect-arrow-'+id);if(!b)return;const h=b.style.display==='none';b.style.display=h?'':'none';if(a)a.textContent=h?'▼':'▶';}
 function toggleLeadDetail(lid){const el=document.getElementById('ld-'+lid);if(!el)return;el.style.display=el.style.display==='none'?'':'none';}
@@ -4930,7 +4931,8 @@ async function fetchHSLeads(){
       const todayStart=new Date(now.getFullYear(),now.getMonth(),now.getDate());
       const todayEnd=new Date(todayStart.getTime()+86400000);
       const allActivity=t.calls||[];
-      const dailyOwnerAct=allActivity.filter(c=>String(c.ownerId)===String(ownerId)&&c.timestamp&&new Date(c.timestamp)>=todayStart&&new Date(c.timestamp)<todayEnd);
+      const todayStartMs=todayStart.getTime(),todayEndMs=todayEnd.getTime();
+      const dailyOwnerAct=allActivity.filter(c=>String(c.ownerId)===String(ownerId)&&c.timestamp&&hsTs(c.timestamp)>=todayStartMs&&hsTs(c.timestamp)<todayEndMs);
       const dailyCallsMade=dailyOwnerAct.filter(c=>c.type==='call').length;
       const dailySmsCount=dailyOwnerAct.filter(c=>c.type==='sms'||c.type==='message').length;
       const expectedCalls=HS_CADENCE[Math.min(ageDays,15)]||0;
@@ -5396,7 +5398,7 @@ function renderHSLeads(){
   }
 
   function renderSection(secId,title,icon,leads,showOwner,mode){
-    const getLastCallMs=l=>{const oc=(l.calls||[]).filter(c=>String(c.ownerId)===String(l.ownerId)&&c.type==='call');return oc[0]?new Date(oc[0].timestamp).getTime():0;};
+    const getLastCallMs=l=>{const oc=(l.calls||[]).filter(c=>String(c.ownerId)===String(l.ownerId)&&c.type==='call');return oc[0]?hsTs(oc[0].timestamp):0;};
     const sorted=[...leads].sort((a,b)=>{const aMs=getLastCallMs(a),bMs=getLastCallMs(b);if(!aMs&&!bMs)return(a.cadencePct||0)-(b.cadencePct||0);if(!aMs)return -1;if(!bMs)return 1;return aMs-bMs;});
     const lacking=leads.filter(l=>(l.cadencePct||0)<100).length;
     const TH='padding:9px 12px;text-align:left;font-size:.66rem;font-weight:700;color:#9ca3af;background:#f9fafb;border-bottom:1px solid #f0f0f0;white-space:nowrap;letter-spacing:.03em;text-transform:uppercase;';

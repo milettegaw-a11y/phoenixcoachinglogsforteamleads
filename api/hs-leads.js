@@ -371,7 +371,8 @@ export default async function handler(req, res) {
 
       const nIds = ticketNoteMap[ticket.id] || [];
       const notes = nIds.map(id => noteMap[id]).filter(Boolean);
-      notes.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+      const tsMs = ts => { if (!ts) return 0; const n = Number(ts); return isNaN(n) ? new Date(ts).getTime() : n; };
+      notes.sort((a, b) => tsMs(b.timestamp) - tsMs(a.timestamp));
 
       // Merge calls/SMS from all paths (deduplicate by id)
       const ticketCallIds = new Set(ticketCallMap[ticket.id] || []);
@@ -389,7 +390,7 @@ export default async function handler(req, res) {
       const smsMsgs = [...ticketSmsIdSet].map(id => smsDetailMap[id]).filter(Boolean);
 
       const allActivity = [...calls, ...smsMsgs];
-      allActivity.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+      allActivity.sort((a, b) => tsMs(b.timestamp) - tsMs(a.timestamp));
 
       return {
         ...ticket,
