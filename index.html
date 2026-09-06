@@ -4869,20 +4869,24 @@ async function fetchHSLeads(){
   if(tlEl)tlEl.innerHTML=loading;
   const closedStages=['1072805490','1072805491','1072805492','1072805493','1072805494','1072805495'];
   const now=new Date();
+  // Build server-side owner filter — only fetch tickets for the 4 allowed teams
+  const allowedOwnerIds=Object.entries(HS_OWNERS)
+    .filter(([,name])=>HS_ALLOWED_NAMES.has(name.toLowerCase()))
+    .map(([id])=>id);
   try{
-    // Fetch up to 200 tickets (paginate if needed)
     let allResults=[];
     let after=undefined;
     do{
-      // Only fetch tickets created in last 15 days (Days 1-15)
       const fifteenDaysAgo=Date.now()-(15*86400000);
+      const filters=[
+        {propertyName:'hs_pipeline',operator:'EQ',value:HS_PIPELINE_SEG},
+        {propertyName:'subject',operator:'CONTAINS_TOKEN',value:'2nd week'},
+        {propertyName:'hs_pipeline_stage',operator:'NOT_IN',values:closedStages},
+        {propertyName:'createdate',operator:'GTE',value:String(fifteenDaysAgo)}
+      ];
+      if(allowedOwnerIds.length>0)filters.push({propertyName:'hubspot_owner_id',operator:'IN',values:allowedOwnerIds});
       const body={
-        filterGroups:[{filters:[
-          {propertyName:'hs_pipeline',operator:'EQ',value:HS_PIPELINE_SEG},
-          {propertyName:'subject',operator:'CONTAINS_TOKEN',value:'2nd week'},
-          {propertyName:'hs_pipeline_stage',operator:'NOT_IN',values:closedStages},
-          {propertyName:'createdate',operator:'GTE',value:String(fifteenDaysAgo)}
-        ]}],
+        filterGroups:[{filters}],
         properties:['subject','hs_pipeline_stage','hubspot_owner_id','createdate','hs_lastcontacted','hs_lastactivitydate'],
         limit:100,
         sorts:[{propertyName:'createdate',direction:'DESCENDING'}]
@@ -4897,7 +4901,7 @@ async function fetchHSLeads(){
       const data=await resp.json();
       allResults=allResults.concat(data.results||[]);
       after=data.paging?.next?.after;
-    }while(after&&allResults.length<2000);
+    }while(after&&allResults.length<10000);
 
     _hsLeads=allResults.map(t=>{
       const p=t.properties;
@@ -4916,8 +4920,9 @@ async function fetchHSLeads(){
       const cadencePct=expectedContacts>0?Math.min(100,Math.round(actualContacts/expectedContacts*100)):100;
       const lacksCadence=cadencePct<100;
       const ageBucket=ageDays<=8?'2nd-week':'3rd-week';
-      return {id:t.id,subject:p.subject||'(no name)',ownerId,ownerName,stageId,stageName,attempts,ageDays,lacksCadence,cadencePct,actualContacts,expectedContacts,ageBucket,contactName:t.contactName||null,contactPhone:t.contactPhone||null,contactEmail:t.contactEmail||null,latestNote:t.latestNote||null,calls:t.calls||[]};
-    }).filter(l=>HS_ALLOWED_NAMES.has(l.ownerName.toLowerCase()));
+      return {id:t.id,subject:p.subject||'(no name)',ownerId,ownerName,stageId,stageName,attempts,ageDays,lacksCadence,cadencePct,actualContacts,expectedContacts,ageBucket,contactName:t.contactName||null,contactPhone:t.contactPhone||null,contactEmail:t.contactEmail||null,contactLifecycle:t.contactLifecycle||null,latestNote:t.latestNote||null,calls:t.calls||[]};
+    }).filter(l=>HS_ALLOWED_NAMES.has(l.ownerName.toLowerCase()))
+      .filter(l=>!l.contactLifecycle||(l.contactLifecycle||'').toLowerCase()!=='other');
     _hsLeadsLoaded=true;
     renderHSLeads();
   }catch(e){

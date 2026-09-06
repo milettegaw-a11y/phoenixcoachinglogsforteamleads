@@ -100,7 +100,7 @@ export default async function handler(req, res) {
       const cr = await fetch('https://api.hubapi.com/crm/v3/objects/contacts/batch/read', {
         method: 'POST', headers: h,
         body: JSON.stringify({
-          properties: ['firstname', 'lastname', 'phone', 'mobilephone', 'email'],
+          properties: ['firstname', 'lastname', 'phone', 'mobilephone', 'email', 'lifecyclestage'],
           inputs: allContactIds.slice(0, 100).map(id => ({ id }))
         })
       });
@@ -111,7 +111,8 @@ export default async function handler(req, res) {
           contactMap[c.id] = {
             name: [p.firstname, p.lastname].filter(Boolean).join(' ') || '(no name)',
             phone: p.mobilephone || p.phone || '',
-            email: p.email || ''
+            email: p.email || '',
+            lifecycle: p.lifecyclestage || null
           };
         }
       }
@@ -223,6 +224,7 @@ export default async function handler(req, res) {
         contactName: contact?.name || null,
         contactPhone: contact?.phone || null,
         contactEmail: contact?.email || null,
+        contactLifecycle: contact?.lifecycle || null,
         latestNote: notes[0] ? { body: notes[0].body, timestamp: notes[0].timestamp } : null,
         calls: allActivity.slice(0, 30)
       };
