@@ -4831,6 +4831,31 @@ const HS_OWNERS={'3817861':'Jimmy Barnachea','17052290':'Kristine Rivera','49682
 let _hsLeads=[];
 let _hsLeadsLoaded=false;
 let _hsViewMode='kanban'; // 'kanban' or 'list'
+// Cadence plan: expected contacts per day (index = day number, 0 = unused)
+// Day 1=3, Day 2=3, Day 3=0(rest), Day 4=3, Day 5=3, Day 6=1, Day 7=3, Day 8=1
+// Days 9-15 (3rd week): 1 per day
+const HS_CADENCE=[0,3,3,0,3,3,1,3,1,1,1,1,1,1,1,1];
+function hsGetCumulativeExpected(day){let t=0;for(let d=1;d<=Math.min(day,15);d++)t+=HS_CADENCE[d]||0;return t;}
+function hsRelTime(dt){const s=Math.floor((Date.now()-new Date(dt))/1000);if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
+function hsFormatDur(ms){if(!ms)return '';const m=Math.round(ms/60000);return m+'m';}
+function toggleSection(id){const b=document.getElementById('sect-body-'+id),a=document.getElementById('sect-arrow-'+id);if(!b)return;const h=b.style.display==='none';b.style.display=h?'':'none';if(a)a.textContent=h?'▼':'▶';}
+function toggleLeadDetail(lid){const el=document.getElementById('ld-'+lid);if(!el)return;el.style.display=el.style.display==='none'?'':'none';}
+async function updateLeadStage(ticketId,stageId,sel){
+  sel.disabled=true;
+  const orig=sel.dataset.orig||sel.value;
+  try{
+    const r=await fetch('/api/hs-update',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticketId,stageId})});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const lead=_hsLeads.find(l=>l.id===ticketId);
+    if(lead){lead.stageId=stageId;lead.stageName=HS_STAGE_LABELS[stageId]||stageId;}
+    sel.style.border='1.5px solid #22c55e';
+    setTimeout(()=>{sel.style.border='';sel.disabled=false;},1800);
+  }catch(e){
+    alert('Update failed: '+e.message);
+    sel.value=orig;
+    sel.disabled=false;
+  }
+}
 
 async function fetchHSLeads(){
   const avEl=document.getElementById('av-hs-leads-body');
@@ -4845,11 +4870,14 @@ async function fetchHSLeads(){
     let allResults=[];
     let after=undefined;
     do{
+      // Only fetch tickets created in last 15 days (Days 1-15)
+      const fifteenDaysAgo=Date.now()-(15*86400000);
       const body={
         filterGroups:[{filters:[
           {propertyName:'hs_pipeline',operator:'EQ',value:HS_PIPELINE_SEG},
           {propertyName:'subject',operator:'CONTAINS_TOKEN',value:'2nd week'},
-          {propertyName:'hs_pipeline_stage',operator:'NOT_IN',values:closedStages}
+          {propertyName:'hs_pipeline_stage',operator:'NOT_IN',values:closedStages},
+          {propertyName:'createdate',operator:'GTE',value:String(fifteenDaysAgo)}
         ]}],
         properties:['subject','hs_pipeline_stage','hubspot_owner_id','createdate','hs_lastcontacted','hs_lastactivitydate'],
         limit:100,
@@ -4865,24 +4893,26 @@ async function fetchHSLeads(){
       const data=await resp.json();
       allResults=allResults.concat(data.results||[]);
       after=data.paging?.next?.after;
-    }while(after&&allResults.length<200);
+    }while(after&&allResults.length<2000);
 
     _hsLeads=allResults.map(t=>{
       const p=t.properties;
       const created=p.createdate?new Date(p.createdate):null;
-      const ageDays=created?Math.floor((now-created)/86400000):null;
+      // Day 1 = today; +1 so created today = day 1, yesterday = day 2, etc.
+      const ageDays=created?Math.max(1,Math.floor((now-created)/86400000)+1):1;
       const ownerId=p.hubspot_owner_id;
       const ownerName=HS_OWNERS[ownerId]||'Owner #'+ownerId;
       const stageId=p.hs_pipeline_stage;
       const stageName=HS_STAGE_LABELS[stageId]||'Stage '+stageId;
       const attempts=HS_STAGE_ATTEMPTS[stageId]??0;
-      const lastContacted=p.hs_lastcontacted?new Date(p.hs_lastcontacted):null;
-      const daysSinceContact=lastContacted?Math.floor((now-lastContacted)/86400000):null;
-      // Lacking cadence = never contacted OR last contact 2+ days ago
-      const lacksCadence=(daysSinceContact===null&&ageDays>=2)||(daysSinceContact!==null&&daysSinceContact>=2);
-      // Age bucket from ticket createdate: days 1-8 = early (less urgent), days 9-15 = late (more urgent)
-      const ageBucket=ageDays<=8?'early':'late';
-      return {id:t.id,subject:p.subject||'(no name)',ownerId,ownerName,stageId,stageName,attempts,ageDays,daysSinceContact,lacksCadence,ageBucket,url:t.url||'',contactName:t.contactName||null,contactPhone:t.contactPhone||null,contactEmail:t.contactEmail||null,latestNote:t.latestNote||null};
+      // Cadence: expected contacts cumulative through today vs actual owner calls
+      const ownerCalls=(t.calls||[]).filter(c=>c.ownerId===ownerId);
+      const expectedContacts=hsGetCumulativeExpected(ageDays);
+      const actualContacts=ownerCalls.length;
+      const cadencePct=expectedContacts>0?Math.min(100,Math.round(actualContacts/expectedContacts*100)):100;
+      const lacksCadence=cadencePct<100;
+      const ageBucket=ageDays<=8?'2nd-week':'3rd-week';
+      return {id:t.id,subject:p.subject||'(no name)',ownerId,ownerName,stageId,stageName,attempts,ageDays,lacksCadence,cadencePct,actualContacts,expectedContacts,ageBucket,contactName:t.contactName||null,contactPhone:t.contactPhone||null,contactEmail:t.contactEmail||null,latestNote:t.latestNote||null,calls:t.calls||[]};
     });
     _hsLeadsLoaded=true;
     renderHSLeads();
@@ -4895,19 +4925,158 @@ async function fetchHSLeads(){
 
 function setHSView(mode){
   _hsViewMode=mode;
-  // Update toggle buttons in both views
-  const ON='background:#ff7a59;color:#fff;';
-  const OFF='background:#fff;color:#6b7280;';
-  ['hs-btn-kanban','av-hs-btn-kanban'].forEach(id=>{const b=document.getElementById(id);if(b)b.style.cssText=b.style.cssText.replace(/background:[^;]+;color:[^;]+;/,mode==='kanban'?ON:OFF);});
-  ['hs-btn-list','av-hs-btn-list'].forEach(id=>{const b=document.getElementById(id);if(b)b.style.cssText=b.style.cssText.replace(/background:[^;]+;color:[^;]+;/,mode==='list'?ON:OFF);});
+  ['hs-btn-kanban','av-hs-btn-kanban'].forEach(id=>{const b=document.getElementById(id);if(b){b.style.background=mode==='kanban'?'#ff7a59':'#fff';b.style.color=mode==='kanban'?'#fff':'#6b7280';}});
+  ['hs-btn-list','av-hs-btn-list'].forEach(id=>{const b=document.getElementById(id);if(b){b.style.background=mode==='list'?'#ff7a59':'#fff';b.style.color=mode==='list'?'#fff':'#6b7280';}});
   renderHSLeads();
 }
 
 function renderHSLeads(){
   if(!_hsLeadsLoaded)return;
-  const now=new Date();
-  const thStyle='padding:7px 10px;text-align:left;font-size:.7rem;font-weight:700;color:var(--g600);border-bottom:2px solid #e5e7eb;white-space:nowrap;';
-  const tdStyle='padding:7px 10px;font-size:.74rem;color:var(--g800);border-bottom:1px solid #f3f4f6;vertical-align:middle;';
+
+  function cadenceBar(l){
+    const pct=Math.min(100,l.cadencePct||0);
+    const color=pct>=100?'#22c55e':pct>=50?'#f97316':'#ef4444';
+    return `<div style="margin-top:5px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">
+        <span style="font-size:.61rem;color:var(--g500);font-weight:600;">Cadence</span>
+        <span style="font-size:.61rem;font-weight:700;color:${color};">${l.actualContacts||0}/${l.expectedContacts||0} calls &nbsp;${pct}%</span>
+      </div>
+      <div style="height:5px;background:#e5e7eb;border-radius:99px;overflow:hidden;">
+        <div style="height:100%;width:${pct}%;background:${color};border-radius:99px;"></div>
+      </div>
+    </div>`;
+  }
+
+  function callHistoryItem(c){
+    const ts=c.timestamp?new Date(c.timestamp).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';
+    const connected=c.connected||(c.status||'').toUpperCase()==='COMPLETED';
+    const dir=(c.direction||'').toUpperCase()==='INBOUND'?'📞 In':'📤 Out';
+    const badge=connected?'<span style="background:#dcfce7;color:#166534;font-size:.59rem;padding:1px 6px;border-radius:99px;font-weight:600;">Connected</span>':'<span style="background:#fee2e2;color:#b91c1c;font-size:.59rem;padding:1px 6px;border-radius:99px;font-weight:600;">No Answer</span>';
+    const dur=c.durationMs&&c.durationMs>0?` · ${Math.round(c.durationMs/60000)}m`:'';
+    const body=c.body&&c.body.trim()?`<div style="color:var(--g600);font-style:italic;line-height:1.4;margin-top:2px;">"${c.body.slice(0,200)}${c.body.length>200?'…':''}"</div>`:'';
+    return `<div style="padding:6px 10px;border-bottom:1px solid #f3f4f6;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;">
+        <span style="font-size:.67rem;color:var(--g500);">${dir} · ${ts}${dur}</span>${badge}
+      </div>${body}
+    </div>`;
+  }
+
+  function stageDropdown(l){
+    const opts=Object.entries(HS_STAGE_LABELS).map(([id,nm])=>`<option value="${id}"${l.stageId===id?' selected':''}>${nm}</option>`).join('');
+    return `<select onchange="updateLeadStage('${l.id}',this.value,this)" style="font-size:.68rem;border:1px solid #e5e7eb;border-radius:6px;padding:3px 7px;background:#fff;color:var(--g700);cursor:pointer;">
+      ${opts}
+    </select>`;
+  }
+
+  function renderLeadCard(l,showOwner){
+    const pct=Math.min(100,l.cadencePct||0);
+    const borderColor=pct>=100?'#22c55e':(l.ageBucket==='3rd-week'?'#ef4444':'#f97316');
+    const displayName=l.contactName||l.subject||'(no name)';
+    const ownerCalls=(l.calls||[]).filter(c=>String(c.ownerId)===String(l.ownerId));
+    const lastOwnerCall=ownerCalls[0]||null;
+    const connected=lastOwnerCall&&(lastOwnerCall.connected||(lastOwnerCall.status||'').toUpperCase()==='COMPLETED');
+    const lastCallStr=lastOwnerCall?(connected?'✅ Connected':'⚠️ No Answer')+' · '+hsRelTime(lastOwnerCall.timestamp):'No calls yet';
+    const allCalls=l.calls||[];
+    return `<div style="background:#fff;border-radius:9px;box-shadow:var(--sh);border-left:4px solid ${borderColor};margin-bottom:8px;">
+      <div style="padding:10px 13px;cursor:pointer;" onclick="toggleLeadDetail('${l.id}')">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:.82rem;font-weight:700;color:var(--g800);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${displayName}</div>
+            <div style="font-size:.7rem;color:var(--g600);margin-bottom:3px;">📞 ${l.contactPhone||'No phone'}${showOwner?` &nbsp;·&nbsp; <strong>${l.ownerName}</strong>`:''}</div>
+            <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;">
+              <span style="font-size:.62rem;background:#fff3e0;color:#e65100;padding:2px 7px;border-radius:99px;font-weight:600;">${l.stageName}</span>
+              <span style="font-size:.62rem;font-weight:700;color:${borderColor};">Day ${l.ageDays}</span>
+              <span style="font-size:.62rem;color:var(--g500);">${lastCallStr}</span>
+            </div>
+          </div>
+          <span style="font-size:.7rem;color:var(--g400);flex-shrink:0;">▼</span>
+        </div>
+        ${cadenceBar(l)}
+      </div>
+      <div id="ld-${l.id}" style="display:none;border-top:1px solid #f3f4f6;padding:10px 13px;">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+          <span style="font-size:.68rem;font-weight:600;color:var(--g600);">Stage:</span>
+          ${stageDropdown(l)}
+          <a href="https://app.hubspot.com/contacts/45809585/ticket/${l.id}" target="_blank" style="font-size:.67rem;color:#ff7a59;text-decoration:none;font-weight:600;border:1px solid #ff7a59;padding:3px 8px;border-radius:6px;">🔗 HubSpot</a>
+        </div>
+        <div style="font-size:.67rem;font-weight:700;color:var(--g600);margin-bottom:4px;">Call History (${allCalls.length})</div>
+        <div style="border:1px solid #f3f4f6;border-radius:6px;overflow:hidden;max-height:210px;overflow-y:auto;">
+          ${allCalls.length>0?allCalls.map(callHistoryItem).join(''):'<div style="padding:8px;color:var(--g400);font-size:.69rem;">No calls recorded</div>'}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function renderLeadRow(l,showOwner){
+    const TH='padding:7px 10px;text-align:left;font-size:.67rem;font-weight:700;color:var(--g600);border-bottom:2px solid #e5e7eb;white-space:nowrap;';
+    const TD='padding:7px 10px;font-size:.71rem;color:var(--g800);border-bottom:1px solid #f3f4f6;vertical-align:middle;';
+    const pct=Math.min(100,l.cadencePct||0);
+    const bc=pct>=100?'#22c55e':pct>=50?'#f97316':'#ef4444';
+    const displayName=l.contactName||l.subject||'(no name)';
+    const ownerCalls=(l.calls||[]).filter(c=>String(c.ownerId)===String(l.ownerId));
+    const loc=ownerCalls[0]||null;
+    const conn=loc&&(loc.connected||(loc.status||'').toUpperCase()==='COMPLETED');
+    const lcs=loc?(conn?'✅':'⚠️')+' '+hsRelTime(loc.timestamp):'—';
+    const allCalls=l.calls||[];
+    const rowId='row-'+l.id;
+    return `<tr style="${pct<100?'background:#fff8f8;':''}cursor:pointer;" onclick="toggleLeadDetail('${rowId}')">
+      <td style="${TD}font-weight:600;">${displayName}</td>
+      <td style="${TD}color:var(--g600);">${l.contactPhone||'—'}</td>
+      ${showOwner?`<td style="${TD}">${l.ownerName}</td>`:''}
+      <td style="${TD}"><span style="font-size:.61rem;background:#fff3e0;color:#e65100;padding:2px 6px;border-radius:99px;font-weight:600;">${l.stageName}</span></td>
+      <td style="${TD}font-weight:700;color:${l.ageBucket==='3rd-week'?'#ef4444':'#f97316'};">Day ${l.ageDays}</td>
+      <td style="${TD}font-size:.67rem;color:var(--g600);">${lcs}</td>
+      <td style="${TD}">
+        <div style="display:flex;align-items:center;gap:5px;">
+          <div style="flex:1;height:5px;background:#e5e7eb;border-radius:99px;overflow:hidden;min-width:45px;"><div style="height:100%;width:${pct}%;background:${bc};border-radius:99px;"></div></div>
+          <span style="font-size:.61rem;color:${bc};font-weight:700;">${pct}%</span>
+        </div>
+      </td>
+    </tr>
+    <tr id="ld-${rowId}" style="display:none;"><td colspan="${showOwner?7:6}" style="padding:0;">
+      <div style="padding:10px 13px;background:#f9fafb;border-bottom:1px solid #f3f4f6;">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+          <span style="font-size:.68rem;font-weight:600;color:var(--g600);">Stage:</span>
+          ${stageDropdown(l)}
+          <a href="https://app.hubspot.com/contacts/45809585/ticket/${l.id}" target="_blank" style="font-size:.67rem;color:#ff7a59;text-decoration:none;font-weight:600;border:1px solid #ff7a59;padding:3px 8px;border-radius:6px;">🔗 HubSpot</a>
+        </div>
+        <div style="font-size:.67rem;font-weight:700;color:var(--g600);margin-bottom:4px;">Call History (${allCalls.length})</div>
+        <div style="border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;max-height:180px;overflow-y:auto;background:#fff;">
+          ${allCalls.length>0?allCalls.map(callHistoryItem).join(''):'<div style="padding:8px;color:var(--g400);font-size:.69rem;">No calls recorded</div>'}
+        </div>
+      </div>
+    </td></tr>`;
+  }
+
+  function renderSection(secId,title,icon,leads,showOwner,mode){
+    const sorted=[...leads].sort((a,b)=>(a.cadencePct||0)-(b.cadencePct||0)||(b.ageDays||0)-(a.ageDays||0));
+    const lacking=leads.filter(l=>(l.cadencePct||0)<100).length;
+    const TH='padding:7px 10px;text-align:left;font-size:.67rem;font-weight:700;color:var(--g600);border-bottom:2px solid #e5e7eb;white-space:nowrap;';
+    let body;
+    if(mode==='list'){
+      body=`<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;background:#fff;border-radius:9px;box-shadow:var(--sh);overflow:hidden;">
+        <thead><tr>
+          <th style="${TH}">Name</th><th style="${TH}">Phone</th>
+          ${showOwner?`<th style="${TH}">Agent</th>`:''}
+          <th style="${TH}">Stage</th><th style="${TH}">Age</th><th style="${TH}">Last Call</th><th style="${TH}">Cadence</th>
+        </tr></thead>
+        <tbody>${sorted.map(l=>renderLeadRow(l,showOwner)).join('')}</tbody>
+      </table></div>`;
+    } else {
+      body=`<div>${sorted.map(l=>renderLeadCard(l,showOwner)).join('')}</div>`;
+    }
+    return `<div style="margin-bottom:14px;">
+      <div onclick="toggleSection('${secId}')" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:9px 13px;background:#f9fafb;border-radius:9px;margin-bottom:6px;border:1px solid #e5e7eb;user-select:none;">
+        <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">
+          <span style="font-size:.76rem;font-weight:700;color:var(--g800);">${icon} ${title}</span>
+          <span style="font-size:.67rem;background:#e5e7eb;color:var(--g600);padding:2px 8px;border-radius:99px;font-weight:600;">${leads.length} leads</span>
+          ${lacking>0?`<span style="font-size:.65rem;color:#ef4444;font-weight:600;">⚠️ ${lacking} need calls</span>`:'<span style="font-size:.65rem;color:#22c55e;font-weight:600;">✅ All on cadence</span>'}
+        </div>
+        <span id="sect-arrow-${secId}" style="color:var(--g400);">▼</span>
+      </div>
+      <div id="sect-body-${secId}">${body}</div>
+    </div>`;
+  }
 
   // ── AGENT VIEW ──
   const avEl=document.getElementById('av-hs-leads-body');
@@ -4915,64 +5084,14 @@ function renderHSLeads(){
     const firstName=(CU.agentName||'').split(' ')[0].toLowerCase();
     const myLeads=_hsLeads.filter(l=>l.ownerName.toLowerCase().includes(firstName));
     if(myLeads.length===0){
-      avEl.innerHTML='<div style="color:var(--g400);font-size:.8rem;padding:6px 0;">No open 2nd week HubSpot leads assigned to you.</div>';
-    } else if(_hsViewMode==='list'){
-      // ── AGENT LIST VIEW ──
-      const sorted=[..._hsLeads.filter(l=>l.ownerName.toLowerCase().includes(firstName))].sort((a,b)=>(b.lacksCadence?1:0)-(a.lacksCadence?1:0)||(b.ageDays||0)-(a.ageDays||0));
-      avEl.innerHTML=`<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;background:#fff;border-radius:9px;box-shadow:var(--sh);overflow:hidden;">
-        <thead><tr>
-          <th style="${thStyle}">Contact</th>
-          <th style="${thStyle}">Phone</th>
-          <th style="${thStyle}">Stage</th>
-          <th style="${thStyle}">Age</th>
-          <th style="${thStyle}">Last Call</th>
-          <th style="${thStyle}">Status</th>
-        </tr></thead>
-        <tbody>${sorted.map(l=>{
-          const ageColor=l.ageBucket==='late'?'#ef4444':'#f97316';
-          const displayName=l.contactName||l.subject||'(no name)';
-          const contact=l.daysSinceContact!==null?`${l.daysSinceContact}d ago`:'Never';
-          const status=l.lacksCadence?'<span style="background:#fee2e2;color:#b91c1c;font-size:.65rem;font-weight:700;padding:2px 8px;border-radius:99px;">⚠️ Needs Call</span>':'<span style="background:#dcfce7;color:#166534;font-size:.65rem;font-weight:700;padding:2px 8px;border-radius:99px;">✅ Called</span>';
-          const rowBg=l.lacksCadence?'background:#fff8f8;':'';
-          return `<tr style="${rowBg}">
-            <td style="${tdStyle}font-weight:600;">${displayName}</td>
-            <td style="${tdStyle}color:var(--g600);">${l.contactPhone||'—'}</td>
-            <td style="${tdStyle}"><span style="font-size:.66rem;background:#fff3e0;color:#e65100;padding:2px 7px;border-radius:99px;font-weight:600;">${l.stageName}</span></td>
-            <td style="${tdStyle}font-weight:700;color:${ageColor};">${l.ageDays}d</td>
-            <td style="${tdStyle}color:var(--g500);">${contact}</td>
-            <td style="${tdStyle}">${status}</td>
-          </tr>`;
-        }).join('')}</tbody></table></div>`;
+      avEl.innerHTML='<div style="color:var(--g400);font-size:.8rem;padding:6px 0;">No leads assigned to you in the last 15 days.</div>';
     } else {
-      // ── AGENT KANBAN VIEW ──
-      const w1=myLeads.filter(l=>l.ageBucket==='early');
-      const w2=myLeads.filter(l=>l.ageBucket==='late');
-      const renderCard=l=>{
-        const ageColor=l.ageBucket==='late'?'#ef4444':'#f97316';
-        const cadBadge=l.lacksCadence?'<span style="background:#fee2e2;color:#b91c1c;font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:99px;margin-left:6px;">⚠️ Needs Call</span>':'<span style="background:#dcfce7;color:#166534;font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:99px;margin-left:6px;">✅ Called</span>';
-        const contactInfo=l.daysSinceContact!==null?`Last call: ${l.daysSinceContact}d ago`:'Never called';
-        const displayName=l.contactName||l.subject||'(no name)';
-        const phone=l.contactPhone?`<span style="font-size:.72rem;color:var(--g600);font-weight:600;">📞 ${l.contactPhone}</span>`:'';
-        const noteHtml=l.latestNote&&l.latestNote.body?`<div style="margin-top:6px;padding:6px 8px;background:#f8f9fa;border-radius:6px;border-left:3px solid #cbd5e1;"><div style="font-size:.66rem;color:var(--g400);margin-bottom:2px;">Last note · ${l.latestNote.timestamp?new Date(l.latestNote.timestamp).toLocaleDateString('en-US',{month:'short',day:'numeric'}):''}:</div><div style="font-size:.72rem;color:var(--g700);line-height:1.4;">${l.latestNote.body.slice(0,200)}${l.latestNote.body.length>200?'…':''}</div></div>`:'';
-        return `<div style="background:#fff;border-radius:9px;padding:11px 13px;box-shadow:var(--sh);border-left:4px solid ${l.lacksCadence?'#ef4444':'#22c55e'};margin-bottom:7px;">
-          <div style="display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap;">
-            <div style="flex:1;min-width:130px;">
-              <div style="font-size:.83rem;font-weight:700;color:var(--g800);margin-bottom:2px;">${displayName}${cadBadge}</div>
-              ${phone}
-              <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-top:4px;">
-                <span style="font-size:.68rem;background:#fff3e0;color:#e65100;padding:2px 7px;border-radius:99px;font-weight:600;">${l.stageName}</span>
-                <span style="font-size:.68rem;color:${ageColor};font-weight:700;">${l.ageDays}d old</span>
-                <span style="font-size:.68rem;color:var(--g500);">${contactInfo}</span>
-              </div>
-              ${noteHtml}
-            </div>
-          </div>
-        </div>`;
-      };
+      const w2=myLeads.filter(l=>l.ageBucket==='2nd-week');
+      const w3=myLeads.filter(l=>l.ageBucket==='3rd-week');
       let html='';
-      if(w2.length>0) html+=`<div style="font-size:.72rem;font-weight:700;color:#ef4444;margin-bottom:5px;">⏰ Days 9–15 (Urgent)</div>${w2.map(renderCard).join('')}`;
-      if(w1.length>0) html+=`<div style="font-size:.72rem;font-weight:700;color:#f97316;margin-bottom:5px;${w2.length?'margin-top:12px;':''}">📋 Days 1–8</div>${w1.map(renderCard).join('')}`;
-      avEl.innerHTML=html;
+      if(w2.length>0) html+=renderSection('av-w2','2nd Week Leads — Days 1–8','📋',w2,false,_hsViewMode);
+      if(w3.length>0) html+=renderSection('av-w3','3rd Week Leads — Days 9–15','⏰',w3,false,_hsViewMode);
+      avEl.innerHTML=html||'<div style="color:var(--g400);font-size:.8rem;">No leads found.</div>';
     }
   }
 
@@ -4980,73 +5099,25 @@ function renderHSLeads(){
   const tlEl=document.getElementById('tl-hs-leads-body');
   if(tlEl&&CU&&!CU.isAgentView){
     if(_hsLeads.length===0){
-      tlEl.innerHTML='<div style="color:var(--g400);font-size:.8rem;padding:8px 0;">No open 2nd week leads found.</div>';
+      tlEl.innerHTML='<div style="color:var(--g400);font-size:.8rem;padding:8px 0;">No leads found in the last 15 days.</div>';
       return;
     }
-    const totalLack=_hsLeads.filter(l=>l.lacksCadence).length;
-    const w1count=_hsLeads.filter(l=>l.ageBucket==='early').length;
-    const w2count=_hsLeads.filter(l=>l.ageBucket==='late').length;
-    const summaryBadges=`<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
-      <span style="font-size:.75rem;background:#f3f4f6;padding:4px 10px;border-radius:99px;color:var(--g700);">Total: <strong>${_hsLeads.length}</strong></span>
-      <span style="font-size:.75rem;background:#fee2e2;padding:4px 10px;border-radius:99px;color:#b91c1c;">⚠️ Lacking Cadence: <strong>${totalLack}</strong></span>
-      <span style="font-size:.75rem;background:#fff3e0;padding:4px 10px;border-radius:99px;color:#e65100;">Days 1–8: <strong>${w1count}</strong></span>
-      <span style="font-size:.75rem;background:#fee2e2;padding:4px 10px;border-radius:99px;color:#ef4444;">Days 9–15: <strong>${w2count}</strong></span>
+    const w2=_hsLeads.filter(l=>l.ageBucket==='2nd-week');
+    const w3=_hsLeads.filter(l=>l.ageBucket==='3rd-week');
+    const totalLack=_hsLeads.filter(l=>(l.cadencePct||0)<100).length;
+    const summary=`<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+      <span style="font-size:.72rem;background:#f3f4f6;padding:4px 10px;border-radius:99px;color:var(--g700);">Total: <strong>${_hsLeads.length}</strong></span>
+      <span style="font-size:.72rem;background:#fee2e2;padding:4px 10px;border-radius:99px;color:#b91c1c;">⚠️ Needs Call: <strong>${totalLack}</strong></span>
+      <span style="font-size:.72rem;background:#fff3e0;padding:4px 10px;border-radius:99px;color:#e65100;">Days 1–8: <strong>${w2.length}</strong></span>
+      <span style="font-size:.72rem;background:#fee2e2;padding:4px 10px;border-radius:99px;color:#ef4444;">Days 9–15: <strong>${w3.length}</strong></span>
     </div>`;
-
-    if(_hsViewMode==='list'){
-      // ── TL LIST VIEW — flat table of all leads ──
-      const sorted=[..._hsLeads].sort((a,b)=>(b.lacksCadence?1:0)-(a.lacksCadence?1:0)||(b.ageDays||0)-(a.ageDays||0));
-      tlEl.innerHTML=summaryBadges+`<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;background:#fff;border-radius:9px;box-shadow:var(--sh);overflow:hidden;">
-        <thead><tr>
-          <th style="${thStyle}">Contact</th>
-          <th style="${thStyle}">Phone</th>
-          <th style="${thStyle}">Agent</th>
-          <th style="${thStyle}">Stage</th>
-          <th style="${thStyle}">Age</th>
-          <th style="${thStyle}">Last Call</th>
-          <th style="${thStyle}">Status</th>
-        </tr></thead>
-        <tbody>${sorted.map(l=>{
-          const ageColor=l.ageBucket==='late'?'#ef4444':'#f97316';
-          const displayName=l.contactName||l.subject||'(no name)';
-          const contact=l.daysSinceContact!==null?`${l.daysSinceContact}d ago`:'Never';
-          const status=l.lacksCadence?'<span style="background:#fee2e2;color:#b91c1c;font-size:.65rem;font-weight:700;padding:2px 8px;border-radius:99px;">⚠️ Needs Call</span>':'<span style="background:#dcfce7;color:#166534;font-size:.65rem;font-weight:700;padding:2px 8px;border-radius:99px;">✅ Called</span>';
-          const rowBg=l.lacksCadence?'background:#fff8f8;':'';
-          return `<tr style="${rowBg}">
-            <td style="${tdStyle}font-weight:600;">${displayName}</td>
-            <td style="${tdStyle}color:var(--g600);">${l.contactPhone||'—'}</td>
-            <td style="${tdStyle}">${l.ownerName}</td>
-            <td style="${tdStyle}"><span style="font-size:.66rem;background:#fff3e0;color:#e65100;padding:2px 7px;border-radius:99px;font-weight:600;">${l.stageName}</span></td>
-            <td style="${tdStyle}font-weight:700;color:${ageColor};">${l.ageDays}d</td>
-            <td style="${tdStyle}color:var(--g500);">${contact}</td>
-            <td style="${tdStyle}">${status}</td>
-          </tr>`;
-        }).join('')}</tbody></table></div>`;
-    } else {
-      // ── TL KANBAN VIEW — agent summary cards ──
-      const byOwner={};
-      _hsLeads.forEach(l=>{
-        if(!byOwner[l.ownerName])byOwner[l.ownerName]={name:l.ownerName,leads:[],lackCount:0,maxAge:0};
-        byOwner[l.ownerName].leads.push(l);
-        if(l.lacksCadence)byOwner[l.ownerName].lackCount++;
-        if((l.ageDays||0)>byOwner[l.ownerName].maxAge)byOwner[l.ownerName].maxAge=l.ageDays||0;
-      });
-      const sorted=Object.values(byOwner).sort((a,b)=>b.lackCount-a.lackCount||b.maxAge-a.maxAge);
-      tlEl.innerHTML=summaryBadges+`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:9px;">
-        ${sorted.map(a=>{
-          const w1=a.leads.filter(l=>l.ageBucket==='early').length;
-          const w2=a.leads.filter(l=>l.ageBucket==='late').length;
-          return `<div style="background:#fff;border-radius:9px;padding:11px 13px;box-shadow:var(--sh);border-left:4px solid ${a.lackCount>0?(a.maxAge>=9?'#ef4444':'#f97316'):'#22c55e'};">
-            <div style="font-size:.8rem;font-weight:700;color:var(--g800);margin-bottom:4px;">${a.name}</div>
-            <div style="font-size:.7rem;color:var(--g600);">${a.leads.length} lead${a.leads.length!==1?'s':''} &nbsp;·&nbsp; ${w1>0?`<span style='color:#f97316'>${w1} d1-8</span>`:''}${w1>0&&w2>0?' ':''} ${w2>0?`<span style='color:#ef4444'>${w2} d9-15</span>`:''}</div>
-            ${a.lackCount>0?`<div style="font-size:.69rem;color:#ef4444;font-weight:600;margin-top:3px;">⚠️ ${a.lackCount} need a call</div>`:`<div style="font-size:.69rem;color:#22c55e;margin-top:3px;">✅ Cadence OK</div>`}
-            <div style="font-size:.65rem;color:var(--g400);margin-top:3px;">Oldest: ${a.maxAge}d</div>
-          </div>`;
-        }).join('')}
-      </div>`;
-    }
+    let html=summary;
+    if(w2.length>0) html+=renderSection('tl-w2','2nd Week Leads — Days 1–8','📋',w2,true,_hsViewMode);
+    if(w3.length>0) html+=renderSection('tl-w3','3rd Week Leads — Days 9–15','⏰',w3,true,_hsViewMode);
+    tlEl.innerHTML=html;
   }
 }
+
 
 let _leadUnsub=null;
 

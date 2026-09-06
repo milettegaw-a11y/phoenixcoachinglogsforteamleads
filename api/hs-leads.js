@@ -27,8 +27,8 @@ export default async function handler(req, res) {
 
     const ticketIds = tickets.map(t => t.id);
 
-    // ── Step 2: Get associated contacts for each ticket ──────────────────
-    const [contactAssocResp, noteAssocResp] = await Promise.all([
+    // ── Step 2: Get associations (contacts, notes, calls) in parallel ──
+    const [contactAssocResp, noteAssocResp, callAssocResp] = await Promise.all([
       fetch('https://api.hubapi.com/crm/v4/associations/tickets/contacts/batch/read', {
         method: 'POST', headers: h,
         body: JSON.stringify({ inputs: ticketIds.map(id => ({ id })) })
@@ -36,19 +36,26 @@ export default async function handler(req, res) {
       fetch('https://api.hubapi.com/crm/v4/associations/tickets/notes/batch/read', {
         method: 'POST', headers: h,
         body: JSON.stringify({ inputs: ticketIds.map(id => ({ id })) })
+      }),
+      fetch('https://api.hubapi.com/crm/v4/associations/tickets/calls/batch/read', {
+        method: 'POST', headers: h,
+        body: JSON.stringify({ inputs: ticketIds.map(id => ({ id })) })
       })
     ]);
 
     const contactAssoc = await contactAssocResp.json();
     const noteAssoc = await noteAssocResp.json();
+    const callAssoc = await callAssocResp.json();
 
-    // Build maps
+    // Build contact map
     const ticketContactMap = {};
     if (contactAssoc.results) {
       for (const r of contactAssoc.results) {
         ticketContactMap[r.from.id] = (r.to || []).map(x => x.toObjectId);
       }
     }
+
+    // Build note map
     const ticketNoteMap = {};
     const allNoteIds = [];
     if (noteAssoc.results) {
@@ -56,6 +63,17 @@ export default async function handler(req, res) {
         const ids = (r.to || []).map(x => x.toObjectId);
         ticketNoteMap[r.from.id] = ids;
         allNoteIds.push(...ids);
+      }
+    }
+
+    // Build call map
+    const ticketCallMap = {};
+    const allCallIds = [];
+    if (callAssoc.results) {
+      for (const r of callAssoc.results) {
+        const ids = (r.to || []).map(x => x.toObjectId);
+        ticketCallMap[r.from.id] = ids;
+        allCallIds.push(...ids);
       }
     }
 
@@ -83,7 +101,7 @@ export default async function handler(req, res) {
       }
     }
 
-    // ── Step 4: Batch-read latest notes ──────────────────────────────────
+    // ── Step 4: Batch-read notes ──────────────────────────────────────────
     const noteMap = {};
     const noteIdsToFetch = [...new Set(allNoteIds)].slice(0, 150);
     if (noteIdsToFetch.length > 0) {
@@ -105,7 +123,37 @@ export default async function handler(req, res) {
       }
     }
 
-    // ── Step 5: Enrich & return ──────────────────────────────────────────
+    // ── Step 5: Batch-read calls ──────────────────────────────────────────
+    const callDetailMap = {};
+    const callIdsToFetch = [...new Set(allCallIds)].slice(0, 300);
+    if (callIdsToFetch.length > 0) {
+      const cr = await fetch('https://api.hubapi.com/crm/v3/objects/calls/batch/read', {
+        method: 'POST', headers: h,
+        body: JSON.stringify({
+          properties: ['hs_timestamp', 'hs_call_status', 'hs_call_body', 'hs_call_direction', 'hs_call_duration', 'hubspot_owner_id', 'hs_call_title'],
+          inputs: callIdsToFetch.map(id => ({ id }))
+        })
+      });
+      const cd = await cr.json();
+      if (cd.results) {
+        for (const c of cd.results) {
+          const p = c.properties;
+          callDetailMap[c.id] = {
+            type: 'call',
+            timestamp: p.hs_timestamp || '',
+            status: p.hs_call_status || '',
+            connected: p.hs_call_status === 'COMPLETED',
+            body: (p.hs_call_body || '').replace(/<[^>]+>/g, '').trim(),
+            direction: p.hs_call_direction || '',
+            durationMs: parseInt(p.hs_call_duration || '0') || 0,
+            ownerId: p.hubspot_owner_id || '',
+            title: p.hs_call_title || ''
+          };
+        }
+      }
+    }
+
+    // ── Step 6: Enrich & return ──────────────────────────────────────────
     const enriched = tickets.map(ticket => {
       const cIds = ticketContactMap[ticket.id] || [];
       const contact = cIds.length > 0 ? (contactMap[cIds[0]] || null) : null;
@@ -114,12 +162,17 @@ export default async function handler(req, res) {
       const notes = nIds.map(id => noteMap[id]).filter(Boolean);
       notes.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
+      const callIds = ticketCallMap[ticket.id] || [];
+      const calls = callIds.map(id => callDetailMap[id]).filter(Boolean);
+      calls.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
       return {
         ...ticket,
         contactName: contact?.name || null,
         contactPhone: contact?.phone || null,
         contactEmail: contact?.email || null,
-        latestNote: notes[0] ? { body: notes[0].body, timestamp: notes[0].timestamp } : null
+        latestNote: notes[0] ? { body: notes[0].body, timestamp: notes[0].timestamp } : null,
+        calls: calls.slice(0, 25)
       };
     });
 
