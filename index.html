@@ -4805,7 +4805,7 @@ function renderTodoList(){
 /* ── LEADS (Firestore) ── */
 let _leadItems=[];
 /* ── HUBSPOT 2ND WEEK LEADS ── */
-const HS_TOKEN='pat-na1-445262ca-4830-40e1-a837-3c0bc31d7c1c';
+const HS_TOKEN='';
 const HS_PIPELINE_SEG='736937559';
 const HS_STAGE_LABELS={'1072718881':'New','1072718882':'Assigned','1072718883':'In Progress','1072718884':'2nd Attempt','1072805486':'3rd Attempt','1072805487':'4th Attempt','1072805488':'5th Attempt','1161141150':'Declined (Follow-up)','1072805489':'24hr Callback'};
 const HS_STAGE_ATTEMPTS={'1072718881':0,'1072718882':0,'1072718883':1,'1072718884':1,'1072805486':2,'1072805487':3,'1072805488':4,'1161141150':1,'1072805489':1};
@@ -4837,9 +4837,9 @@ async function fetchHSLeads(){
         sorts:[{propertyName:'createdate',direction:'DESCENDING'}]
       };
       if(after)body.after=after;
-      const resp=await fetch('https://api.hubapi.com/crm/v3/objects/tickets/search',{
+      const resp=await fetch('/api/hs-leads',{
         method:'POST',
-        headers:{'Authorization':'Bearer '+HS_TOKEN,'Content-Type':'application/json'},
+        headers:{'Content-Type':'application/json'},
         body:JSON.stringify(body)
       });
       if(!resp.ok)throw new Error('HubSpot API error '+resp.status);
@@ -4863,7 +4863,7 @@ async function fetchHSLeads(){
       const lacksCadence=(daysSinceContact===null&&ageDays>=2)||(daysSinceContact!==null&&daysSinceContact>=2);
       // Age bucket from ticket createdate: days 1-8 = early (less urgent), days 9-15 = late (more urgent)
       const ageBucket=ageDays<=8?'early':'late';
-      return {id:t.id,subject:p.subject||'(no name)',ownerId,ownerName,stageId,stageName,attempts,ageDays,daysSinceContact,lacksCadence,ageBucket,url:t.url||''};
+      return {id:t.id,subject:p.subject||'(no name)',ownerId,ownerName,stageId,stageName,attempts,ageDays,daysSinceContact,lacksCadence,ageBucket,url:t.url||'',contactName:t.contactName||null,contactPhone:t.contactPhone||null,contactEmail:t.contactEmail||null,latestNote:t.latestNote||null};
     });
     _hsLeadsLoaded=true;
     renderHSLeads();
@@ -4891,17 +4891,21 @@ function renderHSLeads(){
         const ageColor=l.ageBucket==='late'?'#ef4444':'#f97316';
         const cadBadge=l.lacksCadence?'<span style="background:#fee2e2;color:#b91c1c;font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:99px;margin-left:6px;">⚠️ Needs Call</span>':'<span style="background:#dcfce7;color:#166534;font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:99px;margin-left:6px;">✅ Called</span>';
         const contactInfo=l.daysSinceContact!==null?`Last call: ${l.daysSinceContact}d ago`:'Never called';
+        const displayName=l.contactName||l.subject||'(no name)';
+        const phone=l.contactPhone?`<span style="font-size:.72rem;color:var(--g600);font-weight:600;">📞 ${l.contactPhone}</span>`:'';
+        const noteHtml=l.latestNote&&l.latestNote.body?`<div style="margin-top:6px;padding:6px 8px;background:#f8f9fa;border-radius:6px;border-left:3px solid #cbd5e1;"><div style="font-size:.66rem;color:var(--g400);margin-bottom:2px;">Last note · ${l.latestNote.timestamp?new Date(l.latestNote.timestamp).toLocaleDateString('en-US',{month:'short',day:'numeric'}):''}:</div><div style="font-size:.72rem;color:var(--g700);line-height:1.4;">${l.latestNote.body.slice(0,200)}${l.latestNote.body.length>200?'…':''}</div></div>`:'';
         return `<div style="background:#fff;border-radius:9px;padding:11px 13px;box-shadow:var(--sh);border-left:4px solid ${l.lacksCadence?'#ef4444':'#22c55e'};margin-bottom:7px;">
           <div style="display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap;">
             <div style="flex:1;min-width:130px;">
-              <div style="font-size:.83rem;font-weight:700;color:var(--g800);margin-bottom:3px;">${l.subject}${cadBadge}</div>
+              <div style="font-size:.83rem;font-weight:700;color:var(--g800);margin-bottom:2px;">${displayName}${cadBadge}</div>
+              ${phone}
               <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-top:4px;">
                 <span style="font-size:.68rem;background:#fff3e0;color:#e65100;padding:2px 7px;border-radius:99px;font-weight:600;">${l.stageName}</span>
                 <span style="font-size:.68rem;color:${ageColor};font-weight:700;">${l.ageDays}d old</span>
                 <span style="font-size:.68rem;color:var(--g500);">${contactInfo}</span>
               </div>
+              ${noteHtml}
             </div>
-            <a href="${l.url}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;padding:5px 10px;background:#ff7a59;color:#fff;border-radius:6px;font-size:.7rem;font-weight:700;text-decoration:none;flex-shrink:0;">🔗 Open</a>
           </div>
         </div>`;
       };
