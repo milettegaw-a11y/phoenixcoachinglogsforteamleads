@@ -4831,6 +4831,7 @@ const HS_OWNERS={'3817861':'Jimmy Barnachea','17052290':'Kristine Rivera','49682
 let _hsLeads=[];
 let _hsLeadsLoaded=false;
 let _hsViewMode='kanban'; // 'kanban' or 'list'
+let _hsDayFilter=0; // 0 = All days
 // Cadence plan: expected contacts per day (index = day number, 0 = unused)
 // Day 1=3, Day 2=3, Day 3=0(rest), Day 4=3, Day 5=3, Day 6=1, Day 7=3, Day 8=1
 // Days 9-15 (3rd week): 1 per day
@@ -4930,8 +4931,26 @@ function setHSView(mode){
   renderHSLeads();
 }
 
+function setHSDayFilter(day){
+  _hsDayFilter=parseInt(day)||0;
+  renderHSLeads();
+}
+
 function renderHSLeads(){
   if(!_hsLeadsLoaded)return;
+
+  // Apply day filter
+  const activeDays=_hsDayFilter>0?[..._hsLeads].filter(l=>l.ageDays===_hsDayFilter):_hsLeads;
+
+  // Day filter dropdown HTML
+  const dayOpts='<option value="0">All Days</option>'+Array.from({length:15},(_,i)=>`<option value="${i+1}"${_hsDayFilter===i+1?' selected':''}>Day ${i+1}</option>`).join('');
+  const dayFilterHtml=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+    <span style="font-size:.72rem;font-weight:600;color:var(--g600);">Filter by Day:</span>
+    <select onchange="setHSDayFilter(this.value)" style="font-size:.72rem;border:1px solid #e5e7eb;border-radius:7px;padding:4px 10px;background:#fff;color:var(--g800);cursor:pointer;font-weight:${_hsDayFilter>0?'700':'400'};color:${_hsDayFilter>0?'#ff7a59':'var(--g800)'};">
+      ${dayOpts}
+    </select>
+    ${_hsDayFilter>0?`<span style="font-size:.7rem;color:#ff7a59;font-weight:600;">${activeDays.length} lead${activeDays.length!==1?'s':''} on Day ${_hsDayFilter}</span><button onclick="setHSDayFilter(0)" style="font-size:.68rem;border:none;background:#fee2e2;color:#b91c1c;border-radius:6px;padding:3px 8px;cursor:pointer;font-weight:600;">✕ Clear</button>`:''}
+  </div>`;
 
   function cadenceBar(l){
     const pct=Math.min(100,l.cadencePct||0);
@@ -5088,16 +5107,17 @@ function renderHSLeads(){
   const avEl=document.getElementById('av-hs-leads-body');
   if(avEl&&CU&&CU.isAgentView){
     const firstName=(CU.agentName||'').split(' ')[0].toLowerCase();
-    const myLeads=_hsLeads.filter(l=>l.ownerName.toLowerCase().includes(firstName));
-    if(myLeads.length===0){
+    const myLeads=activeDays.filter(l=>l.ownerName.toLowerCase().includes(firstName));
+    if(_hsLeads.filter(l=>l.ownerName.toLowerCase().includes(firstName)).length===0){
       avEl.innerHTML='<div style="color:var(--g400);font-size:.8rem;padding:6px 0;">No leads assigned to you in the last 15 days.</div>';
     } else {
       const w2=myLeads.filter(l=>l.ageBucket==='2nd-week');
       const w3=myLeads.filter(l=>l.ageBucket==='3rd-week');
-      let html='';
+      let html=dayFilterHtml;
       if(w2.length>0) html+=renderSection('av-w2','2nd Week Leads — Days 1–8','📋',w2,false,_hsViewMode);
       if(w3.length>0) html+=renderSection('av-w3','3rd Week Leads — Days 9–15','⏰',w3,false,_hsViewMode);
-      avEl.innerHTML=html||'<div style="color:var(--g400);font-size:.8rem;">No leads found.</div>';
+      if(w2.length===0&&w3.length===0) html+='<div style="color:var(--g400);font-size:.8rem;padding:6px 0;">No leads on Day '+_hsDayFilter+' for you.</div>';
+      avEl.innerHTML=html;
     }
   }
 
@@ -5108,18 +5128,19 @@ function renderHSLeads(){
       tlEl.innerHTML='<div style="color:var(--g400);font-size:.8rem;padding:8px 0;">No leads found in the last 15 days.</div>';
       return;
     }
-    const w2=_hsLeads.filter(l=>l.ageBucket==='2nd-week');
-    const w3=_hsLeads.filter(l=>l.ageBucket==='3rd-week');
-    const totalLack=_hsLeads.filter(l=>(l.cadencePct||0)<100).length;
+    const w2=activeDays.filter(l=>l.ageBucket==='2nd-week');
+    const w3=activeDays.filter(l=>l.ageBucket==='3rd-week');
+    const totalLack=activeDays.filter(l=>(l.cadencePct||0)<100).length;
     const summary=`<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
-      <span style="font-size:.72rem;background:#f3f4f6;padding:4px 10px;border-radius:99px;color:var(--g700);">Total: <strong>${_hsLeads.length}</strong></span>
+      <span style="font-size:.72rem;background:#f3f4f6;padding:4px 10px;border-radius:99px;color:var(--g700);">Showing: <strong>${activeDays.length}</strong>${_hsDayFilter>0?` (Day ${_hsDayFilter} only)`:` of ${_hsLeads.length}`}</span>
       <span style="font-size:.72rem;background:#fee2e2;padding:4px 10px;border-radius:99px;color:#b91c1c;">⚠️ Needs Call: <strong>${totalLack}</strong></span>
       <span style="font-size:.72rem;background:#fff3e0;padding:4px 10px;border-radius:99px;color:#e65100;">Days 1–8: <strong>${w2.length}</strong></span>
       <span style="font-size:.72rem;background:#fee2e2;padding:4px 10px;border-radius:99px;color:#ef4444;">Days 9–15: <strong>${w3.length}</strong></span>
     </div>`;
-    let html=summary;
+    let html=dayFilterHtml+summary;
     if(w2.length>0) html+=renderSection('tl-w2','2nd Week Leads — Days 1–8','📋',w2,true,_hsViewMode);
     if(w3.length>0) html+=renderSection('tl-w3','3rd Week Leads — Days 9–15','⏰',w3,true,_hsViewMode);
+    if(w2.length===0&&w3.length===0) html+='<div style="color:var(--g400);font-size:.8rem;padding:6px 0;">No leads on Day '+_hsDayFilter+'.</div>';
     tlEl.innerHTML=html;
   }
 }
