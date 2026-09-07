@@ -1510,33 +1510,32 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
 
     <!-- AGENT VIEW (filtered — own records only) -->
     <div id="v-agent" class="view">
-      <!-- Welcome banner -->
-      <div style="background:#fff;border-radius:14px;padding:20px 24px;margin-bottom:20px;border:1px solid #e5e7eb;box-shadow:0 2px 8px rgba(0,0,0,.06);">
-        <div style="display:flex;align-items:center;gap:14px;">
-          <div style="width:48px;height:48px;background:var(--hdr-grad);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;">🧑‍💼</div>
-          <div>
-            <div style="font-size:1.1rem;font-weight:900;color:#111111" id="av-welcome">My Dashboard</div>
-            <div style="font-size:.82rem;color:#737373;margin-top:2px;">View your coaching records, NTE notices, and follow-through logs.</div>
-          </div>
-        </div>
-        <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;">
-          <div style="background:var(--hdr-grad);border-radius:10px;padding:12px 18px;flex:1;min-width:120px;text-align:center;">
-            <div style="font-size:1.5rem;font-weight:900;color:#fff" id="av-stat-c">0</div>
-            <div style="font-size:.72rem;color:#E7F0D2;margin-top:2px;text-transform:uppercase;letter-spacing:.5px;">Coaching Logs</div>
-          </div>
-          <div style="background:var(--hdr-grad);border-radius:10px;padding:12px 18px;flex:1;min-width:120px;text-align:center;">
-            <div style="font-size:1.5rem;font-weight:900;color:#fff" id="av-stat-n">0</div>
-            <div style="font-size:.72rem;color:#E7F0D2;margin-top:2px;text-transform:uppercase;letter-spacing:.5px;">NTE Notices</div>
-          </div>
-          <div style="background:var(--hdr-grad);border-radius:10px;padding:12px 18px;flex:1;min-width:120px;text-align:center;">
-            <div style="font-size:1.5rem;font-weight:900;color:#fff" id="av-stat-f">0</div>
-            <div style="font-size:.72rem;color:#E7F0D2;margin-top:2px;text-transform:uppercase;letter-spacing:.5px;">Follow Through</div>
-          </div>
-        </div>
-      </div>
-
       <!-- Coaching Logs section -->
       <div id="av-coaching" class="av-section">
+        <!-- Welcome banner (only shown on coaching tab) -->
+        <div style="background:#fff;border-radius:14px;padding:20px 24px;margin-bottom:20px;border:1px solid #e5e7eb;box-shadow:0 2px 8px rgba(0,0,0,.06);">
+          <div style="display:flex;align-items:center;gap:14px;">
+            <div style="width:48px;height:48px;background:var(--hdr-grad);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;">🧑‍💼</div>
+            <div>
+              <div style="font-size:1.1rem;font-weight:900;color:#111111" id="av-welcome">My Dashboard</div>
+              <div style="font-size:.82rem;color:#737373;margin-top:2px;">View your coaching records, NTE notices, and follow-through logs.</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;">
+            <div style="background:var(--hdr-grad);border-radius:10px;padding:12px 18px;flex:1;min-width:120px;text-align:center;">
+              <div style="font-size:1.5rem;font-weight:900;color:#fff" id="av-stat-c">0</div>
+              <div style="font-size:.72rem;color:#E7F0D2;margin-top:2px;text-transform:uppercase;letter-spacing:.5px;">Coaching Logs</div>
+            </div>
+            <div style="background:var(--hdr-grad);border-radius:10px;padding:12px 18px;flex:1;min-width:120px;text-align:center;">
+              <div style="font-size:1.5rem;font-weight:900;color:#fff" id="av-stat-n">0</div>
+              <div style="font-size:.72rem;color:#E7F0D2;margin-top:2px;text-transform:uppercase;letter-spacing:.5px;">NTE Notices</div>
+            </div>
+            <div style="background:var(--hdr-grad);border-radius:10px;padding:12px 18px;flex:1;min-width:120px;text-align:center;">
+              <div style="font-size:1.5rem;font-weight:900;color:#fff" id="av-stat-f">0</div>
+              <div style="font-size:.72rem;color:#E7F0D2;margin-top:2px;text-transform:uppercase;letter-spacing:.5px;">Follow Through</div>
+            </div>
+          </div>
+        </div>
         <div class="tbl-wrap">
           <div class="tbl-hdr"><h3>My Coaching Logs</h3><span class="cnt-badge" id="av-c-cnt">0</span></div>
           <div class="tbl-scroll">
