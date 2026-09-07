@@ -5252,8 +5252,9 @@ async function loadAircallData(lid,contactPhone){
     // Only show calls/SMS on or after the ticket was created (prevents phantom calls from other leads sharing the same number)
     const ticketCreatedMs=lead.createdMs||0;
     if(ticketCreatedMs>0){
-      // Allow 1 day buffer before ticket creation in case of minor clock drift
-      const minTs=ticketCreatedMs-86400000;
+      // Allow 45 day buffer — ensures calls just before ticket creation are included
+      // (prevents Jun 9 phantom calls while keeping Aug 31 legitimate calls)
+      const minTs=ticketCreatedMs-(45*86400000);
       acCalls=acCalls.filter(c=>hsTs(c.timestamp)>=minTs);
       acMsgs =acMsgs.filter(c=>hsTs(c.timestamp)>=minTs);
     }
@@ -5346,31 +5347,47 @@ async function sendSMS(lid,phone){
 let _acPhone=null;
 function _initAircallPhone(){
   if(_acPhone)return;
-  if(typeof AircallPhone==='undefined'){console.warn('Aircall SDK not loaded');return;}
+  if(typeof AircallPhone==='undefined'){console.log('[Aircall] SDK not loaded — will use extension CTI');return;}
   try{
     _acPhone=new AircallPhone({
       domToLoadPhone:'#ac-phone-inner',
       size:'auto',
-      onLogin:()=>{},
+      onLogin:()=>{console.log('[Aircall] Phone logged in');},
       onLogout:()=>{_acPhone=null;}
     });
-  }catch(e){console.warn('Aircall init failed:',e.message);}
+    console.log('[Aircall] Phone SDK initialized');
+  }catch(e){console.warn('[Aircall] SDK init failed:',e.message);}
 }
 function makeCall(phone,name){
   if(!phone){toast('No phone number for this lead');return;}
+  const clean=phone.replace(/[^\d+]/g,'');
+  // 1. Try Aircall Chrome Extension CTI API (postMessage)
+  try{
+    window.postMessage({action:'dial',phone:clean},'*');
+    console.log('[Aircall] Sent CTI dial via postMessage for',clean);
+  }catch(e){}
+  // 2. Show the phone slot with the number prominently
   const slot=document.getElementById('ac-phone-slot');
   if(slot)slot.style.display='flex';
   _initAircallPhone();
-  const clean=phone.replace(/[^\d+]/g,'');
-  // Give the phone iframe 800ms to settle, then send the dial command
+  const inner=document.getElementById('ac-phone-inner');
+  // Pre-fill the slot with the number so agent can dial manually if needed
+  if(inner&&!inner.querySelector('iframe')){
+    inner.innerHTML=`<div style="padding:24px 16px;text-align:center;">
+      <div style="font-size:.72rem;color:#9ca3af;margin-bottom:8px;">Dial in Aircall:</div>
+      <div style="font-size:1.5rem;font-weight:700;color:#ff7a59;font-family:monospace;letter-spacing:.05em;">${clean}</div>
+      <button onclick="navigator.clipboard.writeText('${clean}').then(()=>toast('Copied!'))" style="margin-top:10px;padding:5px 14px;background:#ff7a59;color:#fff;border:none;border-radius:6px;font-size:.7rem;font-weight:700;cursor:pointer;">Copy Number</button>
+      <div style="font-size:.6rem;color:#9ca3af;margin-top:10px;line-height:1.4;">Open the Aircall extension in your browser toolbar to dial</div>
+    </div>`;
+  }
+  // 3. Also try SDK dial after 1.5s in case iframe finishes loading
   setTimeout(()=>{
     if(_acPhone){
       _acPhone.send('dial_number',{phone_number:clean});
       toast('📞 Dialing '+(name||phone)+' via Aircall…');
-    } else {
-      toast('📞 Aircall loading — dial '+clean+' manually if needed');
+      if(inner)inner.innerHTML=''; // let SDK iframe take over
     }
-  },800);
+  },1500);
 }
 // ────────────────────────────────────────────────────────────────────────────
 
