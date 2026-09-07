@@ -692,6 +692,8 @@ html[data-theme="lavender"] .cl-subtab.active{color:#4a2d7a;border-bottom-color:
 html[data-theme="slate"] .cl-subtab.active{color:#1f2937;border-bottom-color:#1f2937;}
 html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1232;}
 </style>
+<!-- Aircall Phone SDK -->
+<script src="https://unpkg.com/@aircall/aircall-everywhere/dist/AircallPhone.min.js"></script>
 </head>
 <body>
 
@@ -4839,6 +4841,16 @@ const HS_OWNERS={'3817861':'Jimmy Barnachea','17052290':'Kristine Rivera','49682
 '93916279':'Cheryl Sayon','93916660':'Darlyn Acuriza','93916661':'Emmanuel Maturana',
 '93916678':'Kris Mayes','94150180':'Joenel Las',
 '422514679':'(Unassigned)','81973079':'(Admin)'};
+
+// Maps Aircall username (lowercase) → app owner name (lowercase, matches HS_OWNERS / lead.ownerName)
+// Required when Aircall and HubSpot use a DIFFERENT first name for the same agent.
+// Add a row here whenever a new mismatch is discovered.
+const AIRCALL_NAME_MAP={
+  // Aircall name (lower)      : App/HubSpot name (lower, must match HS_OWNERS value exactly)
+  'claire villanueva'          : 'mariefe villanueva',   // Aircall uses middle name as first
+  'jersey de guzman'           : 'jersey deguzman',      // spacing difference (belt-and-suspenders)
+};
+
 let _hsLeads=[];
 let _hsLeadsLoaded=false;
 let _hsViewMode='kanban'; // 'kanban' or 'list'
@@ -4946,7 +4958,7 @@ async function fetchHSLeads(){
       return {id:t.id,subject:p.subject||'(no name)',ownerId,ownerName,stageId,stageName,attempts,ageDays,lacksCadence,cadencePct,actualContacts,expectedContacts,dailyCallsMade,dailySmsCount,ageBucket,contactId:t.contactId||null,contactName:t.contactName||null,contactPhone:t.contactPhone||null,contactEmail:t.contactEmail||null,contactLifecycle:t.contactLifecycle||null,latestNote:t.latestNote||null,calls:t.calls||[]};
     }).filter(l=>HS_ALLOWED_NAMES.has(l.ownerName.toLowerCase()))
       .filter(l=>(l.subject||'').toLowerCase().includes('2nd week'))
-      .filter(l=>l.ageDays>=8||!closedStages.includes(l.stageId))
+      .filter(l=>l.ageDays<=8||!closedStages.includes(l.stageId))
       .filter(l=>{const lc=(l.contactLifecycle||'').toLowerCase();return!lc||(lc!=='other'&&lc!=='customer');});
     _hsLeadsLoaded=true;
     renderHSLeads();
@@ -5044,6 +5056,9 @@ async function saveContactEdit(lid,contactId){
   }
 }
 const _emailLoaded={};
+const _aircallLoaded={};   // lid → true once Aircall data fetched for this lead
+let   _aircallUsers=[];    // [{id,name,email}] cached after first fetch
+let   _acUsersFetched=false;
 async function loadEmailTab(lid,contactId){
   if(_emailLoaded[lid])return; // already loaded
   const body=document.getElementById('comm-email-body-'+lid);
@@ -5051,7 +5066,9 @@ async function loadEmailTab(lid,contactId){
   if(!contactId){body.innerHTML='<div style="padding:14px;text-align:center;color:#9ca3af;font-size:.72rem;">No contact ID — cannot load emails.</div>';return;}
   body.innerHTML='<div style="padding:14px;text-align:center;color:#9ca3af;font-size:.72rem;">Loading emails…</div>';
   try{
-    const r=await fetch('/api/hs-emails?contactId='+encodeURIComponent(contactId));
+    const _emailLead=_hsLeads.find(l=>l.id===lid);
+    const _emailOwner=_emailLead?_emailLead.ownerId:'';
+    const r=await fetch('/api/hs-emails?contactId='+encodeURIComponent(contactId)+(_emailOwner?'&ownerId='+encodeURIComponent(_emailOwner):''));
     const d=await r.json();
     const emails=d.emails||[];
     if(emails.length===0){body.innerHTML='<div style="padding:14px;text-align:center;color:#9ca3af;font-size:.72rem;">No emails found in HubSpot</div>';_emailLoaded[lid]=true;return;}
@@ -5073,6 +5090,118 @@ async function loadEmailTab(lid,contactId){
     _emailLoaded[lid]=true;
   }catch(ex){body.innerHTML='<div style="padding:14px;text-align:center;color:#ef4444;font-size:.72rem;">Failed to load emails: '+ex.message+'</div>';}
 }
+// ── Aircall integration ────────────────────────────────────────────────────
+async function ensureAircallUsers(){
+  if(_acUsersFetched)return;
+  _acUsersFetched=true;
+  try{
+    const r=await fetch('/api/aircall?action=users');
+    if(!r.ok)return;
+    const d=await r.json();
+    _aircallUsers=d.users||[];
+  }catch(_){}
+}
+
+async function loadAircallData(lid,contactPhone){
+  if(!contactPhone)return;
+  if(_aircallLoaded[lid])return;
+  _aircallLoaded[lid]=true;
+  const lead=_hsLeads.find(l=>l.id===lid);
+  if(!lead)return;
+
+  const pid=lid;
+  // Show loading indicator in both tabs
+  const callListEl=document.getElementById('comm-calls-list-'+pid);
+  const smsListEl =document.getElementById('comm-sms-list-'+pid);
+
+  try{
+    // Normalize phone: strip non-digit/+ characters, ensure + prefix
+    const normPhone=(contactPhone||'').replace(/[^\d+]/g,'');
+    const cleanPhone=normPhone.startsWith('+')?normPhone:(normPhone.length===10?'+1'+normPhone:'+'+normPhone);
+
+    // Fetch Aircall calls + SMS — 90-day window, ALL agents for this contact
+    const from90=Date.now()-90*24*3600*1000;
+    const r=await fetch('/api/aircall?contactPhone='+encodeURIComponent(cleanPhone)+'&from='+from90);
+    if(!r.ok){
+      const errTxt='Aircall API error '+r.status;
+      if(callListEl)callListEl.innerHTML='<div style="padding:14px;text-align:center;color:#ef4444;font-size:.72rem;">⚠️ '+errTxt+'</div>';
+      if(smsListEl){const lp=smsListEl.querySelector('#ac-loading-'+pid);if(lp)lp.remove();}
+      return;
+    }
+    const data=await r.json();
+
+    // Show ALL calls for this contact (full cadence visibility — not filtered by agent)
+    let acCalls=data.calls||[];
+    let acMsgs =data.messages||[];
+
+    // Merge with HubSpot activities, dedup by timestamp ±60 s
+    const isSmsC=c=>c.type==='sms'||c.type==='message'||(c.type||'').toLowerCase().includes('sms');
+    const existing=(lead.calls||[]).filter(c=>c.source!=='aircall');
+    const hsCalls=existing.filter(c=>!isSmsC(c));
+    const hsMsgs =existing.filter(isSmsC);
+    const mergeDedup=(acArr,hsArr)=>{
+      const out=[...acArr];
+      for(const h of hsArr){
+        const hts=hsTs(h.timestamp);
+        const dup=acArr.find(a=>Math.abs(hsTs(a.timestamp)-hts)<60000);
+        if(!dup)out.push(h);
+      }
+      return out.sort((a,b)=>hsTs(b.timestamp)-hsTs(a.timestamp));
+    };
+    const mergedCalls=mergeDedup(acCalls,hsCalls);
+    const mergedMsgs =mergeDedup(acMsgs ,hsMsgs);
+
+    // Persist on lead object so re-opens skip the fetch
+    lead.calls=[...mergedCalls,...mergedMsgs].sort((a,b)=>hsTs(b.timestamp)-hsTs(a.timestamp));
+
+    // ── Update Calls tab ──────────────────────────────────────────────────────
+    if(callListEl){
+      callListEl.innerHTML=mergedCalls.length>0
+        ?mergedCalls.map(callHistoryItem).join('')
+        :'<div style="padding:14px;text-align:center;color:#9ca3af;font-size:.72rem;">No calls recorded in the last 90 days</div>';
+    }
+    const callTab=document.getElementById('comm-tab-calls-'+pid);
+    if(callTab)callTab.textContent='📞 Calls ('+mergedCalls.length+')';
+
+    // ── Update SMS tab ────────────────────────────────────────────────────────
+    const smsBubbleAc=c=>{
+      const isOut=(c.direction||'').toUpperCase()!=='INBOUND';
+      const tsStr=c.timestamp?(()=>{const ms=hsTs(c.timestamp);return ms?new Date(ms).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):''})():'';
+      const body=(c.body||'').trim()||'(no message body)';
+      const src=c.source==='aircall'?'<span style="font-size:.55rem;background:#e0f2fe;color:#0369a1;padding:1px 5px;border-radius:4px;margin-left:4px;">Aircall</span>':'';
+      return '<div style="display:flex;flex-direction:column;align-items:'+(isOut?'flex-end':'flex-start')+';margin-bottom:8px;">'
+        +'<div style="max-width:82%;background:'+(isOut?'#ff7a59':'#f3f4f6')+';color:'+(isOut?'#fff':'#111')+';padding:8px 12px;border-radius:'+(isOut?'12px 12px 2px 12px':'12px 12px 12px 2px')+';font-size:.75rem;line-height:1.5;">'+body+'</div>'
+        +'<div style="font-size:.59rem;color:#9ca3af;margin-top:2px;">'+(isOut?'Out · ':'In · ')+tsStr+src+'</div></div>';
+    };
+    if(smsListEl){
+      const sorted=[...mergedMsgs].sort((a,b)=>hsTs(a.timestamp)-hsTs(b.timestamp));
+      smsListEl.innerHTML=sorted.length>0
+        ?sorted.map(smsBubbleAc).join('')
+        :'<div style="text-align:center;color:#9ca3af;font-size:.72rem;padding:18px 0;">No SMS in the last 90 days</div>';
+      // Auto-scroll SMS to bottom (newest)
+      smsListEl.scrollTop=smsListEl.scrollHeight;
+    }
+    const smsTab=document.getElementById('comm-tab-msgs-'+pid);
+    if(smsTab)smsTab.textContent='💬 SMS ('+mergedMsgs.length+')';
+
+    // Update summary counters in the panel header
+    const isSmsItem=c=>c.type==='sms'||c.type==='message'||(c.type||'').toLowerCase().includes('sms');
+    const ownerCallsOnly=lead.calls.filter(c=>!isSmsItem(c)&&(String(c.ownerId)===String(lead.ownerId)||!c.ownerId));
+    const connCalls=ownerCallsOnly.filter(c=>c.connected||(c.status||'').toUpperCase()==='COMPLETED');
+    const smsCntUp=lead.calls.filter(isSmsItem).length;
+    const statEl=k=>document.getElementById('stat-'+k+'-'+pid);
+    if(statEl('calls-made'))statEl('calls-made').textContent=ownerCallsOnly.length;
+    if(statEl('connected'))statEl('connected').textContent=connCalls.length;
+    if(statEl('sms-sent'))statEl('sms-sent').textContent=smsCntUp;
+
+  }catch(e){
+    console.warn('[Aircall] load failed:',e.message);
+    if(callListEl)callListEl.innerHTML='<div style="padding:14px;text-align:center;color:#ef4444;font-size:.72rem;">⚠️ Could not load Aircall data</div>';
+    if(smsListEl){const lp=smsListEl.querySelector('#ac-loading-'+pid);if(lp)lp.textContent='Could not load Aircall SMS';}
+  }
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 async function sendSMS(lid,phone){
   const inp=document.getElementById('sms-inp-'+lid);
   const msg=(inp?.value||'').trim();
@@ -5085,12 +5214,71 @@ async function sendSMS(lid,phone){
 }
 function makeCall(phone,name){
   if(window._aircallPhone){
+    // Already connected — dial silently, no panel needed
     window._aircallPhone.send('dial_number',{phone_number:phone});
+    toast('📞 Dialing '+name+'…');
   } else {
+    // SDK not ready yet — open panel so agent can log in once
+    document.getElementById('aircall-panel').style.display='block';
+    if(!_aircallPhoneInited)initAircallPhone();
     navigator.clipboard?.writeText(phone).catch(()=>{});
-    alert('Aircall not connected yet.\n\nNumber copied to clipboard: '+phone+'\n\nConnect Aircall to enable one-click calling.');
+    toast('📞 Log in to Aircall — number copied: '+phone);
   }
 }
+
+// ── Aircall Phone widget ────────────────────────────────────────────────────
+let _aircallPhoneInited=false;
+window._aircallPhone=null;
+
+function toggleAircallPhone(){
+  const panel=document.getElementById('aircall-panel');
+  if(!panel)return;
+  const open=panel.style.display!=='none';
+  panel.style.display=open?'none':'block';
+  if(!open&&!_aircallPhoneInited)initAircallPhone();
+}
+
+function initAircallPhone(){
+  if(typeof AircallPhone==='undefined'){
+    // SDK still loading — retry
+    setTimeout(initAircallPhone,600);
+    return;
+  }
+  _aircallPhoneInited=true;
+  const container=document.getElementById('aircall-phone-container');
+  if(!container)return;
+  try{
+    const phone=new AircallPhone({
+      domToLoadPhone:container,
+      size:'auto',
+      onLogin:()=>{
+        window._aircallPhone=phone;
+        const dot=document.getElementById('aircall-status-dot');
+        const lbl=document.getElementById('aircall-status-label');
+        const fab=document.getElementById('aircall-fab');
+        if(dot)dot.style.background='#22c55e';
+        if(lbl)lbl.textContent='Aircall — Connected';
+        if(fab)fab.style.background='#22c55e';
+        toast('✅ Aircall connected — one-click calling is active');
+      },
+      onLogout:()=>{
+        window._aircallPhone=null;
+        const dot=document.getElementById('aircall-status-dot');
+        const lbl=document.getElementById('aircall-status-label');
+        const fab=document.getElementById('aircall-fab');
+        if(dot)dot.style.background='#9ca3af';
+        if(lbl)lbl.textContent='Aircall — Not connected';
+        if(fab)fab.style.background='#1f2937';
+      }
+    });
+  }catch(err){
+    console.warn('[Aircall Phone]',err.message);
+    // Fallback: raw iframe so agent can at least see the phone
+    const container2=document.getElementById('aircall-phone-container');
+    if(container2)container2.innerHTML='<iframe src="https://phone.aircall.io" allow="microphone;autoplay;camera" style="width:100%;height:100%;border:none;"></iframe>';
+  }
+}
+// ────────────────────────────────────────────────────────────────────────────
 
 function renderHSLeads(){
   if(!_hsLeadsLoaded)return;
@@ -5186,31 +5374,38 @@ function renderHSLeads(){
   function commPanel(l,allCalls){
     const pid=l.id;
     const isSmsC=c=>c.type==='sms'||c.type==='message'||(c.type||'').toLowerCase().includes('sms');
-    const smsList=[...allCalls].filter(isSmsC).reverse();
+    const smsList=[...allCalls].filter(isSmsC).sort((a,b)=>hsTs(a.timestamp)-hsTs(b.timestamp));
     const callList=allCalls.filter(c=>!isSmsC(c));
     const ph=(l.contactPhone||'').replace(/'/g,"\\'");
     const nm=((l.contactName||l.subject||'Lead').split(' ')[0]).replace(/'/g,"\\'");
     const cid=l.contactId||'';
+    const hasPhone=!!l.contactPhone;
     const smsBubble=c=>{
       const isOut=(c.direction||'').toUpperCase()!=='INBOUND';
       const ts=c.timestamp?(()=>{const ms=hsTs(c.timestamp);return ms?new Date(ms).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):''})():'';
       const body=(c.body||'').trim()||'(no message body)';
+      const src=c.source==='aircall'?'<span style="font-size:.55rem;background:#e0f2fe;color:#0369a1;padding:1px 5px;border-radius:4px;margin-left:4px;">Aircall</span>':'';
       return `<div style="display:flex;flex-direction:column;align-items:${isOut?'flex-end':'flex-start'};margin-bottom:8px;">
-        <div style="max-width:78%;background:${isOut?'#ff7a59':'#f3f4f6'};color:${isOut?'#fff':'#111'};padding:8px 12px;border-radius:${isOut?'12px 12px 2px 12px':'12px 12px 12px 2px'};font-size:.75rem;line-height:1.5;">${body}</div>
-        <div style="font-size:.59rem;color:#9ca3af;margin-top:2px;">${isOut?'You · ':''}${ts}</div>
+        <div style="max-width:82%;background:${isOut?'#ff7a59':'#f3f4f6'};color:${isOut?'#fff':'#111'};padding:8px 12px;border-radius:${isOut?'12px 12px 2px 12px':'12px 12px 12px 2px'};font-size:.75rem;line-height:1.5;">${body}</div>
+        <div style="font-size:.59rem;color:#9ca3af;margin-top:2px;">${isOut?'Out · ':'In · '}${ts}${src}</div>
       </div>`;
     };
+    // Loading placeholder — replaced by loadAircallData once Aircall responds
+    const loadingPlaceholder='<div id="ac-loading-'+pid+'" style="padding:16px;text-align:center;color:#9ca3af;font-size:.72rem;">🔄 Loading history…</div>';
+    const smsInitial=smsList.length>0?smsList.map(smsBubble).join('')+loadingPlaceholder:loadingPlaceholder;
+    const callInitial=callList.length>0?callList.map(callHistoryItem).join(''):loadingPlaceholder;
     const TAB='padding:8px 12px;border:none;background:transparent;cursor:pointer;font-size:.68rem;font-weight:700;border-bottom:2px solid;white-space:nowrap;';
     return `<div style="border-top:1px solid #f0f0f0;">
-      <div style="display:flex;background:#f9fafb;border-bottom:1px solid #f0f0f0;overflow-x:auto;">
+      <div style="display:flex;background:#f9fafb;border-bottom:1px solid #f0f0f0;overflow-x:auto;align-items:center;">
         <button id="comm-tab-msgs-${pid}" onclick="switchCommTab('${pid}','msgs')" style="${TAB}color:#ff7a59;border-bottom-color:#ff7a59;">💬 SMS (${smsList.length})</button>
         <button id="comm-tab-calls-${pid}" onclick="switchCommTab('${pid}','calls')" style="${TAB}color:#6b7280;border-bottom-color:transparent;">📞 Calls (${callList.length})</button>
         <button id="comm-tab-email-${pid}" onclick="switchCommTab('${pid}','email');loadEmailTab('${pid}','${cid}');" style="${TAB}color:#6b7280;border-bottom-color:transparent;">✉️ Email</button>
         <button id="comm-tab-notes-${pid}" onclick="switchCommTab('${pid}','notes');loadNotesTab('${pid}');" style="${TAB}color:#6b7280;border-bottom-color:transparent;">📝 Notes</button>
+        ${hasPhone?`<button onclick="_aircallLoaded['${pid}']=false;loadAircallData('${pid}','${ph}');" title="Refresh from Aircall" style="margin-left:auto;padding:4px 8px;font-size:.65rem;background:none;border:1px solid #e5e7eb;border-radius:6px;cursor:pointer;color:#6b7280;white-space:nowrap;">↻ Refresh</button>`:''}
       </div>
       <div id="comm-msgs-${pid}" style="display:block;">
-        <div style="max-height:200px;overflow-y:auto;padding:12px;display:flex;flex-direction:column;">
-          ${smsList.length>0?smsList.map(smsBubble).join(''):'<div style="text-align:center;color:#9ca3af;font-size:.72rem;padding:18px 0;">No text messages yet</div>'}
+        <div id="comm-sms-list-${pid}" style="max-height:340px;overflow-y:auto;padding:12px;display:flex;flex-direction:column;">
+          ${smsInitial}
         </div>
         <div style="padding:8px 10px;border-top:1px solid #f0f0f0;display:flex;gap:6px;align-items:center;background:#f9fafb;">
           <input id="sms-inp-${pid}" type="text" placeholder="Type a message…" onkeydown="if(event.key==='Enter')sendSMS('${pid}','${ph}');" style="flex:1;font-size:.75rem;border:1px solid #e5e7eb;border-radius:8px;padding:7px 10px;outline:none;background:#fff;" />
@@ -5218,10 +5413,10 @@ function renderHSLeads(){
         </div>
       </div>
       <div id="comm-calls-${pid}" style="display:none;">
-        <div style="max-height:200px;overflow-y:auto;">
-          ${callList.length>0?callList.map(callHistoryItem).join(''):'<div style="padding:14px;text-align:center;color:#9ca3af;font-size:.72rem;">No calls recorded</div>'}
+        <div id="comm-calls-list-${pid}" style="max-height:340px;overflow-y:auto;">
+          ${callInitial}
         </div>
-        <div style="padding:8px 10px;border-top:1px solid #f0f0f0;background:#f9fafb;">
+        <div style="padding:8px 10px;border-top:1px solid #f0f0f0;background:#f9fafb;display:flex;gap:8px;align-items:center;">
           <button onclick="makeCall('${ph}','${nm}');" style="padding:7px 16px;background:#22c55e;color:#fff;border:none;border-radius:8px;font-size:.72rem;font-weight:700;cursor:pointer;">📞 Call ${nm}</button>
         </div>
       </div>
@@ -5269,9 +5464,9 @@ function renderHSLeads(){
     const summaryHtml=`<div style="padding:12px 14px;background:#f9fafb;border-bottom:1px solid #f0f0f0;">
       <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#9ca3af;margin-bottom:8px;">Conversation Summary</div>
       <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;">
-        <div style="text-align:center;"><div style="font-size:1.3rem;font-weight:800;color:#3b82f6;line-height:1;">${ownerCalls.length}</div><div style="font-size:.58rem;color:#9ca3af;margin-top:2px;">Calls Made</div></div>
-        <div style="text-align:center;"><div style="font-size:1.3rem;font-weight:800;color:#22c55e;line-height:1;">${connectedCalls.length}</div><div style="font-size:.58rem;color:#9ca3af;margin-top:2px;">Connected</div></div>
-        <div style="text-align:center;"><div style="font-size:1.3rem;font-weight:800;color:#8b5cf6;line-height:1;">${smsCnt}</div><div style="font-size:.58rem;color:#9ca3af;margin-top:2px;">SMS Sent</div></div>
+        <div style="text-align:center;"><div id="stat-calls-made-${pid}" style="font-size:1.3rem;font-weight:800;color:#3b82f6;line-height:1;">${ownerCalls.length}</div><div style="font-size:.58rem;color:#9ca3af;margin-top:2px;">Calls Made</div></div>
+        <div style="text-align:center;"><div id="stat-connected-${pid}" style="font-size:1.3rem;font-weight:800;color:#22c55e;line-height:1;">${connectedCalls.length}</div><div style="font-size:.58rem;color:#9ca3af;margin-top:2px;">Connected</div></div>
+        <div style="text-align:center;"><div id="stat-sms-sent-${pid}" style="font-size:1.3rem;font-weight:800;color:#8b5cf6;line-height:1;">${smsCnt}</div><div style="font-size:.58rem;color:#9ca3af;margin-top:2px;">SMS Sent</div></div>
         <div style="flex:1;min-width:90px;padding-left:10px;border-left:1px solid #e5e7eb;">
           <div style="font-size:.58rem;color:#9ca3af;margin-bottom:2px;">Last Contact</div>
           <div style="font-size:.68rem;font-weight:600;color:#374151;">${lastConnStr}</div>
@@ -5314,6 +5509,8 @@ function renderHSLeads(){
     const panel=document.getElementById('lead-side-panel');
     panel.style.display='flex';
     panel.scrollTop=0;
+    // Augment calls/SMS with Aircall data (async, non-blocking)
+    if(l.contactPhone)setTimeout(()=>loadAircallData(l.id,l.contactPhone),80);
   };
   window.closeLeadPanel=function(){
     document.getElementById('lead-panel-overlay').style.display='none';
@@ -7394,6 +7591,13 @@ function calcCalc(){
     s('cc-csr-sales').textContent = '—';
   }
 }
+
+// Auto-init Aircall SDK in background on page load so agents who are already
+// logged in to Aircall get seamless one-click calling (no "connect" step).
+document.addEventListener('DOMContentLoaded',()=>{
+  // Small delay so the Aircall SDK script has time to load
+  setTimeout(()=>{ if(!_aircallPhoneInited)initAircallPhone(); }, 1800);
+});
 
 // Mark target leads as manually touched so auto-fill stops overriding
 document.addEventListener('DOMContentLoaded',()=>{
@@ -10679,5 +10883,18 @@ document.addEventListener('keydown', function(e) {
   </div>
   <div id="lead-panel-body" style="flex:1;overflow-y:auto;"></div>
 </div>
+<!-- ── Aircall floating phone panel ────────────────────────────────────── -->
+<div id="aircall-panel" style="display:none;position:fixed;bottom:80px;left:20px;width:380px;height:680px;z-index:1200;border-radius:14px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.28);border:1px solid #e5e7eb;background:#fff;">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#1f2937;color:#fff;">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span id="aircall-status-dot" style="width:8px;height:8px;background:#9ca3af;border-radius:50%;display:inline-block;flex-shrink:0;"></span>
+      <span style="font-size:.78rem;font-weight:600;" id="aircall-status-label">Aircall — Not connected</span>
+    </div>
+    <button onclick="document.getElementById('aircall-panel').style.display='none';" style="background:none;border:none;color:#9ca3af;font-size:1rem;cursor:pointer;padding:2px 6px;">✕</button>
+  </div>
+  <div id="aircall-phone-container" style="width:100%;height:calc(100% - 42px);"></div>
+</div>
+<button id="aircall-fab" onclick="toggleAircallPhone()" title="Aircall Phone" style="position:fixed;bottom:20px;left:20px;z-index:1201;width:52px;height:52px;border-radius:50%;background:#1f2937;color:#fff;border:none;font-size:1.3rem;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;transition:background .2s;">📞</button>
+<!-- ─────────────────────────────────────────────────────────────────────── -->
 </body>
 </html>
