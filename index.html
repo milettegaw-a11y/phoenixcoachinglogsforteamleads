@@ -6004,8 +6004,9 @@ function renderHSLeads(){
       tlEl.innerHTML='<div style="color:var(--g400);font-size:.8rem;padding:8px 0;">No leads found in the last 15 days.</div>';
       return;
     }
-    // Use all leads (not filtered) for summary stats so gaps button doesn't change the numbers
-    const allActiveForStats=_hsDayFilter>0?_hsLeads.filter(l=>l.ageDays===_hsDayFilter):_hsLeads;
+    // Apply same day + age-bucket filters as activeDays so TL stats match agent view
+    let allActiveForStats=_hsDayFilter>0?_hsLeads.filter(l=>l.ageDays===_hsDayFilter):[..._hsLeads];
+    if(_hsAgeBucket) allActiveForStats=allActiveForStats.filter(l=>l.ageBucket===_hsAgeBucket);
     const statsBase=(_hsTeamFilter?allActiveForStats.filter(l=>{const ag=rosterAgents.find(a=>a.name===l.ownerName);return ag&&ag.tl===_hsTeamFilter;}):allActiveForStats).filter(l=>_hsOwnerFilter?l.ownerName===_hsOwnerFilter:true);
     const totalLack=statsBase.filter(l=>(l.cadencePct||0)<100).length;
     const avgCadPct=Math.round(statsBase.reduce((s,l)=>s+(l.cadencePct||0),0)/Math.max(1,statsBase.length));
