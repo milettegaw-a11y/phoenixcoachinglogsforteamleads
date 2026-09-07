@@ -5160,6 +5160,25 @@ async function ensureAircallUsers(){
   }catch(_){}
 }
 
+function callHistoryItem(c){
+  const ts=c.timestamp?(()=>{const ms=hsTs(c.timestamp);return ms?new Date(ms).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):''})():'';
+  const isSms=c.type==='sms'||c.type==='message'||(c.type||'').toLowerCase().includes('sms');
+  const connected=!isSms&&(c.connected||(c.status||'').toUpperCase()==='COMPLETED');
+  const dir=(c.direction||'').toUpperCase()==='INBOUND'?'📨 In':'📤 Out';
+  const callDir=(c.direction||'').toUpperCase()==='INBOUND'?'📞 In':'📤 Out';
+  const typeLabel=isSms?`${dir} SMS`:`${callDir} Call`;
+  let badge;
+  if(isSms){badge='<span style="background:#ede9fe;color:#6d28d9;font-size:.59rem;padding:1px 6px;border-radius:99px;font-weight:600;">SMS</span>';}
+  else if(connected){badge='<span style="background:#dcfce7;color:#166534;font-size:.59rem;padding:1px 6px;border-radius:99px;font-weight:600;">Connected</span>';}
+  else{badge='<span style="background:#fee2e2;color:#b91c1c;font-size:.59rem;padding:1px 6px;border-radius:99px;font-weight:600;">No Answer</span>';}
+  const dur=!isSms&&c.durationMs&&c.durationMs>0?` · ${Math.round(c.durationMs/60000)}m`:'';
+  const body=c.body&&c.body.trim()?`<div style="color:var(--g600);font-style:italic;line-height:1.4;margin-top:2px;">"${c.body.slice(0,200)}${c.body.length>200?'…':''}"</div>`:'';
+  return `<div style="padding:6px 10px;border-bottom:1px solid #f3f4f6;">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;">
+      <span style="font-size:.67rem;color:var(--g500);">${typeLabel} · ${ts}${dur}</span>${badge}
+    </div>${body}
+  </div>`;
+}
 async function loadAircallData(lid,contactPhone){
   if(!contactPhone)return;
   if(_aircallLoaded[lid])return;
@@ -5415,26 +5434,6 @@ function renderHSLeads(){
     const lastOwnerCall=(l.calls||[]).find(c=>String(c.ownerId)===String(l.ownerId)&&c.type==='call');
     const lastStr=lastOwnerCall?hsRelTime(lastOwnerCall.timestamp):'';
     return `<div style="margin-top:7px;"><span style="font-size:.62rem;padding:2px 9px;border-radius:99px;font-weight:600;background:${hasCalls?'#dcfce7':'#fee2e2'};color:${hasCalls?'#15803d':'#b91c1c'};">${hasCalls?'✅ Called · '+lastStr:'⚠️ Needs to be contacted'}</span></div>`;
-  }
-
-  function callHistoryItem(c){
-    const ts=c.timestamp?(()=>{const ms=hsTs(c.timestamp);return ms?new Date(ms).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):''})():'';
-    const isSms=c.type==='sms'||c.type==='message'||(c.type||'').toLowerCase().includes('sms');
-    const connected=!isSms&&(c.connected||(c.status||'').toUpperCase()==='COMPLETED');
-    const dir=(c.direction||'').toUpperCase()==='INBOUND'?'📨 In':'📤 Out';
-    const callDir=(c.direction||'').toUpperCase()==='INBOUND'?'📞 In':'📤 Out';
-    const typeLabel=isSms?`${dir} SMS`:`${callDir} Call`;
-    let badge;
-    if(isSms){badge='<span style="background:#ede9fe;color:#6d28d9;font-size:.59rem;padding:1px 6px;border-radius:99px;font-weight:600;">SMS</span>';}
-    else if(connected){badge='<span style="background:#dcfce7;color:#166534;font-size:.59rem;padding:1px 6px;border-radius:99px;font-weight:600;">Connected</span>';}
-    else{badge='<span style="background:#fee2e2;color:#b91c1c;font-size:.59rem;padding:1px 6px;border-radius:99px;font-weight:600;">No Answer</span>';}
-    const dur=!isSms&&c.durationMs&&c.durationMs>0?` · ${Math.round(c.durationMs/60000)}m`:'';
-    const body=c.body&&c.body.trim()?`<div style="color:var(--g600);font-style:italic;line-height:1.4;margin-top:2px;">"${c.body.slice(0,200)}${c.body.length>200?'…':''}"</div>`:'';
-    return `<div style="padding:6px 10px;border-bottom:1px solid #f3f4f6;">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;">
-        <span style="font-size:.67rem;color:var(--g500);">${typeLabel} · ${ts}${dur}</span>${badge}
-      </div>${body}
-    </div>`;
   }
 
   function commPanel(l,allCalls){
