@@ -116,9 +116,39 @@ export default async function handler(req, res) {
 
     const allContactIds = [...new Set(Object.values(ticketContactMap).flat().map(String))];
 
+    // ── PHASE 1.5: Contact→calls/SMS (Aircall logs to contact, not ticket) ────
+    const contactCallAssocMap = {};
+    const contactSmsAssocMap  = {};
+    if (allContactIds.length > 0) {
+      const [cCallAssocResp, cSmsAssocResp] = await Promise.all([
+        hsFetch('https://api.hubapi.com/crm/v4/associations/contacts/calls/batch/read', {
+          method: 'POST', headers: h,
+          body: JSON.stringify({ inputs: allContactIds.map(id => ({ id })) })
+        }),
+        hsFetch('https://api.hubapi.com/crm/v4/associations/contacts/communications/batch/read', {
+          method: 'POST', headers: h,
+          body: JSON.stringify({ inputs: allContactIds.map(id => ({ id })) })
+        })
+      ]);
+      const cCallAssoc = await cCallAssocResp.json().catch(() => ({ results: [] }));
+      const cSmsAssoc  = await cSmsAssocResp.json().catch(() => ({ results: [] }));
+      if (cCallAssoc.results) {
+        for (const r of cCallAssoc.results) {
+          contactCallAssocMap[r.from.id] = (r.to || []).map(x => String(x.toObjectId));
+          (r.to || []).forEach(x => allCallIds.add(String(x.toObjectId)));
+        }
+      }
+      if (cSmsAssoc.results) {
+        for (const r of cSmsAssoc.results) {
+          contactSmsAssocMap[r.from.id] = (r.to || []).map(x => String(x.toObjectId));
+          (r.to || []).forEach(x => allSmsIds.add(String(x.toObjectId)));
+        }
+      }
+    }
+
     // ── PHASE 2: Batch-read all objects in parallel ───────────────────────────
-    const callIdList  = [...allCallIds].slice(0, 300);
-    const smsIdList   = [...allSmsIds].slice(0, 300);
+    const callIdList  = [...allCallIds].slice(0, 500);
+    const smsIdList   = [...allSmsIds].slice(0, 500);
     const noteIdList  = [...new Set(allNoteIds)].slice(0, 50);
 
     const [contactResults, noteResults, callResults, smsResults] = await Promise.all([
@@ -213,8 +243,9 @@ export default async function handler(req, res) {
       const notes = nIds.map(id => noteMap[id]).filter(Boolean);
       notes.sort((a, b) => tsMs(b.timestamp) - tsMs(a.timestamp));
 
-      const callIds  = ticketCallMap[ticket.id] || [];
-      const smsIds   = ticketSmsMap[ticket.id] || [];
+      // Merge ticket-direct + contact-associated calls (Aircall logs to contact)
+      const callIds  = [...new Set([...(ticketCallMap[ticket.id]||[]), ...cIds.flatMap(cid=>contactCallAssocMap[cid]||[])])];
+      const smsIds   = [...new Set([...(ticketSmsMap[ticket.id]||[]), ...cIds.flatMap(cid=>contactSmsAssocMap[cid]||[])])];
       const calls    = callIds.map(id => callDetailMap[id]).filter(Boolean);
       const smsMsgs  = smsIds.map(id => smsDetailMap[id]).filter(Boolean);
 
