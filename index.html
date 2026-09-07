@@ -128,6 +128,11 @@ body{font-family:'Poppins',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sa
 .px-swatch{width:26px;height:26px;border-radius:7px;border:2.5px solid transparent;cursor:pointer;transition:all .13s;padding:0;outline:none;flex-shrink:0;}
 .px-swatch:hover{transform:scale(1.13);}
 .px-swatch.active{box-shadow:0 0 0 2.5px rgba(0,0,0,.5);}
+.st-theme-btn{border:none;border-radius:10px;padding:10px 8px 8px;cursor:pointer;font-family:inherit;font-size:.73rem;font-weight:700;color:#fff;text-align:center;line-height:1.2;position:relative;transition:transform .13s,box-shadow .13s;text-shadow:0 1px 3px rgba(0,0,0,.5);}
+.st-theme-btn:hover{transform:scale(1.04);box-shadow:0 4px 12px rgba(0,0,0,.22);}
+.st-theme-btn.active{box-shadow:0 0 0 3px #fff,0 0 0 5px rgba(0,0,0,.35);}
+.st-th-check{display:none;position:absolute;top:5px;right:7px;font-size:.75rem;font-weight:900;}
+.st-theme-btn.active .st-th-check{display:inline;}
 
 /* ══ COLOR THEMES ══ */
 html[data-theme="ocean"]{--yellow:#5ba3d4;--yellow-dk:#2b7fbc;--yellow-lt:#d0ecf9;--sb-grad:linear-gradient(160deg,#1d5c8a 0%,#2b7fbc 55%,#5ba3d4 100%);--hdr-grad:linear-gradient(135deg,#1d5c8a 0%,#5ba3d4 100%);--sb-bg:#d0ecf9;--sb-border:#92c8e8;--sb-dark:#1a4e78;--content-bg:#dff2ff;--topbar-bg:#bce1f7;--topbar-title:#1a4e78;}
@@ -179,6 +184,33 @@ html[data-theme="rose"] .sb-section-lbl{color:rgba(122,18,50,.45);}
 html[data-theme="rose"] .sb-logout{color:rgba(122,18,50,.7);border-color:rgba(122,18,50,.25);}
 html[data-theme="rose"] .sb-notif{background:#bf3060;color:#fce7ef;}
 html[data-theme="rose"] #topbar{box-shadow:0 2px 0 rgba(191,48,96,.45),0 4px 16px rgba(0,0,0,.1);}
+html[data-theme="ibericblue"]{--yellow:#3a7bd5;--yellow-dk:#1a4fa8;--yellow-lt:#d4e5ff;--sb-grad:linear-gradient(160deg,#0d2d6b 0%,#1a4fa8 55%,#3a7bd5 100%);--hdr-grad:linear-gradient(135deg,#0d2d6b 0%,#3a7bd5 100%);--sb-bg:#d4e5ff;--sb-border:#90b8f0;--sb-dark:#0d2d6b;--content-bg:#ddeeff;--topbar-bg:#c2d8f8;--topbar-title:#0d2d6b;}
+html[data-theme="ibericblue"] .sb-item{color:rgba(13,45,107,.85);}
+html[data-theme="ibericblue"] .sb-item:hover{background:rgba(58,123,213,.22);color:#0d2d6b;}
+html[data-theme="ibericblue"] .sb-sub-item{color:rgba(13,45,107,.72);}html[data-theme="ibericblue"] .sb-sub-item:hover{background:rgba(58,123,213,.18);color:#0d2d6b;}
+html[data-theme="ibericblue"] .sb-title{color:#0d2d6b;}
+html[data-theme="ibericblue"] .sb-section-lbl{color:rgba(13,45,107,.45);}
+html[data-theme="ibericblue"] .sb-logout{color:rgba(13,45,107,.7);border-color:rgba(13,45,107,.25);}
+html[data-theme="ibericblue"] .sb-notif{background:#1a4fa8;color:#d4e5ff;}
+html[data-theme="ibericblue"] #topbar{box-shadow:0 2px 0 rgba(26,79,168,.45),0 4px 16px rgba(0,0,0,.1);}
+html[data-theme="violet"]{--yellow:#a98fd4;--yellow-dk:#7c5fb0;--yellow-lt:#e8dff7;--sb-grad:linear-gradient(160deg,#5b3d8f 0%,#7c5fb0 55%,#a98fd4 100%);--hdr-grad:linear-gradient(135deg,#5b3d8f 0%,#a98fd4 100%);--sb-bg:#e8dff7;--sb-border:#c5ade8;--sb-dark:#4a2d7a;--content-bg:#ede6fa;--topbar-bg:#dfd3f5;--topbar-title:#4a2d7a;}
+html[data-theme="violet"] .sb-item{color:rgba(74,45,122,.85);}
+html[data-theme="violet"] .sb-item:hover{background:rgba(169,143,212,.22);color:#4a2d7a;}
+html[data-theme="violet"] .sb-sub-item{color:rgba(74,45,122,.72);}html[data-theme="violet"] .sb-sub-item:hover{background:rgba(169,143,212,.18);color:#4a2d7a;}
+html[data-theme="violet"] .sb-title{color:#4a2d7a;}
+html[data-theme="violet"] .sb-section-lbl{color:rgba(74,45,122,.45);}
+html[data-theme="violet"] .sb-logout{color:rgba(74,45,122,.7);border-color:rgba(74,45,122,.25);}
+html[data-theme="violet"] .sb-notif{background:#7c5fb0;color:#e8dff7;}
+html[data-theme="violet"] #topbar{box-shadow:0 2px 0 rgba(124,95,176,.45),0 4px 16px rgba(0,0,0,.1);}
+html[data-theme="graphite"]{--yellow:#6b7280;--yellow-dk:#4b5563;--yellow-lt:#e5e7eb;--sb-grad:linear-gradient(160deg,#374151 0%,#4b5563 55%,#6b7280 100%);--hdr-grad:linear-gradient(135deg,#374151 0%,#6b7280 100%);--sb-bg:#e5e7eb;--sb-border:#9ca3af;--sb-dark:#1f2937;--content-bg:#eaecf0;--topbar-bg:#d1d5db;--topbar-title:#1f2937;}
+html[data-theme="graphite"] .sb-item{color:rgba(31,41,55,.85);}
+html[data-theme="graphite"] .sb-item:hover{background:rgba(107,114,128,.22);color:#1f2937;}
+html[data-theme="graphite"] .sb-sub-item{color:rgba(31,41,55,.72);}html[data-theme="graphite"] .sb-sub-item:hover{background:rgba(107,114,128,.18);color:#1f2937;}
+html[data-theme="graphite"] .sb-title{color:#1f2937;}
+html[data-theme="graphite"] .sb-section-lbl{color:rgba(31,41,55,.45);}
+html[data-theme="graphite"] .sb-logout{color:rgba(31,41,55,.7);border-color:rgba(31,41,55,.25);}
+html[data-theme="graphite"] .sb-notif{background:#4b5563;color:#e5e7eb;}
+html[data-theme="graphite"] #topbar{box-shadow:0 2px 0 rgba(75,85,99,.45),0 4px 16px rgba(0,0,0,.1);}
 
 /* ── CONTENT ── */
 #content{flex:1;display:flex;flex-direction:column;min-width:0;background:#f7f8fa;margin:10px 10px 10px 0;border-radius:16px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.35),0 4px 12px rgba(0,0,0,.2);}
@@ -793,6 +825,7 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
         <div class="sb-item agent-hide" onclick="openDocsModal()"><span class="sb-icon">📁</span><span>Documents</span></div>
         <div class="sb-item" data-tab="kb" onclick="switchOM('kb')"><span class="sb-icon">📖</span><span>Knowledge Base</span></div>
         <div class="sb-item" data-tab="calendar" onclick="switchOM('calendar')"><span class="sb-icon">📅</span><span>Calendar</span></div>
+        <div class="sb-item" data-tab="settings" onclick="switchOM('settings')"><span class="sb-icon">⚙️</span><span>Settings</span></div>
       </div>
       <div class="sb-section-lbl agent-hide" onclick="toggleSbGroup('om-grp-admin',this)">ADMIN<span class="sb-grp-arrow">›</span></div>
       <div class="sb-group agent-hide" id="om-grp-admin">
@@ -832,6 +865,7 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
         <div class="sb-item" onclick="openDocsModal()"><span class="sb-icon">📁</span><span>Documents</span></div>
         <div class="sb-item" id="tl-nav-kb" onclick="tlShowView('kb')"><span class="sb-icon">📖</span><span>Knowledge Base</span></div>
         <div class="sb-item" id="tl-nav-calendar" onclick="tlShowView('calendar')"><span class="sb-icon">📅</span><span>Calendar</span></div>
+        <div class="sb-item" id="tl-nav-settings" onclick="tlShowView('settings')"><span class="sb-icon">⚙️</span><span>Settings</span></div>
       </div>
       <div class="sb-section-lbl" onclick="toggleSbGroup('tl-grp-admin',this)">ADMIN<span class="sb-grp-arrow">›</span></div>
       <div class="sb-group" id="tl-grp-admin">
@@ -862,6 +896,7 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
         <div class="sb-item" data-tab="kb" onclick="switchAgentTab('kb')"><span class="sb-icon">📖</span><span>Knowledge Base</span></div>
         <div class="sb-item" data-tab="library" onclick="switchAgentTab('library')"><span class="sb-icon">🎵</span><span>Call Library</span></div>
         <div class="sb-item" onclick="openRainmakerGuide()"><span class="sb-icon">🌧️</span><span>Rainmaker Guide</span></div>
+        <div class="sb-item" data-tab="settings" onclick="switchAgentTab('settings')"><span class="sb-icon">⚙️</span><span>Settings</span></div>
       </div>
     </div>
 
@@ -2453,6 +2488,133 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
   </div>
   <div id="ob-cards" style="display:flex;flex-direction:column;gap:10px;"></div>
   <div id="ob-empty" style="display:none;text-align:center;padding:40px;color:var(--g400);font-size:.88rem;">No entries yet. Click "+ New Entry" to add one.</div>
+</div>
+
+<!-- SETTINGS VIEW -->
+<div id="v-settings" class="view" style="display:none;">
+  <div style="max-width:680px;margin:0 auto;padding:8px 0 40px;">
+    <div style="font-size:1.1rem;font-weight:700;color:var(--g800);margin-bottom:6px;">⚙️ Settings</div>
+    <div style="font-size:.78rem;color:var(--g500);margin-bottom:28px;">Customize your experience</div>
+
+    <!-- APPEARANCE -->
+    <div style="background:#fff;border:1.5px solid var(--sb-border);border-radius:14px;padding:22px 24px;margin-bottom:18px;box-shadow:0 2px 8px rgba(0,0,0,.06);">
+      <div style="font-size:.72rem;font-weight:700;letter-spacing:.08em;color:var(--g500);text-transform:uppercase;margin-bottom:18px;">Appearance</div>
+
+      <!-- Color Theme -->
+      <div style="margin-bottom:20px;">
+        <div style="font-size:.82rem;font-weight:600;color:var(--g700);margin-bottom:10px;">Color Theme</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:10px;">
+          <button class="st-theme-btn" id="stth-ibericblue" onclick="applyTheme('ibericblue')" style="background:linear-gradient(135deg,#0d2d6b,#3a7bd5);">
+            <span class="st-th-check" id="stck-ibericblue">✓</span>Iberic Blue
+          </button>
+          <button class="st-theme-btn" id="stth-ocean" onclick="applyTheme('ocean')" style="background:linear-gradient(135deg,#1d5c8a,#5ba3d4);">
+            <span class="st-th-check" id="stck-ocean">✓</span>Ocean
+          </button>
+          <button class="st-theme-btn" id="stth-forest" onclick="applyTheme('forest')" style="background:linear-gradient(135deg,#3d6b2c,#83B271);">
+            <span class="st-th-check" id="stck-forest">✓</span>Forest
+          </button>
+          <button class="st-theme-btn" id="stth-sunset" onclick="applyTheme('sunset')" style="background:linear-gradient(135deg,#8b3a0a,#e8a258);">
+            <span class="st-th-check" id="stck-sunset">✓</span>Sunset
+          </button>
+          <button class="st-theme-btn" id="stth-rose" onclick="applyTheme('rose')" style="background:linear-gradient(135deg,#8b2042,#e06898);">
+            <span class="st-th-check" id="stck-rose">✓</span>Rose
+          </button>
+          <button class="st-theme-btn" id="stth-violet" onclick="applyTheme('violet')" style="background:linear-gradient(135deg,#5b3d8f,#a98fd4);">
+            <span class="st-th-check" id="stck-violet">✓</span>Violet
+          </button>
+          <button class="st-theme-btn" id="stth-graphite" onclick="applyTheme('graphite')" style="background:linear-gradient(135deg,#374151,#6b7280);">
+            <span class="st-th-check" id="stck-graphite">✓</span>Graphite
+          </button>
+        </div>
+      </div>
+
+      <!-- Text Size -->
+      <div style="margin-bottom:20px;">
+        <div style="font-size:.82rem;font-weight:600;color:var(--g700);margin-bottom:10px;">Text Size</div>
+        <div style="display:flex;gap:8px;">
+          <button class="px-sz-btn" id="stsz-s" onclick="applyFontSize('s')">S</button>
+          <button class="px-sz-btn active" id="stsz-m" onclick="applyFontSize('m')">M</button>
+          <button class="px-sz-btn" id="stsz-l" onclick="applyFontSize('l')">L</button>
+        </div>
+      </div>
+
+      <!-- Font -->
+      <div>
+        <div style="font-size:.82rem;font-weight:600;color:var(--g700);margin-bottom:10px;">Font</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+          <button class="px-font-btn" id="stfnt-poppins" onclick="applyFont('Poppins')" style="font-family:'Poppins',sans-serif;">Poppins</button>
+          <button class="px-font-btn" id="stfnt-inter" onclick="applyFont('Inter')" style="font-family:'Inter',sans-serif;">Inter</button>
+          <button class="px-font-btn" id="stfnt-nunito" onclick="applyFont('Nunito')" style="font-family:'Nunito',sans-serif;">Nunito</button>
+          <button class="px-font-btn" id="stfnt-roboto" onclick="applyFont('Roboto')" style="font-family:'Roboto',sans-serif;">Roboto</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTIFICATIONS -->
+    <div style="background:#fff;border:1.5px solid var(--sb-border);border-radius:14px;padding:22px 24px;box-shadow:0 2px 8px rgba(0,0,0,.06);">
+      <div style="font-size:.72rem;font-weight:700;letter-spacing:.08em;color:var(--g500);text-transform:uppercase;margin-bottom:18px;">Notifications</div>
+
+      <!-- Chat messages -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:120px;">
+          <div style="font-size:.83rem;font-weight:600;color:var(--g700);">Chat messages</div>
+        </div>
+        <select id="st-snd-chat" onchange="saveNotifPref()" style="padding:6px 10px;border:1.5px solid var(--g300);border-radius:8px;font-size:.8rem;font-family:inherit;min-width:130px;">
+          <option value="none">No sound</option>
+          <option value="chime">Chime</option>
+          <option value="ping">Ping</option>
+          <option value="pop">Pop</option>
+          <option value="bell">Bell</option>
+        </select>
+        <button onclick="previewSound('chat')" style="padding:6px 14px;border:1.5px solid var(--sb-border);border-radius:8px;background:#fff;font-family:inherit;font-size:.78rem;font-weight:600;cursor:pointer;color:var(--g700);white-space:nowrap;">▶ Preview</button>
+      </div>
+
+      <!-- Mentions -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:120px;">
+          <div style="font-size:.83rem;font-weight:600;color:var(--g700);">Mentions</div>
+        </div>
+        <select id="st-snd-mention" onchange="saveNotifPref()" style="padding:6px 10px;border:1.5px solid var(--g300);border-radius:8px;font-size:.8rem;font-family:inherit;min-width:130px;">
+          <option value="none">No sound</option>
+          <option value="chime">Chime</option>
+          <option value="ping">Ping</option>
+          <option value="pop">Pop</option>
+          <option value="bell">Bell</option>
+        </select>
+        <button onclick="previewSound('mention')" style="padding:6px 14px;border:1.5px solid var(--sb-border);border-radius:8px;background:#fff;font-family:inherit;font-size:.78rem;font-weight:600;cursor:pointer;color:var(--g700);white-space:nowrap;">▶ Preview</button>
+      </div>
+
+      <!-- New actions -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:120px;">
+          <div style="font-size:.83rem;font-weight:600;color:var(--g700);">New actions</div>
+        </div>
+        <select id="st-snd-action" onchange="saveNotifPref()" style="padding:6px 10px;border:1.5px solid var(--g300);border-radius:8px;font-size:.8rem;font-family:inherit;min-width:130px;">
+          <option value="none">No sound</option>
+          <option value="chime">Chime</option>
+          <option value="ping">Ping</option>
+          <option value="pop">Pop</option>
+          <option value="bell">Bell</option>
+        </select>
+        <button onclick="previewSound('action')" style="padding:6px 14px;border:1.5px solid var(--sb-border);border-radius:8px;background:#fff;font-family:inherit;font-size:.78rem;font-weight:600;cursor:pointer;color:var(--g700);white-space:nowrap;">▶ Preview</button>
+      </div>
+
+      <!-- Desktop notifications -->
+      <div style="display:flex;align-items:center;gap:12px;padding-top:14px;border-top:1px solid var(--g200);">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;flex:1;">
+          <div style="position:relative;width:42px;height:24px;flex-shrink:0;">
+            <input type="checkbox" id="st-desktop-notif" onchange="toggleDesktopNotif(this)" style="position:absolute;opacity:0;width:0;height:0;">
+            <div id="st-toggle-track" style="position:absolute;inset:0;border-radius:12px;background:var(--g300);transition:background .2s;cursor:pointer;" onclick="document.getElementById('st-desktop-notif').click()"></div>
+            <div id="st-toggle-thumb" style="position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .2s;pointer-events:none;"></div>
+          </div>
+          <div>
+            <div style="font-size:.83rem;font-weight:600;color:var(--g700);">Desktop notifications</div>
+            <div style="font-size:.72rem;color:var(--g500);margin-top:2px;" id="st-notif-status">Enable browser push notifications</div>
+          </div>
+        </label>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- AGENT RANKING VIEW -->
@@ -4653,7 +4815,120 @@ function applyTheme(name){
   document.querySelectorAll('.px-swatch').forEach(b=>b.classList.remove('active'));
   const btn=document.getElementById('pxth-'+name);
   if(btn)btn.classList.add('active');
+  // also update settings page theme buttons
+  document.querySelectorAll('.st-theme-btn').forEach(b=>b.classList.remove('active'));
+  const stBtn=document.getElementById('stth-'+name);
+  if(stBtn)stBtn.classList.add('active');
   localStorage.setItem('px-theme',name);
+}
+
+/* ── SETTINGS PAGE ── */
+function renderSettingsPage(){
+  // sync theme buttons
+  const theme=localStorage.getItem('px-theme')||'forest';
+  document.querySelectorAll('.st-theme-btn').forEach(b=>b.classList.remove('active'));
+  const stBtn=document.getElementById('stth-'+theme);
+  if(stBtn)stBtn.classList.add('active');
+  // sync font size buttons
+  const sz=localStorage.getItem('px-sz')||'m';
+  ['s','m','l'].forEach(s=>{
+    const b=document.getElementById('stsz-'+s);
+    if(b)b.classList.toggle('active',s===sz);
+  });
+  // sync font buttons
+  const font=(localStorage.getItem('px-font')||'Poppins').toLowerCase();
+  ['poppins','inter','nunito','roboto'].forEach(f=>{
+    const b=document.getElementById('stfnt-'+f);
+    if(b)b.classList.toggle('active',f===font);
+  });
+  // sync notification dropdowns
+  const prefs=JSON.parse(localStorage.getItem('px-notif-prefs')||'{}');
+  ['chat','mention','action'].forEach(k=>{
+    const sel=document.getElementById('st-snd-'+k);
+    if(sel) sel.value=prefs[k]||'none';
+  });
+  // sync desktop notif toggle
+  const desktopOn=localStorage.getItem('px-desktop-notif')==='1';
+  const cb=document.getElementById('st-desktop-notif');
+  const track=document.getElementById('st-toggle-track');
+  const thumb=document.getElementById('st-toggle-thumb');
+  if(cb){
+    cb.checked=desktopOn;
+    if(track) track.style.background=desktopOn?'var(--yellow-dk)':'var(--g300)';
+    if(thumb) thumb.style.transform=desktopOn?'translateX(18px)':'translateX(0)';
+  }
+  const statusEl=document.getElementById('st-notif-status');
+  if(statusEl){
+    if(Notification&&Notification.permission==='granted'&&desktopOn) statusEl.textContent='Desktop notifications are active';
+    else if(Notification&&Notification.permission==='denied') statusEl.textContent='Blocked by browser — update site permissions to enable';
+    else statusEl.textContent='Enable browser push notifications';
+  }
+}
+
+function saveNotifPref(){
+  const prefs={};
+  ['chat','mention','action'].forEach(k=>{
+    const sel=document.getElementById('st-snd-'+k);
+    if(sel) prefs[k]=sel.value;
+  });
+  localStorage.setItem('px-notif-prefs',JSON.stringify(prefs));
+}
+
+function toggleDesktopNotif(cb){
+  const track=document.getElementById('st-toggle-track');
+  const thumb=document.getElementById('st-toggle-thumb');
+  const statusEl=document.getElementById('st-notif-status');
+  if(cb.checked){
+    if(typeof Notification!=='undefined'&&Notification.permission!=='granted'){
+      Notification.requestPermission().then(perm=>{
+        if(perm==='granted'){
+          localStorage.setItem('px-desktop-notif','1');
+          if(track) track.style.background='var(--yellow-dk)';
+          if(thumb) thumb.style.transform='translateX(18px)';
+          if(statusEl) statusEl.textContent='Desktop notifications are active';
+        } else {
+          cb.checked=false;
+          if(track) track.style.background='var(--g300)';
+          if(thumb) thumb.style.transform='translateX(0)';
+          if(statusEl) statusEl.textContent='Blocked by browser — update site permissions to enable';
+        }
+      });
+    } else {
+      localStorage.setItem('px-desktop-notif','1');
+      if(track) track.style.background='var(--yellow-dk)';
+      if(thumb) thumb.style.transform='translateX(18px)';
+      if(statusEl) statusEl.textContent='Desktop notifications are active';
+    }
+  } else {
+    localStorage.removeItem('px-desktop-notif');
+    if(track) track.style.background='var(--g300)';
+    if(thumb) thumb.style.transform='translateX(0)';
+    if(statusEl) statusEl.textContent='Enable browser push notifications';
+  }
+}
+
+function previewSound(type){
+  const prefs=JSON.parse(localStorage.getItem('px-notif-prefs')||'{}');
+  const snd=prefs[type]||'none';
+  if(snd==='none') return;
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    const osc=ctx.createOscillator();
+    const gain=ctx.createGain();
+    osc.connect(gain);gain.connect(ctx.destination);
+    const freqs={chime:[1047,1319,1568],ping:[880],pop:[300,600],bell:[659,784,1047]};
+    const notes=freqs[snd]||[440];
+    let t=ctx.currentTime;
+    notes.forEach(f=>{
+      osc.frequency.setValueAtTime(f,t);
+      gain.gain.setValueAtTime(0.25,t);
+      gain.gain.exponentialRampToValueAtTime(0.001,t+0.35);
+      t+=0.22;
+    });
+    osc.type=snd==='pop'?'sine':'triangle';
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime+notes.length*0.22+0.1);
+  }catch(e){console.warn('previewSound:',e);}
 }
 function loadPreferences(){
   const font=localStorage.getItem('px-font')||'Poppins';
@@ -6294,9 +6569,9 @@ function toggleSbSub(id){
 
 function switchOM(tab){
   document.querySelectorAll('#om-nav .sb-item').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
-  const titles={dash:'Coaching Dashboard',coaching:'Coaching Logs',nte:'NTE Logs',ft:'Follow Through',cl:'Call Listening',attendance:'Attendance Points',ranking:'Agent Ranking',pwreset:'Reset Passwords',kb:'Knowledge Base',suggestions:'Suggestions & Reports',calendar:'Team Calendar',actions:'Action Items',leads:'Lead Follow-Ups',leadmgmt:'Lead Management',onboard:'Onboarding / Offboarding'};
+  const titles={dash:'Coaching Dashboard',coaching:'Coaching Logs',nte:'NTE Logs',ft:'Follow Through',cl:'Call Listening',attendance:'Attendance Points',ranking:'Agent Ranking',pwreset:'Reset Passwords',kb:'Knowledge Base',suggestions:'Suggestions & Reports',calendar:'Team Calendar',actions:'Action Items',leads:'Lead Follow-Ups',leadmgmt:'Lead Management',onboard:'Onboarding / Offboarding',settings:'Settings'};
   const el=document.getElementById('tb-title'); if(el) el.textContent=titles[tab]||'';
-  const map={dash:'v-om-dash',coaching:'v-om-c',nte:'v-om-n',ft:'v-om-f',cl:'v-om-cl',attendance:'v-om-attendance',ranking:'v-ranking',pwreset:'v-om-pwreset',kb:'v-kb',suggestions:'v-om-suggestions',calendar:'v-cal',actions:'v-actions',leads:'v-leads-tl',leadmgmt:'v-leadmgmt-tl',onboard:'v-onboard'};
+  const map={dash:'v-om-dash',coaching:'v-om-c',nte:'v-om-n',ft:'v-om-f',cl:'v-om-cl',attendance:'v-om-attendance',ranking:'v-ranking',pwreset:'v-om-pwreset',kb:'v-kb',suggestions:'v-om-suggestions',calendar:'v-cal',actions:'v-actions',leads:'v-leads-tl',leadmgmt:'v-leadmgmt-tl',onboard:'v-onboard',settings:'v-settings'};
   showView(map[tab]||'v-om-dash');
   populateAllFilters();
   if(tab==='dash')renderOMDash();
@@ -6314,6 +6589,7 @@ function switchOM(tab){
   if(tab==='leads'){subscribeLeads();renderLeads();}
   if(tab==='leadmgmt')fetchHSLeads();
   if(tab==='onboard'){subscribeOnboard();renderOnboardDash();}
+  if(tab==='settings') renderSettingsPage();
 }
 
 /* ═══════════════════════════════════════
@@ -6989,9 +7265,9 @@ function clearFilters(){
 
 // Switch TL nav views (Dashboard / Coaching Logs / Attendance Points)
 function tlShowView(tab){
-  const viewMap={dashboard:'v-tl',logs:'v-tl-logs',nte:'v-om-n',attendance:'v-tl-attendance',ranking:'v-ranking',kb:'v-kb',calendar:'v-cal',actions:'v-actions',leads:'v-leads-tl',leadmgmt:'v-leadmgmt-tl',caddash:'v-cad-dash',onboard:'v-onboard',cl:'v-tl-cl'};
+  const viewMap={dashboard:'v-tl',logs:'v-tl-logs',nte:'v-om-n',attendance:'v-tl-attendance',ranking:'v-ranking',kb:'v-kb',calendar:'v-cal',actions:'v-actions',leads:'v-leads-tl',leadmgmt:'v-leadmgmt-tl',caddash:'v-cad-dash',onboard:'v-onboard',cl:'v-tl-cl',settings:'v-settings'};
   showView(viewMap[tab]||'v-tl');
-  ['dash','logs','nte','attendance','ranking','kb','calendar','actions','leads','leadmgmt','caddash','onboard','cl'].forEach(t=>{
+  ['dash','logs','nte','attendance','ranking','kb','calendar','actions','leads','leadmgmt','caddash','onboard','cl','settings'].forEach(t=>{
     const el=document.getElementById('tl-nav-'+t);
     if(el) el.classList.toggle('active',t===tab||(t==='dash'&&tab==='dashboard'));
   });
@@ -7007,6 +7283,7 @@ function tlShowView(tab){
   if(tab==='caddash')renderCadDash();
   if(tab==='onboard'){subscribeOnboard();renderOnboardDash();}
   if(tab==='cl') renderCLLogs();
+  if(tab==='settings') renderSettingsPage();
 }
 
 /* ═══════════════════════════════════════
@@ -9693,12 +9970,12 @@ function onEmailInput(){
 function switchAgentTab(tab){
   document.querySelectorAll('#agent-nav .sb-item').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
   document.querySelectorAll('.av-section').forEach(s=>s.style.display='none');
-  const map={coaching:'av-coaching',nte:'av-nte',ft:'av-ft',perf:'av-perf',clhist:'av-cl-hist',calc:'av-calc',attendance:'av-attendance',leads:'av-leads',leadmgmt:'av-leadmgmt',library:'av-lib',kb:'__kb__'};
+  const map={coaching:'av-coaching',nte:'av-nte',ft:'av-ft',perf:'av-perf',clhist:'av-cl-hist',calc:'av-calc',attendance:'av-attendance',leads:'av-leads',leadmgmt:'av-leadmgmt',library:'av-lib',kb:'__kb__',settings:'__settings__'};
   const secId=map[tab];
-  if(secId==='__kb__'){showView('v-kb');renderAll();}else{showView('v-agent');if(secId){const sec=document.getElementById(secId);if(sec)sec.style.display='';}}
+  if(secId==='__kb__'){showView('v-kb');renderAll();}else if(secId==='__settings__'){showView('v-settings');renderSettingsPage();}else{showView('v-agent');if(secId){const sec=document.getElementById(secId);if(sec)sec.style.display='';}}
   if(tab==='leads'){if(!_leadUnsub)subscribeLeads();else renderLeads();}
   if(tab==='leadmgmt')fetchHSLeads();
-  const titles={coaching:'My Coaching',nte:'My NTE',ft:'My Follow Through',perf:'My Performance',clhist:'My Call History',calc:'Phoenix Calculator',attendance:'My Attendance',leads:'Lead Follow-Up',leadmgmt:'Lead Management',library:'Call Library 🎵',kb:'Knowledge Base'};
+  const titles={coaching:'My Coaching',nte:'My NTE',ft:'My Follow Through',perf:'My Performance',clhist:'My Call History',calc:'Phoenix Calculator',attendance:'My Attendance',leads:'Lead Follow-Up',leadmgmt:'Lead Management',library:'Call Library 🎵',kb:'Knowledge Base',settings:'Settings'};
   const el=document.getElementById('tb-title'); if(el) el.textContent=titles[tab]||'';
   if(tab==='perf') renderAgentPerf();
   if(tab==='calc') avCalcInit();
