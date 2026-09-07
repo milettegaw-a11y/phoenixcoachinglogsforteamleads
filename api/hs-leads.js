@@ -183,7 +183,7 @@ export default async function handler(req, res) {
       const [contactResults, ctCallAssocResp, ctSmsAssocResp] = await Promise.all([
         batchRead(
           'https://api.hubapi.com/crm/v3/objects/contacts/batch/read',
-          allContactIds.slice(0, 100),
+          allContactIds,
           ['firstname','lastname','phone','mobilephone','email','lifecyclestage','createdate']
         ),
         hsFetch('https://api.hubapi.com/crm/v4/associations/contacts/calls/batch/read', {
@@ -367,6 +367,10 @@ export default async function handler(req, res) {
       const allActivity = [...calls, ...smsMsgs];
       allActivity.sort((a, b) => tsMs(b.timestamp) - tsMs(a.timestamp));
 
+      // Return all activities associated with this ticket (calls, SMS).
+      // Do NOT filter by hubspot_owner_id here — Aircall logs calls under a
+      // different owner ID than the ticket assignee, which would zero out cadence.
+      // The client-side cadence counter already restricts to today's window.
       return {
         ...ticket,
         contactId: cIds[0] ? String(cIds[0]) : null,
