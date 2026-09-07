@@ -133,6 +133,30 @@ body{font-family:'Poppins',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sa
 .st-theme-btn.active{box-shadow:0 0 0 3px #fff,0 0 0 5px rgba(0,0,0,.35);}
 .st-th-check{display:none;position:absolute;top:5px;right:7px;font-size:.75rem;font-weight:900;}
 .st-theme-btn.active .st-th-check{display:inline;}
+/* ── CHAT ── */
+#chat-fab{position:fixed;bottom:24px;right:24px;z-index:1200;width:52px;height:52px;border-radius:50%;background:var(--yellow-dk);border:none;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.28);display:flex;align-items:center;justify-content:center;font-size:1.35rem;transition:transform .15s;}
+#chat-fab:hover{transform:scale(1.08);}
+#chat-badge{position:absolute;top:-3px;right:-3px;background:#e53e3e;color:#fff;border-radius:50%;width:19px;height:19px;font-size:.65rem;font-weight:800;display:none;align-items:center;justify-content:center;border:2px solid #fff;}
+#chat-panel{position:fixed;bottom:86px;right:24px;z-index:1199;width:340px;max-height:480px;background:#fff;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,.22);display:none;flex-direction:column;overflow:hidden;border:1.5px solid var(--sb-border);}
+#chat-panel.open{display:flex;}
+.chat-ph{padding:12px 16px;background:var(--sb-grad);color:#fff;font-weight:700;font-size:.88rem;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.chat-msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;min-height:0;}
+.chat-msg{display:flex;flex-direction:column;max-width:82%;}
+.chat-msg.mine{align-self:flex-end;align-items:flex-end;}
+.chat-msg.theirs{align-self:flex-start;align-items:flex-start;}
+.chat-bubble{padding:8px 12px;border-radius:12px;font-size:.82rem;line-height:1.4;word-break:break-word;}
+.chat-msg.mine .chat-bubble{background:var(--yellow-dk);color:#fff;border-bottom-right-radius:3px;}
+.chat-msg.theirs .chat-bubble{background:#f1f1f1;color:#1a1a1a;border-bottom-left-radius:3px;}
+.chat-meta{font-size:.66rem;color:var(--g400);margin-top:2px;padding:0 3px;}
+.chat-input-row{display:flex;gap:8px;padding:10px 12px;border-top:1px solid var(--g200);flex-shrink:0;}
+.chat-input{flex:1;border:1.5px solid var(--g300);border-radius:20px;padding:8px 14px;font-size:.82rem;font-family:inherit;outline:none;resize:none;}
+.chat-input:focus{border-color:var(--yellow-dk);}
+.chat-send{background:var(--yellow-dk);border:none;border-radius:50%;width:36px;height:36px;cursor:pointer;color:#fff;font-size:1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.chat-send:hover{opacity:.88;}
+/* Full-page chat view */
+#v-chat .chat-msgs{min-height:300px;max-height:calc(100vh - 280px);border:1.5px solid var(--sb-border);border-radius:12px;background:#fafafa;}
+#v-chat .chat-input-row{padding:10px 0 0;}
+#v-chat .chat-input{border-radius:10px;}
 
 /* ══ COLOR THEMES ══ */
 html[data-theme="ocean"]{--yellow:#5ba3d4;--yellow-dk:#2b7fbc;--yellow-lt:#d0ecf9;--sb-grad:linear-gradient(160deg,#1d5c8a 0%,#2b7fbc 55%,#5ba3d4 100%);--hdr-grad:linear-gradient(135deg,#1d5c8a 0%,#5ba3d4 100%);--sb-bg:#d0ecf9;--sb-border:#92c8e8;--sb-dark:#1a4e78;--content-bg:#dff2ff;--topbar-bg:#bce1f7;--topbar-title:#1a4e78;}
@@ -826,6 +850,7 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
         <div class="sb-item" data-tab="kb" onclick="switchOM('kb')"><span class="sb-icon">📖</span><span>Knowledge Base</span></div>
         <div class="sb-item" data-tab="calendar" onclick="switchOM('calendar')"><span class="sb-icon">📅</span><span>Calendar</span></div>
         <div class="sb-item" data-tab="settings" onclick="switchOM('settings')"><span class="sb-icon">⚙️</span><span>Settings</span></div>
+        <div class="sb-item" data-tab="chat" onclick="switchOM('chat')"><span class="sb-icon">💬</span><span>Chat</span><span id="nav-badge-om-chat" class="sb-notif" style="display:none"></span></div>
       </div>
       <div class="sb-section-lbl agent-hide" onclick="toggleSbGroup('om-grp-admin',this)">ADMIN<span class="sb-grp-arrow">›</span></div>
       <div class="sb-group agent-hide" id="om-grp-admin">
@@ -866,6 +891,7 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
         <div class="sb-item" id="tl-nav-kb" onclick="tlShowView('kb')"><span class="sb-icon">📖</span><span>Knowledge Base</span></div>
         <div class="sb-item" id="tl-nav-calendar" onclick="tlShowView('calendar')"><span class="sb-icon">📅</span><span>Calendar</span></div>
         <div class="sb-item" id="tl-nav-settings" onclick="tlShowView('settings')"><span class="sb-icon">⚙️</span><span>Settings</span></div>
+        <div class="sb-item" id="tl-nav-chat" onclick="tlShowView('chat')"><span class="sb-icon">💬</span><span>Chat</span><span id="nav-badge-tl-chat" class="sb-notif" style="display:none"></span></div>
       </div>
       <div class="sb-section-lbl" onclick="toggleSbGroup('tl-grp-admin',this)">ADMIN<span class="sb-grp-arrow">›</span></div>
       <div class="sb-group" id="tl-grp-admin">
@@ -897,6 +923,7 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
         <div class="sb-item" data-tab="library" onclick="switchAgentTab('library')"><span class="sb-icon">🎵</span><span>Call Library</span></div>
         <div class="sb-item" onclick="openRainmakerGuide()"><span class="sb-icon">🌧️</span><span>Rainmaker Guide</span></div>
         <div class="sb-item" data-tab="settings" onclick="switchAgentTab('settings')"><span class="sb-icon">⚙️</span><span>Settings</span></div>
+        <div class="sb-item" data-tab="chat" onclick="switchAgentTab('chat')"><span class="sb-icon">💬</span><span>Chat</span><span id="nav-badge-ag-chat" class="sb-notif" style="display:none"></span></div>
       </div>
     </div>
 
@@ -2450,6 +2477,19 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
   </div>
   <div id="ob-cards" style="display:flex;flex-direction:column;gap:10px;"></div>
   <div id="ob-empty" style="display:none;text-align:center;padding:40px;color:var(--g400);font-size:.88rem;">No entries yet. Click "+ New Entry" to add one.</div>
+</div>
+
+<!-- CHAT VIEW -->
+<div id="v-chat" class="view">
+  <div style="max-width:720px;margin:0 auto;padding:8px 0 40px;display:flex;flex-direction:column;height:calc(100vh - 100px);">
+    <div style="font-size:1.05rem;font-weight:700;color:var(--g800);margin-bottom:4px;">💬 Team Chat</div>
+    <div style="font-size:.75rem;color:var(--g500);margin-bottom:14px;">Shared channel — all roles</div>
+    <div class="chat-msgs" id="chat-msgs-main" style="flex:1;"></div>
+    <div class="chat-input-row" style="padding:10px 0 0;">
+      <textarea class="chat-input" id="chat-inp-main" rows="1" placeholder="Type a message…" onkeydown="chatKeyMain(event)"></textarea>
+      <button class="chat-send" onclick="sendChatMsg('main')" title="Send">➤</button>
+    </div>
+  </div>
 </div>
 
 <!-- SETTINGS VIEW -->
@@ -4869,6 +4909,95 @@ function toggleDesktopNotif(cb){
   }
 }
 
+/* ── CHAT ── */
+let _chatUnsub=null;
+let _chatUnread=0;
+let _chatLastSeen=0;
+let _chatPanelOpen=false;
+
+function toggleChatPanel(){
+  _chatPanelOpen=!_chatPanelOpen;
+  const panel=document.getElementById('chat-panel');
+  if(panel) panel.classList.toggle('open',_chatPanelOpen);
+  if(_chatPanelOpen){clearChatBadge();subscribeChatMessages();setTimeout(()=>{const el=document.getElementById('chat-inp-fab');if(el)el.focus();},80);}
+}
+
+function subscribeChatMessages(){
+  if(_chatUnsub) return; // already subscribed
+  if(!FSB) return;
+  _chatUnsub=FSB.collection('chat_messages')
+    .orderBy('ts','asc').limitToLast(80)
+    .onSnapshot(snap=>{
+      const msgs=snap.docs.map(d=>({id:d.id,...d.data()}));
+      renderChatMsgs(msgs,'chat-msgs-fab');
+      renderChatMsgs(msgs,'chat-msgs-main');
+      // badge for new msgs when panel closed or chat tab not active
+      const chatTabActive=document.getElementById('v-chat')&&document.getElementById('v-chat').classList.contains('active');
+      if(!_chatPanelOpen&&!chatTabActive){
+        const newCount=msgs.filter(m=>m.ts&&m.ts.toMillis&&m.ts.toMillis()>_chatLastSeen).length;
+        if(newCount>0) showChatBadge(newCount);
+      }
+    },err=>console.warn('chat:',err));
+}
+
+function renderChatMsgs(msgs,containerId){
+  const el=document.getElementById(containerId);
+  if(!el) return;
+  const myName=CU?CU.agentName||CU.email:'';
+  el.innerHTML=msgs.map(m=>{
+    const mine=(m.senderName===myName);
+    const cls=mine?'mine':'theirs';
+    const ts=m.ts&&m.ts.toDate?m.ts.toDate().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'';
+    const role=m.senderRole?` · ${m.senderRole}`:'';
+    return`<div class="chat-msg ${cls}">
+      <div class="chat-bubble">${e(m.text)}</div>
+      <div class="chat-meta">${mine?'You':e(m.senderName||'?')}${role} ${ts}</div>
+    </div>`;
+  }).join('');
+  el.scrollTop=el.scrollHeight;
+}
+
+async function sendChatMsg(src){
+  const inpId=src==='fab'?'chat-inp-fab':'chat-inp-main';
+  const inp=document.getElementById(inpId);
+  if(!inp||!inp.value.trim()) return;
+  const text=inp.value.trim();
+  inp.value='';
+  inp.style.height='';
+  if(!FSB||!CU) return;
+  await FSB.collection('chat_messages').add({
+    text,
+    senderName:CU.agentName||CU.email||'Unknown',
+    senderRole:CU.role||'',
+    uid:CU.email||'',
+    ts:firebase.firestore.FieldValue.serverTimestamp()
+  });
+}
+
+function chatKeyFab(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChatMsg('fab');}}
+function chatKeyMain(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChatMsg('main');}}
+
+function showChatBadge(n){
+  _chatUnread=n;
+  const badge=document.getElementById('chat-badge');
+  if(badge){badge.textContent=n>9?'9+':n;badge.style.display='flex';}
+  ['nav-badge-om-chat','nav-badge-tl-chat','nav-badge-ag-chat'].forEach(id=>{
+    const b=document.getElementById(id);
+    if(b){b.textContent=n>9?'9+':n;b.style.display='';}
+  });
+}
+
+function clearChatBadge(){
+  _chatUnread=0;
+  _chatLastSeen=Date.now();
+  const badge=document.getElementById('chat-badge');
+  if(badge) badge.style.display='none';
+  ['nav-badge-om-chat','nav-badge-tl-chat','nav-badge-ag-chat'].forEach(id=>{
+    const b=document.getElementById(id);
+    if(b) b.style.display='none';
+  });
+}
+
 function previewSound(type){
   const prefs=JSON.parse(localStorage.getItem('px-notif-prefs')||'{}');
   const snd=prefs[type]||'none';
@@ -6531,9 +6660,9 @@ function toggleSbSub(id){
 
 function switchOM(tab){
   document.querySelectorAll('#om-nav .sb-item').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
-  const titles={dash:'Coaching Dashboard',coaching:'Coaching Logs',nte:'NTE Logs',ft:'Follow Through',cl:'Call Listening',attendance:'Attendance Points',ranking:'Agent Ranking',pwreset:'Reset Passwords',kb:'Knowledge Base',suggestions:'Suggestions & Reports',calendar:'Team Calendar',actions:'Action Items',leads:'Lead Follow-Ups',leadmgmt:'Lead Management',onboard:'Onboarding / Offboarding',settings:'Settings'};
+  const titles={dash:'Coaching Dashboard',coaching:'Coaching Logs',nte:'NTE Logs',ft:'Follow Through',cl:'Call Listening',attendance:'Attendance Points',ranking:'Agent Ranking',pwreset:'Reset Passwords',kb:'Knowledge Base',suggestions:'Suggestions & Reports',calendar:'Team Calendar',actions:'Action Items',leads:'Lead Follow-Ups',leadmgmt:'Lead Management',onboard:'Onboarding / Offboarding',settings:'Settings',chat:'Team Chat'};
   const el=document.getElementById('tb-title'); if(el) el.textContent=titles[tab]||'';
-  const map={dash:'v-om-dash',coaching:'v-om-c',nte:'v-om-n',ft:'v-om-f',cl:'v-om-cl',attendance:'v-om-attendance',ranking:'v-ranking',pwreset:'v-om-pwreset',kb:'v-kb',suggestions:'v-om-suggestions',calendar:'v-cal',actions:'v-actions',leads:'v-leads-tl',leadmgmt:'v-leadmgmt-tl',onboard:'v-onboard',settings:'v-settings'};
+  const map={dash:'v-om-dash',coaching:'v-om-c',nte:'v-om-n',ft:'v-om-f',cl:'v-om-cl',attendance:'v-om-attendance',ranking:'v-ranking',pwreset:'v-om-pwreset',kb:'v-kb',suggestions:'v-om-suggestions',calendar:'v-cal',actions:'v-actions',leads:'v-leads-tl',leadmgmt:'v-leadmgmt-tl',onboard:'v-onboard',settings:'v-settings',chat:'v-chat'};
   showView(map[tab]||'v-om-dash');
   populateAllFilters();
   if(tab==='dash')renderOMDash();
@@ -6552,6 +6681,7 @@ function switchOM(tab){
   if(tab==='leadmgmt')fetchHSLeads();
   if(tab==='onboard'){subscribeOnboard();renderOnboardDash();}
   if(tab==='settings') renderSettingsPage();
+  if(tab==='chat'){subscribeChatMessages();clearChatBadge();}
 }
 
 /* ═══════════════════════════════════════
@@ -7227,9 +7357,9 @@ function clearFilters(){
 
 // Switch TL nav views (Dashboard / Coaching Logs / Attendance Points)
 function tlShowView(tab){
-  const viewMap={dashboard:'v-tl',logs:'v-tl-logs',nte:'v-om-n',attendance:'v-tl-attendance',ranking:'v-ranking',kb:'v-kb',calendar:'v-cal',actions:'v-actions',leads:'v-leads-tl',leadmgmt:'v-leadmgmt-tl',caddash:'v-cad-dash',onboard:'v-onboard',cl:'v-tl-cl',settings:'v-settings'};
+  const viewMap={dashboard:'v-tl',logs:'v-tl-logs',nte:'v-om-n',attendance:'v-tl-attendance',ranking:'v-ranking',kb:'v-kb',calendar:'v-cal',actions:'v-actions',leads:'v-leads-tl',leadmgmt:'v-leadmgmt-tl',caddash:'v-cad-dash',onboard:'v-onboard',cl:'v-tl-cl',settings:'v-settings',chat:'v-chat'};
   showView(viewMap[tab]||'v-tl');
-  ['dash','logs','nte','attendance','ranking','kb','calendar','actions','leads','leadmgmt','caddash','onboard','cl','settings'].forEach(t=>{
+  ['dash','logs','nte','attendance','ranking','kb','calendar','actions','leads','leadmgmt','caddash','onboard','cl','settings','chat'].forEach(t=>{
     const el=document.getElementById('tl-nav-'+t);
     if(el) el.classList.toggle('active',t===tab||(t==='dash'&&tab==='dashboard'));
   });
@@ -7246,6 +7376,7 @@ function tlShowView(tab){
   if(tab==='onboard'){subscribeOnboard();renderOnboardDash();}
   if(tab==='cl') renderCLLogs();
   if(tab==='settings') renderSettingsPage();
+  if(tab==='chat'){subscribeChatMessages();clearChatBadge();}
 }
 
 /* ═══════════════════════════════════════
@@ -9932,12 +10063,12 @@ function onEmailInput(){
 function switchAgentTab(tab){
   document.querySelectorAll('#agent-nav .sb-item').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
   document.querySelectorAll('.av-section').forEach(s=>s.style.display='none');
-  const map={coaching:'av-coaching',nte:'av-nte',ft:'av-ft',perf:'av-perf',clhist:'av-cl-hist',calc:'av-calc',attendance:'av-attendance',leads:'av-leads',leadmgmt:'av-leadmgmt',library:'av-lib',kb:'__kb__',settings:'__settings__'};
+  const map={coaching:'av-coaching',nte:'av-nte',ft:'av-ft',perf:'av-perf',clhist:'av-cl-hist',calc:'av-calc',attendance:'av-attendance',leads:'av-leads',leadmgmt:'av-leadmgmt',library:'av-lib',kb:'__kb__',settings:'__settings__',chat:'__chat__'};
   const secId=map[tab];
-  if(secId==='__kb__'){showView('v-kb');renderAll();}else if(secId==='__settings__'){showView('v-settings');renderSettingsPage();}else{showView('v-agent');if(secId){const sec=document.getElementById(secId);if(sec)sec.style.display='';}}
+  if(secId==='__kb__'){showView('v-kb');renderAll();}else if(secId==='__settings__'){showView('v-settings');renderSettingsPage();}else if(secId==='__chat__'){showView('v-chat');subscribeChatMessages();clearChatBadge();}else{showView('v-agent');if(secId){const sec=document.getElementById(secId);if(sec)sec.style.display='';}}
   if(tab==='leads'){if(!_leadUnsub)subscribeLeads();else renderLeads();}
   if(tab==='leadmgmt')fetchHSLeads();
-  const titles={coaching:'My Coaching',nte:'My NTE',ft:'My Follow Through',perf:'My Performance',clhist:'My Call History',calc:'Phoenix Calculator',attendance:'My Attendance',leads:'Lead Follow-Up',leadmgmt:'Lead Management',library:'Call Library 🎵',kb:'Knowledge Base',settings:'Settings'};
+  const titles={coaching:'My Coaching',nte:'My NTE',ft:'My Follow Through',perf:'My Performance',clhist:'My Call History',calc:'Phoenix Calculator',attendance:'My Attendance',leads:'Lead Follow-Up',leadmgmt:'Lead Management',library:'Call Library 🎵',kb:'Knowledge Base',settings:'Settings',chat:'Team Chat'};
   const el=document.getElementById('tb-title'); if(el) el.textContent=titles[tab]||'';
   if(tab==='perf') renderAgentPerf();
   if(tab==='calc') avCalcInit();
@@ -11490,6 +11621,22 @@ document.addEventListener('keydown', function(e) {
       <button onclick="document.getElementById('ac-phone-slot').style.display='none'" style="background:none;border:none;cursor:pointer;font-size:.9rem;color:#9ca3af;line-height:1;padding:2px 6px;">✕</button>
     </div>
     <div id="ac-phone-inner" style="flex:1;min-height:480px;overflow:hidden;"></div>
+  </div>
+</div>
+<!-- FLOATING CHAT WIDGET -->
+<button id="chat-fab" onclick="toggleChatPanel()" title="Team Chat">
+  💬
+  <span id="chat-badge" style="display:none;"></span>
+</button>
+<div id="chat-panel">
+  <div class="chat-ph">
+    <span>💬 Team Chat</span>
+    <button onclick="toggleChatPanel()" style="background:none;border:none;color:#fff;cursor:pointer;font-size:1.1rem;line-height:1;">✕</button>
+  </div>
+  <div class="chat-msgs" id="chat-msgs-fab"></div>
+  <div class="chat-input-row">
+    <textarea class="chat-input" id="chat-inp-fab" rows="1" placeholder="Type a message…" onkeydown="chatKeyFab(event)"></textarea>
+    <button class="chat-send" onclick="sendChatMsg('fab')" title="Send">➤</button>
   </div>
 </div>
 </body>
