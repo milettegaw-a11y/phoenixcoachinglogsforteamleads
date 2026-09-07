@@ -5032,6 +5032,10 @@ async function fetchHSLeads(){
       .filter(l=>l.ageDays<=15)
       .filter(l=>{if(l.ageDays<=8)return true;const lc=(l.contactLifecycle||'').toLowerCase();return!lc||(lc!=='other'&&lc!=='customer');});
     _hsLeadsLoaded=true;
+    // Auto-restrict TLs to their own team — OMs can see all
+    if(CU&&!CU.isOM&&!CU.isAgentView&&TL_TEAM_MAP[CU.email]){
+      _hsTeamFilter=TL_TEAM_MAP[CU.email];
+    }
     renderHSLeads();
   }catch(e){
     const msg=`<div style="color:#ef4444;font-size:.8rem;padding:8px 0;">⚠️ Error: ${e.message}</div>`;
@@ -5082,7 +5086,10 @@ function renderCadDash(){
   }
   const teamColors={'Team Jhay Oglimen':'#3b82f6','Team Jumz Delacruz':'#22c55e','Team Florence Llait':'#f97316','Team Jersey Deguzman':'#a855f7'};
   const defColors=['#3b82f6','#22c55e','#f97316','#a855f7','#ef4444','#14b8a6'];
-  const teams=[...new Set(rosterAgents.map(a=>a.tl))].filter(Boolean).sort();
+  // TLs only see their own team; OMs see all
+  const myTLTeam=CU&&!CU.isOM&&!CU.isAgentView&&TL_TEAM_MAP[CU.email]?TL_TEAM_MAP[CU.email]:null;
+  const allTeams=[...new Set(rosterAgents.map(a=>a.tl))].filter(Boolean).sort();
+  const teams=myTLTeam?allTeams.filter(t=>t===myTLTeam):allTeams;
   const DAYS=Array.from({length:15},(_,i)=>i+1);
 
   // Per-day per-team compliance datasets for chart
@@ -5106,9 +5113,10 @@ function renderCadDash(){
     return {team,total:al.length,done,gaps:al.length-done,avg,color};
   }).filter(Boolean);
 
-  // Agent rows sorted by avg cadence ascending (worst first)
-  const agentRows=rosterAgents.map((ag,ti)=>{
-    const al=_hsLeads.filter(l=>l.ownerName===ag.name);
+  // Agent rows sorted by avg cadence ascending (worst first) — TLs see only their team
+  const visibleLeads=myTLTeam?_hsLeads.filter(l=>{const ag=rosterAgents.find(a=>a.name===l.ownerName);return ag&&ag.tl===myTLTeam;}):_hsLeads;
+  const agentRows=rosterAgents.filter(ag=>myTLTeam?ag.tl===myTLTeam:true).map((ag,ti)=>{
+    const al=visibleLeads.filter(l=>l.ownerName===ag.name);
     if(!al.length)return null;
     const done=al.filter(l=>(l.cadencePct||0)>=100).length;
     const avg=Math.round(al.reduce((s,l)=>s+(l.cadencePct||0),0)/al.length);
@@ -5116,9 +5124,9 @@ function renderCadDash(){
     return {name:ag.name,team:ag.tl,total:al.length,done,gaps:al.length-done,avg,color};
   }).filter(Boolean).sort((a,b)=>a.avg-b.avg);
 
-  const totalLeads=_hsLeads.length;
-  const totalDone=_hsLeads.filter(l=>(l.cadencePct||0)>=100).length;
-  const overallAvg=Math.round(_hsLeads.reduce((s,l)=>s+(l.cadencePct||0),0)/Math.max(1,totalLeads));
+  const totalLeads=visibleLeads.length;
+  const totalDone=visibleLeads.filter(l=>(l.cadencePct||0)>=100).length;
+  const overallAvg=Math.round(visibleLeads.reduce((s,l)=>s+(l.cadencePct||0),0)/Math.max(1,totalLeads));
   const ovC=overallAvg>=80?'#22c55e':overallAvg>=50?'#f97316':'#ef4444';
 
   el.innerHTML=`
@@ -5574,7 +5582,15 @@ function renderHSLeads(){
   const tlTeamSel=document.getElementById('hs-team-filter');
   if(tlTeamSel){
     const teams=[...HS_ALLOWED_TEAMS].sort();
-    tlTeamSel.innerHTML='<option value="">All Teams</option>'+teams.map(t=>`<option value="${t}"${_hsTeamFilter===t?' selected':''}>${t}</option>`).join('');
+    if(CU&&!CU.isOM&&TL_TEAM_MAP[CU.email]){
+      // TL: show only their team, no switcher
+      tlTeamSel.innerHTML=`<option value="${TL_TEAM_MAP[CU.email]}" selected>${TL_TEAM_MAP[CU.email]}</option>`;
+      tlTeamSel.disabled=true;
+      tlTeamSel.title='You can only view your own team\'s leads';
+    }else{
+      tlTeamSel.disabled=false;
+      tlTeamSel.innerHTML='<option value="">All Teams</option>'+teams.map(t=>`<option value="${t}"${_hsTeamFilter===t?' selected':''}>${t}</option>`).join('');
+    }
   }
 
   // Populate agent owner dropdown (shows only their name, locked)
