@@ -5016,7 +5016,7 @@ async function fetchHSLeads(){
       return {id:t.id,subject:p.subject||'(no name)',ownerId,ownerName,stageId,stageName,attempts,ageDays,lacksCadence,cadencePct,actualContacts,expectedContacts,dailyCallsMade,dailySmsCount,ageBucket,contactId:t.contactId||null,contactName:t.contactName||null,contactPhone:t.contactPhone||null,contactEmail:t.contactEmail||null,contactLifecycle:t.contactLifecycle||null,latestNote:t.latestNote||null,calls:t.calls||[]};
     }).filter(l=>HS_ALLOWED_NAMES.has(l.ownerName.toLowerCase()))
       .filter(l=>(l.subject||'').toLowerCase().includes('2nd week'))
-      .filter(l=>l.ageDays<=8||!closedStages.includes(l.stageId))
+      .filter(l=>l.ageDays<=15)
       .filter(l=>{const lc=(l.contactLifecycle||'').toLowerCase();return!lc||(lc!=='other'&&lc!=='customer');});
     _hsLeadsLoaded=true;
     renderHSLeads();
@@ -5261,9 +5261,9 @@ async function loadAircallData(lid,contactPhone){
     if(statEl('sms-sent'))statEl('sms-sent').textContent=smsCntUp;
 
   }catch(e){
-    console.warn('[Aircall] load failed:',e.message);
-    if(callListEl)callListEl.innerHTML='<div style="padding:14px;text-align:center;color:#ef4444;font-size:.72rem;">⚠️ Could not load Aircall data</div>';
-    if(smsListEl){const lp=smsListEl.querySelector('#ac-loading-'+pid);if(lp)lp.textContent='Could not load Aircall SMS';}
+    console.warn('[Aircall] load failed:',e.message,e);
+    if(callListEl)callListEl.innerHTML='<div style="padding:14px;text-align:center;color:#ef4444;font-size:.72rem;">⚠️ Aircall error: '+e.message+'</div>';
+    if(smsListEl){const lp=smsListEl.querySelector('#ac-loading-'+pid);if(lp)lp.innerHTML='<div style="text-align:center;color:#ef4444;font-size:.72rem;padding:8px;">⚠️ Aircall error: '+e.message+'</div>';}
   }
 }
 // ─────────────────────────────────────────────────────────────────────────────
