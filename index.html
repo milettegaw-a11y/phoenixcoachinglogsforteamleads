@@ -5193,7 +5193,9 @@ async function loadAircallData(lid,contactPhone){
     let acMsgs =data.messages||[];
     const _teamLineIds=getTeamAircallLineIds();
     if(_teamLineIds){
-      const inTeam=c=>{const nid=Number(c.numberId||0);return nid&&_teamLineIds.has(nid);};
+      // Only exclude a call if it has a positive numberId that is NOT in the team's set.
+      // Calls with no numberId (API didn't return number field) pass through so nothing is silently hidden.
+      const inTeam=c=>{const nid=Number(c.numberId||0);return !nid||_teamLineIds.has(nid);};
       acCalls=acCalls.filter(inTeam);
       acMsgs =acMsgs.filter(inTeam);
     }
