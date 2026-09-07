@@ -85,7 +85,12 @@ body{font-family:'Poppins',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sa
 .sb-logo{width:38px;height:38px;background:rgba(131,178,113,.2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;}
 .sb-title{font-size:1.1rem;font-weight:700;color:#2E5220;letter-spacing:-.5px;}
 .sb-sub{font-size:.6rem;color:rgba(46,82,32,.55);text-transform:uppercase;letter-spacing:.8px;margin-top:1px;}
-.sb-section-lbl{padding:16px 18px 5px;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:rgba(46,82,32,.45);}
+.sb-section-lbl{padding:12px 18px 5px;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:rgba(46,82,32,.45);display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;transition:color .15s;border-radius:6px;margin:0 6px;}
+.sb-section-lbl:hover{color:rgba(46,82,32,.75);}
+.sb-section-lbl .sb-grp-arrow{font-size:.65rem;transition:transform .22s;opacity:.5;}
+.sb-section-lbl.grp-open .sb-grp-arrow{transform:rotate(90deg);}
+.sb-group{overflow:hidden;max-height:0;transition:max-height .25s ease;}
+.sb-group.grp-open{max-height:600px;}
 .sb-item{display:flex;align-items:center;gap:10px;padding:10px 18px;font-size:.84rem;font-weight:500;color:rgba(46,82,32,.85);cursor:pointer;border-radius:0;transition:all .15s;border-left:3px solid transparent;margin:1px 0;position:relative;}
 .sb-notif{display:none;position:absolute;right:14px;top:50%;transform:translateY(-50%);background:#5E8A50;color:#E7F0D2;font-size:.6rem;font-weight:800;padding:2px 6px;border-radius:999px;line-height:1.4;letter-spacing:.02em;animation:sb-pulse 2s infinite;}
 @keyframes sb-pulse{0%,100%{box-shadow:0 0 0 0 rgba(94,138,80,.55);}50%{box-shadow:0 0 0 5px rgba(94,138,80,0);}}
@@ -353,6 +358,7 @@ tbody td{padding:9px 11px;color:var(--black);vertical-align:middle;}
 @media(max-width:768px){
   #sidebar{width:60px;}
   .sb-title,.sb-sub,.sb-section-lbl,.sb-item span:not(.sb-icon),.sb-footer .sb-user div,.sb-logout,.sg-bubble-lbl{display:none;}
+  .sb-group{max-height:none!important;}
   .sb-brand{padding:14px;justify-content:center;}
   .sb-item{padding:12px;justify-content:center;}
   .sb-footer{padding:10px;align-items:center;}
@@ -761,87 +767,102 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
 
     <!-- OM nav -->
     <div id="om-nav" class="hidden">
-      <div class="sb-section-lbl">PERFORMANCE</div>
-      <div class="sb-item active" data-tab="dash" onclick="switchOM('dash')"><span class="sb-icon">📊</span><span>Coaching Dashboard</span></div>
-      <div class="sb-item" data-tab="coaching" onclick="switchOM('coaching');toggleSbSub('om-sub-coaching')"><span class="sb-icon">📋</span><span>Coaching Logs</span><span class="sb-arrow" id="om-arr-coaching">›</span></div>
-      <div class="sb-sub-item agent-hide" id="om-sub-coaching" onclick="openLogModal()"><span class="sb-icon">➕</span><span>New Coaching Log</span></div>
-      <div class="sb-item" data-tab="nte" onclick="switchOM('nte');toggleSbSub('om-sub-nte')"><span class="sb-icon">📝</span><span>NTE Logs</span><span class="sb-arrow" id="om-arr-nte">›</span></div>
-      <div class="sb-sub-item agent-hide" id="om-sub-nte" onclick="openNTEModal()"><span class="sb-icon">📋</span><span>New NTE</span></div>
-      <div class="sb-item" data-tab="attendance" onclick="switchOM('attendance')"><span class="sb-icon">🗓️</span><span>Attendance Points</span><span id="nav-badge-om-att" class="sb-notif" style="display:none"></span></div>
-      <div class="sb-item" data-tab="ranking" onclick="switchOM('ranking')"><span class="sb-icon">🏆</span><span>Agent Ranking</span></div>
-      <div class="sb-divider"></div>
-      <div class="sb-section-lbl">FOLLOW-UP</div>
-      <div class="sb-item" data-tab="ft" onclick="switchOM('ft');toggleSbSub('om-sub-ft')"><span class="sb-icon">🔄</span><span>Follow Through</span><span class="sb-arrow" id="om-arr-ft">›</span></div>
-      <div class="sb-sub-item agent-hide" id="om-sub-ft" onclick="openFTModal()"><span class="sb-icon">🔁</span><span>New Follow Through</span></div>
-      <div class="sb-item" data-tab="cl" onclick="switchOM('cl');toggleSbSub('om-sub-cl')"><span class="sb-icon">🎧</span><span>Call Listening</span><span class="sb-arrow" id="om-arr-cl">›</span></div>
-      <div class="sb-sub-item agent-hide" id="om-sub-cl" onclick="openCLModal()"><span class="sb-icon">➕</span><span>New Call Listening</span></div>
-      <div class="sb-sub-item agent-hide" id="om-sub-cl-dash" onclick="switchOM('cl');omShowCLTab('dashboard')"><span class="sb-icon">📊</span><span>Dashboard</span></div>
-      <div class="sb-item" data-tab="actions" onclick="switchOM('actions')"><span class="sb-icon">⚡</span><span>Action Items</span><span id="nav-badge-actions" class="sb-notif" style="display:none"></span></div>
-      <div class="sb-item agent-hide" data-tab="leads" onclick="switchOM('leads')"><span class="sb-icon">📞</span><span>Lead Follow-Ups</span><span id="nav-badge-om-leads" class="sb-notif" style="display:none"></span></div>
-      <div class="sb-item agent-hide" data-tab="leadmgmt" onclick="switchOM('leadmgmt')"><span class="sb-icon">🔶</span><span>Lead Management</span></div>
-      <div class="sb-divider"></div>
-      <div class="sb-section-lbl">RESOURCES</div>
-      <div class="sb-item agent-hide" onclick="openDocsModal()"><span class="sb-icon">📁</span><span>Documents</span></div>
-      <div class="sb-item" data-tab="kb" onclick="switchOM('kb')"><span class="sb-icon">📖</span><span>Knowledge Base</span></div>
-      <div class="sb-item" data-tab="calendar" onclick="switchOM('calendar')"><span class="sb-icon">📅</span><span>Calendar</span></div>
-      <div class="sb-divider"></div>
-      <div class="sb-section-lbl agent-hide">ADMIN</div>
-      <div class="sb-item agent-hide" id="admin-roster-btn" style="display:none" onclick="openRosterMgr()"><span class="sb-icon">⚙️</span><span>Manage Roster</span></div>
-      <div class="sb-item agent-hide" id="admin-pw-btn" style="display:none" data-tab="pwreset" onclick="switchOM('pwreset')"><span class="sb-icon">🔑</span><span>Reset Passwords</span></div>
-      <div class="sb-item agent-hide" data-tab="suggestions" onclick="switchOM('suggestions')"><span class="sb-icon">💡</span><span>Suggestions &amp; Reports</span></div>
-      <div class="sb-item agent-hide" id="admin-onboard-btn" data-tab="onboard" onclick="switchOM('onboard')"><span class="sb-icon">👥</span><span>Onboarding / Offboarding</span></div>
+      <div class="sb-section-lbl grp-open" onclick="toggleSbGroup('om-grp-perf',this)">PERFORMANCE<span class="sb-grp-arrow">›</span></div>
+      <div class="sb-group grp-open" id="om-grp-perf">
+        <div class="sb-item active" data-tab="dash" onclick="switchOM('dash')"><span class="sb-icon">📊</span><span>Coaching Dashboard</span></div>
+        <div class="sb-item" data-tab="coaching" onclick="switchOM('coaching');toggleSbSub('om-sub-coaching')"><span class="sb-icon">📋</span><span>Coaching Logs</span><span class="sb-arrow" id="om-arr-coaching">›</span></div>
+        <div class="sb-sub-item agent-hide" id="om-sub-coaching" onclick="openLogModal()"><span class="sb-icon">➕</span><span>New Coaching Log</span></div>
+        <div class="sb-item" data-tab="nte" onclick="switchOM('nte');toggleSbSub('om-sub-nte')"><span class="sb-icon">📝</span><span>NTE Logs</span><span class="sb-arrow" id="om-arr-nte">›</span></div>
+        <div class="sb-sub-item agent-hide" id="om-sub-nte" onclick="openNTEModal()"><span class="sb-icon">📋</span><span>New NTE</span></div>
+        <div class="sb-item" data-tab="attendance" onclick="switchOM('attendance')"><span class="sb-icon">🗓️</span><span>Attendance Points</span><span id="nav-badge-om-att" class="sb-notif" style="display:none"></span></div>
+        <div class="sb-item" data-tab="ranking" onclick="switchOM('ranking')"><span class="sb-icon">🏆</span><span>Agent Ranking</span></div>
+      </div>
+      <div class="sb-section-lbl" onclick="toggleSbGroup('om-grp-fu',this)">FOLLOW-UP<span class="sb-grp-arrow">›</span></div>
+      <div class="sb-group" id="om-grp-fu">
+        <div class="sb-item" data-tab="ft" onclick="switchOM('ft');toggleSbSub('om-sub-ft')"><span class="sb-icon">🔄</span><span>Follow Through</span><span class="sb-arrow" id="om-arr-ft">›</span></div>
+        <div class="sb-sub-item agent-hide" id="om-sub-ft" onclick="openFTModal()"><span class="sb-icon">🔁</span><span>New Follow Through</span></div>
+        <div class="sb-item" data-tab="cl" onclick="switchOM('cl');toggleSbSub('om-sub-cl')"><span class="sb-icon">🎧</span><span>Call Listening</span><span class="sb-arrow" id="om-arr-cl">›</span></div>
+        <div class="sb-sub-item agent-hide" id="om-sub-cl" onclick="openCLModal()"><span class="sb-icon">➕</span><span>New Call Listening</span></div>
+        <div class="sb-sub-item agent-hide" id="om-sub-cl-dash" onclick="switchOM('cl');omShowCLTab('dashboard')"><span class="sb-icon">📊</span><span>Dashboard</span></div>
+        <div class="sb-item" data-tab="actions" onclick="switchOM('actions')"><span class="sb-icon">⚡</span><span>Action Items</span><span id="nav-badge-actions" class="sb-notif" style="display:none"></span></div>
+        <div class="sb-item agent-hide" data-tab="leads" onclick="switchOM('leads')"><span class="sb-icon">📞</span><span>Lead Follow-Ups</span><span id="nav-badge-om-leads" class="sb-notif" style="display:none"></span></div>
+        <div class="sb-item agent-hide" data-tab="leadmgmt" onclick="switchOM('leadmgmt')"><span class="sb-icon">🔶</span><span>Lead Management</span></div>
+      </div>
+      <div class="sb-section-lbl" onclick="toggleSbGroup('om-grp-res',this)">RESOURCES<span class="sb-grp-arrow">›</span></div>
+      <div class="sb-group" id="om-grp-res">
+        <div class="sb-item agent-hide" onclick="openDocsModal()"><span class="sb-icon">📁</span><span>Documents</span></div>
+        <div class="sb-item" data-tab="kb" onclick="switchOM('kb')"><span class="sb-icon">📖</span><span>Knowledge Base</span></div>
+        <div class="sb-item" data-tab="calendar" onclick="switchOM('calendar')"><span class="sb-icon">📅</span><span>Calendar</span></div>
+      </div>
+      <div class="sb-section-lbl agent-hide" onclick="toggleSbGroup('om-grp-admin',this)">ADMIN<span class="sb-grp-arrow">›</span></div>
+      <div class="sb-group agent-hide" id="om-grp-admin">
+        <div class="sb-item agent-hide" id="admin-roster-btn" style="display:none" onclick="openRosterMgr()"><span class="sb-icon">⚙️</span><span>Manage Roster</span></div>
+        <div class="sb-item agent-hide" id="admin-pw-btn" style="display:none" data-tab="pwreset" onclick="switchOM('pwreset')"><span class="sb-icon">🔑</span><span>Reset Passwords</span></div>
+        <div class="sb-item agent-hide" data-tab="suggestions" onclick="switchOM('suggestions')"><span class="sb-icon">💡</span><span>Suggestions &amp; Reports</span></div>
+        <div class="sb-item agent-hide" id="admin-onboard-btn" data-tab="onboard" onclick="switchOM('onboard')"><span class="sb-icon">👥</span><span>Onboarding / Offboarding</span></div>
+      </div>
     </div>
 
     <!-- TL nav -->
     <div id="tl-nav" class="hidden">
-      <div class="sb-section-lbl">PERFORMANCE</div>
-      <div class="sb-item active" id="tl-nav-dash" onclick="tlShowView('dashboard')"><span class="sb-icon">📊</span><span>Dashboard</span></div>
-      <div class="sb-item" id="tl-nav-logs" onclick="tlShowView('logs');toggleSbSub('tl-sub-coaching')"><span class="sb-icon">📋</span><span>Coaching Logs</span><span id="nav-badge-tl-logs" class="sb-notif" style="display:none"></span><span class="sb-arrow" id="tl-arr-coaching">›</span></div>
-      <div class="sb-sub-item" id="tl-sub-coaching" onclick="openLogModal()"><span class="sb-icon">➕</span><span>New Coaching Log</span></div>
-      <div class="sb-item" id="tl-nav-nte" onclick="tlShowView('nte');toggleSbSub('tl-sub-nte')"><span class="sb-icon">📝</span><span>NTE Logs</span><span class="sb-arrow" id="tl-arr-nte">›</span></div>
-      <div class="sb-sub-item" id="tl-sub-nte" onclick="openNTEModal()"><span class="sb-icon">📋</span><span>New NTE</span></div>
-      <div class="sb-item" id="tl-nav-attendance" onclick="tlShowView('attendance')"><span class="sb-icon">🗓️</span><span>Attendance Points</span><span id="nav-badge-tl-att" class="sb-notif" style="display:none"></span></div>
-      <div class="sb-item" id="tl-nav-ranking" onclick="tlShowView('ranking')"><span class="sb-icon">🏆</span><span>Agent Ranking</span></div>
-      <div class="sb-divider"></div>
-      <div class="sb-section-lbl">FOLLOW-UP</div>
-      <div class="sb-item" id="tl-nav-ft" onclick="toggleSbSub('tl-sub-ft')"><span class="sb-icon">🔄</span><span>Follow Through</span><span class="sb-arrow" id="tl-arr-ft">›</span></div>
-      <div class="sb-sub-item" id="tl-sub-ft" onclick="openFTModal()"><span class="sb-icon">🔁</span><span>New Follow Through</span></div>
-      <div class="sb-item" id="tl-nav-cl" onclick="tlShowView('cl');toggleSbSub('tl-sub-cl')"><span class="sb-icon">🎧</span><span>Call Listening</span><span class="sb-arrow" id="tl-arr-cl">›</span></div>
-      <div class="sb-sub-item" id="tl-sub-cl" onclick="openCLModal()"><span class="sb-icon">➕</span><span>New Call Listening</span></div>
-      <div class="sb-sub-item" id="tl-sub-cl-dash" onclick="tlShowView('cl');tlShowCLTab('dashboard')"><span class="sb-icon">📊</span><span>Dashboard</span></div>
-      <div class="sb-item" id="tl-nav-actions" onclick="tlShowView('actions')"><span class="sb-icon">⚡</span><span>Action Items</span><span id="nav-badge-tl-actions" class="sb-notif" style="display:none"></span></div>
-      <div class="sb-item" id="tl-nav-leads" onclick="tlShowView('leads')"><span class="sb-icon">📞</span><span>Lead Follow-Ups</span><span id="nav-badge-tl-leads" class="sb-notif" style="display:none"></span></div>
-      <div class="sb-item" id="tl-nav-leadmgmt" onclick="tlShowView('leadmgmt')"><span class="sb-icon">🔶</span><span>Lead Management</span></div>
-      <div class="sb-item" id="tl-nav-caddash" onclick="tlShowView('caddash')"><span class="sb-icon">📈</span><span>Cadence Dashboard</span></div>
-      <div class="sb-divider"></div>
-      <div class="sb-section-lbl">RESOURCES</div>
-      <div class="sb-item" onclick="openDocsModal()"><span class="sb-icon">📁</span><span>Documents</span></div>
-      <div class="sb-item" id="tl-nav-kb" onclick="tlShowView('kb')"><span class="sb-icon">📖</span><span>Knowledge Base</span></div>
-      <div class="sb-item" id="tl-nav-calendar" onclick="tlShowView('calendar')"><span class="sb-icon">📅</span><span>Calendar</span></div>
-      <div class="sb-divider"></div>
-      <div class="sb-section-lbl">ADMIN</div>
-      <div class="sb-item" onclick="openRosterMgr()"><span class="sb-icon">⚙️</span><span>Manage Roster</span></div>
-      <div class="sb-item" id="tl-nav-onboard" onclick="tlShowView('onboard')"><span class="sb-icon">👥</span><span>Onboarding / Offboarding</span></div>
+      <div class="sb-section-lbl grp-open" onclick="toggleSbGroup('tl-grp-perf',this)">PERFORMANCE<span class="sb-grp-arrow">›</span></div>
+      <div class="sb-group grp-open" id="tl-grp-perf">
+        <div class="sb-item active" id="tl-nav-dash" onclick="tlShowView('dashboard')"><span class="sb-icon">📊</span><span>Dashboard</span></div>
+        <div class="sb-item" id="tl-nav-logs" onclick="tlShowView('logs');toggleSbSub('tl-sub-coaching')"><span class="sb-icon">📋</span><span>Coaching Logs</span><span id="nav-badge-tl-logs" class="sb-notif" style="display:none"></span><span class="sb-arrow" id="tl-arr-coaching">›</span></div>
+        <div class="sb-sub-item" id="tl-sub-coaching" onclick="openLogModal()"><span class="sb-icon">➕</span><span>New Coaching Log</span></div>
+        <div class="sb-item" id="tl-nav-nte" onclick="tlShowView('nte');toggleSbSub('tl-sub-nte')"><span class="sb-icon">📝</span><span>NTE Logs</span><span class="sb-arrow" id="tl-arr-nte">›</span></div>
+        <div class="sb-sub-item" id="tl-sub-nte" onclick="openNTEModal()"><span class="sb-icon">📋</span><span>New NTE</span></div>
+        <div class="sb-item" id="tl-nav-attendance" onclick="tlShowView('attendance')"><span class="sb-icon">🗓️</span><span>Attendance Points</span><span id="nav-badge-tl-att" class="sb-notif" style="display:none"></span></div>
+        <div class="sb-item" id="tl-nav-ranking" onclick="tlShowView('ranking')"><span class="sb-icon">🏆</span><span>Agent Ranking</span></div>
+      </div>
+      <div class="sb-section-lbl" onclick="toggleSbGroup('tl-grp-fu',this)">FOLLOW-UP<span class="sb-grp-arrow">›</span></div>
+      <div class="sb-group" id="tl-grp-fu">
+        <div class="sb-item" id="tl-nav-ft" onclick="toggleSbSub('tl-sub-ft')"><span class="sb-icon">🔄</span><span>Follow Through</span><span class="sb-arrow" id="tl-arr-ft">›</span></div>
+        <div class="sb-sub-item" id="tl-sub-ft" onclick="openFTModal()"><span class="sb-icon">🔁</span><span>New Follow Through</span></div>
+        <div class="sb-item" id="tl-nav-cl" onclick="tlShowView('cl');toggleSbSub('tl-sub-cl')"><span class="sb-icon">🎧</span><span>Call Listening</span><span class="sb-arrow" id="tl-arr-cl">›</span></div>
+        <div class="sb-sub-item" id="tl-sub-cl" onclick="openCLModal()"><span class="sb-icon">➕</span><span>New Call Listening</span></div>
+        <div class="sb-sub-item" id="tl-sub-cl-dash" onclick="tlShowView('cl');tlShowCLTab('dashboard')"><span class="sb-icon">📊</span><span>Dashboard</span></div>
+        <div class="sb-item" id="tl-nav-actions" onclick="tlShowView('actions')"><span class="sb-icon">⚡</span><span>Action Items</span><span id="nav-badge-tl-actions" class="sb-notif" style="display:none"></span></div>
+        <div class="sb-item" id="tl-nav-leads" onclick="tlShowView('leads')"><span class="sb-icon">📞</span><span>Lead Follow-Ups</span><span id="nav-badge-tl-leads" class="sb-notif" style="display:none"></span></div>
+        <div class="sb-item" id="tl-nav-leadmgmt" onclick="tlShowView('leadmgmt')"><span class="sb-icon">🔶</span><span>Lead Management</span></div>
+        <div class="sb-item" id="tl-nav-caddash" onclick="tlShowView('caddash')"><span class="sb-icon">📈</span><span>Cadence Dashboard</span></div>
+      </div>
+      <div class="sb-section-lbl" onclick="toggleSbGroup('tl-grp-res',this)">RESOURCES<span class="sb-grp-arrow">›</span></div>
+      <div class="sb-group" id="tl-grp-res">
+        <div class="sb-item" onclick="openDocsModal()"><span class="sb-icon">📁</span><span>Documents</span></div>
+        <div class="sb-item" id="tl-nav-kb" onclick="tlShowView('kb')"><span class="sb-icon">📖</span><span>Knowledge Base</span></div>
+        <div class="sb-item" id="tl-nav-calendar" onclick="tlShowView('calendar')"><span class="sb-icon">📅</span><span>Calendar</span></div>
+      </div>
+      <div class="sb-section-lbl" onclick="toggleSbGroup('tl-grp-admin',this)">ADMIN<span class="sb-grp-arrow">›</span></div>
+      <div class="sb-group" id="tl-grp-admin">
+        <div class="sb-item" onclick="openRosterMgr()"><span class="sb-icon">⚙️</span><span>Manage Roster</span></div>
+        <div class="sb-item" id="tl-nav-onboard" onclick="tlShowView('onboard')"><span class="sb-icon">👥</span><span>Onboarding / Offboarding</span></div>
+      </div>
     </div>
 
     <!-- Agent nav -->
     <div id="agent-nav" class="hidden">
-      <div class="sb-section-lbl">MY RECORDS</div>
-      <div class="sb-item active" data-tab="coaching" onclick="switchAgentTab('coaching')"><span class="sb-icon">📋</span><span>My Coaching</span><span id="nav-badge-coaching" class="sb-notif" style="display:none"></span></div>
-      <div class="sb-item" data-tab="nte" onclick="switchAgentTab('nte')"><span class="sb-icon">📝</span><span>My NTE</span></div>
-      <div class="sb-item" data-tab="ft" onclick="switchAgentTab('ft')"><span class="sb-icon">🔄</span><span>My Follow Through</span></div>
-      <div class="sb-item" data-tab="perf" onclick="switchAgentTab('perf')"><span class="sb-icon">📊</span><span>My Performance</span></div>
-      <div class="sb-item" data-tab="clhist" onclick="switchAgentTab('clhist')"><span class="sb-icon">🎧</span><span>My Call History</span></div>
-      <div class="sb-item" data-tab="calc" onclick="switchAgentTab('calc')"><span class="sb-icon">🧮</span><span>Phoenix Calculator</span></div>
-      <div class="sb-divider"></div>
-      <div class="sb-item" data-tab="attendance" onclick="switchAgentTab('attendance')"><span class="sb-icon">📅</span><span>My Attendance</span><span id="nav-badge-att" class="sb-notif" style="display:none"></span></div>
-      <div class="sb-item" data-tab="leads" onclick="switchAgentTab('leads')"><span class="sb-icon">📞</span><span>Lead Follow-Up</span><span id="nav-badge-leads" class="sb-notif" style="display:none"></span></div>
-      <div class="sb-item" data-tab="leadmgmt" onclick="switchAgentTab('leadmgmt')"><span class="sb-icon">🔶</span><span>Lead Management</span></div>
-      <div class="sb-item" data-tab="kb" onclick="switchAgentTab('kb')"><span class="sb-icon">📖</span><span>Knowledge Base</span></div>
-      <div class="sb-divider"></div>
-      <div class="sb-item" data-tab="library" onclick="switchAgentTab('library')"><span class="sb-icon">🎵</span><span>Call Library</span></div>
-      <div class="sb-item" onclick="openRainmakerGuide()"><span class="sb-icon">🌧️</span><span>Rainmaker Guide</span></div>
-      <div class="sb-divider"></div>
+      <div class="sb-section-lbl grp-open" onclick="toggleSbGroup('ag-grp-rec',this)">MY RECORDS<span class="sb-grp-arrow">›</span></div>
+      <div class="sb-group grp-open" id="ag-grp-rec">
+        <div class="sb-item active" data-tab="coaching" onclick="switchAgentTab('coaching')"><span class="sb-icon">📋</span><span>My Coaching</span><span id="nav-badge-coaching" class="sb-notif" style="display:none"></span></div>
+        <div class="sb-item" data-tab="nte" onclick="switchAgentTab('nte')"><span class="sb-icon">📝</span><span>My NTE</span></div>
+        <div class="sb-item" data-tab="ft" onclick="switchAgentTab('ft')"><span class="sb-icon">🔄</span><span>My Follow Through</span></div>
+        <div class="sb-item" data-tab="perf" onclick="switchAgentTab('perf')"><span class="sb-icon">📊</span><span>My Performance</span></div>
+        <div class="sb-item" data-tab="clhist" onclick="switchAgentTab('clhist')"><span class="sb-icon">🎧</span><span>My Call History</span></div>
+        <div class="sb-item" data-tab="calc" onclick="switchAgentTab('calc')"><span class="sb-icon">🧮</span><span>Phoenix Calculator</span></div>
+      </div>
+      <div class="sb-section-lbl" onclick="toggleSbGroup('ag-grp-fu',this)">FOLLOW-UP<span class="sb-grp-arrow">›</span></div>
+      <div class="sb-group" id="ag-grp-fu">
+        <div class="sb-item" data-tab="attendance" onclick="switchAgentTab('attendance')"><span class="sb-icon">📅</span><span>My Attendance</span><span id="nav-badge-att" class="sb-notif" style="display:none"></span></div>
+        <div class="sb-item" data-tab="leads" onclick="switchAgentTab('leads')"><span class="sb-icon">📞</span><span>Lead Follow-Up</span><span id="nav-badge-leads" class="sb-notif" style="display:none"></span></div>
+        <div class="sb-item" data-tab="leadmgmt" onclick="switchAgentTab('leadmgmt')"><span class="sb-icon">🔶</span><span>Lead Management</span></div>
+      </div>
+      <div class="sb-section-lbl" onclick="toggleSbGroup('ag-grp-res',this)">RESOURCES<span class="sb-grp-arrow">›</span></div>
+      <div class="sb-group" id="ag-grp-res">
+        <div class="sb-item" data-tab="kb" onclick="switchAgentTab('kb')"><span class="sb-icon">📖</span><span>Knowledge Base</span></div>
+        <div class="sb-item" data-tab="library" onclick="switchAgentTab('library')"><span class="sb-icon">🎵</span><span>Call Library</span></div>
+        <div class="sb-item" onclick="openRainmakerGuide()"><span class="sb-icon">🌧️</span><span>Rainmaker Guide</span></div>
+      </div>
     </div>
 
     <div class="sb-footer">
@@ -6243,6 +6264,14 @@ document.addEventListener('keydown',ev=>{
 function showView(id){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+}
+
+function toggleSbGroup(id,lbl){
+  const grp=document.getElementById(id);
+  if(!grp)return;
+  const isOpen=grp.classList.contains('grp-open');
+  grp.classList.toggle('grp-open',!isOpen);
+  if(lbl)lbl.classList.toggle('grp-open',!isOpen);
 }
 
 function toggleSbSub(id){
