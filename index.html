@@ -5347,7 +5347,7 @@ async function fetchHSLeads(){
       const dailyCallsMade=dailyOwnerAct.filter(c=>c.type==='call').length;
       const dailySmsCount=dailyOwnerAct.filter(c=>c.type==='sms'||c.type==='message').length;
       const expectedCalls=HS_CADENCE[Math.min(ageDays,15)]||0;
-      const expectedContacts=expectedCalls+1; // +1 for daily SMS requirement
+      const expectedContacts=expectedCalls>0?expectedCalls+1:0; // Day 3=REST→0 expected, no SMS req
       const actualContacts=dailyCallsMade+dailySmsCount;
       const cadencePct=expectedContacts>0?Math.min(100,Math.round(actualContacts/expectedContacts*100)):100;
       const lacksCadence=cadencePct<100;
@@ -5985,8 +5985,8 @@ function renderHSLeads(){
   function cadenceBar(l){
     const pct=Math.min(100,l.cadencePct||0);
     const color=pct>=100?'#22c55e':pct>=50?'#f97316':'#ef4444';
-    const expCalls=Math.max(0,(l.expectedContacts||1)-1);
-    const label=`${l.dailyCallsMade||0}/${expCalls} calls · ${l.dailySmsCount||0}/1 SMS · ${pct}%`;
+    const expCalls=Math.max(0,(l.expectedContacts||0)-1);
+    const label=l.expectedContacts===0?`REST day · ${pct}%`:`${l.dailyCallsMade||0}/${expCalls} calls · ${l.dailySmsCount||0}/1 SMS · ${pct}%`;
     return `<div id="cadence-${l.id}" style="margin-top:7px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
         <span style="font-size:.6rem;color:#9ca3af;font-weight:500;">Today's cadence</span>
