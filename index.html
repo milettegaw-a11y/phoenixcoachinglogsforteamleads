@@ -908,44 +908,6 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
           <span class="sg-bubble-lbl">Suggest / Report</span>
         </button>
       </div>
-      <!-- Settings toggle -->
-      <button class="px-settings-btn" onclick="toggleSettings()">
-        <span>⚙️</span><span>Customize</span>
-      </button>
-      <!-- Settings panel -->
-      <div class="px-panel" id="px-panel">
-        <!-- Text Size -->
-        <div class="px-st-sec">
-          <div class="px-st-lbl">Text Size</div>
-          <div class="px-sz-row">
-            <button class="px-sz-btn" id="pxsz-s" onclick="applyFontSize('s')">S</button>
-            <button class="px-sz-btn active" id="pxsz-m" onclick="applyFontSize('m')">M</button>
-            <button class="px-sz-btn" id="pxsz-l" onclick="applyFontSize('l')">L</button>
-          </div>
-        </div>
-        <!-- Font -->
-        <div class="px-st-sec">
-          <div class="px-st-lbl">Font</div>
-          <div class="px-font-col">
-            <button class="px-font-btn active" id="pxfnt-poppins" onclick="applyFont('Poppins')" style="font-family:'Poppins',sans-serif;">Poppins</button>
-            <button class="px-font-btn" id="pxfnt-inter" onclick="applyFont('Inter')" style="font-family:'Inter',sans-serif;">Inter</button>
-            <button class="px-font-btn" id="pxfnt-nunito" onclick="applyFont('Nunito')" style="font-family:'Nunito',sans-serif;">Nunito</button>
-            <button class="px-font-btn" id="pxfnt-roboto" onclick="applyFont('Roboto')" style="font-family:'Roboto',sans-serif;">Roboto</button>
-          </div>
-        </div>
-        <!-- Color Theme -->
-        <div class="px-st-sec">
-          <div class="px-st-lbl">Color Theme</div>
-          <div class="px-swatch-row">
-            <button class="px-swatch active" id="pxth-forest" onclick="applyTheme('forest')" title="🌲 Forest" style="background:linear-gradient(135deg,#3d6b2c,#83B271);"></button>
-            <button class="px-swatch" id="pxth-ocean" onclick="applyTheme('ocean')" title="🌊 Ocean" style="background:linear-gradient(135deg,#1d5c8a,#5ba3d4);"></button>
-            <button class="px-swatch" id="pxth-sunset" onclick="applyTheme('sunset')" title="🌅 Sunset" style="background:linear-gradient(135deg,#8b3a0a,#e8a258);"></button>
-            <button class="px-swatch" id="pxth-lavender" onclick="applyTheme('lavender')" title="💜 Lavender" style="background:linear-gradient(135deg,#5b3d8f,#a98fd4);"></button>
-            <button class="px-swatch" id="pxth-slate" onclick="applyTheme('slate')" title="🩶 Slate" style="background:linear-gradient(135deg,#374151,#6b7280);"></button>
-            <button class="px-swatch" id="pxth-rose" onclick="applyTheme('rose')" title="🌸 Rose" style="background:linear-gradient(135deg,#8b2042,#e06898);"></button>
-          </div>
-        </div>
-      </div>
       <div class="sb-user">
         <div class="sb-user-icon">👤</div>
         <div>
@@ -2491,7 +2453,7 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
 </div>
 
 <!-- SETTINGS VIEW -->
-<div id="v-settings" class="view" style="display:none;">
+<div id="v-settings" class="view">
   <div style="max-width:680px;margin:0 auto;padding:8px 0 40px;">
     <div style="font-size:1.1rem;font-weight:700;color:var(--g800);margin-bottom:6px;">⚙️ Settings</div>
     <div style="font-size:.78rem;color:var(--g500);margin-bottom:28px;">Customize your experience</div>
