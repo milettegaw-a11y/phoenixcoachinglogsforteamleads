@@ -5007,12 +5007,6 @@ function toggleDesktopNotif(cb){
   }
 }
 
-/* ── CHAT ── */
-let _chatUnsub=null;
-let _dmUnsub=null;
-let _dmTarget=null; // {name, role}
-let _chatUnread=0;
-let _chatLastSeen=0;
 /* ── CHAT v2 ── */
 let _chatUnsub=null;
 let _chatGroupsUnsub=null;
@@ -5262,15 +5256,6 @@ function subscribeChatMessages(){if(CU)initChatV2();}
 function openDMWith(name,role,src){openDMConv(name,role);}
 function doDMOpen(el){openDMConv(el.dataset.dmname,el.dataset.dmrole);}
 function showDMPeople(){}
-}
-
-function showDMPeople(src){
-  _dmTarget=null;
-  if(_dmUnsub){_dmUnsub();_dmUnsub=null;}
-  const prefix=src==='fab'?'fab':'vc';
-  document.getElementById(prefix+'-dm-people').style.display='flex';
-  document.getElementById(prefix+'-dm-convo').style.display='none';
-}
 
 function subscribeDM(src){
   if(_dmUnsub){_dmUnsub();_dmUnsub=null;}
