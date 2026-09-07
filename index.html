@@ -823,6 +823,7 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
         <div class="sb-item" data-tab="actions" onclick="switchOM('actions')"><span class="sb-icon">⚡</span><span>Action Items</span><span id="nav-badge-actions" class="sb-notif" style="display:none"></span></div>
         <div class="sb-item agent-hide" data-tab="leads" onclick="switchOM('leads')"><span class="sb-icon">📞</span><span>Lead Follow-Ups</span><span id="nav-badge-om-leads" class="sb-notif" style="display:none"></span></div>
         <div class="sb-item agent-hide" data-tab="leadmgmt" onclick="switchOM('leadmgmt')"><span class="sb-icon">🔶</span><span>Lead Management</span></div>
+        <div class="sb-item agent-hide" data-tab="caddash" onclick="switchOM('caddash')"><span class="sb-icon">📈</span><span>Cadence Dashboard</span></div>
         <div class="sb-item agent-hide" data-tab="myactions" onclick="switchOM('myactions')"><span class="sb-icon">🗓️</span><span>My Actions</span></div>
       </div>
       <div class="sb-section-lbl" onclick="toggleSbGroup('om-grp-res',this)">RESOURCES<span class="sb-grp-arrow">›</span></div>
@@ -6626,9 +6627,9 @@ function toggleSbSub(id){
 
 function switchOM(tab){
   document.querySelectorAll('#om-nav .sb-item').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
-  const titles={dash:'Coaching Dashboard',coaching:'Coaching Logs',nte:'NTE Logs',ft:'Follow Through',cl:'Call Listening',attendance:'Attendance Points',ranking:'Agent Ranking',pwreset:'Reset Passwords',kb:'Knowledge Base',suggestions:'Suggestions & Reports',calendar:'Team Calendar',actions:'Action Items',leads:'Lead Follow-Ups',leadmgmt:'Lead Management',myactions:'My Actions',onboard:'Onboarding / Offboarding',settings:'Settings',chat:'Team Chat'};
+  const titles={dash:'Coaching Dashboard',coaching:'Coaching Logs',nte:'NTE Logs',ft:'Follow Through',cl:'Call Listening',attendance:'Attendance Points',ranking:'Agent Ranking',pwreset:'Reset Passwords',kb:'Knowledge Base',suggestions:'Suggestions & Reports',calendar:'Team Calendar',actions:'Action Items',leads:'Lead Follow-Ups',leadmgmt:'Lead Management',caddash:'Cadence Dashboard',myactions:'My Actions',onboard:'Onboarding / Offboarding',settings:'Settings',chat:'Team Chat'};
   const el=document.getElementById('tb-title'); if(el) el.textContent=titles[tab]||'';
-  const map={dash:'v-om-dash',coaching:'v-om-c',nte:'v-om-n',ft:'v-om-f',cl:'v-om-cl',attendance:'v-om-attendance',ranking:'v-ranking',pwreset:'v-om-pwreset',kb:'v-kb',suggestions:'v-om-suggestions',calendar:'v-cal',actions:'v-actions',leads:'v-leads-tl',leadmgmt:'v-leadmgmt-tl',myactions:'v-myactions-tl',onboard:'v-onboard',settings:'v-settings',chat:'v-chat'};
+  const map={dash:'v-om-dash',coaching:'v-om-c',nte:'v-om-n',ft:'v-om-f',cl:'v-om-cl',attendance:'v-om-attendance',ranking:'v-ranking',pwreset:'v-om-pwreset',kb:'v-kb',suggestions:'v-om-suggestions',calendar:'v-cal',actions:'v-actions',leads:'v-leads-tl',leadmgmt:'v-leadmgmt-tl',caddash:'v-cad-dash',myactions:'v-myactions-tl',onboard:'v-onboard',settings:'v-settings',chat:'v-chat'};
   showView(map[tab]||'v-om-dash');
   populateAllFilters();
   if(tab==='dash')renderOMDash();
@@ -6645,6 +6646,7 @@ function switchOM(tab){
   if(tab==='actions'){subscribeActionItems();renderActionItems();}
   if(tab==='leads'){subscribeLeads();renderLeads();}
   if(tab==='leadmgmt')fetchHSLeads();
+  if(tab==='caddash'){renderCadDash();saveDailyCadenceSnapshot();}
   if(tab==='myactions'){loadMyActionsTL();updateMyActionsBadge();}
   if(tab==='onboard'){subscribeOnboard();renderOnboardDash();}
   if(tab==='settings') renderSettingsPage();
