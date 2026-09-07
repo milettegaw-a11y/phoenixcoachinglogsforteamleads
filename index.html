@@ -4915,6 +4915,7 @@ let _hsDayFilter=0; // 0 = All days
 let _hsOwnerFilter=''; // '' = all owners
 let _hsTeamFilter=''; // '' = all teams
 let _hsLeadSearch=''; // '' = no search filter
+let _hsGapsOnly=false; // true = show only leads lacking cadence
 // Only show leads assigned to these four teams
 const HS_ALLOWED_TEAMS=new Set(['Team Jhay Oglimen','Team Jumz Delacruz','Team Florence Llait','Team Jersey Deguzman']);
 const HS_ALLOWED_NAMES=new Set(AGENTS.filter(a=>HS_ALLOWED_TEAMS.has(a.tl)).map(a=>a.name.toLowerCase()));
@@ -5048,6 +5049,10 @@ function setHSTeamFilter(val){
 }
 function setHSSearch(val){
   _hsLeadSearch=(val||'').trim();
+  renderHSLeads();
+}
+function toggleHSGapsOnly(){
+  _hsGapsOnly=!_hsGapsOnly;
   renderHSLeads();
 }
 function switchCommTab(lid,tab){
@@ -5400,6 +5405,7 @@ function renderHSLeads(){
   if(_hsTeamFilter) activeDays=activeDays.filter(l=>{const ag=rosterAgents.find(a=>a.name===l.ownerName);return ag&&ag.tl===_hsTeamFilter;});
   if(_hsOwnerFilter) activeDays=activeDays.filter(l=>l.ownerName===_hsOwnerFilter);
   if(_hsLeadSearch){const q=_hsLeadSearch.toLowerCase();activeDays=activeDays.filter(l=>(l.contactName||'').toLowerCase().includes(q)||(l.subject||'').toLowerCase().includes(q)||(l.contactPhone||'').includes(q));}
+  if(_hsGapsOnly) activeDays=activeDays.filter(l=>(l.cadencePct||0)<100);
 
   // Populate TL/OM owner + team dropdowns
   const tlOwnerSel=document.getElementById('hs-owner-filter');
@@ -5791,30 +5797,58 @@ function renderHSLeads(){
       tlEl.innerHTML='<div style="color:var(--g400);font-size:.8rem;padding:8px 0;">No leads found in the last 15 days.</div>';
       return;
     }
-    const w2=activeDays.filter(l=>l.ageBucket==='2nd-week');
-    const w3=activeDays.filter(l=>l.ageBucket==='3rd-week');
-    const totalLack=activeDays.filter(l=>(l.cadencePct||0)<100).length;
-    const avgCadPct=Math.round(activeDays.reduce((s,l)=>s+(l.cadencePct||0),0)/Math.max(1,activeDays.length));
+    // Use all leads (not filtered) for summary stats so gaps button doesn't change the numbers
+    const allActiveForStats=_hsDayFilter>0?_hsLeads.filter(l=>l.ageDays===_hsDayFilter):_hsLeads;
+    const statsBase=(_hsTeamFilter?allActiveForStats.filter(l=>{const ag=rosterAgents.find(a=>a.name===l.ownerName);return ag&&ag.tl===_hsTeamFilter;}):allActiveForStats).filter(l=>_hsOwnerFilter?l.ownerName===_hsOwnerFilter:true);
+    const totalLack=statsBase.filter(l=>(l.cadencePct||0)<100).length;
+    const avgCadPct=Math.round(statsBase.reduce((s,l)=>s+(l.cadencePct||0),0)/Math.max(1,statsBase.length));
     const cadColor=avgCadPct>=100?'#22c55e':avgCadPct>=50?'#f97316':'#ef4444';
     const CARD='background:#fff;border:1px solid #f0f0f0;border-radius:12px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.05);';
-    const summary=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:22px;">
+    // Per-agent cadence breakdown
+    const agentNames=[...new Set(statsBase.map(l=>l.ownerName).filter(Boolean))].sort();
+    const agentRows=agentNames.map(name=>{
+      const al=statsBase.filter(l=>l.ownerName===name);
+      const done=al.filter(l=>(l.cadencePct||0)>=100).length;
+      const gaps=al.length-done;
+      const pct=Math.round(al.reduce((s,l)=>s+(l.cadencePct||0),0)/Math.max(1,al.length));
+      const c=pct>=100?'#22c55e':pct>=50?'#f97316':'#ef4444';
+      const barW=Math.min(100,pct);
+      return `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #f9fafb;">
+        <div style="width:130px;font-size:.72rem;font-weight:600;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${name}</div>
+        <div style="flex:1;background:#f3f4f6;border-radius:99px;height:8px;overflow:hidden;">
+          <div style="height:100%;width:${barW}%;background:${c};border-radius:99px;transition:width .4s;"></div>
+        </div>
+        <div style="font-size:.7rem;font-weight:700;color:${c};width:34px;text-align:right;">${pct}%</div>
+        <div style="font-size:.65rem;color:#9ca3af;width:70px;text-align:right;">${done}/${al.length} done</div>
+        ${gaps>0?`<div style="font-size:.62rem;font-weight:700;color:#ef4444;background:#fee2e2;padding:2px 7px;border-radius:99px;">${gaps} gap${gaps!==1?'s':''}</div>`:'<div style="font-size:.62rem;font-weight:700;color:#22c55e;">✅</div>'}
+      </div>`;
+    }).join('');
+    const agentBreakdown=agentNames.length>0?`<div style="background:#fff;border:1px solid #f0f0f0;border-radius:12px;padding:14px 18px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.04);">
+      <div style="font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#9ca3af;margin-bottom:10px;">Agent Cadence Today${_hsDayFilter>0?' · Day '+_hsDayFilter:''}</div>
+      ${agentRows}
+    </div>`:'';
+    const gapsBtn=`<button onclick="toggleHSGapsOnly()" style="padding:5px 14px;border:1.5px solid ${_hsGapsOnly?'#ef4444':'#e5e7eb'};border-radius:8px;background:${_hsGapsOnly?'#fee2e2':'#fff'};color:${_hsGapsOnly?'#b91c1c':'#6b7280'};font-size:.72rem;font-weight:700;cursor:pointer;white-space:nowrap;">⚠️ ${_hsGapsOnly?'All Leads':'Gaps Only'}</button>`;
+    const summary=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px;">
       <div style="${CARD}">
-        <div style="font-size:2rem;font-weight:800;color:#3b82f6;line-height:1;">${activeDays.length}</div>
+        <div style="font-size:2rem;font-weight:800;color:#3b82f6;line-height:1;">${statsBase.length}</div>
         <div style="font-size:.75rem;color:#9ca3af;margin-top:6px;font-weight:500;">Active Leads${_hsDayFilter>0?` · Day ${_hsDayFilter}`:''}</div>
       </div>
-      <div style="${CARD}">
+      <div style="${CARD}cursor:pointer;" onclick="toggleHSGapsOnly()">
         <div style="font-size:2rem;font-weight:800;color:#ef4444;line-height:1;">${totalLack}</div>
-        <div style="font-size:.75rem;color:#9ca3af;margin-top:6px;font-weight:500;">Needs Contact</div>
+        <div style="font-size:.75rem;color:#9ca3af;margin-top:6px;font-weight:500;">Cadence Gaps ${_hsGapsOnly?'· <span style="color:#ef4444;">Filtered</span>':''}</div>
       </div>
       <div style="${CARD}">
         <div style="font-size:2rem;font-weight:800;color:${cadColor};line-height:1;">${avgCadPct}%</div>
-        <div style="font-size:.75rem;color:#9ca3af;margin-top:6px;font-weight:500;">Avg Cadence</div>
+        <div style="font-size:.75rem;color:#9ca3af;margin-top:6px;font-weight:500;">Team Cadence</div>
       </div>
     </div>`;
-    let html=dayFilterHtml+summary;
+    const filterRowWithGaps=dayFilterHtml.replace('</div>',gapsBtn+'</div>');
+    const w2=activeDays.filter(l=>l.ageBucket==='2nd-week');
+    const w3=activeDays.filter(l=>l.ageBucket==='3rd-week');
+    let html=filterRowWithGaps+summary+agentBreakdown;
     if(w2.length>0) html+=renderSection('tl-w2','2nd Week Leads — Days 1–8','📋',w2,true,_hsViewMode);
     if(w3.length>0) html+=renderSection('tl-w3','3rd Week Leads — Days 9–15','⏰',w3,true,_hsViewMode);
-    if(w2.length===0&&w3.length===0) html+='<div style="color:var(--g400);font-size:.8rem;padding:6px 0;">No leads on Day '+_hsDayFilter+'.</div>';
+    if(w2.length===0&&w3.length===0) html+=`<div style="color:var(--g400);font-size:.8rem;padding:6px 0;">${_hsGapsOnly?'No cadence gaps found — team is all caught up! ✅':'No leads on Day '+_hsDayFilter+'.'}</div>`;
     tlEl.innerHTML=html;
   }
 }
