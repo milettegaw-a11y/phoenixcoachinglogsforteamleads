@@ -4851,6 +4851,64 @@ const AIRCALL_NAME_MAP={
   'jersey de guzman'           : 'jersey deguzman',      // spacing difference (belt-and-suspenders)
 };
 
+// ── Aircall line-ID sets per team ─────────────────────────────────────────
+// Agents & TLs may only see calls/SMS made through their team's allocated lines.
+// Keys are substrings matched against the TL_TEAM_MAP value (e.g. 'Jhay' ⊂ 'Team Jhay Oglimen').
+// Add new line IDs here whenever Aircall provisiones more numbers for a team.
+const TEAM_AIRCALL_LINES={
+  'Jhay':new Set([
+    962134,1007055,1007316,                          // Jha 01, FCR Auto Jha 1-2, Team Jha 2
+    1072967,1076774,1076779,1076790,                 // Jhay 27,31,32,37
+    1085868,1085869,1085870,1085877,                 // Jhay 40-42,44
+    1109329,1109330,1123989,1132667,                 // Jhay 46,47,51, FCR Auto Jha 2
+    1142060,1142069,1170726,1181546,                 // Jhay 53,54, TX SMS blast, CA SMS blast
+    1218957,1218966,1219691,                         // Jhay 56,57,59
+    1228279,1228280,                                 // Jhay 62,63
+    1256434,1256436,1256440,1256446,                 // Jhay 64-67
+    1347061,1347063,1347066,                         // Jhay 68,69,70
+    1369633,1369635,1369637                          // Jhay 71,72,73
+  ]),
+  'Jumz':new Set([
+    1278818,1278827,1278829,1278831,                 // Jumz NY,NY2,FL,FL2
+    1278833,1278834,1278835,1278836,                 // Jumz TX,TX2,CA,CA2
+    1278838,1278842,1278844,1278845,                 // Jumz GA,PA,MD,NJ
+    1278846,1278849,1278851,1278852,                 // Jumz TN,LA,OH,VA
+    1278853,1278855,1278857,1278859,                 // Jumz NC,SC,IL,CO
+    1278860,1278862,1278863,1278864,1278865,         // Jumz UT,AZ,NV,MN,MI
+    1346790,1346807,1346820,1346823                  // Jumz NY,TX,IA,CA (newer)
+  ]),
+  'Jersey':new Set([
+    1272280,1272282,1272283,1272284,1272286,         // Jersey 1 GA,2 AZ,3 FL,4 NY,PA
+    1272287,1272288,1272290,1272292,1272298,         // Jersey 6 NC,7 SC,8 CA,9 MA,10 VA
+    1272299,1272300,1272301,1272302,1272303,         // Jersey 11 MI,12 CO,TN,14 NJ,15 OH
+    1272304,1272307,1272309,1272311,1272313,         // Jersey 16 MD,17 FL,19 GA,20 AL,21 IN
+    1272315,1272316,                                 // Jersey 22 TX,23 IL
+    1320301,1357878                                  // Jersey NV1, TX 2
+  ]),
+  'Florence':new Set([
+    1104799                                          // TEMP: TEAM FLORENC .1 (TX-FL)
+  ])
+  // 'amp': new Set([...]) — add line IDs once identified
+};
+
+/** Returns the Set of Aircall line IDs the current user is allowed to see,
+ *  or null if no restriction applies (OM, ATL, unlisted team). */
+function getTeamAircallLineIds(){
+  if(!CU||CU.isOM) return null;       // OMs see everything
+  let team='';
+  if(CU.isAgentView){
+    const rec=(typeof AGENTS!=='undefined'?AGENTS:[]).find(a=>a.name===CU.agentName);
+    team=rec?.tl||'';
+  } else {
+    team=myTeam();                     // TL's own team
+  }
+  if(!team) return null;              // ATL or unknown role → no restriction
+  for(const [key,ids] of Object.entries(TEAM_AIRCALL_LINES)){
+    if(team.toLowerCase().includes(key.toLowerCase())) return ids;
+  }
+  return null;                        // team not mapped → no restriction
+}
+
 let _hsLeads=[];
 let _hsLeadsLoaded=false;
 let _hsViewMode='kanban'; // 'kanban' or 'list'
@@ -5130,9 +5188,15 @@ async function loadAircallData(lid,contactPhone){
     }
     const data=await r.json();
 
-    // Show ALL calls for this contact (full cadence visibility — not filtered by agent)
+    // Filter calls/SMS to the current user's team lines only
     let acCalls=data.calls||[];
     let acMsgs =data.messages||[];
+    const _teamLineIds=getTeamAircallLineIds();
+    if(_teamLineIds){
+      const inTeam=c=>{const nid=Number(c.numberId||0);return nid&&_teamLineIds.has(nid);};
+      acCalls=acCalls.filter(inTeam);
+      acMsgs =acMsgs.filter(inTeam);
+    }
 
     // Merge with HubSpot activities, dedup by timestamp ±60 s
     const isSmsC=c=>c.type==='sms'||c.type==='message'||(c.type||'').toLowerCase().includes('sms');
