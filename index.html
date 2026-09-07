@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&family=Nunito:wght@400;500;600;700;800;900&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdn.aircall.io/aircall-everywhere.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -5011,7 +5012,7 @@ async function fetchHSLeads(){
       const cadencePct=expectedContacts>0?Math.min(100,Math.round(actualContacts/expectedContacts*100)):100;
       const lacksCadence=cadencePct<100;
       const ageBucket=ageDays<=8?'2nd-week':'3rd-week';
-      return {id:t.id,subject:p.subject||'(no name)',ownerId,ownerName,stageId,stageName,attempts,ageDays,lacksCadence,cadencePct,actualContacts,expectedContacts,dailyCallsMade,dailySmsCount,ageBucket,contactId:t.contactId||null,contactName:t.contactName||null,contactPhone:t.contactPhone||null,contactEmail:t.contactEmail||null,contactLifecycle:t.contactLifecycle||null,latestNote:t.latestNote||null,calls:t.calls||[]};
+      return {id:t.id,subject:p.subject||'(no name)',ownerId,ownerName,stageId,stageName,attempts,ageDays,createdMs,lacksCadence,cadencePct,actualContacts,expectedContacts,dailyCallsMade,dailySmsCount,ageBucket,contactId:t.contactId||null,contactName:t.contactName||null,contactPhone:t.contactPhone||null,contactEmail:t.contactEmail||null,contactLifecycle:t.contactLifecycle||null,latestNote:t.latestNote||null,calls:t.calls||[]};
     }).filter(l=>HS_ALLOWED_NAMES.has(l.ownerName.toLowerCase()))
       .filter(l=>(l.subject||'').toLowerCase().includes('2nd week'))
       .filter(l=>l.ageDays<=15)
@@ -5118,14 +5119,14 @@ let   _acUsersFetched=false;
 let   _aircallNumbers=[];  // [{id,name,digits,state}] cached after first fetch
 let   _acNumbersFetched=false;
 async function loadAircallNumbers(){
-  if(_acNumbersFetched)return;
+  if(_acNumbersFetched && _aircallNumbers.length>0)return; // Skip if already loaded successfully
   _acNumbersFetched=true;
   try{
     const r=await fetch('/api/aircall?action=numbers');
-    if(!r.ok)return;
+    if(!r.ok){_acNumbersFetched=false;return;} // Allow retry if API fails
     const d=await r.json();
     _aircallNumbers=d.numbers||[];
-  }catch(_){}
+  }catch(e){_acNumbersFetched=false;} // Allow retry on network error
 }
 // Returns [{id,name,digits}] of lines the current user's team is allowed to use
 function getTeamLines(){
@@ -5248,6 +5249,14 @@ async function loadAircallData(lid,contactPhone){
       acCalls=acCalls.filter(inTeam);
       acMsgs =acMsgs.filter(inTeam);
     }
+    // Only show calls/SMS on or after the ticket was created (prevents phantom calls from other leads sharing the same number)
+    const ticketCreatedMs=lead.createdMs||0;
+    if(ticketCreatedMs>0){
+      // Allow 1 day buffer before ticket creation in case of minor clock drift
+      const minTs=ticketCreatedMs-86400000;
+      acCalls=acCalls.filter(c=>hsTs(c.timestamp)>=minTs);
+      acMsgs =acMsgs.filter(c=>hsTs(c.timestamp)>=minTs);
+    }
 
     // Merge with HubSpot activities, dedup by timestamp ±60 s
     const isSmsC=c=>c.type==='sms'||c.type==='message'||(c.type||'').toLowerCase().includes('sms');
@@ -5333,12 +5342,35 @@ async function sendSMS(lid,phone){
     alert('SMS sending will be enabled once Aircall is connected.\n\nNumber: '+phone);
   } finally{inp.disabled=false;inp.value='';}
 }
+// ── Aircall phone (embedded in lead panel) ────────────────────────────────
+let _acPhone=null;
+function _initAircallPhone(){
+  if(_acPhone)return;
+  if(typeof AircallPhone==='undefined'){console.warn('Aircall SDK not loaded');return;}
+  try{
+    _acPhone=new AircallPhone({
+      domToLoadPhone:'#ac-phone-inner',
+      size:'auto',
+      onLogin:()=>{},
+      onLogout:()=>{_acPhone=null;}
+    });
+  }catch(e){console.warn('Aircall init failed:',e.message);}
+}
 function makeCall(phone,name){
   if(!phone){toast('No phone number for this lead');return;}
-  // tel: link triggers Aircall desktop app (or system dialer) to dial
+  const slot=document.getElementById('ac-phone-slot');
+  if(slot)slot.style.display='flex';
+  _initAircallPhone();
   const clean=phone.replace(/[^\d+]/g,'');
-  window.location.href='tel:'+clean;
-  toast('📞 Opening dialer for '+name+'…');
+  // Give the phone iframe 800ms to settle, then send the dial command
+  setTimeout(()=>{
+    if(_acPhone){
+      _acPhone.send('dial_number',{phone_number:clean});
+      toast('📞 Dialing '+(name||phone)+' via Aircall…');
+    } else {
+      toast('📞 Aircall loading — dial '+clean+' manually if needed');
+    }
+  },800);
 }
 // ────────────────────────────────────────────────────────────────────────────
 
@@ -5565,17 +5597,18 @@ function renderHSLeads(){
       const sel=document.getElementById('comm-line-sel-'+pid);
       if(!sel)return;
       const lines=getTeamLines();
+      console.log('[Lines] loaded',lines.length,'lines for team. Sample:',lines.slice(0,3));
       // Remove old options (keep "All Lines")
       while(sel.options.length>1)sel.remove(1);
       lines.forEach(ln=>{
         const o=document.createElement('option');
         o.value=String(ln.id);
-        o.textContent=ln.name||(ln.digits?'+'+ln.digits:String(ln.id));
+        o.textContent=ln.name||(ln.digits?ln.digits:String(ln.id));
         sel.appendChild(o);
       });
-      // Hide the bar if there's only 1 line (no useful filter)
+      // Always keep bar visible so agents can see/use it; update label count
       const bar=document.getElementById('comm-line-bar-'+pid);
-      if(bar)bar.style.display=lines.length<=1?'none':'flex';
+      if(bar&&lines.length===0)bar.style.display='none'; // hide only if API returned nothing at all
     });
   };
   window.closeLeadPanel=function(){
@@ -10941,6 +10974,14 @@ document.addEventListener('keydown', function(e) {
     <button onclick="closeLeadPanel()" style="background:none;border:none;font-size:1.2rem;color:#9ca3af;cursor:pointer;padding:4px 8px;border-radius:6px;line-height:1;">✕</button>
   </div>
   <div id="lead-panel-body" style="flex:1;overflow-y:auto;"></div>
+  <!-- Aircall embedded phone — shown when Call button is clicked -->
+  <div id="ac-phone-slot" style="display:none;flex-direction:column;flex-shrink:0;border-top:2px solid #ff7a59;background:#fff;max-height:540px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:#fff7f5;border-bottom:1px solid #ffe4de;flex-shrink:0;">
+      <span style="font-size:.72rem;font-weight:700;color:#ff7a59;">📱 Aircall Phone</span>
+      <button onclick="document.getElementById('ac-phone-slot').style.display='none'" style="background:none;border:none;cursor:pointer;font-size:.9rem;color:#9ca3af;line-height:1;padding:2px 6px;">✕</button>
+    </div>
+    <div id="ac-phone-inner" style="flex:1;min-height:480px;overflow:hidden;"></div>
+  </div>
 </div>
 </body>
 </html>
