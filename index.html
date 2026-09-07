@@ -5375,9 +5375,10 @@ function makeCall(phone,name){
   if(inner&&!inner.querySelector('iframe')){
     inner.innerHTML=`<div style="padding:24px 16px;text-align:center;">
       <div style="font-size:.72rem;color:#9ca3af;margin-bottom:8px;">Dial in Aircall:</div>
-      <div style="font-size:1.5rem;font-weight:700;color:#ff7a59;font-family:monospace;letter-spacing:.05em;">${clean}</div>
-      <button onclick="navigator.clipboard.writeText('${clean}').then(()=>toast('Copied!'))" style="margin-top:10px;padding:5px 14px;background:#ff7a59;color:#fff;border:none;border-radius:6px;font-size:.7rem;font-weight:700;cursor:pointer;">Copy Number</button>
-      <div style="font-size:.6rem;color:#9ca3af;margin-top:10px;line-height:1.4;">Open the Aircall extension in your browser toolbar to dial</div>
+      <a href="tel:${clean}" style="display:block;font-size:1.5rem;font-weight:700;color:#ff7a59;font-family:monospace;letter-spacing:.05em;text-decoration:none;">${clean} 📞</a>
+      <div style="font-size:.6rem;color:#9ca3af;margin-top:4px;">(tap to dial if Aircall is your default phone app)</div>
+      <button onclick="navigator.clipboard.writeText('${clean}').then(()=>toast('✅ Copied!'))" style="margin-top:10px;padding:5px 14px;background:#ff7a59;color:#fff;border:none;border-radius:6px;font-size:.7rem;font-weight:700;cursor:pointer;">Copy Number</button>
+      <div style="font-size:.6rem;color:#9ca3af;margin-top:8px;line-height:1.4;">Or open the Aircall extension in your browser toolbar</div>
     </div>`;
   }
   // 3. Also try SDK dial after 1.5s in case iframe finishes loading
