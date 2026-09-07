@@ -5052,6 +5052,7 @@ async function fetchHSLeads(){
     }).filter(l=>HS_ALLOWED_NAMES.has(l.ownerName.toLowerCase()))
       .filter(l=>(l.subject||'').toLowerCase().includes('2nd week'))
       .filter(l=>l.ageDays<=15)
+      .filter(l=>!closedStages.includes(l.stageId))
       .filter(l=>{if(l.ageDays<=8)return true;const lc=(l.contactLifecycle||'').toLowerCase();return!lc||(lc!=='other'&&lc!=='customer');});
     _hsLeadsLoaded=true;
     // Auto-restrict TLs to their own team — OMs and Asst TLs (non-primary teams) see all
