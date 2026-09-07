@@ -5172,7 +5172,8 @@ function callHistoryItem(c){
   else if(connected){badge='<span style="background:#dcfce7;color:#166534;font-size:.59rem;padding:1px 6px;border-radius:99px;font-weight:600;">Connected</span>';}
   else{badge='<span style="background:#fee2e2;color:#b91c1c;font-size:.59rem;padding:1px 6px;border-radius:99px;font-weight:600;">No Answer</span>';}
   const dur=!isSms&&c.durationMs&&c.durationMs>0?` · ${Math.round(c.durationMs/60000)}m`:'';
-  const body=c.body&&c.body.trim()?`<div style="color:var(--g600);font-style:italic;line-height:1.4;margin-top:2px;">"${c.body.slice(0,200)}${c.body.length>200?'…':''}"</div>`:'';
+  const bodyStr=c.body!=null?String(c.body):'';
+  const body=bodyStr.trim()?`<div style="color:var(--g600);font-style:italic;line-height:1.4;margin-top:2px;">"${bodyStr.slice(0,200)}${bodyStr.length>200?'…':''}"</div>`:'';
   return `<div style="padding:6px 10px;border-bottom:1px solid #f3f4f6;">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;">
       <span style="font-size:.67rem;color:var(--g500);">${typeLabel} · ${ts}${dur}</span>${badge}
