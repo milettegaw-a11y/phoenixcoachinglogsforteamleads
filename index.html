@@ -5033,8 +5033,8 @@ async function fetchHSLeads(){
       .filter(l=>l.ageDays<=15)
       .filter(l=>{if(l.ageDays<=8)return true;const lc=(l.contactLifecycle||'').toLowerCase();return!lc||(lc!=='other'&&lc!=='customer');});
     _hsLeadsLoaded=true;
-    // Auto-restrict TLs to their own team — OMs can see all
-    if(CU&&!CU.isOM&&!CU.isAgentView&&TL_TEAM_MAP[CU.email]){
+    // Auto-restrict TLs to their own team — OMs and Asst TLs (non-primary teams) see all
+    if(CU&&!CU.isOM&&!CU.isAgentView&&TL_TEAM_MAP[CU.email]&&HS_ALLOWED_TEAMS.has(TL_TEAM_MAP[CU.email])){
       _hsTeamFilter=TL_TEAM_MAP[CU.email];
     }
     renderHSLeads();
@@ -5589,7 +5589,7 @@ function renderHSLeads(){
   const tlTeamSel=document.getElementById('hs-team-filter');
   if(tlTeamSel){
     const teams=[...HS_ALLOWED_TEAMS].sort();
-    if(CU&&!CU.isOM&&TL_TEAM_MAP[CU.email]){
+    if(CU&&!CU.isOM&&TL_TEAM_MAP[CU.email]&&HS_ALLOWED_TEAMS.has(TL_TEAM_MAP[CU.email])){
       // TL: show only their team, no switcher
       tlTeamSel.innerHTML=`<option value="${TL_TEAM_MAP[CU.email]}" selected>${TL_TEAM_MAP[CU.email]}</option>`;
       tlTeamSel.disabled=true;
@@ -5609,30 +5609,21 @@ function renderHSLeads(){
   }
 
   // Age-bucket toggle buttons + day dropdown filter HTML
-  function bucketBtn(val,label){
-    const active=_hsAgeBucket===val;
-    const bg=active?'#ff7a59':'#fff';
-    const col=active?'#fff':'#6b7280';
-    const border=active?'#ff7a59':'#e5e7eb';
-    return `<button onclick="setHSAgeBucket('${val}')" style="padding:4px 12px;border:1.5px solid ${border};border-radius:7px;background:${bg};color:${col};font-size:.72rem;font-weight:700;cursor:pointer;white-space:nowrap;">${label}</button>`;
-  }
-  const dayOpts=((_hsAgeBucket==='2nd-week')?Array.from({length:8},(_,i)=>`<option value="${i+1}"${_hsDayFilter===i+1?' selected':''}>Day ${i+1}</option>`):(_hsAgeBucket==='3rd-week')?Array.from({length:7},(_,i)=>`<option value="${i+9}"${_hsDayFilter===i+9?' selected':''}>Day ${i+9}</option>`):Array.from({length:15},(_,i)=>`<option value="${i+1}"${_hsDayFilter===i+1?' selected':''}>Day ${i+1}</option>`)).join('');
-  const dayFilterHtml=`<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
-    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-      <span style="font-size:.72rem;font-weight:600;color:var(--g600);">Age:</span>
-      ${bucketBtn('','All Leads')}
-      ${bucketBtn('2nd-week','Day 1–8')}
-      ${bucketBtn('3rd-week','Day 9–15')}
-      ${_hsAgeBucket?`<span style="font-size:.7rem;color:#ff7a59;font-weight:600;margin-left:4px;">${activeDays.length} lead${activeDays.length!==1?'s':''}</span>`:''}
-    </div>
-    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-      <span style="font-size:.72rem;font-weight:600;color:var(--g600);">Day:</span>
-      <select onchange="setHSDayFilter(this.value)" style="font-size:.72rem;border:1px solid #e5e7eb;border-radius:7px;padding:4px 10px;background:#fff;cursor:pointer;font-weight:${_hsDayFilter>0?'700':'400'};color:${_hsDayFilter>0?'#ff7a59':'var(--g800)'};">
-        <option value="0">All Days</option>${dayOpts}
-      </select>
-      ${_hsDayFilter>0?`<span style="font-size:.7rem;color:#ff7a59;font-weight:600;">${activeDays.length} lead${activeDays.length!==1?'s':''} on Day ${_hsDayFilter}</span><button onclick="setHSDayFilter(0)" style="font-size:.68rem;border:none;background:#fee2e2;color:#b91c1c;border-radius:6px;padding:3px 8px;cursor:pointer;font-weight:600;">✕ Clear</button>`:''}
-    </div>
-  </div>`;
+  const _bb=(val,label)=>{const active=_hsAgeBucket===val;const bg=active?'#ff7a59':'#fff';const col=active?'#fff':'#6b7280';const bdr=active?'#ff7a59':'#e5e7eb';return '<button onclick="setHSAgeBucket(\''+val+'\')" style="padding:4px 12px;border:1.5px solid '+bdr+';border-radius:7px;background:'+bg+';color:'+col+';font-size:.72rem;font-weight:700;cursor:pointer;white-space:nowrap;">'+label+'</button>';};
+  const _dayRange=_hsAgeBucket==='2nd-week'?{s:1,e:8}:_hsAgeBucket==='3rd-week'?{s:9,e:15}:{s:1,e:15};
+  let _dayOptsHtml='<option value="0">All Days</option>';
+  for(let _di=_dayRange.s;_di<=_dayRange.e;_di++) _dayOptsHtml+=`<option value="${_di}"${_hsDayFilter===_di?' selected':''}>Day ${_di}</option>`;
+  const dayFilterHtml='<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">'
+    +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">'
+    +'<span style="font-size:.72rem;font-weight:600;color:var(--g600);">Age:</span>'
+    +_bb('','All Leads')+_bb('2nd-week','Day 1–8')+_bb('3rd-week','Day 9–15')
+    +(_hsAgeBucket?'<span style="font-size:.7rem;color:#ff7a59;font-weight:600;margin-left:4px;">'+activeDays.length+' lead'+(activeDays.length!==1?'s':'')+'</span>':'')
+    +'</div>'
+    +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
+    +'<span style="font-size:.72rem;font-weight:600;color:var(--g600);">Day:</span>'
+    +'<select onchange="setHSDayFilter(this.value)" style="font-size:.72rem;border:1px solid #e5e7eb;border-radius:7px;padding:4px 10px;background:#fff;cursor:pointer;font-weight:'+(_hsDayFilter>0?'700':'400')+';color:'+(_hsDayFilter>0?'#ff7a59':'var(--g800)')+';">'+_dayOptsHtml+'</select>'
+    +(_hsDayFilter>0?'<span style="font-size:.7rem;color:#ff7a59;font-weight:600;">'+activeDays.length+' lead'+(activeDays.length!==1?'s':'')+' on Day '+_hsDayFilter+'</span><button onclick="setHSDayFilter(0)" style="font-size:.68rem;border:none;background:#fee2e2;color:#b91c1c;border-radius:6px;padding:3px 8px;cursor:pointer;font-weight:600;">✕ Clear</button>':'')
+    +'</div><!--GAPS_SLOT--></div>';
 
   // ── Visual helpers ──
   const _AVATAR_COLORS=['#ff7a59','#6366f1','#10b981','#f59e0b','#ec4899','#14b8a6','#3b82f6','#8b5cf6'];
@@ -6037,7 +6028,7 @@ function renderHSLeads(){
         <div style="font-size:.75rem;color:#9ca3af;margin-top:6px;font-weight:500;">Team Cadence</div>
       </div>
     </div>`;
-    const filterRowWithGaps=dayFilterHtml.replace('</div>',gapsBtn+'</div>');
+    const filterRowWithGaps=dayFilterHtml.replace('<!--GAPS_SLOT-->',gapsBtn);
     const w2=activeDays.filter(l=>l.ageBucket==='2nd-week');
     const w3=activeDays.filter(l=>l.ageBucket==='3rd-week');
     let html=filterRowWithGaps+summary+agentBreakdown;
