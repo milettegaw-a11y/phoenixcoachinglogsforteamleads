@@ -133,75 +133,6 @@ body{font-family:'Poppins',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sa
 .st-theme-btn.active{box-shadow:0 0 0 3px #fff,0 0 0 5px rgba(0,0,0,.35);}
 .st-th-check{display:none;position:absolute;top:5px;right:7px;font-size:.75rem;font-weight:900;}
 .st-theme-btn.active .st-th-check{display:inline;}
-/* ── CHAT v2 ── */
-#chat-fab{position:fixed;bottom:24px;right:24px;z-index:1200;width:52px;height:52px;border-radius:50%;background:var(--yellow-dk);border:none;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.28);display:flex;align-items:center;justify-content:center;font-size:1.35rem;transition:transform .15s;flex-direction:column;}
-#chat-fab:hover{transform:scale(1.08);}
-#chat-badge{position:absolute;top:-3px;right:-3px;background:#e53e3e;color:#fff;border-radius:50%;width:19px;height:19px;font-size:.65rem;font-weight:800;display:none;align-items:center;justify-content:center;border:2px solid #fff;}
-#v-chat{margin:-22px;overflow:hidden;}
-.chat-shell{display:flex;height:calc(100vh - 92px);overflow:hidden;background:#f8f5f1;}
-.chat-left{width:264px;flex-shrink:0;background:#fff;border-right:1px solid #e5e5e5;display:flex;flex-direction:column;overflow:hidden;}
-.chat-left-hdr{padding:14px 14px 10px;border-bottom:1px solid #f0f0f0;}
-.chat-left-title{font-size:.88rem;font-weight:700;color:#1a1a1a;display:flex;align-items:center;gap:8px;margin-bottom:8px;}
-.chat-live-dot{width:8px;height:8px;border-radius:50%;background:#22c55e;flex-shrink:0;box-shadow:0 0 0 2px rgba(34,197,94,.22);}
-.chat-left-search{display:flex;align-items:center;gap:6px;background:#f5f5f5;border-radius:8px;padding:7px 10px;}
-.chat-left-search span{font-size:.8rem;color:#a3a3a3;}
-.chat-left-search input{border:none;background:none;font-size:.79rem;font-family:inherit;color:#404040;outline:none;flex:1;}
-.chat-left-search input::placeholder{color:#a3a3a3;}
-.chat-left-body{flex:1;overflow-y:auto;padding:4px 0 8px;}
-.chat-sec-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 12px 3px;font-size:.58rem;font-weight:700;letter-spacing:.1em;color:#a3a3a3;text-transform:uppercase;}
-.chat-sec-plus{background:none;border:none;cursor:pointer;color:#a3a3a3;font-size:1rem;padding:1px 5px;border-radius:5px;line-height:1;transition:color .12s,background .12s;}
-.chat-sec-plus:hover{color:#525252;background:#f0f0f0;}
-.chat-conv-row{display:flex;align-items:center;gap:9px;padding:8px 10px;cursor:pointer;border-radius:10px;margin:1px 5px;transition:background .12s;position:relative;}
-.chat-conv-row:hover{background:#f5f5f5;}
-.chat-conv-row.active{background:rgba(131,178,113,.15);}
-.chat-conv-avatar{width:37px;height:37px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.78rem;color:#fff;position:relative;}
-.chat-conv-avatar.group-av{border-radius:10px;}
-.chat-online-dot{position:absolute;bottom:0;right:0;width:10px;height:10px;border-radius:50%;background:#22c55e;border:2px solid #fff;}
-.chat-offline-dot{position:absolute;bottom:0;right:0;width:10px;height:10px;border-radius:50%;background:#d4d4d4;border:2px solid #fff;}
-.chat-conv-info{flex:1;min-width:0;}
-.chat-conv-name{font-size:.8rem;font-weight:600;color:#262626;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.chat-conv-preview{font-size:.71rem;color:#a3a3a3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
-.chat-conv-time{font-size:.62rem;color:#a3a3a3;flex-shrink:0;align-self:flex-start;margin-top:1px;}
-.chat-conv-row.active .chat-conv-name{color:var(--yellow-dk);}
-.chat-right{flex:1;display:flex;flex-direction:column;min-width:0;background:#fff;}
-.chat-right-hdr{display:flex;align-items:center;gap:10px;padding:12px 18px;border-bottom:1px solid #f0f0f0;flex-shrink:0;}
-.chat-right-av{width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.79rem;color:#fff;}
-.chat-right-av.group-av{border-radius:10px;}
-.chat-right-name{font-size:.88rem;font-weight:700;color:#111;}
-.chat-right-status{font-size:.71rem;color:#a3a3a3;}
-.chat-right-status.online{color:#22c55e;}
-.chat-msgs-area{flex:1;overflow-y:auto;padding:16px 22px 10px;display:flex;flex-direction:column;gap:0;background:#faf9f7;}
-.chat-convo-begin{text-align:center;font-size:.67rem;color:#a3a3a3;letter-spacing:.08em;text-transform:uppercase;padding:8px 0 14px;}
-.chat-date-div{text-align:center;margin:14px 0 8px;position:relative;}
-.chat-date-div::before,.chat-date-div::after{content:'';position:absolute;top:50%;height:1px;width:calc(50% - 46px);background:#e5e5e5;}
-.chat-date-div::before{left:0;}.chat-date-div::after{right:0;}
-.chat-date-div span{font-size:.66rem;font-weight:600;color:#a3a3a3;text-transform:uppercase;letter-spacing:.06em;background:#faf9f7;padding:0 8px;position:relative;z-index:1;}
-.chat-msg-grp{display:flex;margin-bottom:8px;gap:8px;}
-.chat-msg-grp.mine{flex-direction:row-reverse;}
-.chat-msg-grp.theirs{flex-direction:row;}
-.chat-msg-grp-body{display:flex;flex-direction:column;max-width:70%;}
-.chat-msg-grp.mine .chat-msg-grp-body{align-items:flex-end;}
-.chat-msg-grp.theirs .chat-msg-grp-body{align-items:flex-start;}
-.chat-msg-sender-lbl{font-size:.68rem;font-weight:600;color:#737373;margin-bottom:3px;padding:0 3px;}
-.chat-msg-bubble{padding:9px 13px;border-radius:14px;font-size:.82rem;line-height:1.46;word-break:break-word;}
-.chat-msg-grp.mine .chat-msg-bubble{background:var(--yellow-dk);color:#fff;border-bottom-right-radius:4px;}
-.chat-msg-grp.theirs .chat-msg-bubble{background:#f0efee;color:#1a1a1a;border-bottom-left-radius:4px;}
-.chat-msg-time-lbl{font-size:.61rem;color:#a3a3a3;margin-top:3px;padding:0 3px;}
-.chat-av-sm{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.67rem;color:#fff;margin-top:auto;}
-.chat-input-bar{display:flex;align-items:flex-end;gap:6px;padding:10px 14px 12px;border-top:1px solid #f0f0f0;flex-shrink:0;background:#fff;}
-.chat-input-bar textarea{flex:1;border:1.5px solid #e5e5e5;border-radius:10px;padding:9px 12px;font-size:.82rem;font-family:inherit;resize:none;outline:none;min-height:40px;max-height:110px;line-height:1.42;transition:border-color .15s;color:#262626;}
-.chat-input-bar textarea:focus{border-color:var(--yellow);}
-.cib-icon{width:34px;height:34px;border:none;background:none;cursor:pointer;color:#a3a3a3;font-size:1rem;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .12s,color .12s;}
-.cib-icon:hover{background:#f5f5f5;color:#525252;}
-.cib-send{background:var(--yellow-dk)!important;color:#fff!important;border-radius:50%!important;width:36px!important;height:36px!important;}
-.cib-send:hover{opacity:.88;}
-.chat-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#a3a3a3;background:#faf9f7;}
-.chat-empty-icon{font-size:2.6rem;}
-.chat-empty-text{font-size:.87rem;font-weight:500;}
-.chat-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.36);z-index:2000;display:none;align-items:center;justify-content:center;}
-.chat-modal-bg.open{display:flex;}
-.chat-modal{background:#fff;border-radius:14px;padding:26px 26px 20px;width:360px;box-shadow:0 12px 40px rgba(0,0,0,.22);}
-.chat-modal h3{font-size:.95rem;font-weight:700;color:#111;margin-bottom:14px;}
 .dm-person-row{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;cursor:pointer;transition:background .12s;}
 .dm-person-row:hover{background:#f5f5f5;}
 .dm-name{font-size:.82rem;font-weight:600;color:#404040;}
@@ -899,7 +830,6 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
         <div class="sb-item" data-tab="kb" onclick="switchOM('kb')"><span class="sb-icon">📖</span><span>Knowledge Base</span></div>
         <div class="sb-item" data-tab="calendar" onclick="switchOM('calendar')"><span class="sb-icon">📅</span><span>Calendar</span></div>
         <div class="sb-item" data-tab="settings" onclick="switchOM('settings')"><span class="sb-icon">⚙️</span><span>Settings</span></div>
-        <div class="sb-item" data-tab="chat" onclick="switchOM('chat')"><span class="sb-icon">💬</span><span>Chat</span><span id="nav-badge-om-chat" class="sb-notif" style="display:none"></span></div>
       </div>
       <div class="sb-section-lbl agent-hide" onclick="toggleSbGroup('om-grp-admin',this)">ADMIN<span class="sb-grp-arrow">›</span></div>
       <div class="sb-group agent-hide" id="om-grp-admin">
@@ -940,7 +870,6 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
         <div class="sb-item" id="tl-nav-kb" onclick="tlShowView('kb')"><span class="sb-icon">📖</span><span>Knowledge Base</span></div>
         <div class="sb-item" id="tl-nav-calendar" onclick="tlShowView('calendar')"><span class="sb-icon">📅</span><span>Calendar</span></div>
         <div class="sb-item" id="tl-nav-settings" onclick="tlShowView('settings')"><span class="sb-icon">⚙️</span><span>Settings</span></div>
-        <div class="sb-item" id="tl-nav-chat" onclick="tlShowView('chat')"><span class="sb-icon">💬</span><span>Chat</span><span id="nav-badge-tl-chat" class="sb-notif" style="display:none"></span></div>
       </div>
       <div class="sb-section-lbl" onclick="toggleSbGroup('tl-grp-admin',this)">ADMIN<span class="sb-grp-arrow">›</span></div>
       <div class="sb-group" id="tl-grp-admin">
@@ -972,7 +901,6 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
         <div class="sb-item" data-tab="library" onclick="switchAgentTab('library')"><span class="sb-icon">🎵</span><span>Call Library</span></div>
         <div class="sb-item" onclick="openRainmakerGuide()"><span class="sb-icon">🌧️</span><span>Rainmaker Guide</span></div>
         <div class="sb-item" data-tab="settings" onclick="switchAgentTab('settings')"><span class="sb-icon">⚙️</span><span>Settings</span></div>
-        <div class="sb-item" data-tab="chat" onclick="switchAgentTab('chat')"><span class="sb-icon">💬</span><span>Chat</span><span id="nav-badge-ag-chat" class="sb-notif" style="display:none"></span></div>
       </div>
     </div>
 
@@ -2527,67 +2455,6 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
   <div id="ob-empty" style="display:none;text-align:center;padding:40px;color:var(--g400);font-size:.88rem;">No entries yet. Click "+ New Entry" to add one.</div>
 </div>
 
-<!-- CHAT VIEW -->
-<div id="v-chat" class="view">
-<div class="chat-shell">
-  <!-- LEFT PANEL -->
-  <div class="chat-left">
-    <div class="chat-left-hdr">
-      <div class="chat-left-title"><span class="chat-live-dot"></span>Team chat</div>
-      <div class="chat-left-search"><span>🔍</span><input type="text" id="chat-search-inp" placeholder="Find a conversation" oninput="filterChatList(this.value)"></div>
-    </div>
-    <div class="chat-left-body">
-      <div class="chat-sec-hdr">
-        <span>GROUPS</span>
-        <button class="chat-sec-plus" id="chat-grp-plus-btn" onclick="openCreateGroupModal()" title="New group" style="display:none">+</button>
-      </div>
-      <div id="chat-groups-list"></div>
-      <div class="chat-sec-hdr" style="margin-top:4px;">
-        <span>DIRECT MESSAGES</span>
-        <button class="chat-sec-plus" onclick="openNewDMModal()" title="New DM">+</button>
-      </div>
-      <div id="chat-dms-list"></div>
-    </div>
-  </div>
-  <!-- RIGHT PANEL -->
-  <div class="chat-right">
-    <div class="chat-empty" id="chat-empty-state">
-      <div class="chat-empty-icon">💬</div>
-      <div class="chat-empty-text">Select a conversation to start messaging</div>
-    </div>
-    <div id="chat-convo-area" style="display:none;flex-direction:column;flex:1;min-height:0;">
-      <div class="chat-right-hdr" id="chat-right-hdr"></div>
-      <div class="chat-msgs-area" id="chat-msgs-area"></div>
-      <div class="chat-input-bar">
-        <button class="cib-icon" title="Attach">📎</button>
-        <textarea id="chat-conv-inp" rows="1" placeholder="Message…" onkeydown="chatConvKey(event)" oninput="autoResizeTA(this)"></textarea>
-        <button class="cib-icon" title="Voice">🎤</button>
-        <button class="cib-icon cib-send" onclick="sendConvMsg()" title="Send">➤</button>
-      </div>
-    </div>
-  </div>
-</div>
-<!-- Group creation modal -->
-<div class="chat-modal-bg" id="chat-grp-modal-bg" onclick="if(event.target===this)closeCreateGroupModal()">
-  <div class="chat-modal">
-    <h3>New Group</h3>
-    <div class="fg"><label>Group name</label><input type="text" id="chat-grp-name-inp" placeholder="e.g. Back Office" maxlength="40"></div>
-    <div style="display:flex;gap:8px;margin-top:4px;">
-      <button class="btn btn-outline btn-sm" onclick="closeCreateGroupModal()">Cancel</button>
-      <button class="btn btn-black btn-sm" onclick="createGroup()">Create</button>
-    </div>
-  </div>
-</div>
-<!-- New DM modal -->
-<div class="chat-modal-bg" id="chat-dm-modal-bg" onclick="if(event.target===this)closeNewDMModal()">
-  <div class="chat-modal">
-    <h3>New Direct Message</h3>
-    <div class="fg"><label>Search people</label><input type="text" id="chat-dm-search-inp" placeholder="Type a name…" oninput="filterDMSearch(this.value)"></div>
-    <div id="chat-dm-search-results" style="max-height:200px;overflow-y:auto;border-radius:8px;border:1px solid #f0f0f0;margin-top:4px;"></div>
-    <div style="margin-top:10px;"><button class="btn btn-outline btn-sm" onclick="closeNewDMModal()">Cancel</button></div>
-  </div>
-</div>
-</div>
 
 <!-- SETTINGS VIEW -->
 <div id="v-settings" class="view">
@@ -5009,291 +4876,6 @@ function toggleDesktopNotif(cb){
   }
 }
 
-/* ── CHAT v2 ── */
-let _chatUnsub=null;
-let _chatGroupsUnsub=null;
-let _dmUnsub=null;
-let _dmTarget=null;
-let _activeConv=null;
-let _groups=[];
-let _dmPreviews={};
-let _chatUnread=0;
-let _chatLastSeen=0;
-
-const AV_COLORS=['#5E8A50','#2b7fbc','#c45d1a','#bf3060','#7c5fb0','#4b5563','#c47c1a','#1a7c87','#8b2042','#2d5a8b'];
-function avColor(name){let h=0;for(const c of(name||'?'))h=(h*31+c.charCodeAt(0))%AV_COLORS.length;return AV_COLORS[h];}
-function mkInitials(name){return(name||'?').split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase();}
-
-function navToChat(){
-  if(!CU) return;
-  if(CU.isOM) switchOM('chat');
-  else if(CU.role==='TL') tlShowView('chat');
-  else switchAgentTab('chat');
-}
-
-function initChatV2(){
-  const plusBtn=document.getElementById('chat-grp-plus-btn');
-  if(plusBtn) plusBtn.style.display=(CU&&(CU.isOM||CU.role==='TL'))?'':'none';
-  subscribeGroups();
-  renderDMList();
-}
-
-function subscribeGroups(){
-  if(_chatGroupsUnsub){_chatGroupsUnsub();_chatGroupsUnsub=null;}
-  if(!FSB) return;
-  _chatGroupsUnsub=FSB.collection('chat_groups').orderBy('createdAt','asc')
-    .onSnapshot(snap=>{
-      _groups=snap.docs.map(d=>({id:d.id,...d.data()}));
-      renderGroupList();
-    },err=>console.warn('groups:',err));
-}
-
-function fmtChatTime(ts){
-  if(!ts) return'';
-  const d=ts.toDate?ts.toDate():new Date(ts);
-  const diffDays=Math.floor((Date.now()-d)/86400000);
-  if(diffDays===0) return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-  if(diffDays<7) return d.toLocaleDateString([],{weekday:'short'});
-  return d.toLocaleDateString([],{month:'short',day:'numeric'});
-}
-
-function renderGroupList(filter){
-  const el=document.getElementById('chat-groups-list');
-  if(!el) return;
-  let grps=_groups;
-  if(filter) grps=grps.filter(g=>g.name.toLowerCase().includes(filter.toLowerCase()));
-  if(!grps.length){el.innerHTML='<div style="padding:6px 14px 4px;font-size:.72rem;color:#a3a3a3;font-style:italic;">No groups yet</div>';return;}
-  el.innerHTML=grps.map(g=>{
-    const active=_activeConv&&_activeConv.type==='group'&&_activeConv.id===g.id?'active':'';
-    return`<div class="chat-conv-row ${active}" onclick="openGroupConv('${g.id}','${e(g.name)}')">
-      <div class="chat-conv-avatar group-av" style="background:${avColor(g.name)};">👥</div>
-      <div class="chat-conv-info">
-        <div class="chat-conv-name">${e(g.name)}</div>
-        <div class="chat-conv-preview">${e(g.lastMsg||'No messages yet')}</div>
-      </div>
-      ${g.lastMsgTime?`<div class="chat-conv-time">${fmtChatTime(g.lastMsgTime)}</div>`:''}
-    </div>`;
-  }).join('');
-}
-
-function renderDMList(filter){
-  const el=document.getElementById('chat-dms-list');
-  if(!el) return;
-  const myName=CU?CU.agentName||CU.email:'';
-  const people=[];
-  (rosterAgents||[]).forEach(a=>{if(a.name&&a.name!==myName) people.push({name:a.name,role:'Agent'});});
-  (rosterTLS||[]).forEach(t=>{const n=typeof t==='string'?t:t.name;if(n&&n!==myName&&!people.find(p=>p.name===n)) people.push({name:n,role:'TL'});});
-  people.sort((a,b)=>a.name.localeCompare(b.name));
-  let list=filter?people.filter(p=>p.name.toLowerCase().includes(filter.toLowerCase())):people;
-  if(!list.length){el.innerHTML='<div style="padding:6px 14px 4px;font-size:.72rem;color:#a3a3a3;font-style:italic;">No contacts</div>';return;}
-  el.innerHTML=list.map(p=>{
-    const cid=dmConvoId(myName,p.name);
-    const prev=_dmPreviews[cid];
-    const active=_activeConv&&_activeConv.type==='dm'&&_activeConv.id===cid?'active':'';
-    return`<div class="chat-conv-row ${active}" onclick="openDMConv('${e(p.name)}','${e(p.role)}')">
-      <div class="chat-conv-avatar" style="background:${avColor(p.name)};">
-        ${mkInitials(p.name)}
-        <span class="chat-offline-dot"></span>
-      </div>
-      <div class="chat-conv-info">
-        <div class="chat-conv-name">${e(p.name)}</div>
-        <div class="chat-conv-preview">${prev?e(prev.preview):e(p.role)}</div>
-      </div>
-      ${prev&&prev.time?`<div class="chat-conv-time">${fmtChatTime(prev.time)}</div>`:''}
-    </div>`;
-  }).join('');
-}
-
-function filterChatList(q){renderGroupList(q);renderDMList(q);}
-
-function openGroupConv(groupId,groupName){
-  _activeConv={type:'group',id:groupId,name:groupName};
-  renderGroupList();renderDMList();
-  showConvoArea();
-  const hdr=document.getElementById('chat-right-hdr');
-  if(hdr) hdr.innerHTML=`<div class="chat-right-av group-av" style="background:${avColor(groupName)};">👥</div><div><div class="chat-right-name">${e(groupName)}</div><div class="chat-right-status">Group</div></div>`;
-  const inp=document.getElementById('chat-conv-inp');
-  if(inp){inp.placeholder=`Message ${groupName}…`;inp.value='';}
-  if(_chatUnsub){_chatUnsub();_chatUnsub=null;}
-  if(!FSB) return;
-  _chatUnsub=FSB.collection('group_messages').where('groupId','==',groupId)
-    .orderBy('ts','asc').limitToLast(80)
-    .onSnapshot(snap=>{renderConvMsgs(snap.docs.map(d=>({id:d.id,...d.data()})),'group');},err=>console.warn('grpmsg:',err));
-}
-
-function openDMConv(name,role){
-  const myName=CU?CU.agentName||CU.email:'';
-  const cid=dmConvoId(myName,name);
-  _activeConv={type:'dm',id:cid,name,role};
-  _dmTarget={name,role};
-  renderGroupList();renderDMList();
-  showConvoArea();
-  const hdr=document.getElementById('chat-right-hdr');
-  if(hdr) hdr.innerHTML=`<div class="chat-right-av" style="background:${avColor(name)};">${mkInitials(name)}</div><div><div class="chat-right-name">${e(name)}</div><div class="chat-right-status">${e(role)}</div></div>`;
-  const inp=document.getElementById('chat-conv-inp');
-  if(inp){inp.placeholder=`Message ${name}…`;inp.value='';}
-  if(_chatUnsub){_chatUnsub();_chatUnsub=null;}
-  if(!FSB) return;
-  _chatUnsub=FSB.collection('dm_messages').where('convoId','==',cid)
-    .orderBy('ts','asc').limitToLast(60)
-    .onSnapshot(snap=>{
-      const msgs=snap.docs.map(d=>({id:d.id,...d.data()}));
-      renderConvMsgs(msgs,'dm');
-      if(msgs.length){const last=msgs[msgs.length-1];_dmPreviews[cid]={preview:last.text,time:last.ts};renderDMList();}
-    },err=>console.warn('dmmsg:',err));
-}
-
-function showConvoArea(){
-  document.getElementById('chat-empty-state').style.display='none';
-  const area=document.getElementById('chat-convo-area');
-  area.style.display='flex';
-  setTimeout(()=>{const inp=document.getElementById('chat-conv-inp');if(inp)inp.focus();},60);
-}
-
-function renderConvMsgs(msgs,type){
-  const el=document.getElementById('chat-msgs-area');
-  if(!el) return;
-  const myName=CU?CU.agentName||CU.email:'';
-  let html='<div class="chat-convo-begin">BEGINNING OF CONVERSATION</div>';
-  let lastDate='';
-  msgs.forEach(m=>{
-    const senderName=type==='dm'?(m.from||'?'):(m.senderName||'?');
-    const mine=senderName===myName;
-    const ts=m.ts&&m.ts.toDate?m.ts.toDate():null;
-    if(ts){
-      const dateStr=ts.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'});
-      const todayStr=new Date().toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'});
-      const label=dateStr===todayStr?'TODAY':dateStr;
-      if(label!==lastDate){html+=`<div class="chat-date-div"><span>${label}</span></div>`;lastDate=label;}
-    }
-    const timeStr=ts?ts.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'';
-    const av=`<div class="chat-av-sm" style="background:${avColor(senderName)};">${mkInitials(senderName)}</div>`;
-    const cls=mine?'mine':'theirs';
-    const senderLbl=(!mine&&type==='group')?`<div class="chat-msg-sender-lbl">${e(senderName)}</div>`:'';
-    html+=`<div class="chat-msg-grp ${cls}">${!mine?av:''}
-      <div class="chat-msg-grp-body">${senderLbl}<div class="chat-msg-bubble">${e(m.text)}</div><div class="chat-msg-time-lbl">${timeStr}</div></div>
-      ${mine?av:''}
-    </div>`;
-  });
-  el.innerHTML=html;
-  el.scrollTop=el.scrollHeight;
-}
-
-async function sendConvMsg(){
-  if(!_activeConv||!FSB||!CU) return;
-  const inp=document.getElementById('chat-conv-inp');
-  if(!inp||!inp.value.trim()) return;
-  const text=inp.value.trim();
-  inp.value='';inp.style.height='';
-  const myName=CU.agentName||CU.email||'Unknown';
-  try{
-    if(_activeConv.type==='group'){
-      await FSB.collection('group_messages').add({groupId:_activeConv.id,text,senderName:myName,senderRole:CU.role||'',uid:CU.email||'',ts:firebase.firestore.FieldValue.serverTimestamp()});
-      FSB.collection('chat_groups').doc(_activeConv.id).update({lastMsg:text,lastMsgTime:firebase.firestore.FieldValue.serverTimestamp()}).catch(()=>{});
-    } else {
-      const cid=_activeConv.id;
-      await FSB.collection('dm_messages').add({convoId:cid,from:myName,fromRole:CU.role||'',to:_dmTarget.name,toRole:_dmTarget.role||'',text,ts:firebase.firestore.FieldValue.serverTimestamp()});
-    }
-  }catch(err){
-    inp.value=text;
-    toast('❌ Message not sent. Check your connection and try again. ('+err.message+')');
-  }
-}
-
-function chatConvKey(ev){if(ev.key==='Enter'&&!ev.shiftKey){ev.preventDefault();sendConvMsg();}}
-function autoResizeTA(ta){ta.style.height='auto';ta.style.height=Math.min(ta.scrollHeight,110)+'px';}
-
-function openCreateGroupModal(){
-  if(!CU||(CU.role!=='TL'&&!CU.isOM)){alert('Only OMs and Team Leads can create groups.');return;}
-  const bg=document.getElementById('chat-grp-modal-bg');
-  if(bg) bg.classList.add('open');
-  setTimeout(()=>{const inp=document.getElementById('chat-grp-name-inp');if(inp){inp.value='';inp.focus();}},80);
-}
-function closeCreateGroupModal(){const bg=document.getElementById('chat-grp-modal-bg');if(bg)bg.classList.remove('open');}
-async function createGroup(){
-  const inp=document.getElementById('chat-grp-name-inp');
-  const name=inp?inp.value.trim():'';
-  if(!name){if(inp)inp.focus();return;}
-  if(!FSB||!CU) return;
-  const myName=CU.agentName||CU.email||'Unknown';
-  const ref=await FSB.collection('chat_groups').add({name,createdBy:myName,createdAt:firebase.firestore.FieldValue.serverTimestamp(),lastMsg:'',lastMsgTime:null});
-  closeCreateGroupModal();
-  openGroupConv(ref.id,name);
-}
-
-function openNewDMModal(){
-  const bg=document.getElementById('chat-dm-modal-bg');
-  if(bg) bg.classList.add('open');
-  setTimeout(()=>{const inp=document.getElementById('chat-dm-search-inp');if(inp){inp.value='';inp.focus();}filterDMSearch('');},60);
-}
-function closeNewDMModal(){const bg=document.getElementById('chat-dm-modal-bg');if(bg)bg.classList.remove('open');}
-function filterDMSearch(q){
-  const el=document.getElementById('chat-dm-search-results');
-  if(!el) return;
-  const myName=CU?CU.agentName||CU.email:'';
-  const people=[];
-  (rosterAgents||[]).forEach(a=>{if(a.name&&a.name!==myName) people.push({name:a.name,role:'Agent'});});
-  (rosterTLS||[]).forEach(t=>{const n=typeof t==='string'?t:t.name;if(n&&n!==myName&&!people.find(p=>p.name===n)) people.push({name:n,role:'TL'});});
-  people.sort((a,b)=>a.name.localeCompare(b.name));
-  const filtered=q?people.filter(p=>p.name.toLowerCase().includes(q.toLowerCase())):people;
-  el.innerHTML=filtered.map(p=>`<div class="dm-person-row" data-dmname="${e(p.name)}" data-dmrole="${e(p.role)}" onclick="pickDMPerson(this)">
-    <div class="chat-conv-avatar" style="background:${avColor(p.name)};width:32px;height:32px;font-size:.72rem;flex-shrink:0;border-radius:50%;">${mkInitials(p.name)}</div>
-    <div><div class="dm-name">${e(p.name)}</div><div class="dm-role">${e(p.role)}</div></div>
-  </div>`).join('');
-}
-function pickDMPerson(el){closeNewDMModal();openDMConv(el.dataset.dmname,el.dataset.dmrole);}
-
-function showChatBadge(n){
-  _chatUnread=n;
-  const badge=document.getElementById('chat-badge');
-  if(badge){badge.textContent=n>9?'9+':n;badge.style.display='flex';}
-  ['nav-badge-om-chat','nav-badge-tl-chat','nav-badge-ag-chat'].forEach(id=>{const b=document.getElementById(id);if(b){b.textContent=n>9?'9+':n;b.style.display='';}});
-}
-function clearChatBadge(){
-  _chatUnread=0;_chatLastSeen=Date.now();
-  const badge=document.getElementById('chat-badge');
-  if(badge) badge.style.display='none';
-  ['nav-badge-om-chat','nav-badge-tl-chat','nav-badge-ag-chat'].forEach(id=>{const b=document.getElementById(id);if(b)b.style.display='none';});
-}
-
-function dmConvoId(a,b){return[a,b].sort().join('___');}
-function toggleChatPanel(){navToChat();}
-function subscribeChatMessages(){if(CU)initChatV2();}
-
-function openDMWith(name,role,src){openDMConv(name,role);}
-function doDMOpen(el){openDMConv(el.dataset.dmname,el.dataset.dmrole);}
-function showDMPeople(){}
-
-function subscribeDM(src){
-  if(_dmUnsub){_dmUnsub();_dmUnsub=null;}
-  if(!FSB||!_dmTarget||!CU) return;
-  const myName=CU.agentName||CU.email||'';
-  const cid=dmConvoId(myName,_dmTarget.name);
-  _dmUnsub=FSB.collection('dm_messages').where('convoId','==',cid)
-    .orderBy('ts','asc').limitToLast(60)
-    .onSnapshot(snap=>{
-      const msgs=snap.docs.map(d=>({id:d.id,...d.data()}));
-      renderChatMsgs(msgs,'chat-msgs-dm-'+src,true);
-    },err=>console.warn('dm:',err));
-}
-
-async function sendDM(src){
-  const inp=document.getElementById('chat-inp-dm-'+src);
-  if(!inp||!inp.value.trim()||!_dmTarget||!FSB||!CU) return;
-  const text=inp.value.trim();
-  inp.value='';
-  const myName=CU.agentName||CU.email||'';
-  await FSB.collection('dm_messages').add({
-    convoId:dmConvoId(myName,_dmTarget.name),
-    from:myName,fromRole:CU.role||'',
-    to:_dmTarget.name,toRole:_dmTarget.role||'',
-    text,
-    ts:firebase.firestore.FieldValue.serverTimestamp()
-  });
-}
-
-function dmKeyFab(ev){if(ev.key==='Enter'&&!ev.shiftKey){ev.preventDefault();sendDM('fab');}}
-function dmKeyMain(ev){if(ev.key==='Enter'&&!ev.shiftKey){ev.preventDefault();sendDM('main');}}
 
 function previewSound(type){
   const prefs=JSON.parse(localStorage.getItem('px-notif-prefs')||'{}');
@@ -11954,10 +11536,5 @@ document.addEventListener('keydown', function(e) {
     <div id="ac-phone-inner" style="flex:1;min-height:480px;overflow:hidden;"></div>
   </div>
 </div>
-<!-- FLOATING CHAT WIDGET -->
-<button id="chat-fab" onclick="navToChat()" title="Team Chat">
-  💬
-  <span id="chat-badge" style="display:none;align-items:center;justify-content:center;"></span>
-</button>
 </body>
 </html>
