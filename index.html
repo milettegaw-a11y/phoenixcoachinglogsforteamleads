@@ -5068,13 +5068,14 @@ function renderDMPeopleList(src){
   people.sort((a,b)=>a.name.localeCompare(b.name));
   listEl.innerHTML=people.map(p=>{
     const initials=p.name.split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase();
-    return`<div class="dm-person-row" onclick="openDMWith(${JSON.stringify(p.name)},${JSON.stringify(p.role)},'${src}')">
+    return`<div class="dm-person-row" data-dmname="${e(p.name)}" data-dmrole="${e(p.role)}" data-dmsrc="${src}" onclick="doDMOpen(this)">
       <div class="dm-avatar">${initials}</div>
       <div><div class="dm-name">${e(p.name)}</div><div class="dm-role">${p.role}</div></div>
     </div>`;
   }).join('');
 }
 
+function doDMOpen(el){openDMWith(el.dataset.dmname,el.dataset.dmrole,el.dataset.dmsrc);}
 function openDMWith(name, role, src){
   _dmTarget={name,role};
   const prefix=src==='fab'?'fab':'vc';
