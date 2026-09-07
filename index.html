@@ -154,9 +154,23 @@ body{font-family:'Poppins',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sa
 .chat-send{background:var(--yellow-dk);border:none;border-radius:50%;width:36px;height:36px;cursor:pointer;color:#fff;font-size:1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .chat-send:hover{opacity:.88;}
 /* Full-page chat view */
-#v-chat .chat-msgs{min-height:300px;max-height:calc(100vh - 280px);border:1.5px solid var(--sb-border);border-radius:12px;background:#fafafa;}
+#v-chat .chat-msgs{min-height:300px;max-height:calc(100vh - 340px);border:1.5px solid var(--sb-border);border-radius:12px;background:#fafafa;}
 #v-chat .chat-input-row{padding:10px 0 0;}
 #v-chat .chat-input{border-radius:10px;}
+.chat-tabs{display:flex;gap:0;border-bottom:1.5px solid var(--g200);flex-shrink:0;background:#fff;}
+.chat-tab-btn{flex:1;padding:9px 6px;border:none;background:none;font-family:inherit;font-size:.78rem;font-weight:600;color:var(--g500);cursor:pointer;border-bottom:2.5px solid transparent;margin-bottom:-1.5px;transition:color .13s;}
+.chat-tab-btn.active{color:var(--yellow-dk);border-bottom-color:var(--yellow-dk);}
+.chat-pane{display:none;flex-direction:column;flex:1;min-height:0;}
+.chat-pane.active{display:flex;}
+.dm-people-list{flex:1;overflow-y:auto;padding:8px;}
+.dm-person-row{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;cursor:pointer;transition:background .12s;}
+.dm-person-row:hover{background:var(--sb-bg);}
+.dm-avatar{width:32px;height:32px;border-radius:50%;background:var(--yellow-lt);color:var(--yellow-dk);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.82rem;flex-shrink:0;}
+.dm-name{font-size:.82rem;font-weight:600;color:var(--g700);}
+.dm-role{font-size:.68rem;color:var(--g400);}
+.dm-back{background:none;border:none;cursor:pointer;font-size:.8rem;color:var(--yellow-dk);font-weight:600;padding:6px 0;font-family:inherit;}
+.dm-with{font-size:.82rem;font-weight:700;color:var(--g800);padding:6px 0 4px;}
+.dm-unread-dot{width:8px;height:8px;border-radius:50%;background:#e53e3e;flex-shrink:0;}
 
 /* ══ COLOR THEMES ══ */
 html[data-theme="ocean"]{--yellow:#5ba3d4;--yellow-dk:#2b7fbc;--yellow-lt:#d0ecf9;--sb-grad:linear-gradient(160deg,#1d5c8a 0%,#2b7fbc 55%,#5ba3d4 100%);--hdr-grad:linear-gradient(135deg,#1d5c8a 0%,#5ba3d4 100%);--sb-bg:#d0ecf9;--sb-border:#92c8e8;--sb-dark:#1a4e78;--content-bg:#dff2ff;--topbar-bg:#bce1f7;--topbar-title:#1a4e78;}
@@ -2482,12 +2496,40 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
 <!-- CHAT VIEW -->
 <div id="v-chat" class="view">
   <div style="max-width:720px;margin:0 auto;padding:8px 0 40px;display:flex;flex-direction:column;height:calc(100vh - 100px);">
-    <div style="font-size:1.05rem;font-weight:700;color:var(--g800);margin-bottom:4px;">💬 Team Chat</div>
-    <div style="font-size:.75rem;color:var(--g500);margin-bottom:14px;">Shared channel — all roles</div>
-    <div class="chat-msgs" id="chat-msgs-main" style="flex:1;"></div>
-    <div class="chat-input-row" style="padding:10px 0 0;">
-      <textarea class="chat-input" id="chat-inp-main" rows="1" placeholder="Type a message…" onkeydown="chatKeyMain(event)"></textarea>
-      <button class="chat-send" onclick="sendChatMsg('main')" title="Send">➤</button>
+    <div style="font-size:1.05rem;font-weight:700;color:var(--g800);margin-bottom:12px;">💬 Team Chat</div>
+    <div style="background:#fff;border:1.5px solid var(--sb-border);border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,.06);display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;">
+      <div class="chat-tabs">
+        <button class="chat-tab-btn active" id="vc-tab-gen" onclick="switchChatTab('general','main')">💬 General</button>
+        <button class="chat-tab-btn" id="vc-tab-dm" onclick="switchChatTab('dm','main')">✉️ Direct Messages</button>
+      </div>
+      <!-- General pane -->
+      <div class="chat-pane active" id="vc-pane-general">
+        <div class="chat-msgs" id="chat-msgs-main" style="flex:1;border:none;border-radius:0;margin:0;background:#fafafa;"></div>
+        <div class="chat-input-row" style="padding:10px 12px;border-top:1px solid var(--g200);">
+          <textarea class="chat-input" id="chat-inp-main" rows="1" placeholder="Message everyone…" onkeydown="chatKeyMain(event)"></textarea>
+          <button class="chat-send" onclick="sendChatMsg('main')" title="Send">➤</button>
+        </div>
+      </div>
+      <!-- DM pane -->
+      <div class="chat-pane" id="vc-pane-dm">
+        <!-- People list -->
+        <div id="vc-dm-people" style="display:flex;flex-direction:column;flex:1;min-height:0;">
+          <div style="padding:10px 14px 6px;font-size:.72rem;font-weight:700;color:var(--g400);text-transform:uppercase;letter-spacing:.06em;">Select someone to message</div>
+          <div class="dm-people-list" id="vc-dm-people-list"></div>
+        </div>
+        <!-- DM conversation -->
+        <div id="vc-dm-convo" style="display:none;flex-direction:column;flex:1;min-height:0;">
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--g200);flex-shrink:0;">
+            <button class="dm-back" onclick="showDMPeople('main')">← Back</button>
+            <div class="dm-with" id="vc-dm-with-name"></div>
+          </div>
+          <div class="chat-msgs" id="chat-msgs-dm-main" style="flex:1;border:none;border-radius:0;background:#fafafa;"></div>
+          <div class="chat-input-row" style="padding:10px 12px;border-top:1px solid var(--g200);">
+            <textarea class="chat-input" id="chat-inp-dm-main" rows="1" placeholder="Send a direct message…" onkeydown="dmKeyMain(event)"></textarea>
+            <button class="chat-send" onclick="sendDM('main')" title="Send">➤</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -4911,6 +4953,8 @@ function toggleDesktopNotif(cb){
 
 /* ── CHAT ── */
 let _chatUnsub=null;
+let _dmUnsub=null;
+let _dmTarget=null; // {name, role}
 let _chatUnread=0;
 let _chatLastSeen=0;
 let _chatPanelOpen=false;
@@ -4940,18 +4984,20 @@ function subscribeChatMessages(){
     },err=>console.warn('chat:',err));
 }
 
-function renderChatMsgs(msgs,containerId){
+function renderChatMsgs(msgs,containerId,isDM){
   const el=document.getElementById(containerId);
   if(!el) return;
   const myName=CU?CU.agentName||CU.email:'';
   el.innerHTML=msgs.map(m=>{
-    const mine=(m.senderName===myName);
+    const sender=isDM?(m.from||'?'):(m.senderName||'?');
+    const mine=(sender===myName);
     const cls=mine?'mine':'theirs';
     const ts=m.ts&&m.ts.toDate?m.ts.toDate().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'';
-    const role=m.senderRole?` · ${m.senderRole}`:'';
+    const role=isDM?(mine?m.fromRole:m.toRole):(m.senderRole||'');
+    const roleStr=role?` · ${role}`:'';
     return`<div class="chat-msg ${cls}">
       <div class="chat-bubble">${e(m.text)}</div>
-      <div class="chat-meta">${mine?'You':e(m.senderName||'?')}${role} ${ts}</div>
+      <div class="chat-meta">${mine?'You':e(sender)}${roleStr} ${ts}</div>
     </div>`;
   }).join('');
   el.scrollTop=el.scrollHeight;
@@ -4997,6 +5043,89 @@ function clearChatBadge(){
     if(b) b.style.display='none';
   });
 }
+
+/* ── DIRECT MESSAGES ── */
+function dmConvoId(a,b){return[a,b].sort().join('___');}
+
+function switchChatTab(tab, src){
+  const prefix=src==='fab'?'fab':'vc';
+  document.getElementById(prefix+'-tab-gen').classList.toggle('active',tab==='general');
+  document.getElementById(prefix+'-tab-dm').classList.toggle('active',tab==='dm');
+  document.getElementById(prefix+'-pane-general').classList.toggle('active',tab==='general');
+  document.getElementById(prefix+'-pane-dm').classList.toggle('active',tab==='dm');
+  if(tab==='dm') renderDMPeopleList(src);
+}
+
+function renderDMPeopleList(src){
+  const prefix=src==='fab'?'fab':'vc';
+  const listEl=document.getElementById(prefix+'-dm-people-list');
+  if(!listEl) return;
+  const myName=CU?CU.agentName||CU.email:'';
+  // Build full roster: agents + TLs
+  const people=[];
+  (rosterAgents||[]).forEach(a=>{if(a.name&&a.name!==myName) people.push({name:a.name,role:'Agent'});});
+  (rosterTLS||[]).forEach(t=>{const n=typeof t==='string'?t:t.name;if(n&&n!==myName&&!people.find(p=>p.name===n)) people.push({name:n,role:'TL'});});
+  people.sort((a,b)=>a.name.localeCompare(b.name));
+  listEl.innerHTML=people.map(p=>{
+    const initials=p.name.split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase();
+    return`<div class="dm-person-row" onclick="openDMWith(${JSON.stringify(p.name)},${JSON.stringify(p.role)},'${src}')">
+      <div class="dm-avatar">${initials}</div>
+      <div><div class="dm-name">${e(p.name)}</div><div class="dm-role">${p.role}</div></div>
+    </div>`;
+  }).join('');
+}
+
+function openDMWith(name, role, src){
+  _dmTarget={name,role};
+  const prefix=src==='fab'?'fab':'vc';
+  // hide people list, show convo
+  document.getElementById(prefix+'-dm-people').style.display='none';
+  const convo=document.getElementById(prefix+'-dm-convo');
+  convo.style.display='flex';
+  const nameEl=document.getElementById(prefix+'-dm-with-name');
+  if(nameEl) nameEl.textContent=name;
+  subscribeDM(src);
+  setTimeout(()=>{const inp=document.getElementById('chat-inp-dm-'+src);if(inp)inp.focus();},60);
+}
+
+function showDMPeople(src){
+  _dmTarget=null;
+  if(_dmUnsub){_dmUnsub();_dmUnsub=null;}
+  const prefix=src==='fab'?'fab':'vc';
+  document.getElementById(prefix+'-dm-people').style.display='flex';
+  document.getElementById(prefix+'-dm-convo').style.display='none';
+}
+
+function subscribeDM(src){
+  if(_dmUnsub){_dmUnsub();_dmUnsub=null;}
+  if(!FSB||!_dmTarget||!CU) return;
+  const myName=CU.agentName||CU.email||'';
+  const cid=dmConvoId(myName,_dmTarget.name);
+  _dmUnsub=FSB.collection('dm_messages').where('convoId','==',cid)
+    .orderBy('ts','asc').limitToLast(60)
+    .onSnapshot(snap=>{
+      const msgs=snap.docs.map(d=>({id:d.id,...d.data()}));
+      renderChatMsgs(msgs,'chat-msgs-dm-'+src,true);
+    },err=>console.warn('dm:',err));
+}
+
+async function sendDM(src){
+  const inp=document.getElementById('chat-inp-dm-'+src);
+  if(!inp||!inp.value.trim()||!_dmTarget||!FSB||!CU) return;
+  const text=inp.value.trim();
+  inp.value='';
+  const myName=CU.agentName||CU.email||'';
+  await FSB.collection('dm_messages').add({
+    convoId:dmConvoId(myName,_dmTarget.name),
+    from:myName,fromRole:CU.role||'',
+    to:_dmTarget.name,toRole:_dmTarget.role||'',
+    text,
+    ts:firebase.firestore.FieldValue.serverTimestamp()
+  });
+}
+
+function dmKeyFab(ev){if(ev.key==='Enter'&&!ev.shiftKey){ev.preventDefault();sendDM('fab');}}
+function dmKeyMain(ev){if(ev.key==='Enter'&&!ev.shiftKey){ev.preventDefault();sendDM('main');}}
 
 function previewSound(type){
   const prefs=JSON.parse(localStorage.getItem('px-notif-prefs')||'{}');
@@ -11633,10 +11762,37 @@ document.addEventListener('keydown', function(e) {
     <span>💬 Team Chat</span>
     <button onclick="toggleChatPanel()" style="background:none;border:none;color:#fff;cursor:pointer;font-size:1.1rem;line-height:1;">✕</button>
   </div>
-  <div class="chat-msgs" id="chat-msgs-fab"></div>
-  <div class="chat-input-row">
-    <textarea class="chat-input" id="chat-inp-fab" rows="1" placeholder="Type a message…" onkeydown="chatKeyFab(event)"></textarea>
-    <button class="chat-send" onclick="sendChatMsg('fab')" title="Send">➤</button>
+  <div class="chat-tabs" style="background:rgba(255,255,255,.95);">
+    <button class="chat-tab-btn active" id="fab-tab-gen" onclick="switchChatTab('general','fab')">💬 General</button>
+    <button class="chat-tab-btn" id="fab-tab-dm" onclick="switchChatTab('dm','fab')">✉️ Direct</button>
+  </div>
+  <!-- General pane -->
+  <div class="chat-pane active" id="fab-pane-general" style="flex:1;min-height:0;">
+    <div class="chat-msgs" id="chat-msgs-fab" style="flex:1;"></div>
+    <div class="chat-input-row">
+      <textarea class="chat-input" id="chat-inp-fab" rows="1" placeholder="Message everyone…" onkeydown="chatKeyFab(event)"></textarea>
+      <button class="chat-send" onclick="sendChatMsg('fab')" title="Send">➤</button>
+    </div>
+  </div>
+  <!-- DM pane -->
+  <div class="chat-pane" id="fab-pane-dm" style="flex:1;min-height:0;">
+    <!-- People list -->
+    <div id="fab-dm-people" style="display:flex;flex-direction:column;flex:1;min-height:0;">
+      <div style="padding:8px 12px 4px;font-size:.68rem;font-weight:700;color:var(--g400);text-transform:uppercase;">Select someone</div>
+      <div class="dm-people-list" id="fab-dm-people-list"></div>
+    </div>
+    <!-- DM conversation -->
+    <div id="fab-dm-convo" style="display:none;flex-direction:column;flex:1;min-height:0;">
+      <div style="display:flex;align-items:center;gap:8px;padding:7px 12px;border-bottom:1px solid var(--g200);flex-shrink:0;">
+        <button class="dm-back" onclick="showDMPeople('fab')">← Back</button>
+        <div class="dm-with" id="fab-dm-with-name" style="font-size:.8rem;"></div>
+      </div>
+      <div class="chat-msgs" id="chat-msgs-dm-fab" style="flex:1;"></div>
+      <div class="chat-input-row">
+        <textarea class="chat-input" id="chat-inp-dm-fab" rows="1" placeholder="Direct message…" onkeydown="dmKeyFab(event)"></textarea>
+        <button class="chat-send" onclick="sendDM('fab')" title="Send">➤</button>
+      </div>
+    </div>
   </div>
 </div>
 </body>
