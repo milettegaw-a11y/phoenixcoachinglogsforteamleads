@@ -823,6 +823,7 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
         <div class="sb-item" data-tab="actions" onclick="switchOM('actions')"><span class="sb-icon">⚡</span><span>Action Items</span><span id="nav-badge-actions" class="sb-notif" style="display:none"></span></div>
         <div class="sb-item agent-hide" data-tab="leads" onclick="switchOM('leads')"><span class="sb-icon">📞</span><span>Lead Follow-Ups</span><span id="nav-badge-om-leads" class="sb-notif" style="display:none"></span></div>
         <div class="sb-item agent-hide" data-tab="leadmgmt" onclick="switchOM('leadmgmt')"><span class="sb-icon">🔶</span><span>Lead Management</span></div>
+        <div class="sb-item agent-hide" data-tab="myactions" onclick="switchOM('myactions')"><span class="sb-icon">🗓️</span><span>My Actions</span></div>
       </div>
       <div class="sb-section-lbl" onclick="toggleSbGroup('om-grp-res',this)">RESOURCES<span class="sb-grp-arrow">›</span></div>
       <div class="sb-group" id="om-grp-res">
@@ -863,6 +864,7 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
         <div class="sb-item" id="tl-nav-leads" onclick="tlShowView('leads')"><span class="sb-icon">📞</span><span>Lead Follow-Ups</span><span id="nav-badge-tl-leads" class="sb-notif" style="display:none"></span></div>
         <div class="sb-item" id="tl-nav-leadmgmt" onclick="tlShowView('leadmgmt')"><span class="sb-icon">🔶</span><span>Lead Management</span></div>
         <div class="sb-item" id="tl-nav-caddash" onclick="tlShowView('caddash')"><span class="sb-icon">📈</span><span>Cadence Dashboard</span></div>
+        <div class="sb-item" id="tl-nav-myactions" onclick="tlShowView('myactions')"><span class="sb-icon">🗓️</span><span>My Actions</span><span id="tl-nav-badge-myactions" class="sb-notif" style="display:none"></span></div>
       </div>
       <div class="sb-section-lbl" onclick="toggleSbGroup('tl-grp-res',this)">RESOURCES<span class="sb-grp-arrow">›</span></div>
       <div class="sb-group" id="tl-grp-res">
@@ -894,6 +896,7 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
         <div class="sb-item" data-tab="attendance" onclick="switchAgentTab('attendance')"><span class="sb-icon">📅</span><span>My Attendance</span><span id="nav-badge-att" class="sb-notif" style="display:none"></span></div>
         <div class="sb-item" data-tab="leads" onclick="switchAgentTab('leads')"><span class="sb-icon">📞</span><span>Lead Follow-Up</span><span id="nav-badge-leads" class="sb-notif" style="display:none"></span></div>
         <div class="sb-item" data-tab="leadmgmt" onclick="switchAgentTab('leadmgmt')"><span class="sb-icon">🔶</span><span>Lead Management</span></div>
+        <div class="sb-item" data-tab="myactions" onclick="switchAgentTab('myactions')"><span class="sb-icon">🗓️</span><span>My Actions</span><span id="nav-badge-myactions" class="sb-notif" style="display:none"></span></div>
       </div>
       <div class="sb-section-lbl" onclick="toggleSbGroup('ag-grp-res',this)">RESOURCES<span class="sb-grp-arrow">›</span></div>
       <div class="sb-group" id="ag-grp-res">
@@ -1787,6 +1790,18 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
         <div id="av-hs-leads-body"><div style="color:var(--g400);font-size:.8rem;padding:16px 0;text-align:center;">Loading HubSpot leads…</div></div>
       </div><!-- /av-leadmgmt -->
 
+      <!-- MY ACTIONS -->
+      <div id="av-myactions" class="av-section" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+          <div>
+            <div style="font-size:1rem;font-weight:700;color:var(--g800);">🗓️ My Actions</div>
+            <div style="font-size:.74rem;color:var(--g500);margin-top:2px;">Your scheduled follow-ups — due today, upcoming, and completed</div>
+          </div>
+          <button onclick="openMyActionModal()" style="padding:7px 16px;background:#ff7a59;color:#fff;border:none;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer;">+ Add Follow-Up</button>
+        </div>
+        <div id="av-myactions-body"><div style="color:var(--g400);font-size:.8rem;padding:16px 0;text-align:center;">Loading your actions…</div></div>
+      </div><!-- /av-myactions -->
+
       <!-- CALL LIBRARY -->
       <div id="av-lib" class="av-section" style="display:none;padding:16px;">
         <div style="margin-bottom:20px;">
@@ -2385,12 +2400,50 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
 <div id="v-cad-dash" class="view">
   <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
     <div>
-      <div style="font-size:1rem;font-weight:700;color:var(--g800);">📈 Cadence Compliance Dashboard</div>
-      <div style="font-size:.74rem;color:var(--g500);margin-top:2px;">Team compliance % per day — how well each team completes their daily cadence requirements</div>
+      <div style="font-size:1rem;font-weight:700;color:var(--g800);">📈 Cadence Dashboard</div>
+      <div style="font-size:.74rem;color:var(--g500);margin-top:2px;">Daily compliance, 14-day trend &amp; call connect rates</div>
     </div>
-    <button onclick="renderCadDash()" style="padding:6px 14px;border:1.5px solid #ff7a59;border-radius:8px;background:#fff;color:#ff7a59;font-size:.78rem;font-weight:700;cursor:pointer;">↻ Refresh</button>
+    <div style="display:flex;gap:6px;align-items:center;">
+      <div style="display:flex;border:1.5px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+        <button id="cad-subtab-today" onclick="setCadDashTab('today')" style="padding:5px 14px;border:none;background:#ff7a59;color:#fff;font-size:.75rem;font-weight:700;cursor:pointer;">Today</button>
+        <button id="cad-subtab-trend" onclick="setCadDashTab('trend')" style="padding:5px 14px;border:none;background:#f3f4f6;color:#6b7280;font-size:.75rem;font-weight:700;cursor:pointer;">14-Day Trend</button>
+        <button id="cad-subtab-tcr" onclick="setCadDashTab('tcr')" style="padding:5px 14px;border:none;background:#f3f4f6;color:#6b7280;font-size:.75rem;font-weight:700;cursor:pointer;">TCR%</button>
+      </div>
+      <button onclick="renderCadDash();saveDailyCadenceSnapshot();" style="padding:6px 14px;border:1.5px solid #ff7a59;border-radius:8px;background:#fff;color:#ff7a59;font-size:.78rem;font-weight:700;cursor:pointer;">↻ Refresh</button>
+    </div>
   </div>
-  <div id="cad-dash-body"><div style="color:var(--g400);font-size:.8rem;padding:24px;text-align:center;">Click Refresh or visit Lead Management first to load lead data.</div></div>
+  <!-- Today panel -->
+  <div id="cad-panel-today">
+    <div id="cad-dash-body"><div style="color:var(--g400);font-size:.8rem;padding:24px;text-align:center;">Click Refresh or visit Lead Management first to load lead data.</div></div>
+  </div>
+  <!-- 14-Day Trend panel -->
+  <div id="cad-panel-trend" style="display:none;">
+    <div style="background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;padding:20px;">
+      <div style="font-size:.85rem;font-weight:700;color:#374151;margin-bottom:4px;">📊 14-Day Cadence Compliance Trend</div>
+      <div style="font-size:.7rem;color:#9ca3af;margin-bottom:16px;">Historical daily compliance % — saved automatically when you visit the Cadence Dashboard each day</div>
+      <div id="cad-trend-empty" style="display:none;color:#9ca3af;font-size:.8rem;padding:24px;text-align:center;">No historical data yet — snapshots save automatically each time you open this tab. Come back tomorrow to see your first trend line.</div>
+      <div style="position:relative;height:300px;"><canvas id="cad-trend-canvas" style="display:none;"></canvas></div>
+    </div>
+  </div>
+  <!-- TCR% panel -->
+  <div id="cad-panel-tcr" style="display:none;"></div>
+</div>
+
+<!-- MY ACTIONS VIEW (TL/OM) -->
+<div id="v-myactions-tl" class="view">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+    <div>
+      <div style="font-size:1rem;font-weight:700;color:var(--g800);">🗓️ My Actions</div>
+      <div style="font-size:.74rem;color:var(--g500);margin-top:2px;">Scheduled follow-ups for leads — yours and your team's</div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <select id="tl-actions-agent-filter" onchange="renderMyActionsTL()" style="font-size:.72rem;border:1.5px solid #e5e7eb;border-radius:8px;padding:5px 10px;background:#fff;color:#374151;cursor:pointer;">
+        <option value="">All Agents</option>
+      </select>
+      <button onclick="openMyActionModal()" style="padding:7px 16px;background:#ff7a59;color:#fff;border:none;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer;">+ Add Follow-Up</button>
+    </div>
+  </div>
+  <div id="tl-myactions-body"><div style="color:var(--g400);font-size:.8rem;padding:16px 0;text-align:center;">Loading actions…</div></div>
 </div>
 
 <!-- ACTION ITEMS VIEW -->
@@ -6090,7 +6143,7 @@ function renderHSLeads(){
         <button title="Edit contact info" onclick="const f=document.getElementById('contact-edit-form-${l.id}');f.style.display=f.style.display==='none'?'flex':'none';" style="background:none;border:none;cursor:pointer;font-size:1rem;color:#9ca3af;padding:2px 6px;" >✏️</button>
       </div>
     </div>`;
-    const actionsHtml=`<div style="padding:10px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #f0f0f0;">${stageDropdown(l)}<a href="https://app.hubspot.com/contacts/45809585/ticket/${l.id}" target="_blank" style="font-size:.67rem;color:#ff7a59;text-decoration:none;font-weight:600;border:1px solid #ff7a59;padding:3px 8px;border-radius:6px;">🔗 HubSpot</a></div>`;
+    const actionsHtml=`<div style="padding:10px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #f0f0f0;flex-wrap:wrap;">${stageDropdown(l)}<a href="https://app.hubspot.com/contacts/45809585/ticket/${l.id}" target="_blank" style="font-size:.67rem;color:#ff7a59;text-decoration:none;font-weight:600;border:1px solid #ff7a59;padding:3px 8px;border-radius:6px;">🔗 HubSpot</a><button onclick="openMyActionModal('${l.id}','${(l.contactName||l.subject||'').replace(/'/g,'')}');closeLeadPanel();" style="font-size:.67rem;color:#3b82f6;font-weight:600;border:1px solid #3b82f6;padding:3px 8px;border-radius:6px;background:#fff;cursor:pointer;">🗓️ Schedule Follow-Up</button></div>`;
     document.getElementById('lead-panel-name').textContent=displayName;
     document.getElementById('lead-panel-sub').textContent=(l.contactPhone||'')+(l.stageName?' · '+l.stageName:'');
     document.getElementById('lead-panel-body').innerHTML=summaryHtml+gridHtml+actionsHtml+commPanel(l,allCalls);
@@ -6573,9 +6626,9 @@ function toggleSbSub(id){
 
 function switchOM(tab){
   document.querySelectorAll('#om-nav .sb-item').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
-  const titles={dash:'Coaching Dashboard',coaching:'Coaching Logs',nte:'NTE Logs',ft:'Follow Through',cl:'Call Listening',attendance:'Attendance Points',ranking:'Agent Ranking',pwreset:'Reset Passwords',kb:'Knowledge Base',suggestions:'Suggestions & Reports',calendar:'Team Calendar',actions:'Action Items',leads:'Lead Follow-Ups',leadmgmt:'Lead Management',onboard:'Onboarding / Offboarding',settings:'Settings',chat:'Team Chat'};
+  const titles={dash:'Coaching Dashboard',coaching:'Coaching Logs',nte:'NTE Logs',ft:'Follow Through',cl:'Call Listening',attendance:'Attendance Points',ranking:'Agent Ranking',pwreset:'Reset Passwords',kb:'Knowledge Base',suggestions:'Suggestions & Reports',calendar:'Team Calendar',actions:'Action Items',leads:'Lead Follow-Ups',leadmgmt:'Lead Management',myactions:'My Actions',onboard:'Onboarding / Offboarding',settings:'Settings',chat:'Team Chat'};
   const el=document.getElementById('tb-title'); if(el) el.textContent=titles[tab]||'';
-  const map={dash:'v-om-dash',coaching:'v-om-c',nte:'v-om-n',ft:'v-om-f',cl:'v-om-cl',attendance:'v-om-attendance',ranking:'v-ranking',pwreset:'v-om-pwreset',kb:'v-kb',suggestions:'v-om-suggestions',calendar:'v-cal',actions:'v-actions',leads:'v-leads-tl',leadmgmt:'v-leadmgmt-tl',onboard:'v-onboard',settings:'v-settings',chat:'v-chat'};
+  const map={dash:'v-om-dash',coaching:'v-om-c',nte:'v-om-n',ft:'v-om-f',cl:'v-om-cl',attendance:'v-om-attendance',ranking:'v-ranking',pwreset:'v-om-pwreset',kb:'v-kb',suggestions:'v-om-suggestions',calendar:'v-cal',actions:'v-actions',leads:'v-leads-tl',leadmgmt:'v-leadmgmt-tl',myactions:'v-myactions-tl',onboard:'v-onboard',settings:'v-settings',chat:'v-chat'};
   showView(map[tab]||'v-om-dash');
   populateAllFilters();
   if(tab==='dash')renderOMDash();
@@ -6592,6 +6645,7 @@ function switchOM(tab){
   if(tab==='actions'){subscribeActionItems();renderActionItems();}
   if(tab==='leads'){subscribeLeads();renderLeads();}
   if(tab==='leadmgmt')fetchHSLeads();
+  if(tab==='myactions'){loadMyActionsTL();updateMyActionsBadge();}
   if(tab==='onboard'){subscribeOnboard();renderOnboardDash();}
   if(tab==='settings') renderSettingsPage();
   if(tab==='chat'){initChatV2();clearChatBadge();}
@@ -7268,11 +7322,363 @@ function clearFilters(){
   renderDash();
 }
 
+/* ═══════════════════════════════════════════════════════
+   MY ACTIONS — Firebase-backed follow-up scheduling
+═══════════════════════════════════════════════════════ */
+let _myActionsUnsub = null;
+
+function openMyActionModal(prefillLeadId, prefillLeadName) {
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('ma-due-date').value = today;
+  document.getElementById('ma-lead-name').value = prefillLeadName || '';
+  document.getElementById('ma-lead-id').value = prefillLeadId || '';
+  document.getElementById('ma-note').value = '';
+  document.getElementById('ma-status').textContent = '';
+  document.getElementById('my-action-modal-overlay').style.display = 'block';
+  document.getElementById('my-action-modal').style.display = 'block';
+  setTimeout(() => document.getElementById('ma-lead-name').focus(), 80);
+}
+function closeMyActionModal() {
+  document.getElementById('my-action-modal-overlay').style.display = 'none';
+  document.getElementById('my-action-modal').style.display = 'none';
+}
+async function saveMyAction() {
+  if (!FSB) { alert('Firebase not connected'); return; }
+  const leadName = (document.getElementById('ma-lead-name').value || '').trim();
+  const note = (document.getElementById('ma-note').value || '').trim();
+  const dueDate = document.getElementById('ma-due-date').value;
+  if (!leadName) { document.getElementById('ma-lead-name').style.borderColor = '#ef4444'; return; }
+  if (!dueDate) { document.getElementById('ma-due-date').style.borderColor = '#ef4444'; return; }
+  const btn = document.getElementById('ma-save-btn');
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+  const agentEmail = CU && CU.email ? CU.email.toLowerCase() : 'unknown';
+  try {
+    await FSB.collection('my_actions').doc(agentEmail).collection('items').add({
+      leadName, leadId: (document.getElementById('ma-lead-id').value || '').trim() || null,
+      note, dueDate, agentEmail, agentName: CU && CU.agentName ? CU.agentName : (CU && CU.email ? CU.email.split('@')[0] : 'Agent'),
+      doneAt: null, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    document.getElementById('ma-status').textContent = '✅ Saved!';
+    setTimeout(() => { closeMyActionModal(); loadMyActions(); loadMyActionsTL(); updateMyActionsBadge(); }, 700);
+  } catch(e) { document.getElementById('ma-status').textContent = '⚠️ Error: ' + e.message; }
+  finally { btn.disabled = false; btn.textContent = 'Save Action'; }
+}
+
+async function toggleMyActionDone(agentEmail, itemId, isDone) {
+  if (!FSB) return;
+  await FSB.collection('my_actions').doc(agentEmail).collection('items').doc(itemId).update({
+    doneAt: isDone ? null : firebase.firestore.FieldValue.serverTimestamp()
+  });
+  loadMyActions(); loadMyActionsTL(); updateMyActionsBadge();
+}
+async function deleteMyAction(agentEmail, itemId) {
+  if (!FSB) return;
+  if (!confirm('Delete this action?')) return;
+  await FSB.collection('my_actions').doc(agentEmail).collection('items').doc(itemId).delete();
+  loadMyActions(); loadMyActionsTL(); updateMyActionsBadge();
+}
+
+async function loadMyActions() {
+  const el = document.getElementById('av-myactions-body');
+  if (!el || !FSB) return;
+  const agentEmail = CU && CU.email ? CU.email.toLowerCase() : null;
+  if (!agentEmail) { el.innerHTML = '<div style="color:#9ca3af;font-size:.8rem;padding:16px;text-align:center;">Not logged in.</div>'; return; }
+  el.innerHTML = '<div style="color:#9ca3af;font-size:.8rem;padding:16px;text-align:center;">Loading…</div>';
+  try {
+    const snap = await FSB.collection('my_actions').doc(agentEmail).collection('items')
+      .orderBy('dueDate', 'asc').get();
+    renderMyActionsEl(el, snap.docs.map(d => ({id: d.id, ...d.data()})), agentEmail, false);
+  } catch(e) { el.innerHTML = '<div style="color:#ef4444;font-size:.8rem;padding:16px;">Error: ' + e.message + '</div>'; }
+}
+
+async function loadMyActionsTL() {
+  const el = document.getElementById('tl-myactions-body');
+  if (!el || !FSB) return;
+  el.innerHTML = '<div style="color:#9ca3af;font-size:.8rem;padding:16px;text-align:center;">Loading…</div>';
+  // TL sees their team's agents; OM sees all
+  const myTeam = CU && !CU.isOM && TL_TEAM_MAP && TL_TEAM_MAP[CU.email] ? TL_TEAM_MAP[CU.email] : null;
+  const teamAgents = AGENTS.filter(a => myTeam ? a.tl === myTeam : HS_ALLOWED_TEAMS.has(a.tl));
+  // Populate agent filter dropdown
+  const sel = document.getElementById('tl-actions-agent-filter');
+  if (sel) {
+    const cur = sel.value;
+    while (sel.options.length > 1) sel.remove(1);
+    teamAgents.forEach(a => { const o = document.createElement('option'); o.value = a.email || a.name; o.textContent = a.name; sel.appendChild(o); });
+    if (cur) sel.value = cur;
+  }
+  const agentFilter = sel ? sel.value : '';
+  try {
+    const agentsToLoad = agentFilter ? teamAgents.filter(a => (a.email || a.name) === agentFilter) : teamAgents;
+    const allItems = [];
+    await Promise.all(agentsToLoad.map(async ag => {
+      const email = ag.email || ag.name.toLowerCase().replace(/\s+/g,'') + '@homeaglowsales.com';
+      const snap = await FSB.collection('my_actions').doc(email).collection('items')
+        .orderBy('dueDate','asc').get();
+      snap.docs.forEach(d => allItems.push({id: d.id, ...d.data(), _agentEmail: email}));
+    }));
+    allItems.sort((a,b) => (a.dueDate||'') < (b.dueDate||'') ? -1 : 1);
+    renderMyActionsEl(el, allItems, null, true);
+  } catch(e) { el.innerHTML = '<div style="color:#ef4444;font-size:.8rem;padding:16px;">Error: ' + e.message + '</div>'; }
+}
+
+function renderMyActionsEl(el, items, agentEmail, showAgent) {
+  const today = new Date().toISOString().slice(0,10);
+  const overdue = items.filter(i => !i.doneAt && i.dueDate < today);
+  const dueToday = items.filter(i => !i.doneAt && i.dueDate === today);
+  const upcoming = items.filter(i => !i.doneAt && i.dueDate > today);
+  const done = items.filter(i => !!i.doneAt);
+  if (!items.length) {
+    el.innerHTML = '<div style="padding:32px;text-align:center;"><div style="font-size:2rem;margin-bottom:8px;">🗓️</div><div style="color:#9ca3af;font-size:.82rem;">No actions scheduled yet.</div><div style="margin-top:12px;"><button onclick="openMyActionModal()" style="padding:8px 18px;background:#ff7a59;color:#fff;border:none;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer;">+ Schedule First Follow-Up</button></div></div>';
+    return;
+  }
+  const renderGroup = (title, icon, color, bg, group) => {
+    if (!group.length) return '';
+    return `<div style="margin-bottom:20px;">
+      <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:${color};background:${bg};padding:5px 12px;border-radius:6px;margin-bottom:10px;">${icon} ${title} (${group.length})</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        ${group.map(item => renderActionCard(item, agentEmail || item._agentEmail, showAgent)).join('')}
+      </div>
+    </div>`;
+  };
+  el.innerHTML =
+    renderGroup('Overdue', '🔴', '#b91c1c', '#fee2e2', overdue) +
+    renderGroup('Due Today', '🟡', '#92400e', '#fef3c7', dueToday) +
+    renderGroup('Upcoming', '📅', '#1d4ed8', '#dbeafe', upcoming) +
+    (done.length ? `<details style="margin-top:4px;"><summary style="font-size:.72rem;font-weight:700;color:#6b7280;cursor:pointer;padding:4px 0;">✅ Completed (${done.length})</summary><div style="margin-top:8px;display:flex;flex-direction:column;gap:6px;">${done.map(item => renderActionCard(item, agentEmail || item._agentEmail, showAgent)).join('')}</div></details>` : '');
+}
+
+function renderActionCard(item, agentEmail, showAgent) {
+  const isDone = !!item.doneAt;
+  const doneTs = item.doneAt && item.doneAt.toDate ? item.doneAt.toDate().toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '';
+  const fmtDue = item.dueDate ? new Date(item.dueDate + 'T00:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}) : '—';
+  const lid = item.leadId || '';
+  const hsLink = lid ? `<a href="https://app.hubspot.com/contacts/45809585/ticket/${lid}" target="_blank" style="font-size:.63rem;color:#ff7a59;text-decoration:none;font-weight:600;border:1px solid #ff7a59;padding:2px 7px;border-radius:5px;flex-shrink:0;">🔗 HubSpot</a>` : '';
+  return `<div style="background:#fff;border:1px solid ${isDone?'#e5e7eb':'#f0f0f0'};border-radius:10px;padding:12px 14px;opacity:${isDone?'.6':'1'};">
+    <div style="display:flex;align-items:flex-start;gap:10px;">
+      <input type="checkbox" ${isDone?'checked':''} onchange="toggleMyActionDone('${agentEmail}','${item.id}',${isDone})" style="margin-top:3px;width:15px;height:15px;accent-color:#ff7a59;cursor:pointer;flex-shrink:0;" />
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:.82rem;font-weight:700;color:#111;${isDone?'text-decoration:line-through;':''}">${(item.leadName||'').replace(/</g,'&lt;')}</div>
+        ${showAgent?`<div style="font-size:.65rem;color:#9ca3af;margin-top:1px;">👤 ${item.agentName||item.agentEmail}</div>`:''}
+        ${item.note?`<div style="font-size:.73rem;color:#6b7280;margin-top:5px;line-height:1.5;white-space:pre-wrap;">${(item.note||'').replace(/</g,'&lt;')}</div>`:''}
+        <div style="display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;">
+          <span style="font-size:.65rem;color:#6b7280;">📅 ${fmtDue}</span>
+          ${isDone?`<span style="font-size:.63rem;color:#22c55e;">✅ Done ${doneTs}</span>`:''}
+          ${hsLink}
+          <button onclick="deleteMyAction('${agentEmail}','${item.id}')" style="margin-left:auto;background:none;border:none;color:#d1d5db;font-size:.85rem;cursor:pointer;padding:0;" title="Delete">🗑️</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function updateMyActionsBadge() {
+  if (!FSB || !CU) return;
+  const agentEmail = CU.email ? CU.email.toLowerCase() : null;
+  if (!agentEmail) return;
+  try {
+    const today = new Date().toISOString().slice(0,10);
+    const snap = await FSB.collection('my_actions').doc(agentEmail).collection('items')
+      .where('doneAt','==',null).get();
+    const urgent = snap.docs.filter(d => (d.data().dueDate||'') <= today).length;
+    ['nav-badge-myactions','tl-nav-badge-myactions'].forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.style.display = urgent > 0 ? '' : 'none';
+      el.textContent = urgent > 0 ? urgent : '';
+    });
+  } catch(_) {}
+}
+
+/* ═══════════════════════════════════════════════════════
+   CADENCE DAILY SNAPSHOT — save to Firebase once per day
+═══════════════════════════════════════════════════════ */
+async function saveDailyCadenceSnapshot() {
+  if (!FSB || !_hsLeadsLoaded || !_hsLeads.length) return;
+  const today = new Date().toISOString().slice(0,10);
+  const ref = FSB.collection('cadence_snapshots').doc(today);
+  try {
+    const existing = await ref.get();
+    // Only save once per day (overwrite if TL manually refreshes)
+    const agentData = {};
+    const teamData = {};
+    _hsLeads.forEach(l => {
+      if (!agentData[l.ownerName]) agentData[l.ownerName] = {total:0,done:0,pct:0,team:l.ownerName};
+      agentData[l.ownerName].total++;
+      if ((l.cadencePct||0) >= 100) agentData[l.ownerName].done++;
+      if (!teamData[l.ownerName.replace('Team ','')]) {
+        const ag = rosterAgents.find(a => a.name === l.ownerName);
+        const teamKey = ag ? ag.tl : 'Unknown';
+        if (!teamData[teamKey]) teamData[teamKey] = {total:0,done:0};
+        teamData[teamKey].total++;
+        if ((l.cadencePct||0) >= 100) teamData[teamKey].done++;
+      }
+    });
+    // Compute pct for each agent
+    Object.values(agentData).forEach(a => { a.pct = a.total > 0 ? Math.round(a.done/a.total*100) : 0; });
+    // Compute team pct
+    const teamSnap = {};
+    _hsLeads.forEach(l => {
+      const ag = rosterAgents.find(a => a.name === l.ownerName);
+      const teamKey = ag ? ag.tl : 'Unknown';
+      if (!teamSnap[teamKey]) teamSnap[teamKey] = {total:0,done:0};
+      teamSnap[teamKey].total++;
+      if ((l.cadencePct||0) >= 100) teamSnap[teamKey].done++;
+    });
+    Object.keys(teamSnap).forEach(k => { teamSnap[k].pct = teamSnap[k].total > 0 ? Math.round(teamSnap[k].done/teamSnap[k].total*100) : 0; });
+    const overallPct = _hsLeads.length > 0 ? Math.round(_hsLeads.filter(l=>(l.cadencePct||0)>=100).length/_hsLeads.length*100) : 0;
+    await ref.set({date:today, savedAt:firebase.firestore.FieldValue.serverTimestamp(), overallPct, agentData, teamData:teamSnap, totalLeads:_hsLeads.length});
+    console.log('[Snapshot] Daily cadence snapshot saved for', today, '— overall', overallPct+'%');
+  } catch(e) { console.warn('[Snapshot] Failed to save:', e.message); }
+}
+
+async function loadCadenceHistory(days) {
+  if (!FSB) return [];
+  const results = [];
+  const today = new Date();
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(today); d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().slice(0,10);
+    results.push({date: dateStr, dayLabel: d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})});
+  }
+  const snaps = await Promise.all(results.map(r => FSB.collection('cadence_snapshots').doc(r.date).get().catch(()=>null)));
+  return results.map((r,i) => ({...r, data: snaps[i] && snaps[i].exists ? snaps[i].data() : null}));
+}
+
+// ─────────────────────────────────────────────
+// ENHANCED renderCadDash: add weekly trend + TCR
+// ─────────────────────────────────────────────
+
+// Switch between sub-tabs inside Cadence Dashboard
+let _cadDashTab = 'today';
+function setCadDashTab(tab) {
+  _cadDashTab = tab;
+  ['today','trend','tcr'].forEach(t => {
+    const btn = document.getElementById('cad-subtab-' + t);
+    if (btn) { btn.style.background = t === tab ? '#ff7a59' : '#f3f4f6'; btn.style.color = t === tab ? '#fff' : '#6b7280'; }
+  });
+  document.getElementById('cad-panel-today') && (document.getElementById('cad-panel-today').style.display = tab === 'today' ? '' : 'none');
+  document.getElementById('cad-panel-trend') && (document.getElementById('cad-panel-trend').style.display = tab === 'trend' ? '' : 'none');
+  document.getElementById('cad-panel-tcr') && (document.getElementById('cad-panel-tcr').style.display = tab === 'tcr' ? '' : 'none');
+  if (tab === 'trend') renderCadTrendChart();
+  if (tab === 'tcr') renderTCRDash();
+}
+
+let _cadTrendChart = null;
+async function renderCadTrendChart() {
+  const el = document.getElementById('cad-trend-canvas');
+  if (!el) return;
+  const history = await loadCadenceHistory(14);
+  const hasData = history.some(h => h.data);
+  if (!hasData) {
+    document.getElementById('cad-trend-empty').style.display = '';
+    el.style.display = 'none';
+    return;
+  }
+  document.getElementById('cad-trend-empty').style.display = 'none';
+  el.style.display = '';
+  const teamColors={'Team Jhay Oglimen':'#3b82f6','Team Jumz Delacruz':'#22c55e','Team Florence Llait':'#f97316','Team Jersey Deguzman':'#a855f7'};
+  const teams = [...HS_ALLOWED_TEAMS];
+  const labels = history.map(h => h.dayLabel);
+  const datasets = [
+    {label:'Overall', data: history.map(h => h.data ? h.data.overallPct : null), borderColor:'#374151', backgroundColor:'#37415122', borderWidth:2.5, tension:.3, spanGaps:true, pointRadius:4},
+    ...teams.map(team => ({
+      label: team.replace('Team ',''), borderColor: teamColors[team] || '#999', backgroundColor:'transparent',
+      borderWidth: 1.5, tension:.3, spanGaps:true, pointRadius:3,
+      data: history.map(h => {
+        if (!h.data || !h.data.teamData) return null;
+        const td = h.data.teamData[team];
+        return td ? td.pct : null;
+      })
+    }))
+  ];
+  if (_cadTrendChart) { _cadTrendChart.destroy(); _cadTrendChart = null; }
+  _cadTrendChart = new Chart(el, {
+    type:'line', data:{labels, datasets},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{position:'top',labels:{font:{size:11},padding:12,boxWidth:10}},
+        tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y===null?'No data':c.parsed.y+'%'}`}}},
+      scales:{x:{grid:{display:false},ticks:{font:{size:10},maxRotation:40}},
+        y:{min:0,max:100,ticks:{callback:v=>v+'%',font:{size:10}},grid:{color:'#f3f4f6'},title:{display:true,text:'Compliance %',font:{size:10}}}}}
+  });
+}
+
+function renderTCRDash() {
+  const el = document.getElementById('cad-panel-tcr');
+  if (!el) return;
+  if (!_hsLeadsLoaded || !_hsLeads.length) {
+    el.innerHTML = '<div style="color:#9ca3af;font-size:.8rem;padding:24px;text-align:center;">Load Lead Management first to see TCR metrics.</div>';
+    return;
+  }
+  // TCR = connected calls / total calls (per agent, today's calls only)
+  // CSR = (leads in closed/won stage) / connected calls
+  const closedWonStages = ['1072805490','1072805491','1072805492'];
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const todayEnd = todayStart + 86400000;
+  const agentStats = {};
+  _hsLeads.forEach(l => {
+    if (!agentStats[l.ownerName]) agentStats[l.ownerName] = {agent:l.ownerName, team:l.ownerName, totalLeads:0, totalCalls:0, connected:0, closed:0};
+    const s = agentStats[l.ownerName];
+    s.totalLeads++;
+    const ag = rosterAgents.find(a => a.name === l.ownerName);
+    if (ag) s.team = ag.tl;
+    if (closedWonStages.includes(l.stageId)) s.closed++;
+    const todayCalls = (l.calls||[]).filter(c => c.type==='call' && c.timestamp && hsTs(c.timestamp) >= todayStart && hsTs(c.timestamp) < todayEnd);
+    s.totalCalls += todayCalls.length;
+    s.connected += todayCalls.filter(c => c.connected || (c.status||'').toUpperCase()==='COMPLETED').length;
+  });
+  const rows = Object.values(agentStats).sort((a,b) => {
+    const tcrA = a.totalCalls > 0 ? a.connected / a.totalCalls : 0;
+    const tcrB = b.totalCalls > 0 ? b.connected / b.totalCalls : 0;
+    return tcrB - tcrA;
+  });
+  const teamColors={'Team Jhay Oglimen':'#3b82f6','Team Jumz Delacruz':'#22c55e','Team Florence Llait':'#f97316','Team Jersey Deguzman':'#a855f7'};
+  const pct = (n,d) => d > 0 ? Math.round(n/d*100) + '%' : '—';
+  const TH = 'padding:8px 12px;text-align:left;font-weight:700;color:#374151;border-bottom:2px solid #e5e7eb;font-size:.68rem;text-transform:uppercase;letter-spacing:.04em;';
+  const TD = 'padding:8px 12px;border-bottom:1px solid #f3f4f6;';
+  el.innerHTML = `<div style="margin-bottom:14px;">
+    <div style="font-size:.78rem;font-weight:700;color:#374151;margin-bottom:4px;">📊 Call Connect Rate (TCR) — Today</div>
+    <div style="font-size:.7rem;color:#9ca3af;">TCR = Connected Calls ÷ Total Calls placed today. CSR = Closed Leads ÷ Connected Calls.</div>
+    <div style="font-size:.67rem;color:#f97316;margin-top:4px;">Note: "Connected" = calls logged as COMPLETED in HubSpot. Aircall tag-based connect detection coming soon.</div>
+  </div>
+  <div style="overflow-x:auto;background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;">
+    <table style="width:100%;border-collapse:collapse;font-size:.78rem;">
+      <thead><tr style="background:#f9fafb;">
+        <th style="${TH}">Agent</th><th style="${TH}">Team</th>
+        <th style="${TH}text-align:center;">Leads</th>
+        <th style="${TH}text-align:center;">Calls Today</th>
+        <th style="${TH}text-align:center;">Connected</th>
+        <th style="${TH}text-align:center;">TCR%</th>
+        <th style="${TH}text-align:center;">Closed</th>
+        <th style="${TH}text-align:center;">CSR%</th>
+      </tr></thead>
+      <tbody>${rows.map(r => {
+        const tcr = r.totalCalls > 0 ? Math.round(r.connected/r.totalCalls*100) : null;
+        const csr = r.connected > 0 ? Math.round(r.closed/r.connected*100) : null;
+        const tcrC = tcr===null?'#9ca3af':tcr>=30?'#22c55e':tcr>=15?'#f97316':'#ef4444';
+        const csrC = csr===null?'#9ca3af':csr>=20?'#22c55e':csr>=10?'#f97316':'#ef4444';
+        const tc = teamColors[r.team]||'#6b7280';
+        return `<tr>
+          <td style="${TD}font-weight:600;color:#111;">${r.agent}</td>
+          <td style="${TD}"><span style="font-size:.62rem;background:${tc}22;color:${tc};padding:2px 8px;border-radius:99px;font-weight:700;">${r.team.replace('Team ','')}</span></td>
+          <td style="${TD}text-align:center;color:#6b7280;">${r.totalLeads}</td>
+          <td style="${TD}text-align:center;color:#374151;font-weight:600;">${r.totalCalls}</td>
+          <td style="${TD}text-align:center;color:#3b82f6;font-weight:700;">${r.connected}</td>
+          <td style="${TD}text-align:center;font-weight:800;color:${tcrC};font-size:.84rem;">${tcr!==null?tcr+'%':'—'}</td>
+          <td style="${TD}text-align:center;color:#6b7280;">${r.closed}</td>
+          <td style="${TD}text-align:center;font-weight:800;color:${csrC};">${csr!==null?csr+'%':'—'}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>
+  </div>`;
+}
+
 // Switch TL nav views (Dashboard / Coaching Logs / Attendance Points)
 function tlShowView(tab){
-  const viewMap={dashboard:'v-tl',logs:'v-tl-logs',nte:'v-om-n',attendance:'v-tl-attendance',ranking:'v-ranking',kb:'v-kb',calendar:'v-cal',actions:'v-actions',leads:'v-leads-tl',leadmgmt:'v-leadmgmt-tl',caddash:'v-cad-dash',onboard:'v-onboard',cl:'v-tl-cl',settings:'v-settings',chat:'v-chat'};
+  const viewMap={dashboard:'v-tl',logs:'v-tl-logs',nte:'v-om-n',attendance:'v-tl-attendance',ranking:'v-ranking',kb:'v-kb',calendar:'v-cal',actions:'v-actions',leads:'v-leads-tl',leadmgmt:'v-leadmgmt-tl',caddash:'v-cad-dash',myactions:'v-myactions-tl',onboard:'v-onboard',cl:'v-tl-cl',settings:'v-settings',chat:'v-chat'};
   showView(viewMap[tab]||'v-tl');
-  ['dash','logs','nte','attendance','ranking','kb','calendar','actions','leads','leadmgmt','caddash','onboard','cl','settings','chat'].forEach(t=>{
+  ['dash','logs','nte','attendance','ranking','kb','calendar','actions','leads','leadmgmt','caddash','myactions','onboard','cl','settings','chat'].forEach(t=>{
     const el=document.getElementById('tl-nav-'+t);
     if(el) el.classList.toggle('active',t===tab||(t==='dash'&&tab==='dashboard'));
   });
@@ -7285,7 +7691,8 @@ function tlShowView(tab){
   if(tab==='actions'){subscribeActionItems();renderActionItems();}
   if(tab==='leads'){subscribeLeads();renderLeads();}
   if(tab==='leadmgmt')fetchHSLeads();
-  if(tab==='caddash')renderCadDash();
+  if(tab==='caddash'){renderCadDash();saveDailyCadenceSnapshot();}
+  if(tab==='myactions'){loadMyActionsTL();updateMyActionsBadge();}
   if(tab==='onboard'){subscribeOnboard();renderOnboardDash();}
   if(tab==='cl') renderCLLogs();
   if(tab==='settings') renderSettingsPage();
@@ -9976,12 +10383,13 @@ function onEmailInput(){
 function switchAgentTab(tab){
   document.querySelectorAll('#agent-nav .sb-item').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
   document.querySelectorAll('.av-section').forEach(s=>s.style.display='none');
-  const map={coaching:'av-coaching',nte:'av-nte',ft:'av-ft',perf:'av-perf',clhist:'av-cl-hist',calc:'av-calc',attendance:'av-attendance',leads:'av-leads',leadmgmt:'av-leadmgmt',library:'av-lib',kb:'__kb__',settings:'__settings__',chat:'__chat__'};
+  const map={coaching:'av-coaching',nte:'av-nte',ft:'av-ft',perf:'av-perf',clhist:'av-cl-hist',calc:'av-calc',attendance:'av-attendance',leads:'av-leads',leadmgmt:'av-leadmgmt',myactions:'av-myactions',library:'av-lib',kb:'__kb__',settings:'__settings__',chat:'__chat__'};
   const secId=map[tab];
   if(secId==='__kb__'){showView('v-kb');renderAll();}else if(secId==='__settings__'){showView('v-settings');renderSettingsPage();}else if(secId==='__chat__'){showView('v-chat');initChatV2();clearChatBadge();}else{showView('v-agent');if(secId){const sec=document.getElementById(secId);if(sec)sec.style.display='';}}
   if(tab==='leads'){if(!_leadUnsub)subscribeLeads();else renderLeads();}
   if(tab==='leadmgmt')fetchHSLeads();
-  const titles={coaching:'My Coaching',nte:'My NTE',ft:'My Follow Through',perf:'My Performance',clhist:'My Call History',calc:'Phoenix Calculator',attendance:'My Attendance',leads:'Lead Follow-Up',leadmgmt:'Lead Management',library:'Call Library 🎵',kb:'Knowledge Base',settings:'Settings',chat:'Team Chat'};
+  if(tab==='myactions'){loadMyActions();updateMyActionsBadge();}
+  const titles={coaching:'My Coaching',nte:'My NTE',ft:'My Follow Through',perf:'My Performance',clhist:'My Call History',calc:'Phoenix Calculator',attendance:'My Attendance',leads:'Lead Follow-Up',leadmgmt:'Lead Management',myactions:'My Actions',library:'Call Library 🎵',kb:'Knowledge Base',settings:'Settings',chat:'Team Chat'};
   const el=document.getElementById('tb-title'); if(el) el.textContent=titles[tab]||'';
   if(tab==='perf') renderAgentPerf();
   if(tab==='calc') avCalcInit();
@@ -11534,6 +11942,38 @@ document.addEventListener('keydown', function(e) {
       <button onclick="document.getElementById('ac-phone-slot').style.display='none'" style="background:none;border:none;cursor:pointer;font-size:.9rem;color:#9ca3af;line-height:1;padding:2px 6px;">✕</button>
     </div>
     <div id="ac-phone-inner" style="flex:1;min-height:480px;overflow:hidden;"></div>
+  </div>
+</div>
+
+<!-- MY ACTIONS MODAL -->
+<div id="my-action-modal-overlay" onclick="closeMyActionModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:3000;"></div>
+<div id="my-action-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:14px;box-shadow:0 8px 40px rgba(0,0,0,.18);z-index:3001;width:min(440px,94vw);padding:24px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+    <div style="font-size:.95rem;font-weight:700;color:#111;">🗓️ Schedule Follow-Up</div>
+    <button onclick="closeMyActionModal()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:#9ca3af;">×</button>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:12px;">
+    <div>
+      <label style="font-size:.68rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.05em;">Lead / Contact Name</label>
+      <input id="ma-lead-name" type="text" placeholder="Customer name or lead subject…" style="width:100%;margin-top:4px;padding:8px 10px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:.82rem;outline:none;box-sizing:border-box;" />
+    </div>
+    <div>
+      <label style="font-size:.68rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.05em;">HubSpot Ticket ID (optional)</label>
+      <input id="ma-lead-id" type="text" placeholder="Ticket ID…" style="width:100%;margin-top:4px;padding:8px 10px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:.82rem;outline:none;box-sizing:border-box;" />
+    </div>
+    <div>
+      <label style="font-size:.68rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.05em;">Due Date</label>
+      <input id="ma-due-date" type="date" style="width:100%;margin-top:4px;padding:8px 10px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:.82rem;outline:none;box-sizing:border-box;" />
+    </div>
+    <div>
+      <label style="font-size:.68rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.05em;">Note / Action to Take</label>
+      <textarea id="ma-note" rows="3" placeholder="What do you need to do for this lead?" style="width:100%;margin-top:4px;padding:8px 10px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:.82rem;outline:none;resize:vertical;box-sizing:border-box;font-family:inherit;"></textarea>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px;">
+      <button onclick="closeMyActionModal()" style="padding:8px 18px;background:#f3f4f6;color:#374151;border:none;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;">Cancel</button>
+      <button onclick="saveMyAction()" id="ma-save-btn" style="padding:8px 20px;background:#ff7a59;color:#fff;border:none;border-radius:8px;font-size:.8rem;font-weight:700;cursor:pointer;">Save Action</button>
+    </div>
+    <div id="ma-status" style="font-size:.72rem;color:#22c55e;text-align:center;min-height:16px;"></div>
   </div>
 </div>
 </body>
