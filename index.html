@@ -5705,7 +5705,9 @@ async function fetchHSLeads(){
       const todayEnd=new Date(todayStart.getTime()+86400000);
       const allActivity=t.calls||[];
       const todayStartMs=todayStart.getTime(),todayEndMs=todayEnd.getTime();
-      const dailyOwnerAct=allActivity.filter(c=>String(c.ownerId)===String(ownerId)&&c.timestamp&&hsTs(c.timestamp)>=todayStartMs&&hsTs(c.timestamp)<todayEndMs);
+      // Count all calls/SMS on this lead today regardless of logged owner ID.
+      // Aircall may log calls under a different HubSpot user ID than the ticket owner.
+      const dailyOwnerAct=allActivity.filter(c=>c.timestamp&&hsTs(c.timestamp)>=todayStartMs&&hsTs(c.timestamp)<todayEndMs);
       const dailyCallsMade=dailyOwnerAct.filter(c=>c.type==='call').length;
       const dailySmsCount=dailyOwnerAct.filter(c=>c.type==='sms'||c.type==='message').length;
       const expectedCalls=HS_CADENCE[Math.min(ageDays,15)]||0;
@@ -6341,9 +6343,10 @@ function renderHSLeads(){
     </div>`;
   }
   function calledBadge(l){
-    // Days 9-15: check if ANY owner call exists on this lead (not just today)
-    const hasCalls=(l.calls||[]).some(c=>String(c.ownerId)===String(l.ownerId)&&c.type==='call');
-    const lastOwnerCall=(l.calls||[]).find(c=>String(c.ownerId)===String(l.ownerId)&&c.type==='call');
+    // Days 9-15: check if ANY call exists on this lead (not just today).
+    // Don't filter by ownerId — Aircall may log under a different HubSpot user.
+    const hasCalls=(l.calls||[]).some(c=>c.type==='call');
+    const lastOwnerCall=(l.calls||[]).find(c=>c.type==='call');
     const lastStr=lastOwnerCall?hsRelTime(lastOwnerCall.timestamp):'';
     return `<div style="margin-top:7px;"><span style="font-size:.62rem;padding:2px 9px;border-radius:99px;font-weight:600;background:${hasCalls?'#dcfce7':'#fee2e2'};color:${hasCalls?'#15803d':'#b91c1c'};">${hasCalls?'✅ Called · '+lastStr:'⚠️ Needs to be contacted'}</span></div>`;
   }
@@ -6433,7 +6436,8 @@ function renderHSLeads(){
     if(!l)return;
     const pid=l.id;
     const allCalls=l.calls||[];
-    const ownerCalls=allCalls.filter(c=>String(c.ownerId)===String(l.ownerId));
+    // Don't filter by owner ID — Aircall may log calls under a different HubSpot user
+    const ownerCalls=allCalls;
     const connectedCalls=ownerCalls.filter(c=>c.connected||(c.status||'').toUpperCase()==='COMPLETED');
     const isSmsC=c=>c.type==='sms'||c.type==='message'||(c.type||'').toLowerCase().includes('sms');
     const smsCnt=allCalls.filter(isSmsC).length;
