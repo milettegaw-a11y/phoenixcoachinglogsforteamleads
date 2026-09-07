@@ -5514,6 +5514,7 @@ function renderHSLeads(){
   window.openLeadPanel=function(lid){
     const l=_hsLeads.find(x=>x.id===lid||x.id==lid);
     if(!l)return;
+    const pid=l.id;
     const allCalls=l.calls||[];
     const ownerCalls=allCalls.filter(c=>String(c.ownerId)===String(l.ownerId));
     const connectedCalls=ownerCalls.filter(c=>c.connected||(c.status||'').toUpperCase()==='COMPLETED');
