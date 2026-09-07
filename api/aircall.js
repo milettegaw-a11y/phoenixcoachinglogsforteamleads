@@ -48,6 +48,23 @@ export default async function handler(req, res) {
       return res.status(200).json({ users: allUsers });
     }
 
+    // ── ACTION: numbers list (lines) ─────────────────────────────────────────
+    if (action === 'numbers') {
+      let page = 1, allNumbers = [];
+      while (true) {
+        const r = await fetch(`${BASE}/numbers?per_page=50&page=${page}`, { headers });
+        if (!r.ok) break;
+        const d = await r.json().catch(() => ({}));
+        const batch = d.numbers || [];
+        for (const n of batch) {
+          allNumbers.push({ id: n.id, name: n.name || '', digits: n.digits || n.phone_number || '', state: n.state || '' });
+        }
+        if (!d.meta || page >= (d.meta.total_pages || 1)) break;
+        page++;
+      }
+      return res.status(200).json({ numbers: allNumbers });
+    }
+
     // ── ACTION: calls + messages for a contact phone ─────────────────────────
     if (!contactPhone) {
       return res.status(400).json({ error: 'contactPhone required (or action=users)' });
