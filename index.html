@@ -692,8 +692,6 @@ html[data-theme="lavender"] .cl-subtab.active{color:#4a2d7a;border-bottom-color:
 html[data-theme="slate"] .cl-subtab.active{color:#1f2937;border-bottom-color:#1f2937;}
 html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1232;}
 </style>
-<!-- Aircall Phone SDK -->
-<script src="https://unpkg.com/@aircall/aircall-everywhere/dist/AircallPhone.min.js"></script>
 </head>
 <body>
 
@@ -5117,6 +5115,37 @@ const _emailLoaded={};
 const _aircallLoaded={};   // lid → true once Aircall data fetched for this lead
 let   _aircallUsers=[];    // [{id,name,email}] cached after first fetch
 let   _acUsersFetched=false;
+let   _aircallNumbers=[];  // [{id,name,digits,state}] cached after first fetch
+let   _acNumbersFetched=false;
+async function loadAircallNumbers(){
+  if(_acNumbersFetched)return;
+  _acNumbersFetched=true;
+  try{
+    const r=await fetch('/api/aircall?action=numbers');
+    if(!r.ok)return;
+    const d=await r.json();
+    _aircallNumbers=d.numbers||[];
+  }catch(_){}
+}
+// Returns [{id,name,digits}] of lines the current user's team is allowed to use
+function getTeamLines(){
+  const ids=getTeamAircallLineIds(); // Set<number> or null
+  if(!ids)return _aircallNumbers;   // OMs/ATLs see all
+  return _aircallNumbers.filter(n=>ids.has(Number(n.id)));
+}
+// Filter the calls list in the lead panel to show only a specific Aircall line
+function filterCallsByLine(pid,lineId){
+  const lead=_hsLeads.find(l=>l.id===pid||l.id==pid);
+  if(!lead)return;
+  const isSmsC=c=>c.type==='sms'||c.type==='message'||(c.type||'').toLowerCase().includes('sms');
+  const allCalls=(lead.calls||[]).filter(c=>!isSmsC(c));
+  const filtered=lineId?allCalls.filter(c=>String(c.numberId)===String(lineId)):allCalls;
+  const el=document.getElementById('comm-calls-list-'+pid);
+  if(!el)return;
+  el.innerHTML=filtered.length>0
+    ?filtered.map(callHistoryItem).join('')
+    :'<div style="padding:14px;text-align:center;color:#9ca3af;font-size:.72rem;">No calls on this line</div>';
+}
 async function loadEmailTab(lid,contactId){
   if(_emailLoaded[lid])return; // already loaded
   const body=document.getElementById('comm-email-body-'+lid);
@@ -5242,9 +5271,15 @@ async function loadAircallData(lid,contactPhone){
 
     // ── Update Calls tab ──────────────────────────────────────────────────────
     if(callListEl){
-      callListEl.innerHTML=mergedCalls.length>0
-        ?mergedCalls.map(callHistoryItem).join('')
-        :'<div style="padding:14px;text-align:center;color:#9ca3af;font-size:.72rem;">No calls recorded in the last 90 days</div>';
+      // Respect active line filter if the user already selected one
+      const lineSel=document.getElementById('comm-line-sel-'+pid);
+      const activeLineId=lineSel?lineSel.value:'';
+      const displayCalls=activeLineId?mergedCalls.filter(c=>String(c.numberId)===activeLineId):mergedCalls;
+      callListEl.innerHTML=displayCalls.length>0
+        ?displayCalls.map(callHistoryItem).join('')
+        :mergedCalls.length>0
+          ?'<div style="padding:14px;text-align:center;color:#9ca3af;font-size:.72rem;">No calls on this line</div>'
+          :'<div style="padding:14px;text-align:center;color:#9ca3af;font-size:.72rem;">No calls recorded in the last 90 days</div>';
     }
     const callTab=document.getElementById('comm-tab-calls-'+pid);
     if(callTab)callTab.textContent='📞 Calls ('+mergedCalls.length+')';
@@ -5299,70 +5334,11 @@ async function sendSMS(lid,phone){
   } finally{inp.disabled=false;inp.value='';}
 }
 function makeCall(phone,name){
-  if(window._aircallPhone){
-    // Already connected — dial silently, no panel needed
-    window._aircallPhone.send('dial_number',{phone_number:phone});
-    toast('📞 Dialing '+name+'…');
-  } else {
-    // SDK not ready yet — open panel so agent can log in once
-    document.getElementById('aircall-panel').style.display='block';
-    if(!_aircallPhoneInited)initAircallPhone();
-    navigator.clipboard?.writeText(phone).catch(()=>{});
-    toast('📞 Log in to Aircall — number copied: '+phone);
-  }
-}
-
-// ── Aircall Phone widget ────────────────────────────────────────────────────
-let _aircallPhoneInited=false;
-window._aircallPhone=null;
-
-function toggleAircallPhone(){
-  const panel=document.getElementById('aircall-panel');
-  if(!panel)return;
-  const open=panel.style.display!=='none';
-  panel.style.display=open?'none':'block';
-  if(!open&&!_aircallPhoneInited)initAircallPhone();
-}
-
-function initAircallPhone(){
-  if(typeof AircallPhone==='undefined'){
-    // SDK still loading — retry
-    setTimeout(initAircallPhone,600);
-    return;
-  }
-  _aircallPhoneInited=true;
-  const container=document.getElementById('aircall-phone-container');
-  if(!container)return;
-  try{
-    const phone=new AircallPhone({
-      domToLoadPhone:container,
-      size:'auto',
-      onLogin:()=>{
-        window._aircallPhone=phone;
-        const dot=document.getElementById('aircall-status-dot');
-        const lbl=document.getElementById('aircall-status-label');
-        const fab=document.getElementById('aircall-fab');
-        if(dot)dot.style.background='#22c55e';
-        if(lbl)lbl.textContent='Aircall — Connected';
-        if(fab)fab.style.background='#22c55e';
-        toast('✅ Aircall connected — one-click calling is active');
-      },
-      onLogout:()=>{
-        window._aircallPhone=null;
-        const dot=document.getElementById('aircall-status-dot');
-        const lbl=document.getElementById('aircall-status-label');
-        const fab=document.getElementById('aircall-fab');
-        if(dot)dot.style.background='#9ca3af';
-        if(lbl)lbl.textContent='Aircall — Not connected';
-        if(fab)fab.style.background='#1f2937';
-      }
-    });
-  }catch(err){
-    console.warn('[Aircall Phone]',err.message);
-    // Fallback: raw iframe so agent can at least see the phone
-    const container2=document.getElementById('aircall-phone-container');
-    if(container2)container2.innerHTML='<iframe src="https://phone.aircall.io" allow="microphone;autoplay;camera" style="width:100%;height:100%;border:none;"></iframe>';
-  }
+  if(!phone){toast('No phone number for this lead');return;}
+  // tel: link triggers Aircall desktop app (or system dialer) to dial
+  const clean=phone.replace(/[^\d+]/g,'');
+  window.location.href='tel:'+clean;
+  toast('📞 Opening dialer for '+name+'…');
 }
 // ────────────────────────────────────────────────────────────────────────────
 
@@ -5479,7 +5455,13 @@ function renderHSLeads(){
         </div>
       </div>
       <div id="comm-calls-${pid}" style="display:none;">
-        <div id="comm-calls-list-${pid}" style="max-height:340px;overflow-y:auto;">
+        <div id="comm-line-bar-${pid}" style="padding:6px 10px;background:#f9fafb;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:8px;">
+          <span style="font-size:.62rem;font-weight:600;color:#9ca3af;white-space:nowrap;">Line:</span>
+          <select id="comm-line-sel-${pid}" onchange="filterCallsByLine('${pid}',this.value)" style="font-size:.65rem;border:1px solid #e5e7eb;border-radius:6px;padding:3px 8px;background:#fff;color:#374151;flex:1;min-width:0;">
+            <option value="">All Lines</option>
+          </select>
+        </div>
+        <div id="comm-calls-list-${pid}" style="max-height:300px;overflow-y:auto;">
           ${callInitial}
         </div>
         <div style="padding:8px 10px;border-top:1px solid #f0f0f0;background:#f9fafb;display:flex;gap:8px;align-items:center;">
@@ -5578,6 +5560,23 @@ function renderHSLeads(){
     panel.scrollTop=0;
     // Augment calls/SMS with Aircall data (async, non-blocking)
     if(l.contactPhone)setTimeout(()=>loadAircallData(l.id,l.contactPhone),80);
+    // Populate the line selector dropdown in the calls tab
+    loadAircallNumbers().then(()=>{
+      const sel=document.getElementById('comm-line-sel-'+pid);
+      if(!sel)return;
+      const lines=getTeamLines();
+      // Remove old options (keep "All Lines")
+      while(sel.options.length>1)sel.remove(1);
+      lines.forEach(ln=>{
+        const o=document.createElement('option');
+        o.value=String(ln.id);
+        o.textContent=ln.name||(ln.digits?'+'+ln.digits:String(ln.id));
+        sel.appendChild(o);
+      });
+      // Hide the bar if there's only 1 line (no useful filter)
+      const bar=document.getElementById('comm-line-bar-'+pid);
+      if(bar)bar.style.display=lines.length<=1?'none':'flex';
+    });
   };
   window.closeLeadPanel=function(){
     document.getElementById('lead-panel-overlay').style.display='none';
@@ -7658,13 +7657,6 @@ function calcCalc(){
     s('cc-csr-sales').textContent = '—';
   }
 }
-
-// Auto-init Aircall SDK in background on page load so agents who are already
-// logged in to Aircall get seamless one-click calling (no "connect" step).
-document.addEventListener('DOMContentLoaded',()=>{
-  // Small delay so the Aircall SDK script has time to load
-  setTimeout(()=>{ if(!_aircallPhoneInited)initAircallPhone(); }, 1800);
-});
 
 // Mark target leads as manually touched so auto-fill stops overriding
 document.addEventListener('DOMContentLoaded',()=>{
@@ -10950,18 +10942,5 @@ document.addEventListener('keydown', function(e) {
   </div>
   <div id="lead-panel-body" style="flex:1;overflow-y:auto;"></div>
 </div>
-<!-- ── Aircall floating phone panel ────────────────────────────────────── -->
-<div id="aircall-panel" style="display:none;position:fixed;bottom:80px;left:20px;width:380px;height:680px;z-index:1200;border-radius:14px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.28);border:1px solid #e5e7eb;background:#fff;">
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#1f2937;color:#fff;">
-    <div style="display:flex;align-items:center;gap:8px;">
-      <span id="aircall-status-dot" style="width:8px;height:8px;background:#9ca3af;border-radius:50%;display:inline-block;flex-shrink:0;"></span>
-      <span style="font-size:.78rem;font-weight:600;" id="aircall-status-label">Aircall — Not connected</span>
-    </div>
-    <button onclick="document.getElementById('aircall-panel').style.display='none';" style="background:none;border:none;color:#9ca3af;font-size:1rem;cursor:pointer;padding:2px 6px;">✕</button>
-  </div>
-  <div id="aircall-phone-container" style="width:100%;height:calc(100% - 42px);"></div>
-</div>
-<button id="aircall-fab" onclick="toggleAircallPhone()" title="Aircall Phone" style="position:fixed;bottom:20px;left:20px;z-index:1201;width:52px;height:52px;border-radius:50%;background:#1f2937;color:#fff;border:none;font-size:1.3rem;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;transition:background .2s;">📞</button>
-<!-- ─────────────────────────────────────────────────────────────────────── -->
 </body>
 </html>
