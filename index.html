@@ -5260,6 +5260,9 @@ const HS_ALLOWED_NAMES=new Set(AGENTS.filter(a=>HS_ALLOWED_TEAMS.has(a.tl)).map(
 // Day 1=3, Day 2=3, Day 3=0(rest), Day 4=3, Day 5=3, Day 6=1, Day 7=3, Day 8=1
 // Days 9-15 (3rd week): 1 per day
 const HS_CADENCE=[0,3,3,0,3,3,1,3,1,1,1,1,1,1,1,1];
+// Team day-off schedule — keys match substrings of the agent's tl field (e.g. 'Jhay' ⊂ 'Team Jhay Oglimen')
+// On a team's day off, cadence is skipped (expectedContacts=0) and dials are zeroed out.
+const TEAM_DAY_OFF={'Jhay':[0,6],'Jumz':[2,3],'Florence':[5,6]}; // 0=Sun,1=Mon,...,6=Sat
 function hsGetCumulativeExpected(day){let t=0;for(let d=1;d<=Math.min(day,15);d++)t+=HS_CADENCE[d]||0;return t;}
 function hsTs(dt){if(!dt)return 0;const n=Number(dt);return isNaN(n)?new Date(dt).getTime():n;}
 function hsRelTime(dt){const ms=hsTs(dt);if(!ms||isNaN(ms))return '?';const s=Math.floor((Date.now()-ms)/1000);if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
@@ -5346,10 +5349,18 @@ async function fetchHSLeads(){
       // Count only calls/SMS made TODAY by the ticket owner (ownerId match).
       // This avoids counting other agents' historical activity on the same contact.
       const dailyOwnerAct=allActivity.filter(c=>c.timestamp&&hsTs(c.timestamp)>=todayStartMs&&hsTs(c.timestamp)<todayEndMs&&c.ownerId===ownerId);
-      const dailyCallsMade=dailyOwnerAct.filter(c=>c.type==='call').length;
-      const dailySmsCount=dailyOwnerAct.filter(c=>c.type==='sms'||c.type==='message').length;
-      const expectedCalls=HS_CADENCE[Math.min(ageDays,15)]||0;
-      const expectedContacts=expectedCalls>0?expectedCalls+1:0; // Day 3=REST→0 expected, no SMS req
+      const rawCallsMade=dailyOwnerAct.filter(c=>c.type==='call').length;
+      const rawSmsCount=dailyOwnerAct.filter(c=>c.type==='sms'||c.type==='message').length;
+      // Team day-off: determine agent's team and whether today (CDT) is their day off
+      const cdtDow=new Date(Date.now()-5*3600000).getUTCDay();
+      const agentTeamStr=rosterAgents.find(a=>a.name===ownerName)?.tl||'';
+      const teamKey=Object.keys(TEAM_DAY_OFF).find(k=>agentTeamStr.includes(k))||'';
+      const isTeamDayOff=!!(teamKey&&TEAM_DAY_OFF[teamKey].includes(cdtDow));
+      // Zero out dials on day-off so they don't count against cadence
+      const dailyCallsMade=isTeamDayOff?0:rawCallsMade;
+      const dailySmsCount=isTeamDayOff?0:rawSmsCount;
+      const expectedCalls=isTeamDayOff?0:(HS_CADENCE[Math.min(ageDays,15)]||0);
+      const expectedContacts=expectedCalls>0?expectedCalls+1:0; // Day 3=REST or day-off→0 expected
       const actualContacts=dailyCallsMade+dailySmsCount;
       const cadencePct=expectedContacts>0?Math.min(100,Math.round(actualContacts/expectedContacts*100)):100;
       const lacksCadence=cadencePct<100;
