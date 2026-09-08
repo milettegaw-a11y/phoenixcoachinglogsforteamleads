@@ -147,8 +147,8 @@ export default async function handler(req, res) {
     }
 
     // ── PHASE 2: Batch-read all objects in parallel ───────────────────────────
-    const callIdList  = [...allCallIds].slice(0, 500);
-    const smsIdList   = [...allSmsIds].slice(0, 500);
+    const callIdList  = [...allCallIds].slice(0, 2000);
+    const smsIdList   = [...allSmsIds].slice(0, 2000);
     const noteIdList  = [...new Set(allNoteIds)].slice(0, 50);
 
     const [contactResults, noteResults, callResults, smsResults] = await Promise.all([
