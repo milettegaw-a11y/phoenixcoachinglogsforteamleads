@@ -35,6 +35,22 @@ export default async function handler(req, res) {
     return results.flat();
   };
 
+  // Paginated CRM search helper
+  const searchAll = async (url, body, maxResults = 1000) => {
+    const results = [];
+    let after;
+    do {
+      const pageBody = after ? { ...body, after } : body;
+      const resp = await hsFetch(url, {
+        method: 'POST', headers: h, body: JSON.stringify(pageBody)
+      });
+      const data = await resp.json().catch(() => ({ results: [] }));
+      results.push(...(data.results || []));
+      after = data.paging?.next?.after;
+    } while (after && results.length < maxResults);
+    return results;
+  };
+
   const h = {
     'Authorization': 'Bearer ' + HS_TOKEN,
     'Content-Type': 'application/json'
@@ -55,8 +71,8 @@ export default async function handler(req, res) {
 
     const ticketIds = tickets.map(t => t.id);
 
-    // ── PHASE 1: All ticket associations in parallel ──────────────────────────
-    // ticket→contacts, ticket→notes, ticket→calls, ticket→SMS
+    // ── PHASE 1: Ticket associations in parallel ──────────────────────────────
+    // ticket→contacts, ticket→notes, ticket→calls (direct), ticket→SMS (direct)
     const [contactAssocResp, noteAssocResp, callAssocResp, smsAssocResp] = await Promise.all([
       hsFetch('https://api.hubapi.com/crm/v4/associations/tickets/contacts/batch/read', {
         method: 'POST', headers: h, body: JSON.stringify({ inputs: ticketIds.map(id => ({ id })) })
@@ -95,63 +111,139 @@ export default async function handler(req, res) {
     }
 
     const ticketCallMap = {};
-    const allCallIds = new Set();
+    const allTicketCallIds = new Set();
     if (callAssoc.results) {
       for (const r of callAssoc.results) {
         const ids = (r.to || []).map(x => String(x.toObjectId));
         ticketCallMap[r.from.id] = ids;
-        ids.forEach(id => allCallIds.add(id));
+        ids.forEach(id => allTicketCallIds.add(id));
       }
     }
 
     const ticketSmsMap = {};
-    const allSmsIds = new Set();
+    const allTicketSmsIds = new Set();
     if (smsAssoc.results) {
       for (const r of smsAssoc.results) {
         const ids = (r.to || []).map(x => String(x.toObjectId));
         ticketSmsMap[r.from.id] = ids;
-        ids.forEach(id => allSmsIds.add(id));
+        ids.forEach(id => allTicketSmsIds.add(id));
       }
     }
 
     const allContactIds = [...new Set(Object.values(ticketContactMap).flat().map(String))];
 
-    // ── PHASE 1.5: Contact→calls/SMS (Aircall logs to contact, not ticket) ────
-    const contactCallAssocMap = {};
-    const contactSmsAssocMap  = {};
-    if (allContactIds.length > 0) {
-      const [cCallAssocResp, cSmsAssocResp] = await Promise.all([
-        hsFetch('https://api.hubapi.com/crm/v4/associations/contacts/calls/batch/read', {
-          method: 'POST', headers: h,
-          body: JSON.stringify({ inputs: allContactIds.map(id => ({ id })) })
+    // ── PHASE 1.5: Search TODAY's calls/SMS by owner ──────────────────────────
+    // Instead of fetching all historical contact→calls (which overflows any slice cap),
+    // we search directly for calls/SMS made today by the ticket owners.
+    // CDT = UTC-5; compute today's window in UTC ms.
+    const cdtMs   = Date.now() - 5 * 3600000;
+    const cdtDate  = new Date(cdtMs);
+    const todayStartUTC = Date.UTC(cdtDate.getUTCFullYear(), cdtDate.getUTCMonth(), cdtDate.getUTCDate()) + 5 * 3600000;
+    const todayEndUTC   = todayStartUTC + 86400000;
+
+    const allOwnerIds = [...new Set(tickets.map(t => t.properties.hubspot_owner_id).filter(Boolean))];
+
+    // contactId → [today's callIds / smsIds from search]
+    const contactTodayCallMap = {};
+    const contactTodaySmsMap  = {};
+    // Pre-populated detail maps from today's search results
+    const todayCallDetailMap  = {};
+    const todaySmsDetailMap   = {};
+
+    if (allOwnerIds.length > 0) {
+      const timeGTE   = { propertyName: 'hs_timestamp', operator: 'GTE', value: String(todayStartUTC) };
+      const timeLT    = { propertyName: 'hs_timestamp', operator: 'LT',  value: String(todayEndUTC)   };
+      const ownerIn   = { propertyName: 'hubspot_owner_id', operator: 'IN', values: allOwnerIds };
+
+      // Search today's calls and SMS in parallel
+      const [todayCallList, todaySmsList] = await Promise.all([
+        searchAll('https://api.hubapi.com/crm/v3/objects/calls/search', {
+          filterGroups: [{ filters: [timeGTE, timeLT, ownerIn] }],
+          properties: ['hs_timestamp','hs_call_status','hs_call_direction','hs_call_duration','hubspot_owner_id'],
+          limit: 200
         }),
-        hsFetch('https://api.hubapi.com/crm/v4/associations/contacts/communications/batch/read', {
-          method: 'POST', headers: h,
-          body: JSON.stringify({ inputs: allContactIds.map(id => ({ id })) })
+        searchAll('https://api.hubapi.com/crm/v3/objects/communications/search', {
+          filterGroups: [{ filters: [timeGTE, timeLT, ownerIn,
+            { propertyName: 'hs_communication_channel_type', operator: 'EQ', value: 'SMS' }
+          ]}],
+          properties: ['hs_timestamp','hs_communication_channel_type','hubspot_owner_id','hs_communication_logged_from'],
+          limit: 200
         })
       ]);
-      const cCallAssoc = await cCallAssocResp.json().catch(() => ({ results: [] }));
-      const cSmsAssoc  = await cSmsAssocResp.json().catch(() => ({ results: [] }));
-      if (cCallAssoc.results) {
-        for (const r of cCallAssoc.results) {
-          contactCallAssocMap[r.from.id] = (r.to || []).map(x => String(x.toObjectId));
-          (r.to || []).forEach(x => allCallIds.add(String(x.toObjectId)));
+
+      // Build today's detail maps directly from search results (no extra batch-read needed)
+      for (const c of todayCallList) {
+        const p = c.properties;
+        todayCallDetailMap[String(c.id)] = {
+          type: 'call',
+          timestamp: p.hs_timestamp || '',
+          status: p.hs_call_status || '',
+          connected: (p.hs_call_status || '').toUpperCase() === 'COMPLETED',
+          direction: p.hs_call_direction || '',
+          durationMs: parseInt(p.hs_call_duration || '0') || 0,
+          ownerId: String(p.hubspot_owner_id || '')
+        };
+      }
+      for (const s of todaySmsList) {
+        const p = s.properties;
+        todaySmsDetailMap[String(s.id)] = {
+          type: 'sms',
+          timestamp: p.hs_timestamp || '',
+          status: 'SENT',
+          connected: false,
+          direction: (p.hs_communication_logged_from || '').toUpperCase() === 'CONTACT' ? 'INBOUND' : 'OUTBOUND',
+          durationMs: 0,
+          ownerId: String(p.hubspot_owner_id || '')
+        };
+      }
+
+      // Reverse-associate: find which contacts each today's call/SMS belongs to
+      const todayCallIds2 = todayCallList.map(c => String(c.id));
+      const todaySmsIds2  = todaySmsList.map(s => String(s.id));
+
+      const [callContactAssoc, smsContactAssoc] = await Promise.all([
+        todayCallIds2.length > 0
+          ? hsFetch('https://api.hubapi.com/crm/v4/associations/calls/contacts/batch/read', {
+              method: 'POST', headers: h,
+              body: JSON.stringify({ inputs: todayCallIds2.map(id => ({ id })) })
+            }).then(r => r.json()).catch(() => ({ results: [] }))
+          : Promise.resolve({ results: [] }),
+        todaySmsIds2.length > 0
+          ? hsFetch('https://api.hubapi.com/crm/v4/associations/communications/contacts/batch/read', {
+              method: 'POST', headers: h,
+              body: JSON.stringify({ inputs: todaySmsIds2.map(id => ({ id })) })
+            }).then(r => r.json()).catch(() => ({ results: [] }))
+          : Promise.resolve({ results: [] })
+      ]);
+
+      // Build contactId → [today's callIds]
+      for (const r of callContactAssoc.results || []) {
+        const callId = String(r.from.id);
+        for (const contact of r.to || []) {
+          const cid = String(contact.toObjectId);
+          if (!contactTodayCallMap[cid]) contactTodayCallMap[cid] = [];
+          contactTodayCallMap[cid].push(callId);
         }
       }
-      if (cSmsAssoc.results) {
-        for (const r of cSmsAssoc.results) {
-          contactSmsAssocMap[r.from.id] = (r.to || []).map(x => String(x.toObjectId));
-          (r.to || []).forEach(x => allSmsIds.add(String(x.toObjectId)));
+      // Build contactId → [today's smsIds]
+      for (const r of smsContactAssoc.results || []) {
+        const smsId = String(r.from.id);
+        for (const contact of r.to || []) {
+          const cid = String(contact.toObjectId);
+          if (!contactTodaySmsMap[cid]) contactTodaySmsMap[cid] = [];
+          contactTodaySmsMap[cid].push(smsId);
         }
       }
     }
 
-    // ── PHASE 2: Batch-read all objects in parallel ───────────────────────────
-    const callIdList  = [...allCallIds].slice(0, 2000);
-    const smsIdList   = [...allSmsIds].slice(0, 2000);
-    const noteIdList  = [...new Set(allNoteIds)].slice(0, 50);
+    // ── PHASE 2: Batch-read contacts, notes, and ticket-direct calls/SMS ─────
+    // Ticket-direct call/SMS IDs are few (logged directly on the ticket, not contact),
+    // so 500 is safe here. Today's contact-level calls already came from Phase 1.5 search.
+    const noteIdList         = [...new Set(allNoteIds)].slice(0, 50);
+    const ticketCallIdList   = [...allTicketCallIds].slice(0, 500);
+    const ticketSmsIdList    = [...allTicketSmsIds].slice(0, 500);
 
-    const [contactResults, noteResults, callResults, smsResults] = await Promise.all([
+    const [contactResults, noteResults, ticketCallResults, ticketSmsResults] = await Promise.all([
       allContactIds.length > 0
         ? batchRead(
             'https://api.hubapi.com/crm/v3/objects/contacts/batch/read',
@@ -166,19 +258,17 @@ export default async function handler(req, res) {
             ['hs_note_body','hs_timestamp','createdate']
           )
         : Promise.resolve([]),
-      callIdList.length > 0
+      ticketCallIdList.length > 0
         ? batchRead(
             'https://api.hubapi.com/crm/v3/objects/calls/batch/read',
-            callIdList,
-            // Omit hs_call_body — large text field not needed for cadence
+            ticketCallIdList,
             ['hs_timestamp','hs_call_status','hs_call_direction','hs_call_duration','hubspot_owner_id']
           )
         : Promise.resolve([]),
-      smsIdList.length > 0
+      ticketSmsIdList.length > 0
         ? batchRead(
             'https://api.hubapi.com/crm/v3/objects/communications/batch/read',
-            smsIdList,
-            // Omit hs_communication_body — large text field not needed for cadence
+            ticketSmsIdList,
             ['hs_timestamp','hs_communication_channel_type','hubspot_owner_id','hs_communication_logged_from']
           )
         : Promise.resolve([])
@@ -205,10 +295,12 @@ export default async function handler(req, res) {
       };
     }
 
-    const callDetailMap = {};
-    for (const c of callResults) {
+    // Merge today's search details with ticket-direct details
+    const callDetailMap = { ...todayCallDetailMap };
+    for (const c of ticketCallResults) {
+      if (callDetailMap[String(c.id)]) continue; // already populated from today's search
       const p = c.properties;
-      callDetailMap[c.id] = {
+      callDetailMap[String(c.id)] = {
         type: 'call',
         timestamp: p.hs_timestamp || '',
         status: p.hs_call_status || '',
@@ -219,11 +311,12 @@ export default async function handler(req, res) {
       };
     }
 
-    const smsDetailMap = {};
-    for (const s of smsResults) {
+    const smsDetailMap = { ...todaySmsDetailMap };
+    for (const s of ticketSmsResults) {
+      if (smsDetailMap[String(s.id)]) continue;
       const p = s.properties;
       const channel = (p.hs_communication_channel_type || '').toUpperCase();
-      smsDetailMap[s.id] = {
+      smsDetailMap[String(s.id)] = {
         type: channel === 'SMS' ? 'sms' : (channel || 'message'),
         timestamp: p.hs_timestamp || '',
         status: 'SENT',
@@ -243,25 +336,32 @@ export default async function handler(req, res) {
       const notes = nIds.map(id => noteMap[id]).filter(Boolean);
       notes.sort((a, b) => tsMs(b.timestamp) - tsMs(a.timestamp));
 
-      // Merge ticket-direct + contact-associated calls (Aircall logs to contact)
-      const callIds  = [...new Set([...(ticketCallMap[ticket.id]||[]), ...cIds.flatMap(cid=>contactCallAssocMap[cid]||[])])];
-      const smsIds   = [...new Set([...(ticketSmsMap[ticket.id]||[]), ...cIds.flatMap(cid=>contactSmsAssocMap[cid]||[])])];
-      const calls    = callIds.map(id => callDetailMap[id]).filter(Boolean);
-      const smsMsgs  = smsIds.map(id => smsDetailMap[id]).filter(Boolean);
+      // Merge ticket-direct + today's contact-level calls/SMS (from Phase 1.5 search)
+      const callIds = [...new Set([
+        ...(ticketCallMap[ticket.id] || []),
+        ...cIds.flatMap(cid => contactTodayCallMap[cid] || [])
+      ])];
+      const smsIds = [...new Set([
+        ...(ticketSmsMap[ticket.id] || []),
+        ...cIds.flatMap(cid => contactTodaySmsMap[cid] || [])
+      ])];
+
+      const calls   = callIds.map(id => callDetailMap[String(id)]).filter(Boolean);
+      const smsMsgs = smsIds.map(id => smsDetailMap[String(id)]).filter(Boolean);
 
       const allActivity = [...calls, ...smsMsgs];
       allActivity.sort((a, b) => tsMs(b.timestamp) - tsMs(a.timestamp));
 
       return {
         ...ticket,
-        contactId:        cIds[0] || null,
-        contactName:      contact?.name || null,
-        contactPhone:     contact?.phone || null,
-        contactEmail:     contact?.email || null,
-        contactLifecycle: contact?.lifecycle || null,
-        contactCreatedate:contact?.createdate || null,
+        contactId:         cIds[0] || null,
+        contactName:       contact?.name || null,
+        contactPhone:      contact?.phone || null,
+        contactEmail:      contact?.email || null,
+        contactLifecycle:  contact?.lifecycle || null,
+        contactCreatedate: contact?.createdate || null,
         latestNote: notes[0] ? { body: notes[0].body, timestamp: notes[0].timestamp } : null,
-        // Return all ticket-associated activities (no owner filter — Aircall logs under different owner ID)
+        // All activity for this ticket — owner filter applied client-side in index.html
         calls: allActivity.slice(0, 100)
       };
     });
