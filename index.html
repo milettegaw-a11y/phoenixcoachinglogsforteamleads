@@ -5434,7 +5434,7 @@ function toggleHSGapsOnly(){
 ═══════════════════════════════════════ */
 // CDT-keyed localStorage cache — auto-expires at midnight CDT (UTC-5)
 function _cdtDate(){return new Date(Date.now()-5*3600000).toISOString().slice(0,10);}
-function _cadCacheKey(){return'cad_v2_'+_cdtDate();} // v2: contact→calls + Day3 exclusion
+function _cadCacheKey(){return'cad_v3_'+_cdtDate();} // v3: CDT day window fix (calls after midnight PHT)
 function _saveCadCache(leads){try{localStorage.setItem(_cadCacheKey(),JSON.stringify({ts:Date.now(),leads}));}catch(e){}}
 function _loadCadCache(){try{return JSON.parse(localStorage.getItem(_cadCacheKey())||'null');}catch(e){return null;}}
 async function refreshCadDash(){
