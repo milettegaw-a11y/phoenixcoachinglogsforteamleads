@@ -5289,7 +5289,8 @@ async function fetchHSLeads(){
   const loading='<div style="color:var(--g400);font-size:.8rem;padding:8px 0;">Loading HubSpot leads…</div>';
   if(avEl)avEl.innerHTML=loading;
   if(tlEl)tlEl.innerHTML=loading;
-  const closedStages=['1072805490','1072805491','1072805492','1072805493','1072805494','1072805495'];
+  // Only exclude Sold + DNC — Admin Close / Bad Number / Not Interested / Already Member are still tracked
+  const closedStages=['1072805490','1072805494'];
   const now=new Date();
   // Build server-side owner filter — only fetch tickets for the 4 allowed teams
   const allowedOwnerIds=Object.entries(HS_OWNERS)
@@ -5357,7 +5358,8 @@ async function fetchHSLeads(){
     }).filter(l=>HS_ALLOWED_NAMES.has(l.ownerName.toLowerCase()))
       .filter(l=>(l.subject||'').toLowerCase().includes('2nd week'))
       .filter(l=>l.ageDays<=15)
-      .filter(l=>!closedStages.includes(l.stageId));
+      .filter(l=>!closedStages.includes(l.stageId))
+      .filter(l=>{const lc=(l.contactLifecycle||'').toLowerCase();return!lc||(lc!=='other'&&lc!=='customer');});
     _hsLeadsLoaded=true;
     _hsLastFetched=Date.now();
     _saveCadCache(_hsLeads); // persist for today (CDT) — survives page refresh until midnight CDT
