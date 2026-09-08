@@ -2410,7 +2410,8 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
         <button id="cad-subtab-trend" onclick="setCadDashTab('trend')" style="padding:5px 14px;border:none;background:#f3f4f6;color:#6b7280;font-size:.75rem;font-weight:700;cursor:pointer;">14-Day Trend</button>
         <button id="cad-subtab-tcr" onclick="setCadDashTab('tcr')" style="padding:5px 14px;border:none;background:#f3f4f6;color:#6b7280;font-size:.75rem;font-weight:700;cursor:pointer;">TCR%</button>
       </div>
-      <button onclick="renderCadDash();saveDailyCadenceSnapshot();" style="padding:6px 14px;border:1.5px solid #ff7a59;border-radius:8px;background:#fff;color:#ff7a59;font-size:.78rem;font-weight:700;cursor:pointer;">↻ Refresh</button>
+      <button id="cad-refresh-btn" onclick="refreshCadDash()" style="padding:6px 14px;border:1.5px solid #ff7a59;border-radius:8px;background:#fff;color:#ff7a59;font-size:.78rem;font-weight:700;cursor:pointer;">↻ Refresh</button>
+      <span id="cad-last-fetch" style="font-size:.65rem;color:#9ca3af;white-space:nowrap;"></span>
     </div>
   </div>
   <!-- Today panel -->
@@ -5360,6 +5361,8 @@ async function fetchHSLeads(){
       .filter(l=>{if(l.ageDays<=8)return true;const lc=(l.contactLifecycle||'').toLowerCase();return!lc||(lc!=='other'&&lc!=='customer');});
     _hsLeadsLoaded=true;
     _hsLastFetched=Date.now();
+    _saveCadCache(_hsLeads); // persist for today (CDT) — survives page refresh until midnight CDT
+    saveDailyCadenceSnapshot(); // log team performance to Firestore on every fresh fetch
     // Auto-restrict TLs to their own team — OMs and Asst TLs (non-primary teams) see all
     if(CU&&!CU.isOM&&!CU.isAgentView&&TL_TEAM_MAP[CU.email]&&HS_ALLOWED_TEAMS.has(TL_TEAM_MAP[CU.email])){
       _hsTeamFilter=TL_TEAM_MAP[CU.email];
@@ -5413,13 +5416,43 @@ function toggleHSGapsOnly(){
 /* ═══════════════════════════════════════
    CADENCE COMPLIANCE DASHBOARD
 ═══════════════════════════════════════ */
+// CDT-keyed localStorage cache — auto-expires at midnight CDT (UTC-5)
+function _cdtDate(){return new Date(Date.now()-5*3600000).toISOString().slice(0,10);}
+function _cadCacheKey(){return'cad_v1_'+_cdtDate();}
+function _saveCadCache(leads){try{localStorage.setItem(_cadCacheKey(),JSON.stringify({ts:Date.now(),leads}));}catch(e){}}
+function _loadCadCache(){try{return JSON.parse(localStorage.getItem(_cadCacheKey())||'null');}catch(e){return null;}}
+async function refreshCadDash(){
+  const btn=document.getElementById('cad-refresh-btn');
+  if(btn){btn.disabled=true;btn.textContent='Loading…';}
+  localStorage.removeItem(_cadCacheKey());
+  await fetchHSLeads();
+  renderCadDash();
+  await saveDailyCadenceSnapshot();
+  if(btn){btn.disabled=false;btn.textContent='↻ Refresh';}
+}
 let _cadChart=null;
 function renderCadDash(){
   const el=document.getElementById('cad-dash-body');
   if(!el)return;
-  if(!_hsLeadsLoaded||_hsLeads.length===0){
-    el.innerHTML='<div style="color:var(--g400);font-size:.8rem;padding:24px;text-align:center;">No lead data loaded. <a href="#" onclick="tlShowView(\'leadmgmt\');return false;" style="color:#ff7a59;font-weight:700;">Open Lead Management</a> first to load data, then come back.</div>';
+  // Restore from today's CDT cache if page was refreshed and memory was cleared
+  if(!_hsLeadsLoaded||!_hsLeads.length){
+    const cached=_loadCadCache();
+    if(cached&&cached.leads&&cached.leads.length){
+      _hsLeads=cached.leads;
+      _hsLeadsLoaded=true;
+      _hsLastFetched=cached.ts;
+    }
+  }
+  if(!_hsLeadsLoaded||!_hsLeads.length){
+    el.innerHTML='<div style="color:var(--g400);font-size:.8rem;padding:24px;text-align:center;">No lead data loaded. <a href="#" onclick="refreshCadDash();return false;" style="color:#ff7a59;font-weight:700;">Click to load</a> or visit Lead Management first.</div>';
     return;
+  }
+  // Show "as of HH:MM CDT" timestamp
+  const tsEl=document.getElementById('cad-last-fetch');
+  if(tsEl&&_hsLastFetched){
+    const d=new Date(_hsLastFetched-5*3600000);
+    const hm=d.toISOString().slice(11,16);
+    tsEl.textContent='as of '+hm+' CDT';
   }
   const teamColors={'Team Jhay Oglimen':'#3b82f6','Team Jumz Delacruz':'#22c55e','Team Florence Llait':'#f97316','Team Jersey Deguzman':'#a855f7'};
   const defColors=['#3b82f6','#22c55e','#f97316','#a855f7','#ef4444','#14b8a6'];
