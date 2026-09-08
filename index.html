@@ -5342,7 +5342,11 @@ async function fetchHSLeads(){
       const stageName=HS_STAGE_LABELS[stageId]||'Stage '+stageId;
       const attempts=HS_STAGE_ATTEMPTS[stageId]??0;
       // Cadence: only count calls/SMS made TODAY (midnight to midnight, agent's local time)
-      const todayStart=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+      // Use CDT (UTC-5) for the day window to match the backend.
+      // Without this, a browser in UTC+8 (Philippines) would cut off calls
+      // after 16:00 UTC (midnight PHT), reporting them as "tomorrow".
+      const _cdtNow=new Date(now.getTime()-5*3600000);
+      const todayStart=new Date(Date.UTC(_cdtNow.getUTCFullYear(),_cdtNow.getUTCMonth(),_cdtNow.getUTCDate())+5*3600000);
       const todayEnd=new Date(todayStart.getTime()+86400000);
       const allActivity=t.calls||[];
       const todayStartMs=todayStart.getTime(),todayEndMs=todayEnd.getTime();
