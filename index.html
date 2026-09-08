@@ -5466,6 +5466,7 @@ function renderCadDash(){
   const datasets=teams.map((team,ti)=>{
     const color=teamColors[team]||defColors[ti%defColors.length];
     const data=DAYS.map(day=>{
+      if(day===3)return null; // Day 3=REST, excluded from compliance chart
       const dl=_hsLeads.filter(l=>{const ag=rosterAgents.find(a=>a.name===l.ownerName);return ag&&ag.tl===team&&l.ageDays===day;});
       if(!dl.length)return null;
       return Math.round(dl.filter(l=>(l.cadencePct||0)>=100).length/dl.length*100);
@@ -5475,7 +5476,7 @@ function renderCadDash(){
 
   // Team summary cards
   const teamSummary=teams.map((team,ti)=>{
-    const al=_hsLeads.filter(l=>{const ag=rosterAgents.find(a=>a.name===l.ownerName);return ag&&ag.tl===team;});
+    const al=_hsLeads.filter(l=>{const ag=rosterAgents.find(a=>a.name===l.ownerName);return ag&&ag.tl===team&&l.ageDays!==3;});
     if(!al.length)return null;
     const done=al.filter(l=>(l.cadencePct||0)>=100).length;
     const avg=Math.round(al.reduce((s,l)=>s+(l.cadencePct||0),0)/al.length);
@@ -5484,7 +5485,8 @@ function renderCadDash(){
   }).filter(Boolean);
 
   // Agent rows sorted by avg cadence ascending (worst first) — TLs see only their team
-  const visibleLeads=myTLTeam?_hsLeads.filter(l=>{const ag=rosterAgents.find(a=>a.name===l.ownerName);return ag&&ag.tl===myTLTeam;}):_hsLeads;
+  // Exclude Day 3 (REST) from all compliance counts — neither for nor against agents
+  const visibleLeads=(myTLTeam?_hsLeads.filter(l=>{const ag=rosterAgents.find(a=>a.name===l.ownerName);return ag&&ag.tl===myTLTeam;}):_hsLeads).filter(l=>l.ageDays!==3);
   const agentRows=rosterAgents.filter(ag=>myTLTeam?ag.tl===myTLTeam:true).map((ag,ti)=>{
     const al=visibleLeads.filter(l=>l.ownerName===ag.name);
     if(!al.length)return null;
