@@ -150,20 +150,25 @@ export default async function handler(req, res) {
     const todayCallDetailMap  = {};
     const todaySmsDetailMap   = {};
 
-    if (allOwnerIds.length > 0) {
-      const timeGTE   = { propertyName: 'hs_timestamp', operator: 'GTE', value: String(todayStartUTC) };
-      const timeLT    = { propertyName: 'hs_timestamp', operator: 'LT',  value: String(todayEndUTC)   };
-      const ownerIn   = { propertyName: 'hubspot_owner_id', operator: 'IN', values: allOwnerIds };
+    // Search by contact association — Aircall calls often have no hubspot_owner_id set,
+    // so filtering by owner misses them. Filtering by contact IDs finds all today's
+    // activity on those contacts regardless of how the call was logged.
+    if (allContactIds.length > 0) {
+      const timeGTE    = { propertyName: 'hs_timestamp', operator: 'GTE', value: String(todayStartUTC) };
+      const timeLT     = { propertyName: 'hs_timestamp', operator: 'LT',  value: String(todayEndUTC)   };
+      // HubSpot IN operator supports up to 300 values
+      const contactSlice = allContactIds.slice(0, 300);
+      const contactIn  = { propertyName: 'associations.contact', operator: 'IN', values: contactSlice };
 
       // Search today's calls and SMS in parallel
       const [todayCallList, todaySmsList] = await Promise.all([
         searchAll('https://api.hubapi.com/crm/v3/objects/calls/search', {
-          filterGroups: [{ filters: [timeGTE, timeLT, ownerIn] }],
+          filterGroups: [{ filters: [timeGTE, timeLT, contactIn] }],
           properties: ['hs_timestamp','hs_call_status','hs_call_direction','hs_call_duration','hubspot_owner_id'],
           limit: 200
         }),
         searchAll('https://api.hubapi.com/crm/v3/objects/communications/search', {
-          filterGroups: [{ filters: [timeGTE, timeLT, ownerIn,
+          filterGroups: [{ filters: [timeGTE, timeLT, contactIn,
             { propertyName: 'hs_communication_channel_type', operator: 'EQ', value: 'SMS' }
           ]}],
           properties: ['hs_timestamp','hs_communication_channel_type','hubspot_owner_id','hs_communication_logged_from'],
