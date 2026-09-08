@@ -5343,9 +5343,9 @@ async function fetchHSLeads(){
       const todayEnd=new Date(todayStart.getTime()+86400000);
       const allActivity=t.calls||[];
       const todayStartMs=todayStart.getTime(),todayEndMs=todayEnd.getTime();
-      // Count all calls/SMS on this lead today regardless of logged owner ID.
-      // Aircall may log calls under a different HubSpot user ID than the ticket owner.
-      const dailyOwnerAct=allActivity.filter(c=>c.timestamp&&hsTs(c.timestamp)>=todayStartMs&&hsTs(c.timestamp)<todayEndMs);
+      // Count only calls/SMS made TODAY by the ticket owner (ownerId match).
+      // This avoids counting other agents' historical activity on the same contact.
+      const dailyOwnerAct=allActivity.filter(c=>c.timestamp&&hsTs(c.timestamp)>=todayStartMs&&hsTs(c.timestamp)<todayEndMs&&c.ownerId===ownerId);
       const dailyCallsMade=dailyOwnerAct.filter(c=>c.type==='call').length;
       const dailySmsCount=dailyOwnerAct.filter(c=>c.type==='sms'||c.type==='message').length;
       const expectedCalls=HS_CADENCE[Math.min(ageDays,15)]||0;
