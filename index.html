@@ -5351,8 +5351,9 @@ async function fetchHSLeads(){
       const allActivity=t.calls||[];
       const todayStartMs=todayStart.getTime(),todayEndMs=todayEnd.getTime();
       // Count only calls/SMS made TODAY by the ticket owner (ownerId match).
-      // This avoids counting other agents' historical activity on the same contact.
-      const dailyOwnerAct=allActivity.filter(c=>c.timestamp&&hsTs(c.timestamp)>=todayStartMs&&hsTs(c.timestamp)<todayEndMs&&c.ownerId===ownerId);
+      // Allow empty ownerId — Aircall-logged calls often have no hubspot_owner_id set;
+      // contact-scoping in the backend already ensures they belong to this ticket's contact.
+      const dailyOwnerAct=allActivity.filter(c=>c.timestamp&&hsTs(c.timestamp)>=todayStartMs&&hsTs(c.timestamp)<todayEndMs&&(!c.ownerId||c.ownerId===ownerId));
       const rawCallsMade=dailyOwnerAct.filter(c=>c.type==='call').length;
       const rawSmsCount=dailyOwnerAct.filter(c=>c.type==='sms'||c.type==='message').length;
       // Team day-off: determine agent's team and whether today (CDT) is their day off
@@ -5434,7 +5435,7 @@ function toggleHSGapsOnly(){
 ═══════════════════════════════════════ */
 // CDT-keyed localStorage cache — auto-expires at midnight CDT (UTC-5)
 function _cdtDate(){return new Date(Date.now()-5*3600000).toISOString().slice(0,10);}
-function _cadCacheKey(){return'cad_v3_'+_cdtDate();} // v3: CDT day window fix (calls after midnight PHT)
+function _cadCacheKey(){return'cad_v4_'+_cdtDate();} // v4: Aircall fix — search by contact assoc, allow empty ownerId
 function _saveCadCache(leads){try{localStorage.setItem(_cadCacheKey(),JSON.stringify({ts:Date.now(),leads}));}catch(e){}}
 function _loadCadCache(){try{return JSON.parse(localStorage.getItem(_cadCacheKey())||'null');}catch(e){return null;}}
 async function refreshCadDash(){
