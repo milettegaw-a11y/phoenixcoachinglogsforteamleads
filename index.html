@@ -5601,12 +5601,6 @@ function renderCadDash(){
           }).join('')}</tbody>
         </table>
       </div>
-    </div>
-    <div style="background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;padding:20px;">
-      <div style="font-size:.85rem;font-weight:700;color:#374151;margin-bottom:2px;">Compliance Trend (14 days)</div>
-      <div style="font-size:.7rem;color:#9ca3af;margin-bottom:16px;">Daily overall compliance % — pulled from saved snapshots</div>
-      <div style="position:relative;height:220px;"><canvas id="cad-trend-chart"></canvas></div>
-      <div id="cad-trend-msg" style="display:none;color:#9ca3af;font-size:.75rem;text-align:center;padding:40px 0;">Loading trend data…</div>
     </div>`;
 
   // Render Chart.js grouped bar chart
@@ -5629,8 +5623,6 @@ function renderCadDash(){
       }
     }
   });
-  // Load 14-day trend async
-  renderCadTrend(myTLTeam,agentRows);
 }
 
 function toggleCadAgentRow(safeId){
@@ -5643,62 +5635,6 @@ function toggleCadAgentRow(safeId){
 }
 
 let _cadTrendChart=null;
-async function renderCadTrend(myTLTeam,agentRows){
-  const msg=document.getElementById('cad-trend-msg');
-  const ctx=document.getElementById('cad-trend-chart');
-  if(!ctx)return;
-  if(msg)msg.style.display='';
-  // Build last 14 days date strings (YYYY-MM-DD CDT)
-  const dates=[];
-  for(let i=13;i>=0;i--){const d=new Date(Date.now()-5*3600000-i*86400000);dates.push(d.toISOString().slice(0,10));}
-  try{
-    const snaps=await Promise.all(dates.map(dt=>FSB.collection('cadence_snapshots').doc(dt).get().catch(()=>null)));
-    if(msg)msg.style.display='none';
-    // Build per-agent datasets from snapshot agentData
-    const teamColors={'Team Jhay Oglimen':'#3b82f6','Team Jumz Delacruz':'#22c55e','Team Florence Llait':'#f97316','Team Jersey Deguzman':'#a855f7'};
-    const defColors=['#3b82f6','#22c55e','#f97316','#a855f7','#ef4444','#14b8a6'];
-    // Filter agents to show
-    const showAgents=agentRows&&agentRows.length?agentRows:[];
-    // Also build overall line
-    const overallData=snaps.map(s=>{
-      if(!s||!s.exists)return null;
-      const d=s.data();
-      return d.overallPct!=null?d.overallPct:null;
-    });
-    const agentDatasets=showAgents.slice(0,8).map((r,i)=>{
-      const color=teamColors[r.team]||defColors[i%defColors.length];
-      const data=snaps.map(s=>{
-        if(!s||!s.exists)return null;
-        const d=s.data();
-        const ad=d.agentData&&d.agentData[r.name];
-        if(!ad||!ad.total)return null;
-        return Math.round(ad.done/ad.total*100);
-      });
-      return {label:r.name.split(' ')[0],data,borderColor:color,backgroundColor:color+'33',borderWidth:2,pointRadius:3,pointHoverRadius:5,tension:.35,fill:false,spanGaps:true};
-    });
-    const datasets=[
-      {label:'Overall',data:overallData,borderColor:'#374151',backgroundColor:'#37415122',borderWidth:2.5,pointRadius:4,pointHoverRadius:6,tension:.35,fill:false,spanGaps:true,borderDash:[]}
-      ,...agentDatasets
-    ];
-    if(_cadTrendChart){_cadTrendChart.destroy();_cadTrendChart=null;}
-    _cadTrendChart=new Chart(ctx,{
-      type:'line',
-      data:{labels:dates.map(d=>d.slice(5)),datasets},
-      options:{
-        responsive:true,maintainAspectRatio:false,
-        interaction:{mode:'index',intersect:false},
-        plugins:{
-          legend:{position:'top',labels:{font:{size:10},padding:10,boxWidth:10}},
-          tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y===null?'—':c.parsed.y+'%'}`}}
-        },
-        scales:{
-          x:{grid:{display:false},ticks:{font:{size:10}}},
-          y:{min:0,max:100,ticks:{callback:v=>v+'%',font:{size:10}},grid:{color:'#f3f4f6'}}
-        }
-      }
-    });
-  }catch(e){if(msg){msg.textContent='Could not load trend data.';msg.style.display='';}}
-}
 
 let _agentCadTrendChart=null;
 async function renderAgentCadence(){
