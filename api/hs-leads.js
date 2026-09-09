@@ -1,3 +1,70 @@
+// ── Aircall call-outcome tags → HubSpot "Call outcome" (hs_call_disposition) ──
+// Aircall syncs each call's tag into HubSpot as the call disposition. These GUIDs
+// are this portal's own option values (from the Call outcome property).
+//
+// Connect detection MUST come from here, not from hs_call_status: HubSpot marks
+// every finished call COMPLETED, including No answer and Busy, so a status-based
+// check reports ~100% connect for everyone.
+const CALL_DISPOSITIONS = {
+  'f240bbac-87c9-4f6e-bf70-924b57d47db7': 'Connected',
+  '73a0d17f-1163-4015-bdd5-ec830791da20': 'No answer',
+  '9d9162e7-6cf3-4944-bf63-4dff82258764': 'Busy',
+  '17b47fee-58de-441e-a44c-c6300d46f273': 'Wrong number',
+  'b2cf5968-551e-4856-9783-52b3da59a7d0': 'Left voicemail',
+  'a4c4c377-d246-4b32-a13b-75a56a4cd0ff': 'Left live message',
+  '8764b9cd-1d7b-4ee3-a75d-5bf72c2165af': 'Voicemail Drop',
+  '072a759f-8582-4f74-ad99-cf011f07ed0d': 'Language barrier',
+  'f8fa0e80-a10b-4e34-a99e-19b28160ecd1': 'Follow-up call',
+  '309aeb24-e8ed-4906-b52d-50f1722426a5': 'Duplicate',
+  '71485c7b-9019-41cb-b490-f3c042fb3b10': 'Growth | Call Did Not Connect',
+  '8fa12906-a926-49e3-8931-f0bd23377997': 'Growth | Already an Existing Customer',
+  '3e592798-a062-419a-a627-9cf8d35f9ef2': 'Growth | Did Not Buy',
+  '7adbef2f-611c-4682-a292-33dca7b6bee6': 'Growth | Explicit DNC Request',
+  'bba0eafa-028c-43da-a863-c74ffccb5c92': 'Growth | Not a Sales Lead',
+  '7d609608-a375-4c47-be13-d99c735cfe0a': 'Growth | Request Callback',
+  '8e332e1c-9772-4891-b49f-2ce4d6dd3f2f': 'Growth | SALES',
+  '683f8fd0-8dad-46ed-9d50-58bc29f1fd9d': '1|Board Sale | FCR',
+  '5bd1d99e-cca0-40f5-82ef-105c01cea136': '2|Board Sale - FC (voucher 1st job)',
+  'f628a839-fe69-4169-b8d6-076842c77556': '3|Board Sale - nonFC (15|15+ 1st job)',
+  '3079a568-6d47-4b1f-8e93-34bb03b0d7a9': '4|Existing Customer',
+  '5b970d96-2dfb-4daa-b2cc-aeed67bc31d6': '5|Declined',
+  '781b9766-49e9-4f37-b7d1-bedcf6ca4fe3': '6|No Answer',
+  '83652b21-e82d-47ed-9ed7-842bd7b3325b': '7|Invalid #',
+  '4a153ead-db34-42b1-acc3-54a1d2b1d7b7': '8|Cleaner',
+  '282a4b1f-c88c-4d1d-bef4-fdf01c4038f1': '9|Duplicate',
+  '7bd1d7d0-f30b-4abc-8d78-c8581d7b1b02': '10|DNC/Wrong #',
+  'f1cac9e7-c3b3-4193-926a-d3668c541b6b': '11|Language Barrier',
+  'adf8b6eb-06ca-4f81-be1b-926964601f10': '12|Hangup'
+};
+
+// Tags that mean a person actually picked up. Anything not listed here — and any
+// tag we do not recognise — counts as NOT connected, so a newly added tag can
+// never silently inflate TCR.
+const CONNECTED_DISPOSITIONS = new Set([
+  'f240bbac-87c9-4f6e-bf70-924b57d47db7', // Connected            — the only one in active use
+  'a4c4c377-d246-4b32-a13b-75a56a4cd0ff', // Left live message
+  '072a759f-8582-4f74-ad99-cf011f07ed0d', // Language barrier
+  '8fa12906-a926-49e3-8931-f0bd23377997', // Growth | Already an Existing Customer
+  '3e592798-a062-419a-a627-9cf8d35f9ef2', // Growth | Did Not Buy
+  '7adbef2f-611c-4682-a292-33dca7b6bee6', // Growth | Explicit DNC Request
+  'bba0eafa-028c-43da-a863-c74ffccb5c92', // Growth | Not a Sales Lead
+  '7d609608-a375-4c47-be13-d99c735cfe0a', // Growth | Request Callback
+  '8e332e1c-9772-4891-b49f-2ce4d6dd3f2f', // Growth | SALES
+  '683f8fd0-8dad-46ed-9d50-58bc29f1fd9d', // 1|Board Sale | FCR
+  '5bd1d99e-cca0-40f5-82ef-105c01cea136', // 2|Board Sale - FC
+  'f628a839-fe69-4169-b8d6-076842c77556', // 3|Board Sale - nonFC
+  '3079a568-6d47-4b1f-8e93-34bb03b0d7a9', // 4|Existing Customer
+  '5b970d96-2dfb-4daa-b2cc-aeed67bc31d6', // 5|Declined
+  '4a153ead-db34-42b1-acc3-54a1d2b1d7b7', // 8|Cleaner
+  'f1cac9e7-c3b3-4193-926a-d3668c541b6b', // 11|Language Barrier
+  'adf8b6eb-06ca-4f81-be1b-926964601f10'  // 12|Hangup
+]);
+
+const callConnectInfo = (dispositionId) => {
+  const id = dispositionId || '';
+  return { disposition: CALL_DISPOSITIONS[id] || '', connected: CONNECTED_DISPOSITIONS.has(id) };
+};
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -164,7 +231,7 @@ export default async function handler(req, res) {
       const [todayCallList, todaySmsList] = await Promise.all([
         searchAll('https://api.hubapi.com/crm/v3/objects/calls/search', {
           filterGroups: [{ filters: [timeGTE, timeLT, contactIn] }],
-          properties: ['hs_timestamp','hs_call_status','hs_call_direction','hs_call_duration','hubspot_owner_id'],
+          properties: ['hs_timestamp','hs_call_status','hs_call_disposition','hs_call_direction','hs_call_duration','hubspot_owner_id'],
           limit: 200
         }),
         searchAll('https://api.hubapi.com/crm/v3/objects/communications/search', {
@@ -183,7 +250,8 @@ export default async function handler(req, res) {
           type: 'call',
           timestamp: p.hs_timestamp || '',
           status: p.hs_call_status || '',
-          connected: (p.hs_call_status || '').toUpperCase() === 'COMPLETED',
+          disposition: callConnectInfo(p.hs_call_disposition).disposition,
+          connected: callConnectInfo(p.hs_call_disposition).connected,
           direction: p.hs_call_direction || '',
           durationMs: parseInt(p.hs_call_duration || '0') || 0,
           ownerId: String(p.hubspot_owner_id || '')
@@ -195,6 +263,7 @@ export default async function handler(req, res) {
           type: 'sms',
           timestamp: p.hs_timestamp || '',
           status: 'SENT',
+          disposition: '',
           connected: false,
           direction: (p.hs_communication_logged_from || '').toUpperCase() === 'CONTACT' ? 'INBOUND' : 'OUTBOUND',
           durationMs: 0,
@@ -267,7 +336,7 @@ export default async function handler(req, res) {
         ? batchRead(
             'https://api.hubapi.com/crm/v3/objects/calls/batch/read',
             ticketCallIdList,
-            ['hs_timestamp','hs_call_status','hs_call_direction','hs_call_duration','hubspot_owner_id']
+            ['hs_timestamp','hs_call_status','hs_call_disposition','hs_call_direction','hs_call_duration','hubspot_owner_id']
           )
         : Promise.resolve([]),
       ticketSmsIdList.length > 0
@@ -309,7 +378,8 @@ export default async function handler(req, res) {
         type: 'call',
         timestamp: p.hs_timestamp || '',
         status: p.hs_call_status || '',
-        connected: (p.hs_call_status || '').toUpperCase() === 'COMPLETED',
+        disposition: callConnectInfo(p.hs_call_disposition).disposition,
+        connected: callConnectInfo(p.hs_call_disposition).connected,
         direction: p.hs_call_direction || '',
         durationMs: parseInt(p.hs_call_duration || '0') || 0,
         ownerId: String(p.hubspot_owner_id || '')
@@ -325,6 +395,7 @@ export default async function handler(req, res) {
         type: channel === 'SMS' ? 'sms' : (channel || 'message'),
         timestamp: p.hs_timestamp || '',
         status: 'SENT',
+        disposition: '',
         connected: false,
         direction: (p.hs_communication_logged_from || 'AGENT').toUpperCase() === 'CONTACT' ? 'INBOUND' : 'OUTBOUND',
         durationMs: 0,

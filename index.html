@@ -5873,7 +5873,7 @@ async function ensureAircallUsers(){
 function callHistoryItem(c){
   const ts=c.timestamp?(()=>{const ms=hsTs(c.timestamp);return ms?new Date(ms).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):''})():'';
   const isSms=c.type==='sms'||c.type==='message'||(c.type||'').toLowerCase().includes('sms');
-  const connected=!isSms&&(c.connected||(c.status||'').toUpperCase()==='COMPLETED');
+  const connected=!isSms&&!!c.connected; // Aircall tag (hs_call_disposition), not call status
   const dir=(c.direction||'').toUpperCase()==='INBOUND'?'📨 In':'📤 Out';
   const callDir=(c.direction||'').toUpperCase()==='INBOUND'?'📞 In':'📤 Out';
   const typeLabel=isSms?`${dir} SMS`:`${callDir} Call`;
@@ -6017,7 +6017,7 @@ async function loadAircallData(lid,contactPhone){
     // Update summary counters in the panel header
     const isSmsItem=c=>c.type==='sms'||c.type==='message'||(c.type||'').toLowerCase().includes('sms');
     const ownerCallsOnly=lead.calls.filter(c=>!isSmsItem(c)&&(String(c.ownerId)===String(lead.ownerId)||!c.ownerId));
-    const connCalls=ownerCallsOnly.filter(c=>c.connected||(c.status||'').toUpperCase()==='COMPLETED');
+    const connCalls=ownerCallsOnly.filter(c=>c.connected);
     const smsCntUp=lead.calls.filter(isSmsItem).length;
     const statEl=k=>document.getElementById('stat-'+k+'-'+pid);
     if(statEl('calls-made'))statEl('calls-made').textContent=ownerCallsOnly.length;
@@ -6267,11 +6267,11 @@ function renderHSLeads(){
     const allCalls=l.calls||[];
     // Don't filter by owner ID — Aircall may log calls under a different HubSpot user
     const ownerCalls=allCalls;
-    const connectedCalls=ownerCalls.filter(c=>c.connected||(c.status||'').toUpperCase()==='COMPLETED');
+    const connectedCalls=ownerCalls.filter(c=>c.connected);
     const isSmsC=c=>c.type==='sms'||c.type==='message'||(c.type||'').toLowerCase().includes('sms');
     const smsCnt=allCalls.filter(isSmsC).length;
     const lastOC=ownerCalls[0]||null;
-    const lastConnStr=lastOC?(lastOC.connected||(lastOC.status||'').toUpperCase()==='COMPLETED'?'✅ '+hsRelTime(lastOC.timestamp):'⚠️ '+hsRelTime(lastOC.timestamp)):'No calls yet';
+    const lastConnStr=lastOC?(lastOC.connected?'✅ '+hsRelTime(lastOC.timestamp):'⚠️ '+hsRelTime(lastOC.timestamp)):'No calls yet';
     const displayName=l.contactName||l.subject||'(no name)';
     const _pct=Math.min(100,l.cadencePct||0);
     const _bc=_pct>=100?'#22c55e':_pct>=50?'#f97316':'#ef4444';
@@ -6358,7 +6358,7 @@ function renderHSLeads(){
     const displayName=l.contactName||l.subject||'(no name)';
     const ownerCalls=(l.calls||[]).filter(c=>String(c.ownerId)===String(l.ownerId));
     const lastOwnerCall=ownerCalls[0]||null;
-    const connected=lastOwnerCall&&(lastOwnerCall.connected||(lastOwnerCall.status||'').toUpperCase()==='COMPLETED');
+    const connected=lastOwnerCall&&lastOwnerCall.connected;
     const lastCallStr=lastOwnerCall?(connected?'✅ '+hsRelTime(lastOwnerCall.timestamp):'⚠️ '+hsRelTime(lastOwnerCall.timestamp)):'—';
     const allCalls=l.calls||[];
     const avatarBg=ownerAvatarColor(l.ownerName);
@@ -6394,7 +6394,7 @@ function renderHSLeads(){
     const displayName=l.contactName||l.subject||'(no name)';
     const ownerCalls=(l.calls||[]).filter(c=>String(c.ownerId)===String(l.ownerId));
     const loc=ownerCalls[0]||null;
-    const conn=loc&&(loc.connected||(loc.status||'').toUpperCase()==='COMPLETED');
+    const conn=loc&&loc.connected;
     const lcs=loc?(conn?'✅ '+hsRelTime(loc.timestamp):'⚠️ '+hsRelTime(loc.timestamp)):'—';
     const allCalls=l.calls||[];
     const rowId='row-'+l.id;
@@ -8078,6 +8078,7 @@ function renderTCRDash() {
     return;
   }
   // TCR = connected calls / total calls (per agent, today's calls only)
+  // "Connected" comes from the Aircall tag (hs_call_disposition), resolved in api/hs-leads.js.
   // CSR = (leads in closed/won stage) / connected calls
   const closedWonStages = ['1072805490','1072805491','1072805492'];
   const now = new Date();
@@ -8093,7 +8094,7 @@ function renderTCRDash() {
     if (closedWonStages.includes(l.stageId)) s.closed++;
     const todayCalls = (l.calls||[]).filter(c => c.type==='call' && c.timestamp && hsTs(c.timestamp) >= todayStart && hsTs(c.timestamp) < todayEnd);
     s.totalCalls += todayCalls.length;
-    s.connected += todayCalls.filter(c => c.connected || (c.status||'').toUpperCase()==='COMPLETED').length;
+    s.connected += todayCalls.filter(c => c.connected).length;
   });
   const rows = Object.values(agentStats).sort((a,b) => {
     const tcrA = a.totalCalls > 0 ? a.connected / a.totalCalls : 0;
@@ -8107,7 +8108,7 @@ function renderTCRDash() {
   el.innerHTML = `<div style="margin-bottom:14px;">
     <div style="font-size:.78rem;font-weight:700;color:#374151;margin-bottom:4px;">📊 Call Connect Rate (TCR) — Today</div>
     <div style="font-size:.7rem;color:#9ca3af;">TCR = Connected Calls ÷ Total Calls placed today. CSR = Closed Leads ÷ Connected Calls.</div>
-    <div style="font-size:.67rem;color:#f97316;margin-top:4px;">Note: "Connected" = calls logged as COMPLETED in HubSpot. Aircall tag-based connect detection coming soon.</div>
+    <div style="font-size:.67rem;color:#9ca3af;margin-top:4px;">"Connected" = the Aircall call tag synced to HubSpot as the call outcome (Connected). Tags such as No answer, Busy, Left voicemail and Wrong number do not count.</div>
   </div>
   <div style="overflow-x:auto;background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;">
     <table style="width:100%;border-collapse:collapse;font-size:.78rem;">
