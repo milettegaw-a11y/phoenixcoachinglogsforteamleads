@@ -6588,9 +6588,14 @@ function renderHSLeads(){
     const allowedTeamsArr=_hsTeamFilter?[_hsTeamFilter]:[...HS_ALLOWED_TEAMS];
     const allRosterNames=rosterAgents.filter(ag=>allowedTeamsArr.includes(ag.tl)).map(ag=>ag.name);
     const leadAgentNames=[...new Set(statsBase.map(l=>l.ownerName).filter(Boolean))];
-    const agentNames=[...new Set([...allRosterNames,...leadAgentNames])].sort();
+    const agentNames=[...new Set([...allRosterNames,...leadAgentNames])];
+    // Ordered by cadence % ascending — lowest first, so agents needing coaching surface at the top.
+    // Agents with no leads have no % and sort last (101 sentinel, same convention as the compliance list).
+    // Ties fall back to alphabetical so equal percentages keep a stable, predictable order.
     const agentRows=agentNames.map(name=>{
       const al=statsBase.filter(l=>l.ownerName===name);
+      return {name,al,pct:al.length?Math.round(al.reduce((s,l)=>s+(l.cadencePct||0),0)/Math.max(1,al.length)):null};
+    }).sort((a,b)=>(a.pct??101)-(b.pct??101)||a.name.localeCompare(b.name)).map(({name,al,pct})=>{
       if(!al.length){
         return `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #f9fafb;opacity:.5;">
           <div style="width:130px;font-size:.72rem;font-weight:600;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${name}</div>
@@ -6602,7 +6607,6 @@ function renderHSLeads(){
       }
       const done=al.filter(l=>(l.cadencePct||0)>=100).length;
       const gaps=al.length-done;
-      const pct=Math.round(al.reduce((s,l)=>s+(l.cadencePct||0),0)/Math.max(1,al.length));
       const c=pct>=100?'#22c55e':pct>=50?'#f97316':'#ef4444';
       const barW=Math.min(100,pct);
       return `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #f9fafb;">
