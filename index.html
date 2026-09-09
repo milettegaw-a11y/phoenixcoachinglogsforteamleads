@@ -2420,7 +2420,6 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
         <button id="cad-subtab-today" onclick="setCadDashTab('today')" style="padding:5px 14px;border:none;background:#ff7a59;color:#fff;font-size:.75rem;font-weight:700;cursor:pointer;">Today</button>
         <button id="cad-subtab-agent" onclick="setCadDashTab('agent')" style="padding:5px 14px;border:none;background:#f3f4f6;color:#6b7280;font-size:.75rem;font-weight:700;cursor:pointer;">Agent Level</button>
         <button id="cad-subtab-trend" onclick="setCadDashTab('trend')" style="padding:5px 14px;border:none;background:#f3f4f6;color:#6b7280;font-size:.75rem;font-weight:700;cursor:pointer;">14-Day Trend</button>
-        <button id="cad-subtab-tcr" onclick="setCadDashTab('tcr')" style="padding:5px 14px;border:none;background:#f3f4f6;color:#6b7280;font-size:.75rem;font-weight:700;cursor:pointer;">TCR%</button>
       </div>
       <button id="cad-refresh-btn" onclick="refreshCadDash()" style="padding:6px 14px;border:1.5px solid #ff7a59;border-radius:8px;background:#fff;color:#ff7a59;font-size:.78rem;font-weight:700;cursor:pointer;">↻ Refresh</button>
       <span id="cad-last-fetch" style="font-size:.65rem;color:#9ca3af;white-space:nowrap;"></span>
@@ -2454,8 +2453,6 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
       <div style="position:relative;height:240px;"><canvas id="cad-weekly-canvas" style="display:none;"></canvas></div>
     </div>
   </div>
-  <!-- TCR% panel -->
-  <div id="cad-panel-tcr" style="display:none;"></div>
 </div>
 
 <!-- MY ACTIONS VIEW (TL/OM) -->
@@ -7740,17 +7737,15 @@ async function loadCadenceHistory(days) {
 let _cadDashTab = 'today';
 function setCadDashTab(tab) {
   _cadDashTab = tab;
-  ['today','agent','trend','tcr'].forEach(t => {
+  ['today','agent','trend'].forEach(t => {
     const btn = document.getElementById('cad-subtab-' + t);
     if (btn) { btn.style.background = t === tab ? '#ff7a59' : '#f3f4f6'; btn.style.color = t === tab ? '#fff' : '#6b7280'; }
   });
   document.getElementById('cad-panel-today') && (document.getElementById('cad-panel-today').style.display = tab === 'today' ? '' : 'none');
   document.getElementById('cad-panel-agent') && (document.getElementById('cad-panel-agent').style.display = tab === 'agent' ? '' : 'none');
   document.getElementById('cad-panel-trend') && (document.getElementById('cad-panel-trend').style.display = tab === 'trend' ? '' : 'none');
-  document.getElementById('cad-panel-tcr') && (document.getElementById('cad-panel-tcr').style.display = tab === 'tcr' ? '' : 'none');
   if (tab === 'agent') renderCadAgentPanel();
   if (tab === 'trend') renderCadTrendChart();
-  if (tab === 'tcr') renderTCRDash();
 }
 
 let _cadAgentSnaps14=null; // cache 14-day snapshots for agent panel
@@ -8068,78 +8063,6 @@ async function renderCadTrendChart() {
       scales:{x:{grid:{display:false},ticks:{font:{size:11}}},
         y:{min:0,max:100,ticks:{callback:v=>v+'%',font:{size:10}},grid:{color:'#f3f4f6'}}}}
   });
-}
-
-function renderTCRDash() {
-  const el = document.getElementById('cad-panel-tcr');
-  if (!el) return;
-  if (!_hsLeadsLoaded || !_hsLeads.length) {
-    el.innerHTML = '<div style="color:#9ca3af;font-size:.8rem;padding:24px;text-align:center;">Load Lead Compliance first to see TCR metrics.</div>';
-    return;
-  }
-  // TCR = connected calls / total calls (per agent, today's calls only)
-  // "Connected" comes from the Aircall tag (hs_call_disposition), resolved in api/hs-leads.js.
-  // CSR = (leads in closed/won stage) / connected calls
-  const closedWonStages = ['1072805490','1072805491','1072805492'];
-  const now = new Date();
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  const todayEnd = todayStart + 86400000;
-  const agentStats = {};
-  _hsLeads.forEach(l => {
-    if (!agentStats[l.ownerName]) agentStats[l.ownerName] = {agent:l.ownerName, team:l.ownerName, totalLeads:0, totalCalls:0, connected:0, closed:0};
-    const s = agentStats[l.ownerName];
-    s.totalLeads++;
-    const ag = rosterAgents.find(a => a.name === l.ownerName);
-    if (ag) s.team = ag.tl;
-    if (closedWonStages.includes(l.stageId)) s.closed++;
-    const todayCalls = (l.calls||[]).filter(c => c.type==='call' && c.timestamp && hsTs(c.timestamp) >= todayStart && hsTs(c.timestamp) < todayEnd);
-    s.totalCalls += todayCalls.length;
-    s.connected += todayCalls.filter(c => c.connected).length;
-  });
-  const rows = Object.values(agentStats).sort((a,b) => {
-    const tcrA = a.totalCalls > 0 ? a.connected / a.totalCalls : 0;
-    const tcrB = b.totalCalls > 0 ? b.connected / b.totalCalls : 0;
-    return tcrB - tcrA;
-  });
-  const teamColors={'Team Jhay Oglimen':'#3b82f6','Team Jumz Delacruz':'#22c55e','Team Florence Llait':'#f97316','Team Jersey Deguzman':'#a855f7'};
-  const pct = (n,d) => d > 0 ? Math.round(n/d*100) + '%' : '—';
-  const TH = 'padding:8px 12px;text-align:left;font-weight:700;color:#374151;border-bottom:2px solid #e5e7eb;font-size:.68rem;text-transform:uppercase;letter-spacing:.04em;';
-  const TD = 'padding:8px 12px;border-bottom:1px solid #f3f4f6;';
-  el.innerHTML = `<div style="margin-bottom:14px;">
-    <div style="font-size:.78rem;font-weight:700;color:#374151;margin-bottom:4px;">📊 Call Connect Rate (TCR) — Today</div>
-    <div style="font-size:.7rem;color:#9ca3af;">TCR = Connected Calls ÷ Total Calls placed today. CSR = Closed Leads ÷ Connected Calls.</div>
-    <div style="font-size:.67rem;color:#9ca3af;margin-top:4px;">"Connected" = the Aircall call tag synced to HubSpot as the call outcome (Connected). Tags such as No answer, Busy, Left voicemail and Wrong number do not count.</div>
-  </div>
-  <div style="overflow-x:auto;background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;">
-    <table style="width:100%;border-collapse:collapse;font-size:.78rem;">
-      <thead><tr style="background:#f9fafb;">
-        <th style="${TH}">Agent</th><th style="${TH}">Team</th>
-        <th style="${TH}text-align:center;">Leads</th>
-        <th style="${TH}text-align:center;">Calls Today</th>
-        <th style="${TH}text-align:center;">Connected</th>
-        <th style="${TH}text-align:center;">TCR%</th>
-        <th style="${TH}text-align:center;">Closed</th>
-        <th style="${TH}text-align:center;">CSR%</th>
-      </tr></thead>
-      <tbody>${rows.map(r => {
-        const tcr = r.totalCalls > 0 ? Math.round(r.connected/r.totalCalls*100) : null;
-        const csr = r.connected > 0 ? Math.round(r.closed/r.connected*100) : null;
-        const tcrC = tcr===null?'#9ca3af':tcr>=30?'#22c55e':tcr>=15?'#f97316':'#ef4444';
-        const csrC = csr===null?'#9ca3af':csr>=20?'#22c55e':csr>=10?'#f97316':'#ef4444';
-        const tc = teamColors[r.team]||'#6b7280';
-        return `<tr>
-          <td style="${TD}font-weight:600;color:#111;">${r.agent}</td>
-          <td style="${TD}"><span style="font-size:.62rem;background:${tc}22;color:${tc};padding:2px 8px;border-radius:99px;font-weight:700;">${r.team.replace('Team ','')}</span></td>
-          <td style="${TD}text-align:center;color:#6b7280;">${r.totalLeads}</td>
-          <td style="${TD}text-align:center;color:#374151;font-weight:600;">${r.totalCalls}</td>
-          <td style="${TD}text-align:center;color:#3b82f6;font-weight:700;">${r.connected}</td>
-          <td style="${TD}text-align:center;font-weight:800;color:${tcrC};font-size:.84rem;">${tcr!==null?tcr+'%':'—'}</td>
-          <td style="${TD}text-align:center;color:#6b7280;">${r.closed}</td>
-          <td style="${TD}text-align:center;font-weight:800;color:${csrC};">${csr!==null?csr+'%':'—'}</td>
-        </tr>`;
-      }).join('')}</tbody>
-    </table>
-  </div>`;
 }
 
 // Switch TL nav views (Dashboard / Coaching Logs / Attendance Points)
