@@ -5398,8 +5398,47 @@ async function fetchHSLeads(){
       const lacksCadence=!isRestDay&&cadencePct<100;
       const ageBucket=ageDays<=8?'2nd-week':'3rd-week';
       return {id:t.id,subject:p.subject||'(no name)',ownerId,ownerName,stageId,stageName,attempts,ageDays,createdMs,isRestDay,lacksCadence,cadencePct,actualContacts,expectedContacts,dailyCallsMade,dailySmsCount,ageBucket,contactId:t.contactId||null,contactName:t.contactName||null,contactPhone:t.contactPhone||null,contactEmail:t.contactEmail||null,contactLifecycle:t.contactLifecycle||null,latestNote:t.latestNote||null,calls:t.calls||[]};
+    });
+    // ── DEBUG: log per-filter counts for Jersey/Amer troubleshooting ──
+    const _dbg=['Jersey Deguzman','Amer Ismael','Jersey'];
+    const _raw=allResults;
+    console.log('[HS debug] total raw results from API:',_raw.length);
+    const _step0=_raw.map(t=>{const p=t.properties;return{id:t.id,ownerId:p.hubspot_owner_id,ownerName:HS_OWNERS[p.hubspot_owner_id]||'?'+p.hubspot_owner_id,ageDays:p.createdate?Math.max(1,Math.floor((Date.now()-Number(p.createdate))/86400000)+1):1,stageId:p.hs_pipeline_stage,lifecycle:t.contactLifecycle||''};});
+    ['Jersey Deguzman','Amer Ismael'].forEach(n=>{
+      const mine=_step0.filter(l=>l.ownerName===n);
+      console.log(`[HS debug] ${n}: ${mine.length} raw | ageDays=[${[...new Set(mine.map(l=>l.ageDays))].sort().join(',')}] | stages=[${[...new Set(mine.map(l=>l.stageId))].join(',')}] | lifecycle=[${[...new Set(mine.map(l=>l.lifecycle))].join(',')}]`);
+    });
+    _hsLeads=_step0.map(l=>({...allResults.find(t=>t.id===l.id),...l})); // placeholder — overwritten below
+    _hsLeads=allResults.map(t=>{
+      const p=t.properties;const createdMs=hsTs(p.createdate);const now2=new Date();
+      const ageDays=createdMs?Math.max(1,Math.floor((now2-createdMs)/86400000)+1):1;
+      const ownerId=p.hubspot_owner_id;const ownerName=HS_OWNERS[ownerId]||'Owner #'+ownerId;
+      const stageId=p.hs_pipeline_stage;const stageName=HS_STAGE_LABELS[stageId]||'Stage '+stageId;
+      const attempts=HS_STAGE_ATTEMPTS[stageId]??0;
+      const _cdtNow=new Date(now2.getTime()-5*3600000);
+      const todayStart=new Date(Date.UTC(_cdtNow.getUTCFullYear(),_cdtNow.getUTCMonth(),_cdtNow.getUTCDate())+5*3600000);
+      const todayEnd=new Date(todayStart.getTime()+86400000);
+      const allActivity=t.calls||[];
+      const todayStartMs=todayStart.getTime(),todayEndMs=todayEnd.getTime();
+      const dailyOwnerAct=allActivity.filter(c=>c.timestamp&&hsTs(c.timestamp)>=todayStartMs&&hsTs(c.timestamp)<todayEndMs&&(!c.ownerId||c.ownerId===ownerId));
+      const rawCallsMade=dailyOwnerAct.filter(c=>c.type==='call').length;
+      const rawSmsCount=dailyOwnerAct.filter(c=>c.type==='sms'||c.type==='message').length;
+      const cdtDow=new Date(Date.now()-5*3600000).getUTCDay();
+      const agentTeamStr=rosterAgents.find(a=>a.name===ownerName)?.tl||'';
+      const teamKey=Object.keys(TEAM_DAY_OFF).find(k=>agentTeamStr.includes(k))||'';
+      const isTeamDayOff=!!(teamKey&&TEAM_DAY_OFF[teamKey].includes(cdtDow));
+      const dailyCallsMade=isTeamDayOff?0:rawCallsMade;
+      const dailySmsCount=isTeamDayOff?0:rawSmsCount;
+      const expectedCalls=isTeamDayOff?0:(HS_CADENCE[Math.min(ageDays,15)]||0);
+      const expectedContacts=expectedCalls>0?expectedCalls+1:0;
+      const actualContacts=dailyCallsMade+dailySmsCount;
+      const isRestDay=expectedContacts===0;
+      const cadencePct=expectedContacts>0?Math.min(100,Math.round(actualContacts/expectedContacts*100)):100;
+      const lacksCadence=!isRestDay&&cadencePct<100;
+      const ageBucket=ageDays<=8?'2nd-week':'3rd-week';
+      return {id:t.id,subject:p.subject||'(no name)',ownerId,ownerName,stageId,stageName,attempts,ageDays,createdMs,isRestDay,lacksCadence,cadencePct,actualContacts,expectedContacts,dailyCallsMade,dailySmsCount,ageBucket,contactId:t.contactId||null,contactName:t.contactName||null,contactPhone:t.contactPhone||null,contactEmail:t.contactEmail||null,contactLifecycle:t.contactLifecycle||null,latestNote:t.latestNote||null,calls:t.calls||[]};
     }).filter(l=>HS_ALLOWED_NAMES.has(l.ownerName.toLowerCase()))
-      .filter(l=>l.ageDays<=8) // pipeline filter (HS_PIPELINE_SEG) already scopes to 2nd week
+      .filter(l=>l.ageDays<=8)
       .filter(l=>!closedStages.includes(l.stageId))
       .filter(l=>{const lc=(l.contactLifecycle||'').toLowerCase();return!lc||(lc!=='other'&&lc!=='customer');});
     _hsLeadsLoaded=true;
