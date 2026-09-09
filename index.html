@@ -7841,7 +7841,9 @@ function setCadDashTab(tab) {
   if (tab === 'tcr') renderTCRDash();
 }
 
-let _cadAgentWeekSnaps=null; // cache week snapshots for agent panel
+let _cadAgentSnaps14=null; // cache 14-day snapshots for agent panel
+let _cadAgentTrendChart=null;
+let _cadAgentWeeklyChart=null;
 async function renderCadAgentPanel(){
   const body=document.getElementById('cad-agent-panel-body');
   if(!body)return;
@@ -7859,54 +7861,51 @@ async function renderCadAgentPanel(){
   const tlFilter=tlSel?tlSel.value:'';
   const agSearch=(document.getElementById('cad-agent-search')||{}).value||'';
 
-  // Build today's per-agent stats
+  // Build today's per-agent stats (no leads list needed)
   const agMap={};
   _hsLeads.filter(l=>l.ageDays!==3).forEach(l=>{
-    if(!agMap[l.ownerName]) agMap[l.ownerName]={name:l.ownerName,team:'',total:0,contacted:0,pct:0,gapLeads:[]};
+    if(!agMap[l.ownerName]) agMap[l.ownerName]={name:l.ownerName,team:'',total:0,contacted:0,pct:0};
     const s=agMap[l.ownerName];
     const ag=rosterAgents.find(a=>a.name===l.ownerName);
     if(ag)s.team=ag.tl||'';
     s.total++;
     if((l.cadencePct||0)>=100)s.contacted++;
-    else s.gapLeads.push(l);
   });
-  // Compute today pct
   Object.values(agMap).forEach(s=>{s.pct=s.total?Math.round(s.contacted/s.total*100):100;});
 
-  // Load this week's snapshots for weekly compliance (Mon – today CDT)
-  if(!_cadAgentWeekSnaps){
+  // Load 14-day snapshots (cached)
+  if(!_cadAgentSnaps14){
     const dates=[];
-    const now=Date.now()-5*3600000; // CDT approx
-    const today=new Date(now);
-    // go back to Monday
-    const dow=today.getUTCDay()||7; // 1=Mon..7=Sun
-    for(let i=dow-1;i>=0;i--){
-      const d=new Date(now-i*86400000);
-      dates.push(d.toISOString().slice(0,10));
-    }
+    for(let i=13;i>=0;i--){const d=new Date(Date.now()-5*3600000-i*86400000);dates.push(d.toISOString().slice(0,10));}
     try{
-      const snaps=await Promise.all(dates.map(dt=>FSB.collection('cadence_snapshots').doc(dt).get().catch(()=>null)));
-      _cadAgentWeekSnaps=snaps.filter(s=>s&&s.exists).map(s=>s.data());
-    }catch(e){_cadAgentWeekSnaps=[];}
+      const docs=await Promise.all(dates.map(dt=>FSB.collection('cadence_snapshots').doc(dt).get().catch(()=>null)));
+      _cadAgentSnaps14=dates.map((dt,i)=>({date:dt,data:docs[i]&&docs[i].exists?docs[i].data():null}));
+    }catch(e){_cadAgentSnaps14=[];}
   }
 
-  // Compute per-agent week avg
+  // Per-agent week avg (Mon–today)
+  const now=Date.now()-5*3600000;
+  const dow=new Date(now).getUTCDay()||7;
+  const weekDates=new Set();
+  for(let i=dow-1;i>=0;i--){const d=new Date(now-i*86400000);weekDates.add(d.toISOString().slice(0,10));}
+  const weekSnaps=(_cadAgentSnaps14||[]).filter(s=>weekDates.has(s.date)&&s.data);
   const weekPct={};
-  _cadAgentWeekSnaps.forEach(snap=>{
-    if(!snap.agentData)return;
-    Object.entries(snap.agentData).forEach(([ag,d])=>{
+  weekSnaps.forEach(s=>{
+    if(!s.data.agentData)return;
+    Object.entries(s.data.agentData).forEach(([ag,d])=>{
       if(!weekPct[ag])weekPct[ag]={sum:0,days:0};
       if(d.total>0){weekPct[ag].sum+=Math.round(d.done/d.total*100);weekPct[ag].days++;}
     });
   });
-  const weekAvg=ag=>weekPct[ag]?Math.round(weekPct[ag].sum/weekPct[ag].days):null;
+  const weekAvg=ag=>weekPct[ag]&&weekPct[ag].days?Math.round(weekPct[ag].sum/weekPct[ag].days):null;
 
-  // Filter + sort
+  // Filter + sort (non-compliant first)
   let rows=Object.values(agMap);
   if(tlFilter) rows=rows.filter(r=>r.team===tlFilter);
   if(agSearch) rows=rows.filter(r=>r.name.toLowerCase().includes(agSearch.toLowerCase()));
-  rows.sort((a,b)=>a.pct-b.pct); // non-compliant first
+  rows.sort((a,b)=>a.pct-b.pct);
 
+  const compliantCount=rows.filter(r=>r.pct>=100).length;
   const teamColors={'Team Jhay Oglimen':'#3b82f6','Team Jumz Delacruz':'#22c55e','Team Florence Llait':'#f97316','Team Jersey Deguzman':'#a855f7'};
   const TH='padding:8px 12px;text-align:left;font-weight:700;color:#374151;border-bottom:2px solid #e5e7eb;font-size:.68rem;text-transform:uppercase;letter-spacing:.04em;';
   const TD='padding:8px 12px;border-bottom:1px solid #f3f4f6;vertical-align:middle;';
@@ -7917,24 +7916,24 @@ async function renderCadAgentPanel(){
     const wk=weekAvg(r.name);
     const wkC=wk===null?'#9ca3af':wk>=100?'#22c55e':wk>=80?'#f97316':'#ef4444';
     const tc=teamColors[r.team]||'#6b7280';
-    const gapChips=r.gapLeads.map(l=>`<a href="https://app.hubspot.com/contacts/45809585/ticket/${l.id}" target="_blank"
-      style="display:inline-flex;align-items:center;gap:4px;background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;border-radius:6px;padding:3px 8px;font-size:.63rem;font-weight:600;text-decoration:none;white-space:nowrap;"
-      onmouseover="this.style.background='#fecaca'" onmouseout="this.style.background='#fee2e2'">
-      🔗 ${(l.subject||l.contactName||'Lead').replace(/</g,'&lt;')} <span style="background:#ef4444;color:#fff;border-radius:99px;padding:0 5px;font-size:.55rem;">D${l.ageDays}</span></a>`).join('');
+    const bar=`<div style="display:flex;align-items:center;gap:6px;">
+      <div style="flex:1;height:6px;background:#f3f4f6;border-radius:99px;overflow:hidden;">
+        <div style="height:100%;width:${Math.min(r.pct,100)}%;background:${pc};border-radius:99px;"></div>
+      </div>
+      <span style="font-size:.78rem;font-weight:800;color:${pc};min-width:36px;">${r.pct}%</span>
+    </div>`;
     return `<tr style="background:${compliant?'#f0fdf4':'#fff7f7'};">
       <td style="${TD}font-weight:700;color:#111;">${r.name}</td>
       <td style="${TD}"><span style="font-size:.62rem;background:${tc}22;color:${tc};padding:2px 8px;border-radius:99px;font-weight:700;">${r.team.replace('Team ','')}</span></td>
       <td style="${TD}text-align:center;color:#6b7280;">${r.total}</td>
-      <td style="${TD}text-align:center;font-weight:800;font-size:.88rem;color:${pc};">${r.pct}%</td>
+      <td style="${TD}min-width:130px;">${bar}</td>
       <td style="${TD}text-align:center;font-weight:700;color:${wkC};">${wk!==null?wk+'%':'—'}</td>
       <td style="${TD}text-align:center;">${compliant
         ?'<span style="background:#dcfce7;color:#16a34a;border-radius:99px;padding:3px 10px;font-size:.7rem;font-weight:700;">✅ On Track</span>'
         :'<span style="background:#fee2e2;color:#b91c1c;border-radius:99px;padding:3px 10px;font-size:.7rem;font-weight:700;">❌ Behind</span>'}</td>
-      <td style="${TD}"><div style="display:flex;flex-wrap:wrap;gap:4px;">${gapChips||'<span style="color:#9ca3af;font-size:.7rem;">—</span>'}</div></td>
     </tr>`;
   }).join('');
 
-  const compliantCount=rows.filter(r=>r.pct>=100).length;
   body.innerHTML=`
     <div style="display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
       <div style="background:#dcfce7;border:1.5px solid #86efac;border-radius:10px;padding:12px 20px;text-align:center;min-width:110px;">
@@ -7950,20 +7949,100 @@ async function renderCadAgentPanel(){
         <div style="font-size:.62rem;color:#6b7280;font-weight:700;text-transform:uppercase;">Agents Shown</div>
       </div>
     </div>
-    <div style="overflow-x:auto;background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;">
+    <div style="overflow-x:auto;background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;margin-bottom:20px;">
       <table style="width:100%;border-collapse:collapse;font-size:.78rem;">
         <thead><tr style="background:#f9fafb;">
           <th style="${TH}">Agent</th>
           <th style="${TH}">Team</th>
           <th style="${TH}text-align:center;">Leads</th>
-          <th style="${TH}text-align:center;">Today %</th>
+          <th style="${TH}">Today Compliance</th>
           <th style="${TH}text-align:center;">Week Avg %</th>
           <th style="${TH}text-align:center;">Status</th>
-          <th style="${TH}">Not Contacted Leads</th>
         </tr></thead>
-        <tbody>${rowsHtml||'<tr><td colspan="7" style="padding:20px;text-align:center;color:#9ca3af;">No agents match filter.</td></tr>'}</tbody>
+        <tbody>${rowsHtml||'<tr><td colspan="6" style="padding:20px;text-align:center;color:#9ca3af;">No agents match filter.</td></tr>'}</tbody>
       </table>
+    </div>
+    <div style="background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;padding:20px;margin-bottom:16px;">
+      <div style="font-size:.82rem;font-weight:700;color:#374151;margin-bottom:2px;">📈 Daily Compliance Trend — Agent Level (14 days)</div>
+      <div style="font-size:.7rem;color:#9ca3af;margin-bottom:14px;">Each line = one agent's daily cadence % from saved snapshots</div>
+      <div style="position:relative;height:280px;"><canvas id="cad-agent-daily-chart"></canvas></div>
+    </div>
+    <div style="background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;padding:20px;">
+      <div style="font-size:.82rem;font-weight:700;color:#374151;margin-bottom:2px;">📅 Weekly Compliance — Agent Level</div>
+      <div style="font-size:.7rem;color:#9ca3af;margin-bottom:14px;">Average cadence % per agent per week (current vs prior week)</div>
+      <div style="position:relative;height:260px;"><canvas id="cad-agent-weekly-chart"></canvas></div>
     </div>`;
+
+  // ── Build per-agent datasets from 14-day snapshots ──
+  const agentNames=rows.map(r=>r.name);
+  const dateLabels=(_cadAgentSnaps14||[]).map(s=>s.date.slice(5));
+  const palette=['#3b82f6','#22c55e','#f97316','#a855f7','#ec4899','#14b8a6','#f59e0b','#6366f1','#ef4444','#84cc16'];
+  const agentDatasets=agentNames.map((name,i)=>({
+    label:name,
+    borderColor:palette[i%palette.length],
+    backgroundColor:'transparent',
+    borderWidth:2,pointRadius:3,pointHoverRadius:5,tension:.3,spanGaps:true,
+    data:(_cadAgentSnaps14||[]).map(s=>{
+      if(!s.data||!s.data.agentData||!s.data.agentData[name])return null;
+      const d=s.data.agentData[name];
+      return d.total?Math.round(d.done/d.total*100):null;
+    })
+  }));
+
+  if(_cadAgentTrendChart){_cadAgentTrendChart.destroy();_cadAgentTrendChart=null;}
+  const dctx=document.getElementById('cad-agent-daily-chart');
+  if(dctx&&agentDatasets.length){
+    _cadAgentTrendChart=new Chart(dctx,{
+      type:'line',data:{labels:dateLabels,datasets:agentDatasets},
+      options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+        plugins:{legend:{position:'top',labels:{font:{size:10},padding:8,boxWidth:8}},
+          tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y===null?'No data':c.parsed.y+'%'}`}}},
+        scales:{x:{grid:{display:false},ticks:{font:{size:10},maxRotation:40}},
+          y:{min:0,max:100,ticks:{callback:v=>v+'%',font:{size:10}},grid:{color:'#f3f4f6'}}}}
+    });
+  }
+
+  // ── Weekly grouped bar chart per agent ──
+  // Group snapshots into weeks
+  const wkMap={};
+  (_cadAgentSnaps14||[]).forEach(s=>{
+    if(!s.data)return;
+    const d=new Date(s.date+'T12:00:00');
+    const dow2=d.getDay()||7;
+    const mon=new Date(d);mon.setDate(d.getDate()-(dow2-1));
+    const wk='Wk '+mon.toISOString().slice(5,10);
+    if(!wkMap[wk])wkMap[wk]={};
+    agentNames.forEach(name=>{
+      if(!s.data.agentData||!s.data.agentData[name])return;
+      const ad=s.data.agentData[name];
+      if(!wkMap[wk][name])wkMap[wk][name]={sum:0,days:0};
+      if(ad.total){wkMap[wk][name].sum+=Math.round(ad.done/ad.total*100);wkMap[wk][name].days++;}
+    });
+  });
+  const wkLabels=Object.keys(wkMap);
+  const weeklyDatasets=agentNames.map((name,i)=>({
+    label:name,
+    backgroundColor:palette[i%palette.length]+'88',
+    borderColor:palette[i%palette.length],
+    borderWidth:1.5,borderRadius:4,
+    data:wkLabels.map(wk=>{
+      const d=wkMap[wk][name];
+      return d&&d.days?Math.round(d.sum/d.days):null;
+    })
+  }));
+
+  if(_cadAgentWeeklyChart){_cadAgentWeeklyChart.destroy();_cadAgentWeeklyChart=null;}
+  const wctx=document.getElementById('cad-agent-weekly-chart');
+  if(wctx&&weeklyDatasets.length&&wkLabels.length){
+    _cadAgentWeeklyChart=new Chart(wctx,{
+      type:'bar',data:{labels:wkLabels,datasets:weeklyDatasets},
+      options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+        plugins:{legend:{position:'top',labels:{font:{size:10},padding:8,boxWidth:8}},
+          tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y===null?'No data':c.parsed.y+'%'}`}}},
+        scales:{x:{grid:{display:false},ticks:{font:{size:11}}},
+          y:{min:0,max:100,ticks:{callback:v=>v+'%',font:{size:10}},grid:{color:'#f3f4f6'}}}}
+    });
+  }
 }
 
 async function renderCadTrendChart() {
