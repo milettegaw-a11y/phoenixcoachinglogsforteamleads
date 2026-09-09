@@ -2418,6 +2418,7 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
     <div style="display:flex;gap:6px;align-items:center;">
       <div style="display:flex;border:1.5px solid #e5e7eb;border-radius:8px;overflow:hidden;">
         <button id="cad-subtab-today" onclick="setCadDashTab('today')" style="padding:5px 14px;border:none;background:#ff7a59;color:#fff;font-size:.75rem;font-weight:700;cursor:pointer;">Today</button>
+        <button id="cad-subtab-agent" onclick="setCadDashTab('agent')" style="padding:5px 14px;border:none;background:#f3f4f6;color:#6b7280;font-size:.75rem;font-weight:700;cursor:pointer;">Agent Level</button>
         <button id="cad-subtab-trend" onclick="setCadDashTab('trend')" style="padding:5px 14px;border:none;background:#f3f4f6;color:#6b7280;font-size:.75rem;font-weight:700;cursor:pointer;">14-Day Trend</button>
         <button id="cad-subtab-tcr" onclick="setCadDashTab('tcr')" style="padding:5px 14px;border:none;background:#f3f4f6;color:#6b7280;font-size:.75rem;font-weight:700;cursor:pointer;">TCR%</button>
       </div>
@@ -2429,13 +2430,28 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
   <div id="cad-panel-today">
     <div id="cad-dash-body"><div style="color:var(--g400);font-size:.8rem;padding:24px;text-align:center;">Click Refresh or visit Lead Compliance first to load lead data.</div></div>
   </div>
+  <!-- Agent Level panel -->
+  <div id="cad-panel-agent" style="display:none;">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+      <select id="cad-agent-tl-filter" onchange="renderCadAgentPanel()" style="font-size:.72rem;border:1.5px solid #e5e7eb;border-radius:8px;padding:5px 10px;background:#fff;color:#374151;cursor:pointer;"><option value="">All Teams</option></select>
+      <input id="cad-agent-search" type="text" placeholder="🔍 Filter agent…" oninput="renderCadAgentPanel()" style="font-size:.72rem;border:1.5px solid #e5e7eb;border-radius:8px;padding:5px 10px;background:#fff;color:#374151;outline:none;min-width:140px;"/>
+      <span style="font-size:.68rem;color:#9ca3af;">Week compliance pulled from daily snapshots</span>
+    </div>
+    <div id="cad-agent-panel-body"><div style="color:#9ca3af;font-size:.8rem;padding:24px;text-align:center;">Loading…</div></div>
+  </div>
   <!-- 14-Day Trend panel -->
   <div id="cad-panel-trend" style="display:none;">
-    <div style="background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;padding:20px;">
+    <div style="background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;padding:20px;margin-bottom:16px;">
       <div style="font-size:.85rem;font-weight:700;color:#374151;margin-bottom:4px;">📊 14-Day Cadence Compliance Trend</div>
       <div style="font-size:.7rem;color:#9ca3af;margin-bottom:16px;">Historical daily compliance % — saved automatically when you visit the Cadence Dashboard each day</div>
       <div id="cad-trend-empty" style="display:none;color:#9ca3af;font-size:.8rem;padding:24px;text-align:center;">No historical data yet — snapshots save automatically each time you open this tab. Come back tomorrow to see your first trend line.</div>
       <div style="position:relative;height:300px;"><canvas id="cad-trend-canvas" style="display:none;"></canvas></div>
+    </div>
+    <div style="background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;padding:20px;">
+      <div style="font-size:.85rem;font-weight:700;color:#374151;margin-bottom:4px;">📅 Weekly Compliance Summary</div>
+      <div style="font-size:.7rem;color:#9ca3af;margin-bottom:16px;">Average compliance % per team by week — current vs prior week</div>
+      <div id="cad-weekly-empty" style="display:none;color:#9ca3af;font-size:.8rem;padding:16px;text-align:center;">Not enough data for weekly view yet.</div>
+      <div style="position:relative;height:240px;"><canvas id="cad-weekly-canvas" style="display:none;"></canvas></div>
     </div>
   </div>
   <!-- TCR% panel -->
@@ -7812,15 +7828,142 @@ async function loadCadenceHistory(days) {
 let _cadDashTab = 'today';
 function setCadDashTab(tab) {
   _cadDashTab = tab;
-  ['today','trend','tcr'].forEach(t => {
+  ['today','agent','trend','tcr'].forEach(t => {
     const btn = document.getElementById('cad-subtab-' + t);
     if (btn) { btn.style.background = t === tab ? '#ff7a59' : '#f3f4f6'; btn.style.color = t === tab ? '#fff' : '#6b7280'; }
   });
   document.getElementById('cad-panel-today') && (document.getElementById('cad-panel-today').style.display = tab === 'today' ? '' : 'none');
+  document.getElementById('cad-panel-agent') && (document.getElementById('cad-panel-agent').style.display = tab === 'agent' ? '' : 'none');
   document.getElementById('cad-panel-trend') && (document.getElementById('cad-panel-trend').style.display = tab === 'trend' ? '' : 'none');
   document.getElementById('cad-panel-tcr') && (document.getElementById('cad-panel-tcr').style.display = tab === 'tcr' ? '' : 'none');
+  if (tab === 'agent') renderCadAgentPanel();
   if (tab === 'trend') renderCadTrendChart();
   if (tab === 'tcr') renderTCRDash();
+}
+
+let _cadAgentWeekSnaps=null; // cache week snapshots for agent panel
+async function renderCadAgentPanel(){
+  const body=document.getElementById('cad-agent-panel-body');
+  if(!body)return;
+  if(!_hsLeadsLoaded||!_hsLeads.length){
+    body.innerHTML='<div style="color:#9ca3af;font-size:.8rem;padding:24px;text-align:center;">Load Lead Compliance first (click ↻ Refresh).</div>';
+    return;
+  }
+
+  // Populate TL filter once
+  const tlSel=document.getElementById('cad-agent-tl-filter');
+  if(tlSel&&tlSel.options.length<=1){
+    const teams=[...new Set(rosterAgents.map(a=>a.tl).filter(Boolean))].sort();
+    teams.forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=t.replace('Team ','');tlSel.appendChild(o);});
+  }
+  const tlFilter=tlSel?tlSel.value:'';
+  const agSearch=(document.getElementById('cad-agent-search')||{}).value||'';
+
+  // Build today's per-agent stats
+  const agMap={};
+  _hsLeads.filter(l=>l.ageDays!==3).forEach(l=>{
+    if(!agMap[l.ownerName]) agMap[l.ownerName]={name:l.ownerName,team:'',total:0,contacted:0,pct:0,gapLeads:[]};
+    const s=agMap[l.ownerName];
+    const ag=rosterAgents.find(a=>a.name===l.ownerName);
+    if(ag)s.team=ag.tl||'';
+    s.total++;
+    if((l.cadencePct||0)>=100)s.contacted++;
+    else s.gapLeads.push(l);
+  });
+  // Compute today pct
+  Object.values(agMap).forEach(s=>{s.pct=s.total?Math.round(s.contacted/s.total*100):100;});
+
+  // Load this week's snapshots for weekly compliance (Mon – today CDT)
+  if(!_cadAgentWeekSnaps){
+    const dates=[];
+    const now=Date.now()-5*3600000; // CDT approx
+    const today=new Date(now);
+    // go back to Monday
+    const dow=today.getUTCDay()||7; // 1=Mon..7=Sun
+    for(let i=dow-1;i>=0;i--){
+      const d=new Date(now-i*86400000);
+      dates.push(d.toISOString().slice(0,10));
+    }
+    try{
+      const snaps=await Promise.all(dates.map(dt=>FSB.collection('cadence_snapshots').doc(dt).get().catch(()=>null)));
+      _cadAgentWeekSnaps=snaps.filter(s=>s&&s.exists).map(s=>s.data());
+    }catch(e){_cadAgentWeekSnaps=[];}
+  }
+
+  // Compute per-agent week avg
+  const weekPct={};
+  _cadAgentWeekSnaps.forEach(snap=>{
+    if(!snap.agentData)return;
+    Object.entries(snap.agentData).forEach(([ag,d])=>{
+      if(!weekPct[ag])weekPct[ag]={sum:0,days:0};
+      if(d.total>0){weekPct[ag].sum+=Math.round(d.done/d.total*100);weekPct[ag].days++;}
+    });
+  });
+  const weekAvg=ag=>weekPct[ag]?Math.round(weekPct[ag].sum/weekPct[ag].days):null;
+
+  // Filter + sort
+  let rows=Object.values(agMap);
+  if(tlFilter) rows=rows.filter(r=>r.team===tlFilter);
+  if(agSearch) rows=rows.filter(r=>r.name.toLowerCase().includes(agSearch.toLowerCase()));
+  rows.sort((a,b)=>a.pct-b.pct); // non-compliant first
+
+  const teamColors={'Team Jhay Oglimen':'#3b82f6','Team Jumz Delacruz':'#22c55e','Team Florence Llait':'#f97316','Team Jersey Deguzman':'#a855f7'};
+  const TH='padding:8px 12px;text-align:left;font-weight:700;color:#374151;border-bottom:2px solid #e5e7eb;font-size:.68rem;text-transform:uppercase;letter-spacing:.04em;';
+  const TD='padding:8px 12px;border-bottom:1px solid #f3f4f6;vertical-align:middle;';
+
+  const rowsHtml=rows.map(r=>{
+    const compliant=r.pct>=100;
+    const pc=r.pct>=100?'#22c55e':r.pct>=80?'#f97316':'#ef4444';
+    const wk=weekAvg(r.name);
+    const wkC=wk===null?'#9ca3af':wk>=100?'#22c55e':wk>=80?'#f97316':'#ef4444';
+    const tc=teamColors[r.team]||'#6b7280';
+    const gapChips=r.gapLeads.map(l=>`<a href="https://app.hubspot.com/contacts/45809585/ticket/${l.id}" target="_blank"
+      style="display:inline-flex;align-items:center;gap:4px;background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;border-radius:6px;padding:3px 8px;font-size:.63rem;font-weight:600;text-decoration:none;white-space:nowrap;"
+      onmouseover="this.style.background='#fecaca'" onmouseout="this.style.background='#fee2e2'">
+      🔗 ${(l.subject||l.contactName||'Lead').replace(/</g,'&lt;')} <span style="background:#ef4444;color:#fff;border-radius:99px;padding:0 5px;font-size:.55rem;">D${l.ageDays}</span></a>`).join('');
+    return `<tr style="background:${compliant?'#f0fdf4':'#fff7f7'};">
+      <td style="${TD}font-weight:700;color:#111;">${r.name}</td>
+      <td style="${TD}"><span style="font-size:.62rem;background:${tc}22;color:${tc};padding:2px 8px;border-radius:99px;font-weight:700;">${r.team.replace('Team ','')}</span></td>
+      <td style="${TD}text-align:center;color:#6b7280;">${r.total}</td>
+      <td style="${TD}text-align:center;font-weight:800;font-size:.88rem;color:${pc};">${r.pct}%</td>
+      <td style="${TD}text-align:center;font-weight:700;color:${wkC};">${wk!==null?wk+'%':'—'}</td>
+      <td style="${TD}text-align:center;">${compliant
+        ?'<span style="background:#dcfce7;color:#16a34a;border-radius:99px;padding:3px 10px;font-size:.7rem;font-weight:700;">✅ On Track</span>'
+        :'<span style="background:#fee2e2;color:#b91c1c;border-radius:99px;padding:3px 10px;font-size:.7rem;font-weight:700;">❌ Behind</span>'}</td>
+      <td style="${TD}"><div style="display:flex;flex-wrap:wrap;gap:4px;">${gapChips||'<span style="color:#9ca3af;font-size:.7rem;">—</span>'}</div></td>
+    </tr>`;
+  }).join('');
+
+  const compliantCount=rows.filter(r=>r.pct>=100).length;
+  body.innerHTML=`
+    <div style="display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+      <div style="background:#dcfce7;border:1.5px solid #86efac;border-radius:10px;padding:12px 20px;text-align:center;min-width:110px;">
+        <div style="font-size:1.6rem;font-weight:800;color:#16a34a;">${compliantCount}</div>
+        <div style="font-size:.62rem;color:#15803d;font-weight:700;text-transform:uppercase;">On Cadence</div>
+      </div>
+      <div style="background:#fee2e2;border:1.5px solid #fca5a5;border-radius:10px;padding:12px 20px;text-align:center;min-width:110px;">
+        <div style="font-size:1.6rem;font-weight:800;color:#ef4444;">${rows.length-compliantCount}</div>
+        <div style="font-size:.62rem;color:#b91c1c;font-weight:700;text-transform:uppercase;">Behind</div>
+      </div>
+      <div style="background:#f3f4f6;border:1.5px solid #e5e7eb;border-radius:10px;padding:12px 20px;text-align:center;min-width:110px;">
+        <div style="font-size:1.6rem;font-weight:800;color:#374151;">${rows.length}</div>
+        <div style="font-size:.62rem;color:#6b7280;font-weight:700;text-transform:uppercase;">Agents Shown</div>
+      </div>
+    </div>
+    <div style="overflow-x:auto;background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;">
+      <table style="width:100%;border-collapse:collapse;font-size:.78rem;">
+        <thead><tr style="background:#f9fafb;">
+          <th style="${TH}">Agent</th>
+          <th style="${TH}">Team</th>
+          <th style="${TH}text-align:center;">Leads</th>
+          <th style="${TH}text-align:center;">Today %</th>
+          <th style="${TH}text-align:center;">Week Avg %</th>
+          <th style="${TH}text-align:center;">Status</th>
+          <th style="${TH}">Not Contacted Leads</th>
+        </tr></thead>
+        <tbody>${rowsHtml||'<tr><td colspan="7" style="padding:20px;text-align:center;color:#9ca3af;">No agents match filter.</td></tr>'}</tbody>
+      </table>
+    </div>`;
 }
 
 async function renderCadTrendChart() {
@@ -7839,7 +7982,7 @@ async function renderCadTrendChart() {
   const teams = [...HS_ALLOWED_TEAMS];
   const labels = history.map(h => h.dayLabel);
   const datasets = [
-    {label:'Overall', data: history.map(h => h.data ? h.data.overallPct : null), borderColor:'#374151', backgroundColor:'#37415122', borderWidth:2.5, tension:.3, spanGaps:true, pointRadius:4},
+    {label:'Team Level', data: history.map(h => h.data ? h.data.overallPct : null), borderColor:'#374151', backgroundColor:'#37415122', borderWidth:2.5, tension:.3, spanGaps:true, pointRadius:4},
     ...teams.map(team => ({
       label: team.replace('Team ',''), borderColor: teamColors[team] || '#999', backgroundColor:'transparent',
       borderWidth: 1.5, tension:.3, spanGaps:true, pointRadius:3,
@@ -7858,6 +8001,62 @@ async function renderCadTrendChart() {
         tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y===null?'No data':c.parsed.y+'%'}`}}},
       scales:{x:{grid:{display:false},ticks:{font:{size:10},maxRotation:40}},
         y:{min:0,max:100,ticks:{callback:v=>v+'%',font:{size:10}},grid:{color:'#f3f4f6'},title:{display:true,text:'Compliance %',font:{size:10}}}}}
+  });
+
+  // ── Weekly summary chart ──
+  const weekEl = document.getElementById('cad-weekly-canvas');
+  const weekEmpty = document.getElementById('cad-weekly-empty');
+  if (!weekEl) return;
+  // Group history into ISO weeks (Mon–Sun). Each entry: {weekLabel, days:[]}
+  const weekMap = {};
+  history.forEach(h => {
+    if (!h.data) return;
+    const d = new Date(h.date + 'T12:00:00');
+    // Monday of that week
+    const day = d.getDay(); // 0=Sun
+    const diff = (day === 0 ? -6 : 1 - day);
+    const mon = new Date(d); mon.setDate(d.getDate() + diff);
+    const wk = mon.toISOString().slice(5,10); // MM-DD
+    if (!weekMap[wk]) weekMap[wk] = {label:'Wk '+wk, entries:[]};
+    weekMap[wk].entries.push(h.data);
+  });
+  const weeks = Object.values(weekMap);
+  if (weeks.length < 1) {
+    if (weekEmpty) weekEmpty.style.display = '';
+    weekEl.style.display = 'none';
+    return;
+  }
+  if (weekEmpty) weekEmpty.style.display = 'none';
+  weekEl.style.display = '';
+  const wkLabels = weeks.map(w => w.label);
+  const wkDatasets = [
+    {
+      label:'Team Level',
+      data: weeks.map(w => {
+        const vals = w.entries.map(e => e.overallPct).filter(v => v != null);
+        return vals.length ? Math.round(vals.reduce((a,b)=>a+b,0)/vals.length) : null;
+      }),
+      backgroundColor:'#37415144', borderColor:'#374151', borderWidth:2, borderRadius:6
+    },
+    ...teams.map(team => ({
+      label: team.replace('Team ',''),
+      backgroundColor: (teamColors[team]||'#999')+'55',
+      borderColor: teamColors[team]||'#999',
+      borderWidth: 1.5, borderRadius: 6,
+      data: weeks.map(w => {
+        const vals = w.entries.map(e => e.teamData&&e.teamData[team]?e.teamData[team].pct:null).filter(v=>v!=null);
+        return vals.length ? Math.round(vals.reduce((a,b)=>a+b,0)/vals.length) : null;
+      })
+    }))
+  ];
+  if (window._cadWeeklyChart) { window._cadWeeklyChart.destroy(); }
+  window._cadWeeklyChart = new Chart(weekEl, {
+    type:'bar', data:{labels:wkLabels, datasets:wkDatasets},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{position:'top',labels:{font:{size:11},padding:10,boxWidth:10}},
+        tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y===null?'No data':c.parsed.y+'%'}`}}},
+      scales:{x:{grid:{display:false},ticks:{font:{size:11}}},
+        y:{min:0,max:100,ticks:{callback:v=>v+'%',font:{size:10}},grid:{color:'#f3f4f6'}}}}
   });
 }
 
