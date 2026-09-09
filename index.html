@@ -806,11 +806,15 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
       <div class="sb-section-lbl grp-open" onclick="toggleSbGroup('om-grp-perf',this)">PERFORMANCE<span class="sb-grp-arrow">›</span></div>
       <div class="sb-group grp-open" id="om-grp-perf">
         <div class="sb-item active" data-tab="dash" onclick="switchOM('dash')"><span class="sb-icon">📊</span><span>Coaching Dashboard</span></div>
+        <div class="sb-item agent-hide" data-tab="caddash" onclick="switchOM('caddash')"><span class="sb-icon">📈</span><span>Cadence Dashboard</span></div>
+        <div class="sb-item" data-tab="attendance" onclick="switchOM('attendance')"><span class="sb-icon">🗓️</span><span>Attendance Points</span><span id="nav-badge-om-att" class="sb-notif" style="display:none"></span></div>
+      </div>
+      <div class="sb-section-lbl" onclick="toggleSbGroup('om-grp-coaching',this)">COACHING<span class="sb-grp-arrow">›</span></div>
+      <div class="sb-group" id="om-grp-coaching">
         <div class="sb-item" data-tab="coaching" onclick="switchOM('coaching');toggleSbSub('om-sub-coaching')"><span class="sb-icon">📋</span><span>Coaching Logs</span><span class="sb-arrow" id="om-arr-coaching">›</span></div>
         <div class="sb-sub-item agent-hide" id="om-sub-coaching" onclick="openLogModal()"><span class="sb-icon">➕</span><span>New Coaching Log</span></div>
         <div class="sb-item" data-tab="nte" onclick="switchOM('nte');toggleSbSub('om-sub-nte')"><span class="sb-icon">📝</span><span>NTE Logs</span><span class="sb-arrow" id="om-arr-nte">›</span></div>
         <div class="sb-sub-item agent-hide" id="om-sub-nte" onclick="openNTEModal()"><span class="sb-icon">📋</span><span>New NTE</span></div>
-        <div class="sb-item" data-tab="attendance" onclick="switchOM('attendance')"><span class="sb-icon">🗓️</span><span>Attendance Points</span><span id="nav-badge-om-att" class="sb-notif" style="display:none"></span></div>
         <div class="sb-item" data-tab="ranking" onclick="switchOM('ranking')"><span class="sb-icon">🏆</span><span>Agent Ranking</span></div>
       </div>
       <div class="sb-section-lbl" onclick="toggleSbGroup('om-grp-fu',this)">FOLLOW-UP<span class="sb-grp-arrow">›</span></div>
@@ -823,7 +827,6 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
         <div class="sb-item" data-tab="actions" onclick="switchOM('actions')"><span class="sb-icon">⚡</span><span>Action Items</span><span id="nav-badge-actions" class="sb-notif" style="display:none"></span></div>
         <div class="sb-item agent-hide" data-tab="leads" onclick="switchOM('leads')"><span class="sb-icon">📞</span><span>Lead Follow-Ups</span><span id="nav-badge-om-leads" class="sb-notif" style="display:none"></span></div>
         <div class="sb-item agent-hide" data-tab="leadmgmt" onclick="switchOM('leadmgmt')"><span class="sb-icon">🔶</span><span>Lead Compliance</span></div>
-        <div class="sb-item agent-hide" data-tab="caddash" onclick="switchOM('caddash')"><span class="sb-icon">📈</span><span>Cadence Dashboard</span></div>
       </div>
       <div class="sb-section-lbl" onclick="toggleSbGroup('om-grp-res',this)">RESOURCES<span class="sb-grp-arrow">›</span></div>
       <div class="sb-group" id="om-grp-res">
@@ -845,12 +848,16 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
     <div id="tl-nav" class="hidden">
       <div class="sb-section-lbl grp-open" onclick="toggleSbGroup('tl-grp-perf',this)">PERFORMANCE<span class="sb-grp-arrow">›</span></div>
       <div class="sb-group grp-open" id="tl-grp-perf">
-        <div class="sb-item active" id="tl-nav-dash" onclick="tlShowView('dashboard')"><span class="sb-icon">📊</span><span>Dashboard</span></div>
+        <div class="sb-item active" id="tl-nav-dash" onclick="tlShowView('dashboard')"><span class="sb-icon">📊</span><span>Coaching Dashboard</span></div>
+        <div class="sb-item" id="tl-nav-caddash" onclick="tlShowView('caddash')"><span class="sb-icon">📈</span><span>Cadence Dashboard</span></div>
+        <div class="sb-item" id="tl-nav-attendance" onclick="tlShowView('attendance')"><span class="sb-icon">🗓️</span><span>Attendance Points</span><span id="nav-badge-tl-att" class="sb-notif" style="display:none"></span></div>
+      </div>
+      <div class="sb-section-lbl" onclick="toggleSbGroup('tl-grp-coaching',this)">COACHING<span class="sb-grp-arrow">›</span></div>
+      <div class="sb-group" id="tl-grp-coaching">
         <div class="sb-item" id="tl-nav-logs" onclick="tlShowView('logs');toggleSbSub('tl-sub-coaching')"><span class="sb-icon">📋</span><span>Coaching Logs</span><span id="nav-badge-tl-logs" class="sb-notif" style="display:none"></span><span class="sb-arrow" id="tl-arr-coaching">›</span></div>
         <div class="sb-sub-item" id="tl-sub-coaching" onclick="openLogModal()"><span class="sb-icon">➕</span><span>New Coaching Log</span></div>
         <div class="sb-item" id="tl-nav-nte" onclick="tlShowView('nte');toggleSbSub('tl-sub-nte')"><span class="sb-icon">📝</span><span>NTE Logs</span><span class="sb-arrow" id="tl-arr-nte">›</span></div>
         <div class="sb-sub-item" id="tl-sub-nte" onclick="openNTEModal()"><span class="sb-icon">📋</span><span>New NTE</span></div>
-        <div class="sb-item" id="tl-nav-attendance" onclick="tlShowView('attendance')"><span class="sb-icon">🗓️</span><span>Attendance Points</span><span id="nav-badge-tl-att" class="sb-notif" style="display:none"></span></div>
         <div class="sb-item" id="tl-nav-ranking" onclick="tlShowView('ranking')"><span class="sb-icon">🏆</span><span>Agent Ranking</span></div>
       </div>
       <div class="sb-section-lbl" onclick="toggleSbGroup('tl-grp-fu',this)">FOLLOW-UP<span class="sb-grp-arrow">›</span></div>
@@ -863,7 +870,6 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
         <div class="sb-item" id="tl-nav-actions" onclick="tlShowView('actions')"><span class="sb-icon">⚡</span><span>Action Items</span><span id="nav-badge-tl-actions" class="sb-notif" style="display:none"></span></div>
         <div class="sb-item" id="tl-nav-leads" onclick="tlShowView('leads')"><span class="sb-icon">📞</span><span>Lead Follow-Ups</span><span id="nav-badge-tl-leads" class="sb-notif" style="display:none"></span></div>
         <div class="sb-item" id="tl-nav-leadmgmt" onclick="tlShowView('leadmgmt')"><span class="sb-icon">🔶</span><span>Lead Compliance</span></div>
-        <div class="sb-item" id="tl-nav-caddash" onclick="tlShowView('caddash')"><span class="sb-icon">📈</span><span>Cadence Dashboard</span></div>
       </div>
       <div class="sb-section-lbl" onclick="toggleSbGroup('tl-grp-res',this)">RESOURCES<span class="sb-grp-arrow">›</span></div>
       <div class="sb-group" id="tl-grp-res">
