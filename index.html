@@ -893,6 +893,7 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
         <div class="sb-item" data-tab="nte" onclick="switchAgentTab('nte')"><span class="sb-icon">📝</span><span>My NTE</span></div>
         <div class="sb-item" data-tab="ft" onclick="switchAgentTab('ft')"><span class="sb-icon">🔄</span><span>My Follow Through</span></div>
         <div class="sb-item" data-tab="perf" onclick="switchAgentTab('perf')"><span class="sb-icon">📊</span><span>My Performance</span></div>
+        <div class="sb-item" data-tab="mycad" onclick="switchAgentTab('mycad')"><span class="sb-icon">📈</span><span>My Cadence</span></div>
         <div class="sb-item" data-tab="clhist" onclick="switchAgentTab('clhist')"><span class="sb-icon">🎧</span><span>My Call History</span></div>
         <div class="sb-item" data-tab="calc" onclick="switchAgentTab('calc')"><span class="sb-icon">🧮</span><span>Phoenix Calculator</span></div>
       </div>
@@ -1539,6 +1540,13 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- ── MY CADENCE ── -->
+      <div id="av-mycad" class="av-section" style="display:none;padding:16px;">
+        <div style="font-size:1rem;font-weight:700;color:#374151;margin-bottom:4px;">📈 My Cadence</div>
+        <div style="font-size:.74rem;color:#9ca3af;margin-bottom:18px;">Your daily cadence compliance for your 2nd-week leads</div>
+        <div id="av-mycad-body"><div style="color:#9ca3af;font-size:.8rem;text-align:center;padding:24px;">Loading…</div></div>
       </div>
 
       <!-- ── PHOENIX CALCULATOR ── -->
@@ -5519,7 +5527,8 @@ function renderCadDash(){
     const done=al.filter(l=>(l.cadencePct||0)>=100).length;
     const avg=Math.round(al.reduce((s,l)=>s+(l.cadencePct||0),0)/al.length);
     const color=teamColors[ag.tl]||defColors[ti%defColors.length];
-    return {name:ag.name,team:ag.tl,total:al.length,done,gaps:al.length-done,avg,color};
+    const gapLeads=al.filter(l=>(l.cadencePct||0)<100);
+    return {name:ag.name,team:ag.tl,total:al.length,done,gaps:al.length-done,avg,color,gapLeads};
   }).filter(Boolean).sort((a,b)=>a.avg-b.avg);
 
   const totalLeads=visibleLeads.length;
@@ -5565,34 +5574,58 @@ function renderCadDash(){
       <div style="font-size:.7rem;color:#9ca3af;margin-bottom:16px;">% of leads per day that completed their required cadence today — grouped by team</div>
       <div style="position:relative;height:280px;"><canvas id="cad-bar-chart"></canvas></div>
     </div>
-    <div style="background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;padding:20px;">
-      <div style="font-size:.85rem;font-weight:700;color:#374151;margin-bottom:16px;">Agent Breakdown <span style="font-size:.7rem;font-weight:400;color:#9ca3af;">(sorted: lowest compliance first)</span></div>
+    <div style="background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;padding:20px;margin-bottom:24px;">
+      <div style="font-size:.85rem;font-weight:700;color:#374151;margin-bottom:4px;">Agent Compliance Breakdown <span style="font-size:.7rem;font-weight:400;color:#9ca3af;">(sorted: lowest first · click row to see non-complied leads)</span></div>
       <div style="overflow-x:auto;">
         <table style="width:100%;border-collapse:collapse;font-size:.78rem;">
           <thead><tr style="background:#f9fafb;">
             <th style="padding:8px 12px;text-align:left;font-weight:700;color:#374151;border-bottom:2px solid #e5e7eb;">Agent</th>
             <th style="padding:8px 12px;text-align:left;font-weight:700;color:#374151;border-bottom:2px solid #e5e7eb;">Team</th>
             <th style="padding:8px 12px;text-align:center;font-weight:700;color:#374151;border-bottom:2px solid #e5e7eb;">Leads</th>
-            <th style="padding:8px 12px;text-align:center;font-weight:700;color:#374151;border-bottom:2px solid #e5e7eb;">Done</th>
-            <th style="padding:8px 12px;text-align:center;font-weight:700;color:#374151;border-bottom:2px solid #e5e7eb;">Gaps</th>
-            <th style="padding:8px 12px;text-align:left;font-weight:700;color:#374151;border-bottom:2px solid #e5e7eb;min-width:130px;">Cadence %</th>
+            <th style="padding:8px 12px;text-align:center;font-weight:700;color:#374151;border-bottom:2px solid #e5e7eb;">Done ✅</th>
+            <th style="padding:8px 12px;text-align:center;font-weight:700;color:#374151;border-bottom:2px solid #e5e7eb;">Gaps ⚠️</th>
+            <th style="padding:8px 12px;text-align:left;font-weight:700;color:#374151;border-bottom:2px solid #e5e7eb;min-width:130px;">Compliance %</th>
+            <th style="padding:8px 12px;width:24px;border-bottom:2px solid #e5e7eb;"></th>
           </tr></thead>
           <tbody>${agentRows.map(r=>{
             const bc=r.avg>=100?'#22c55e':r.avg>=50?'#f97316':'#ef4444';
-            return `<tr style="border-bottom:1px solid #f3f4f6;">
+            const safeId=r.name.replace(/\s+/g,'-').replace(/[^a-zA-Z0-9\-]/g,'');
+            const gapHtml=r.gapLeads.length===0
+              ?'<div style="color:#22c55e;font-size:.73rem;padding:8px 0;">✅ All leads are on cadence!</div>'
+              :`<div style="font-size:.71rem;color:#6b7280;margin-bottom:6px;font-weight:600;">Not contacted today (${r.gapLeads.length}):</div>
+                <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                  ${r.gapLeads.map(l=>`<a href="https://app.hubspot.com/contacts/45809585/ticket/${l.id}" target="_blank"
+                    title="Day ${l.ageDays} · ${l.cadencePct||0}% cadence"
+                    style="display:inline-flex;align-items:center;gap:4px;background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;border-radius:6px;padding:3px 9px;font-size:.68rem;font-weight:600;text-decoration:none;cursor:pointer;"
+                    onmouseover="this.style.background='#fecaca'" onmouseout="this.style.background='#fee2e2'">
+                    🔗 ${(l.subject||l.contactName||'Lead').replace(/</g,'&lt;')}
+                    <span style="font-size:.6rem;color:#ef4444;margin-left:2px;">Day ${l.ageDays}</span>
+                  </a>`).join('')}
+                </div>`;
+            return `<tr onclick="toggleCadAgentRow('${safeId}')" style="border-bottom:1px solid #f3f4f6;cursor:pointer;" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">
               <td style="padding:8px 12px;font-weight:600;color:#374151;">${r.name}</td>
               <td style="padding:8px 12px;"><span style="font-size:.62rem;background:${r.color}22;color:${r.color};padding:2px 8px;border-radius:99px;font-weight:700;">${r.team.replace('Team ','')}</span></td>
               <td style="padding:8px 12px;text-align:center;color:#6b7280;">${r.total}</td>
               <td style="padding:8px 12px;text-align:center;color:#22c55e;font-weight:700;">${r.done}</td>
-              <td style="padding:8px 12px;text-align:center;color:${r.gaps>0?'#ef4444':'#22c55e'};font-weight:700;">${r.gaps>0?r.gaps:'✅'}</td>
+              <td style="padding:8px 12px;text-align:center;font-weight:700;"><span style="background:${r.gaps>0?'#fee2e2':'#dcfce7'};color:${r.gaps>0?'#b91c1c':'#166534'};padding:2px 8px;border-radius:99px;font-size:.7rem;">${r.gaps>0?'⚠️ '+r.gaps:'✅'}</span></td>
               <td style="padding:8px 12px;"><div style="display:flex;align-items:center;gap:8px;">
                 <div style="flex:1;background:#f3f4f6;border-radius:99px;height:7px;overflow:hidden;"><div style="height:100%;width:${Math.min(100,r.avg)}%;background:${bc};border-radius:99px;"></div></div>
                 <span style="font-size:.75rem;font-weight:700;color:${bc};min-width:34px;">${r.avg}%</span>
               </div></td>
+              <td style="padding:8px 12px;text-align:center;color:#9ca3af;font-size:.75rem;" id="cad-arr-${safeId}">›</td>
+            </tr>
+            <tr id="cad-detail-${safeId}" style="display:none;background:#fafafa;">
+              <td colspan="7" style="padding:10px 16px 14px 16px;border-bottom:2px solid #e5e7eb;">${gapHtml}</td>
             </tr>`;
           }).join('')}</tbody>
         </table>
       </div>
+    </div>
+    <div style="background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;padding:20px;">
+      <div style="font-size:.85rem;font-weight:700;color:#374151;margin-bottom:2px;">Compliance Trend (14 days)</div>
+      <div style="font-size:.7rem;color:#9ca3af;margin-bottom:16px;">Daily overall compliance % — pulled from saved snapshots</div>
+      <div style="position:relative;height:220px;"><canvas id="cad-trend-chart"></canvas></div>
+      <div id="cad-trend-msg" style="display:none;color:#9ca3af;font-size:.75rem;text-align:center;padding:40px 0;">Loading trend data…</div>
     </div>`;
 
   // Render Chart.js grouped bar chart
@@ -5615,6 +5648,169 @@ function renderCadDash(){
       }
     }
   });
+  // Load 14-day trend async
+  renderCadTrend(myTLTeam,agentRows);
+}
+
+function toggleCadAgentRow(safeId){
+  const det=document.getElementById('cad-detail-'+safeId);
+  const arr=document.getElementById('cad-arr-'+safeId);
+  if(!det)return;
+  const open=det.style.display==='none';
+  det.style.display=open?'':'none';
+  if(arr)arr.textContent=open?'˅':'›';
+}
+
+let _cadTrendChart=null;
+async function renderCadTrend(myTLTeam,agentRows){
+  const msg=document.getElementById('cad-trend-msg');
+  const ctx=document.getElementById('cad-trend-chart');
+  if(!ctx)return;
+  if(msg)msg.style.display='';
+  // Build last 14 days date strings (YYYY-MM-DD CDT)
+  const dates=[];
+  for(let i=13;i>=0;i--){const d=new Date(Date.now()-5*3600000-i*86400000);dates.push(d.toISOString().slice(0,10));}
+  try{
+    const snaps=await Promise.all(dates.map(dt=>FSB.collection('cadence_snapshots').doc(dt).get().catch(()=>null)));
+    if(msg)msg.style.display='none';
+    // Build per-agent datasets from snapshot agentData
+    const teamColors={'Team Jhay Oglimen':'#3b82f6','Team Jumz Delacruz':'#22c55e','Team Florence Llait':'#f97316','Team Jersey Deguzman':'#a855f7'};
+    const defColors=['#3b82f6','#22c55e','#f97316','#a855f7','#ef4444','#14b8a6'];
+    // Filter agents to show
+    const showAgents=agentRows&&agentRows.length?agentRows:[];
+    // Also build overall line
+    const overallData=snaps.map(s=>{
+      if(!s||!s.exists)return null;
+      const d=s.data();
+      return d.overallPct!=null?d.overallPct:null;
+    });
+    const agentDatasets=showAgents.slice(0,8).map((r,i)=>{
+      const color=teamColors[r.team]||defColors[i%defColors.length];
+      const data=snaps.map(s=>{
+        if(!s||!s.exists)return null;
+        const d=s.data();
+        const ad=d.agentData&&d.agentData[r.name];
+        if(!ad||!ad.total)return null;
+        return Math.round(ad.done/ad.total*100);
+      });
+      return {label:r.name.split(' ')[0],data,borderColor:color,backgroundColor:color+'33',borderWidth:2,pointRadius:3,pointHoverRadius:5,tension:.35,fill:false,spanGaps:true};
+    });
+    const datasets=[
+      {label:'Overall',data:overallData,borderColor:'#374151',backgroundColor:'#37415122',borderWidth:2.5,pointRadius:4,pointHoverRadius:6,tension:.35,fill:false,spanGaps:true,borderDash:[]}
+      ,...agentDatasets
+    ];
+    if(_cadTrendChart){_cadTrendChart.destroy();_cadTrendChart=null;}
+    _cadTrendChart=new Chart(ctx,{
+      type:'line',
+      data:{labels:dates.map(d=>d.slice(5)),datasets},
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        interaction:{mode:'index',intersect:false},
+        plugins:{
+          legend:{position:'top',labels:{font:{size:10},padding:10,boxWidth:10}},
+          tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y===null?'—':c.parsed.y+'%'}`}}
+        },
+        scales:{
+          x:{grid:{display:false},ticks:{font:{size:10}}},
+          y:{min:0,max:100,ticks:{callback:v=>v+'%',font:{size:10}},grid:{color:'#f3f4f6'}}
+        }
+      }
+    });
+  }catch(e){if(msg){msg.textContent='Could not load trend data.';msg.style.display='';}}
+}
+
+let _agentCadTrendChart=null;
+async function renderAgentCadence(){
+  const el=document.getElementById('av-mycad-body');
+  if(!el)return;
+  // Ensure leads loaded
+  if(!_hsLeadsLoaded||!_hsLeads.length){
+    const cached=_loadCadCache();
+    if(cached&&cached.leads&&cached.leads.length){_hsLeads=cached.leads;_hsLeadsLoaded=true;_hsLastFetched=cached.ts;}
+  }
+  const agentName=CU&&CU.agentName?CU.agentName:'';
+  if(!agentName){el.innerHTML='<div style="color:#9ca3af;font-size:.8rem;text-align:center;padding:24px;">Agent identity not found.</div>';return;}
+  const myLeads=_hsLeads.filter(l=>l.ownerName===agentName&&l.ageDays!==3);
+  const done=myLeads.filter(l=>(l.cadencePct||0)>=100).length;
+  const gaps=myLeads.length-done;
+  const avg=myLeads.length?Math.round(myLeads.reduce((s,l)=>s+(l.cadencePct||0),0)/myLeads.length):100;
+  const gapLeads=myLeads.filter(l=>(l.cadencePct||0)<100);
+  const bc=avg>=100?'#22c55e':avg>=80?'#22c55e':avg>=50?'#f97316':'#ef4444';
+  const gapHtml=gapLeads.length===0
+    ?'<div style="color:#22c55e;font-size:.8rem;padding:12px 0;font-weight:600;">✅ You\'re on cadence with all your leads today!</div>'
+    :`<div style="font-size:.78rem;font-weight:700;color:#374151;margin-bottom:8px;">Leads you haven\'t fully contacted today (${gapLeads.length}):</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px;">
+        ${gapLeads.map(l=>`<a href="https://app.hubspot.com/contacts/45809585/ticket/${l.id}" target="_blank"
+          title="Day ${l.ageDays} — ${l.cadencePct||0}% cadence"
+          style="display:inline-flex;align-items:center;gap:5px;background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;border-radius:8px;padding:5px 12px;font-size:.72rem;font-weight:600;text-decoration:none;"
+          onmouseover="this.style.background='#fecaca'" onmouseout="this.style.background='#fee2e2'">
+          🔗 ${(l.subject||l.contactName||'Lead').replace(/</g,'&lt;')}
+          <span style="background:#ef4444;color:#fff;border-radius:99px;padding:1px 6px;font-size:.6rem;">Day ${l.ageDays}</span>
+        </a>`).join('')}
+      </div>`;
+  el.innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;">
+      <div style="background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;padding:14px;text-align:center;">
+        <div style="font-size:1.8rem;font-weight:800;color:${bc};">${avg}%</div>
+        <div style="font-size:.65rem;color:#9ca3af;font-weight:600;margin-top:4px;text-transform:uppercase;">My Cadence</div>
+      </div>
+      <div style="background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;padding:14px;text-align:center;">
+        <div style="font-size:1.8rem;font-weight:800;color:#374151;">${myLeads.length}</div>
+        <div style="font-size:.65rem;color:#9ca3af;font-weight:600;margin-top:4px;text-transform:uppercase;">Total Leads</div>
+      </div>
+      <div style="background:#fff;border:1.5px solid ${gaps>0?'#fca5a5':'#86efac'};border-radius:10px;padding:14px;text-align:center;">
+        <div style="font-size:1.8rem;font-weight:800;color:${gaps>0?'#ef4444':'#22c55e'};">${gaps>0?gaps:'✅'}</div>
+        <div style="font-size:.65rem;color:#9ca3af;font-weight:600;margin-top:4px;text-transform:uppercase;">Not Contacted</div>
+      </div>
+    </div>
+    <div style="background:#fff;border:1.5px solid ${gaps>0?'#fca5a5':'#86efac'};border-radius:10px;padding:16px;margin-bottom:20px;">
+      <div style="font-size:.82rem;font-weight:700;color:#374151;margin-bottom:10px;">⚠️ Not Contacted Leads</div>
+      ${gapHtml}
+    </div>
+    <div style="background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;padding:16px;">
+      <div style="font-size:.82rem;font-weight:700;color:#374151;margin-bottom:2px;">My Compliance Trend (14 days)</div>
+      <div style="font-size:.7rem;color:#9ca3af;margin-bottom:12px;">Daily cadence % from saved snapshots</div>
+      <div style="position:relative;height:200px;"><canvas id="agent-cad-trend-chart"></canvas></div>
+      <div id="agent-cad-trend-msg" style="display:none;color:#9ca3af;font-size:.75rem;text-align:center;padding:20px 0;">Loading…</div>
+    </div>`;
+  // Load trend
+  const msgEl=document.getElementById('agent-cad-trend-msg');
+  const tctx=document.getElementById('agent-cad-trend-chart');
+  if(!tctx)return;
+  if(msgEl)msgEl.style.display='';
+  const dates=[];
+  for(let i=13;i>=0;i--){const d=new Date(Date.now()-5*3600000-i*86400000);dates.push(d.toISOString().slice(0,10));}
+  try{
+    const snaps=await Promise.all(dates.map(dt=>FSB.collection('cadence_snapshots').doc(dt).get().catch(()=>null)));
+    if(msgEl)msgEl.style.display='none';
+    const trendData=snaps.map(s=>{
+      if(!s||!s.exists)return null;
+      const d=s.data();
+      const ad=d.agentData&&d.agentData[agentName];
+      if(!ad||!ad.total)return null;
+      return Math.round(ad.done/ad.total*100);
+    });
+    if(_agentCadTrendChart){_agentCadTrendChart.destroy();_agentCadTrendChart=null;}
+    _agentCadTrendChart=new Chart(tctx,{
+      type:'line',
+      data:{
+        labels:dates.map(d=>d.slice(5)),
+        datasets:[{
+          label:'My Compliance %',data:trendData,
+          borderColor:'#3b82f6',backgroundColor:'#3b82f633',
+          borderWidth:2.5,pointRadius:4,pointHoverRadius:6,tension:.35,fill:true,spanGaps:true
+        }]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.parsed.y===null?'No data':c.parsed.y+'%'}`}}},
+        scales:{
+          x:{grid:{display:false},ticks:{font:{size:10}}},
+          y:{min:0,max:100,ticks:{callback:v=>v+'%',font:{size:10}},grid:{color:'#f3f4f6'}}
+        }
+      }
+    });
+  }catch(e){if(msgEl){msgEl.textContent='Trend unavailable.';msgEl.style.display='';}}
 }
 
 function switchCommTab(lid,tab){
@@ -10446,15 +10642,16 @@ function onEmailInput(){
 function switchAgentTab(tab){
   document.querySelectorAll('#agent-nav .sb-item').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
   document.querySelectorAll('.av-section').forEach(s=>s.style.display='none');
-  const map={coaching:'av-coaching',nte:'av-nte',ft:'av-ft',perf:'av-perf',clhist:'av-cl-hist',calc:'av-calc',attendance:'av-attendance',leads:'av-leads',leadmgmt:'av-leadmgmt',myactions:'av-myactions',library:'av-lib',kb:'__kb__',settings:'__settings__',chat:'__chat__'};
+  const map={coaching:'av-coaching',nte:'av-nte',ft:'av-ft',perf:'av-perf',mycad:'av-mycad',clhist:'av-cl-hist',calc:'av-calc',attendance:'av-attendance',leads:'av-leads',leadmgmt:'av-leadmgmt',myactions:'av-myactions',library:'av-lib',kb:'__kb__',settings:'__settings__',chat:'__chat__'};
   const secId=map[tab];
   if(secId==='__kb__'){showView('v-kb');renderAll();}else if(secId==='__settings__'){showView('v-settings');renderSettingsPage();}else if(secId==='__chat__'){showView('v-chat');initChatV2();clearChatBadge();}else{showView('v-agent');if(secId){const sec=document.getElementById(secId);if(sec)sec.style.display='';}}
   if(tab==='leads'){if(!_leadUnsub)subscribeLeads();else renderLeads();}
   if(tab==='leadmgmt')fetchHSLeads();
   if(tab==='myactions'){loadMyActions();updateMyActionsBadge();}
-  const titles={coaching:'My Coaching',nte:'My NTE',ft:'My Follow Through',perf:'My Performance',clhist:'My Call History',calc:'Phoenix Calculator',attendance:'My Attendance',leads:'Lead Follow-Up',leadmgmt:'Lead Compliance',myactions:'My Actions',library:'Call Library 🎵',kb:'Knowledge Base',settings:'Settings',chat:'Team Chat'};
+  const titles={coaching:'My Coaching',nte:'My NTE',ft:'My Follow Through',perf:'My Performance',mycad:'My Cadence',clhist:'My Call History',calc:'Phoenix Calculator',attendance:'My Attendance',leads:'Lead Follow-Up',leadmgmt:'Lead Compliance',myactions:'My Actions',library:'Call Library 🎵',kb:'Knowledge Base',settings:'Settings',chat:'Team Chat'};
   const el=document.getElementById('tb-title'); if(el) el.textContent=titles[tab]||'';
   if(tab==='perf') renderAgentPerf();
+  if(tab==='mycad') renderAgentCadence();
   if(tab==='calc') avCalcInit();
   if(tab==='attendance') renderAttendance();
   if(tab==='clhist') renderAgentCLHist();
