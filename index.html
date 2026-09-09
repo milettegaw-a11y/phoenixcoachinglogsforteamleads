@@ -8010,7 +8010,9 @@ async function renderCadAgentPanel(){
     const d=new Date(s.date+'T12:00:00');
     const dow2=d.getDay()||7;
     const mon=new Date(d);mon.setDate(d.getDate()-(dow2-1));
-    const wk='Wk '+mon.toISOString().slice(5,10);
+    const _wkEpoch=new Date('2016-01-04T00:00:00Z').getTime();
+    const wkNum=Math.floor((mon.getTime()-_wkEpoch)/(7*86400000))+1;
+    const wk='WK'+wkNum;
     if(!wkMap[wk])wkMap[wk]={};
     agentNames.forEach(name=>{
       if(!s.data.agentData||!s.data.agentData[name])return;
@@ -8095,8 +8097,10 @@ async function renderCadTrendChart() {
     const day = d.getDay(); // 0=Sun
     const diff = (day === 0 ? -6 : 1 - day);
     const mon = new Date(d); mon.setDate(d.getDate() + diff);
-    const wk = mon.toISOString().slice(5,10); // MM-DD
-    if (!weekMap[wk]) weekMap[wk] = {label:'Wk '+wk, entries:[]};
+    const _wkEpoch2=new Date('2016-01-04T00:00:00Z').getTime();
+    const wkNum2=Math.floor((mon.getTime()-_wkEpoch2)/(7*86400000))+1;
+    const wk = 'WK'+wkNum2;
+    if (!weekMap[wk]) weekMap[wk] = {label:wk, entries:[]};
     weekMap[wk].entries.push(h.data);
   });
   const weeks = Object.values(weekMap);
