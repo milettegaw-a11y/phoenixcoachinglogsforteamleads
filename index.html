@@ -3854,7 +3854,7 @@ function fillTLs(ids){
 }
 
 /* CL modal — individual TL + ATL names */
-const CL_TL_NAMES=['Jhay Oglimen','Jumz Delacruz','Florence Llait','Jersey Deguzman','Dopear Bundang','Genevieve Palec','Renilo Uyutuc','Maureen Ulao'];
+const CL_TL_NAMES=['Jhay Oglimen','Jumz Delacruz','Florence Llait','Dopear Bundang','Genevieve Palec','Renilo Uyutuc','Maureen Ulao'];
 const CL_EMAIL_NAME={
   'reyoglimen@homeaglowsales.com':'Jhay Oglimen',
   'jumardelacruz@homeaglowsales.com':'Jumz Delacruz',
@@ -4036,7 +4036,6 @@ const TL_TEAM_MAP={
   'jumardelacruz@homeaglowsales.com':    'Team Jumz Delacruz',
   'florencellait@homeaglowsales.com':    'Team Florence Llait',
   'dopearbundang@homeaglowsalestwo.com': 'Phoenix Transition Team',
-  'jerseydeguzman@homeaglowsalesone.com':'Team Jersey Deguzman',
 };
 // Returns the logged-in TL's team, or '' if OM/admin (sees all)
 function myTeam(){ return (CU&&!CU.isOM&&!ATL_EMAILS.has(CU.email)&&TL_TEAM_MAP[CU.email])||''; }
@@ -5396,10 +5395,11 @@ async function fetchHSLeads(){
       const expectedCalls=isTeamDayOff?0:(HS_CADENCE[Math.min(ageDays,15)]||0);
       const expectedContacts=expectedCalls>0?expectedCalls+1:0; // Day 3=REST or day-off→0 expected
       const actualContacts=dailyCallsMade+dailySmsCount;
+      const isRestDay=expectedContacts===0; // Day 3, team day-off, or any cadence=0 day — excluded from % calcs
       const cadencePct=expectedContacts>0?Math.min(100,Math.round(actualContacts/expectedContacts*100)):100;
-      const lacksCadence=cadencePct<100;
+      const lacksCadence=!isRestDay&&cadencePct<100;
       const ageBucket=ageDays<=8?'2nd-week':'3rd-week';
-      return {id:t.id,subject:p.subject||'(no name)',ownerId,ownerName,stageId,stageName,attempts,ageDays,createdMs,lacksCadence,cadencePct,actualContacts,expectedContacts,dailyCallsMade,dailySmsCount,ageBucket,contactId:t.contactId||null,contactName:t.contactName||null,contactPhone:t.contactPhone||null,contactEmail:t.contactEmail||null,contactLifecycle:t.contactLifecycle||null,latestNote:t.latestNote||null,calls:t.calls||[]};
+      return {id:t.id,subject:p.subject||'(no name)',ownerId,ownerName,stageId,stageName,attempts,ageDays,createdMs,isRestDay,lacksCadence,cadencePct,actualContacts,expectedContacts,dailyCallsMade,dailySmsCount,ageBucket,contactId:t.contactId||null,contactName:t.contactName||null,contactPhone:t.contactPhone||null,contactEmail:t.contactEmail||null,contactLifecycle:t.contactLifecycle||null,latestNote:t.latestNote||null,calls:t.calls||[]};
     }).filter(l=>HS_ALLOWED_NAMES.has(l.ownerName.toLowerCase()))
       .filter(l=>(l.subject||'').toLowerCase().includes('2nd week'))
       .filter(l=>l.ageDays<=8)
@@ -5512,7 +5512,7 @@ function renderCadDash(){
   const datasets=teams.map((team,ti)=>{
     const color=teamColors[team]||defColors[ti%defColors.length];
     const data=DAYS.map(day=>{
-      if(day===3)return null; // Day 3=REST, excluded from compliance chart
+      if(HS_CADENCE[day]===0)return null; // REST day (any cadence=0 day), excluded from compliance chart
       const dl=_hsLeads.filter(l=>{const ag=rosterAgents.find(a=>a.name===l.ownerName);return ag&&ag.tl===team&&l.ageDays===day;});
       if(!dl.length)return null;
       return Math.round(dl.filter(l=>(l.cadencePct||0)>=100).length/dl.length*100);
@@ -5521,11 +5521,11 @@ function renderCadDash(){
   });
 
   // Team summary cards
-  // Day 3 = REST (0 calls required → cadencePct auto-100%). Include in total so it
-  // matches Lead Compliance's Active Leads count; compliance avg/done exclude Day 3.
+  // REST days (isRestDay=true) are excluded from compliance % — they always show cadencePct=100
+  // because expectedContacts=0, but shouldn't inflate the team metric.
   const teamSummary=teams.map((team,ti)=>{
     const allTl=_hsLeads.filter(l=>{const ag=rosterAgents.find(a=>a.name===l.ownerName);return ag&&ag.tl===team;});
-    const al=allTl.filter(l=>l.ageDays!==3); // compliance subset (excludes REST day)
+    const al=allTl.filter(l=>!l.isRestDay); // compliance subset (excludes REST/day-off leads)
     if(!allTl.length)return null;
     const done=al.filter(l=>(l.cadencePct||0)>=100).length;
     const avg=al.length?Math.round(al.reduce((s,l)=>s+(l.cadencePct||0),0)/al.length):100;
@@ -5534,9 +5534,9 @@ function renderCadDash(){
   }).filter(Boolean);
 
   // Agent rows sorted by avg cadence ascending (worst first) — TLs see only their team
-  // visibleLeads includes ALL leads for the header count; complianceLeads excludes Day 3
+  // visibleLeads includes ALL leads for the header count; complianceLeads excludes REST/day-off leads
   const visibleLeads=(myTLTeam?_hsLeads.filter(l=>{const ag=rosterAgents.find(a=>a.name===l.ownerName);return ag&&ag.tl===myTLTeam;}):_hsLeads);
-  const complianceLeads=visibleLeads.filter(l=>l.ageDays!==3);
+  const complianceLeads=visibleLeads.filter(l=>!l.isRestDay);
   const agentRows=rosterAgents.filter(ag=>myTLTeam?ag.tl===myTLTeam:true).map((ag,ti)=>{
     const al=complianceLeads.filter(l=>l.ownerName===ag.name);
     if(!al.length)return null;
@@ -5746,7 +5746,7 @@ async function renderAgentCadence(){
   }
   const agentName=CU&&CU.agentName?CU.agentName:'';
   if(!agentName){el.innerHTML='<div style="color:#9ca3af;font-size:.8rem;text-align:center;padding:24px;">Agent identity not found.</div>';return;}
-  const myLeads=_hsLeads.filter(l=>l.ownerName===agentName&&l.ageDays!==3);
+  const myLeads=_hsLeads.filter(l=>l.ownerName===agentName&&!l.isRestDay);
   const done=myLeads.filter(l=>(l.cadencePct||0)>=100).length;
   const gaps=myLeads.length-done;
   const avg=myLeads.length?Math.round(myLeads.reduce((s,l)=>s+(l.cadencePct||0),0)/myLeads.length):100;
@@ -7777,23 +7777,18 @@ async function saveDailyCadenceSnapshot() {
     // Only save once per day (overwrite if TL manually refreshes)
     const agentData = {};
     const teamData = {};
-    _hsLeads.forEach(l => {
+    // Exclude REST/day-off leads (isRestDay=true) from compliance counts so they don't inflate %
+    const activeLeads = _hsLeads.filter(l => !l.isRestDay);
+    activeLeads.forEach(l => {
       if (!agentData[l.ownerName]) agentData[l.ownerName] = {total:0,done:0,pct:0,team:l.ownerName};
       agentData[l.ownerName].total++;
       if ((l.cadencePct||0) >= 100) agentData[l.ownerName].done++;
-      if (!teamData[l.ownerName.replace('Team ','')]) {
-        const ag = rosterAgents.find(a => a.name === l.ownerName);
-        const teamKey = ag ? ag.tl : 'Unknown';
-        if (!teamData[teamKey]) teamData[teamKey] = {total:0,done:0};
-        teamData[teamKey].total++;
-        if ((l.cadencePct||0) >= 100) teamData[teamKey].done++;
-      }
     });
     // Compute pct for each agent
     Object.values(agentData).forEach(a => { a.pct = a.total > 0 ? Math.round(a.done/a.total*100) : 0; });
     // Compute team pct
     const teamSnap = {};
-    _hsLeads.forEach(l => {
+    activeLeads.forEach(l => {
       const ag = rosterAgents.find(a => a.name === l.ownerName);
       const teamKey = ag ? ag.tl : 'Unknown';
       if (!teamSnap[teamKey]) teamSnap[teamKey] = {total:0,done:0};
@@ -7801,7 +7796,7 @@ async function saveDailyCadenceSnapshot() {
       if ((l.cadencePct||0) >= 100) teamSnap[teamKey].done++;
     });
     Object.keys(teamSnap).forEach(k => { teamSnap[k].pct = teamSnap[k].total > 0 ? Math.round(teamSnap[k].done/teamSnap[k].total*100) : 0; });
-    const overallPct = _hsLeads.length > 0 ? Math.round(_hsLeads.filter(l=>(l.cadencePct||0)>=100).length/_hsLeads.length*100) : 0;
+    const overallPct = activeLeads.length > 0 ? Math.round(activeLeads.filter(l=>(l.cadencePct||0)>=100).length/activeLeads.length*100) : 0;
     await ref.set({date:today, savedAt:firebase.firestore.FieldValue.serverTimestamp(), overallPct, agentData, teamData:teamSnap, totalLeads:_hsLeads.length});
     console.log('[Snapshot] Daily cadence snapshot saved for', today, '— overall', overallPct+'%');
   } catch(e) { console.warn('[Snapshot] Failed to save:', e.message); }
@@ -7861,9 +7856,9 @@ async function renderCadAgentPanel(){
   const tlFilter=tlSel?tlSel.value:'';
   const agSearch=(document.getElementById('cad-agent-search')||{}).value||'';
 
-  // Build today's per-agent stats (no leads list needed)
+  // Build today's per-agent stats (no leads list needed); exclude REST/day-off leads from % calc
   const agMap={};
-  _hsLeads.filter(l=>l.ageDays!==3).forEach(l=>{
+  _hsLeads.filter(l=>!l.isRestDay).forEach(l=>{
     if(!agMap[l.ownerName]) agMap[l.ownerName]={name:l.ownerName,team:'',total:0,contacted:0,pct:0};
     const s=agMap[l.ownerName];
     const ag=rosterAgents.find(a=>a.name===l.ownerName);
