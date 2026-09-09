@@ -3989,7 +3989,7 @@ const EMAIL_TO_AGENT={
   'braddperalta@homeaglowsalestwo.com':'Bradd Peralta',
   'jaygabales@homeaglowsalestwo.com':'Jay Gabales',
   'diorezatomilloso@homeaglowsales.com':'Dioreza Tomilloso',
-  'chesterbanluta@homeaglowsales.com':'Chester Banuta',
+  'chesterbanluta@homeaglowsales.com':'Chester Banluta',
   'lestermamaril@homeaglowsalesone.com':'Lester Mamaril',
   'mariefevillanueva@homeaglowsalestwo.com':'Mariefe Villanueva',
   'angelomiranda@homeaglowsales.com':'Angelo Miranda',
@@ -5401,8 +5401,7 @@ async function fetchHSLeads(){
       const ageBucket=ageDays<=8?'2nd-week':'3rd-week';
       return {id:t.id,subject:p.subject||'(no name)',ownerId,ownerName,stageId,stageName,attempts,ageDays,createdMs,isRestDay,lacksCadence,cadencePct,actualContacts,expectedContacts,dailyCallsMade,dailySmsCount,ageBucket,contactId:t.contactId||null,contactName:t.contactName||null,contactPhone:t.contactPhone||null,contactEmail:t.contactEmail||null,contactLifecycle:t.contactLifecycle||null,latestNote:t.latestNote||null,calls:t.calls||[]};
     }).filter(l=>HS_ALLOWED_NAMES.has(l.ownerName.toLowerCase()))
-      .filter(l=>(l.subject||'').toLowerCase().includes('2nd week'))
-      .filter(l=>l.ageDays<=8)
+      .filter(l=>l.ageDays<=8) // pipeline filter (HS_PIPELINE_SEG) already scopes to 2nd week
       .filter(l=>!closedStages.includes(l.stageId))
       .filter(l=>{const lc=(l.contactLifecycle||'').toLowerCase();return!lc||(lc!=='other'&&lc!=='customer');});
     _hsLeadsLoaded=true;
