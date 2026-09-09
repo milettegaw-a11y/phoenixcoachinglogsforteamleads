@@ -140,25 +140,27 @@ export default async function handler(req, res) {
 
     // ── PHASE 1: Ticket associations in parallel ──────────────────────────────
     // ticket→contacts, ticket→notes, ticket→calls (direct), ticket→SMS (direct)
-    const [contactAssocResp, noteAssocResp, callAssocResp, smsAssocResp] = await Promise.all([
-      hsFetch('https://api.hubapi.com/crm/v4/associations/tickets/contacts/batch/read', {
-        method: 'POST', headers: h, body: JSON.stringify({ inputs: ticketIds.map(id => ({ id })) })
-      }),
-      hsFetch('https://api.hubapi.com/crm/v4/associations/tickets/notes/batch/read', {
-        method: 'POST', headers: h, body: JSON.stringify({ inputs: ticketIds.map(id => ({ id })) })
-      }),
-      hsFetch('https://api.hubapi.com/crm/v4/associations/tickets/calls/batch/read', {
-        method: 'POST', headers: h, body: JSON.stringify({ inputs: ticketIds.map(id => ({ id })) })
-      }),
-      hsFetch('https://api.hubapi.com/crm/v4/associations/tickets/communications/batch/read', {
-        method: 'POST', headers: h, body: JSON.stringify({ inputs: ticketIds.map(id => ({ id })) })
-      })
-    ]);
+    // NOTE: HubSpot's association batch/read caps `inputs` at 100. Sending more
+    // silently returns associations for only the first 100 tickets, leaving the
+    // rest with no calls/notes at all — so chunk, exactly like batchRead does.
+    const assocRead = async (url, ids) => {
+      const CHUNK = 100;
+      const chunks = [];
+      for (let i = 0; i < ids.length; i += CHUNK) chunks.push(ids.slice(i, i + CHUNK));
+      const parts = await Promise.all(chunks.map(chunk =>
+        hsFetch(url, {
+          method: 'POST', headers: h, body: JSON.stringify({ inputs: chunk.map(id => ({ id })) })
+        }).then(r => r.json().catch(() => ({ results: [] })))
+      ));
+      return { results: parts.flatMap(p => p.results || []) };
+    };
 
-    const contactAssoc = await contactAssocResp.json();
-    const noteAssoc    = await noteAssocResp.json();
-    const callAssoc    = await callAssocResp.json();
-    const smsAssoc     = await smsAssocResp.json().catch(() => ({ results: [] }));
+    const [contactAssoc, noteAssoc, callAssoc, smsAssoc] = await Promise.all([
+      assocRead('https://api.hubapi.com/crm/v4/associations/tickets/contacts/batch/read', ticketIds),
+      assocRead('https://api.hubapi.com/crm/v4/associations/tickets/notes/batch/read', ticketIds),
+      assocRead('https://api.hubapi.com/crm/v4/associations/tickets/calls/batch/read', ticketIds),
+      assocRead('https://api.hubapi.com/crm/v4/associations/tickets/communications/batch/read', ticketIds)
+    ]);
 
     // Build association maps
     const ticketContactMap = {};

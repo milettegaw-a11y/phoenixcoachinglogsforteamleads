@@ -5291,13 +5291,18 @@ async function fetchHSLeads(){
     .filter(([,name])=>HS_ALLOWED_NAMES.has(name.toLowerCase()))
     .map(([id])=>id);
   try{
-    let allResults=[];
-    let after=undefined;
-    do{
-      const sevenDaysAgo=Date.now()-(9*86400000); // 9-day window so Day 8 tickets aren't cut by hour-of-day
+    // The 9-day window is fetched as one bucket per day, several buckets at a time.
+    // HubSpot paging is cursor-based, so pages within a bucket stay sequential — but
+    // the buckets are disjoint on createdate, so they can run concurrently with no
+    // duplicates and no gaps. One sequential cursor walk was ~53 round trips / ~120s;
+    // 5 buckets in flight measures ~44s. 9 at once trips HubSpot's rate limit.
+    const HS_DAY_MS=86400000, HS_WINDOW_DAYS=9, HS_CONCURRENCY=5, HS_PAGE=100;
+    const _hsNow=Date.now();
+    const _hsFetchPage=async(lo,hi,after)=>{
       const filters=[
         {propertyName:'hs_pipeline',operator:'EQ',value:HS_PIPELINE_SEG},
-        {propertyName:'createdate',operator:'GTE',value:String(sevenDaysAgo)},
+        {propertyName:'createdate',operator:'GTE',value:String(lo)},
+        {propertyName:'createdate',operator:'LT',value:String(hi)},
         // Exclude Sold + DNC server-side so they never inflate the count
         {propertyName:'hs_pipeline_stage',operator:'NOT_IN',values:closedStages}
       ];
@@ -5305,21 +5310,40 @@ async function fetchHSLeads(){
       const body={
         filterGroups:[{filters}],
         properties:['subject','hs_pipeline_stage','hubspot_owner_id','createdate','hs_lastcontacted','hs_lastactivitydate'],
-        limit:100,
+        limit:HS_PAGE,
         sorts:[{propertyName:'createdate',direction:'DESCENDING'}]
       };
       if(after)body.after=after;
-      const _hsAbort=new AbortController();
-      const _hsTimeout=setTimeout(()=>_hsAbort.abort(),30000);
-      let resp;
-      try{resp=await fetch('/api/hs-leads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:_hsAbort.signal});}
-      finally{clearTimeout(_hsTimeout);}
-      if(!resp)throw new Error('Request aborted (timeout).');
-      if(!resp.ok)throw new Error('HubSpot API error '+resp.status);
-      const data=await resp.json();
-      allResults=allResults.concat(data.results||[]);
-      after=data.paging?.next?.after;
-    }while(after&&allResults.length<10000);
+      // Retry on 429 — running buckets in parallel can briefly trip the rate limit.
+      for(let attempt=0;attempt<4;attempt++){
+        const _hsAbort=new AbortController();
+        const _hsTimeout=setTimeout(()=>_hsAbort.abort(),30000);
+        let resp;
+        try{resp=await fetch('/api/hs-leads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:_hsAbort.signal});}
+        finally{clearTimeout(_hsTimeout);}
+        if(!resp)throw new Error('Request aborted (timeout).');
+        if(resp.status===429){await new Promise(r=>setTimeout(r,1000*(attempt+1)));continue;}
+        if(!resp.ok)throw new Error('HubSpot API error '+resp.status);
+        return resp.json();
+      }
+      throw new Error('HubSpot rate limit — please retry.');
+    };
+    const _hsFetchDay=async(dayIdx)=>{
+      const hi=_hsNow-dayIdx*HS_DAY_MS, lo=hi-HS_DAY_MS;
+      const out=[]; let after;
+      do{
+        const data=await _hsFetchPage(lo,hi,after);
+        for(const r of (data.results||[]))out.push(r);
+        after=data.paging?.next?.after;
+      }while(after&&out.length<10000);
+      return out;
+    };
+    let allResults=[];
+    for(let i=0;i<HS_WINDOW_DAYS;i+=HS_CONCURRENCY){
+      const wave=[];
+      for(let d=i;d<Math.min(i+HS_CONCURRENCY,HS_WINDOW_DAYS);d++)wave.push(_hsFetchDay(d));
+      for(const part of await Promise.all(wave))allResults=allResults.concat(part);
+    }
 
     // Age is counted from this ticket's own createdate (the "Sales Call Required (2nd week lead)" ticket).
     // NOTE: p.createdate is an epoch-ms STRING from HubSpot (e.g. "1705363200000"), not an ISO string.
