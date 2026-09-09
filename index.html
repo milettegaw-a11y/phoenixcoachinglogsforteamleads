@@ -5537,15 +5537,16 @@ function renderCadDash(){
   // visibleLeads includes ALL leads for the header count; complianceLeads excludes REST/day-off leads
   const visibleLeads=(myTLTeam?_hsLeads.filter(l=>{const ag=rosterAgents.find(a=>a.name===l.ownerName);return ag&&ag.tl===myTLTeam;}):_hsLeads);
   const complianceLeads=visibleLeads.filter(l=>!l.isRestDay);
-  const agentRows=rosterAgents.filter(ag=>myTLTeam?ag.tl===myTLTeam:true).map((ag,ti)=>{
+  // Include all roster agents even with 0 leads so Jersey/Amer always appear
+  const agentRows=rosterAgents.filter(ag=>myTLTeam?ag.tl===myTLTeam:HS_ALLOWED_TEAMS.has(ag.tl)).map((ag,ti)=>{
     const al=complianceLeads.filter(l=>l.ownerName===ag.name);
-    if(!al.length)return null;
+    const color=teamColors[ag.tl]||defColors[ti%defColors.length];
+    if(!al.length)return {name:ag.name,team:ag.tl,total:0,done:0,gaps:0,avg:null,color,gapLeads:[]};
     const done=al.filter(l=>(l.cadencePct||0)>=100).length;
     const avg=Math.round(al.reduce((s,l)=>s+(l.cadencePct||0),0)/al.length);
-    const color=teamColors[ag.tl]||defColors[ti%defColors.length];
     const gapLeads=al.filter(l=>(l.cadencePct||0)<100);
     return {name:ag.name,team:ag.tl,total:al.length,done,gaps:al.length-done,avg,color,gapLeads};
-  }).filter(Boolean).sort((a,b)=>a.avg-b.avg);
+  }).sort((a,b)=>{if(a.avg===null&&b.avg===null)return 0;if(a.avg===null)return 1;if(b.avg===null)return 1;return a.avg-b.avg;});
 
   const totalLeads=visibleLeads.length;
   const totalDone=complianceLeads.filter(l=>(l.cadencePct||0)>=100).length;
@@ -5604,8 +5605,18 @@ function renderCadDash(){
             <th style="padding:8px 12px;width:24px;border-bottom:2px solid #e5e7eb;"></th>
           </tr></thead>
           <tbody>${agentRows.map(r=>{
-            const bc=r.avg>=100?'#22c55e':r.avg>=50?'#f97316':'#ef4444';
+            const bc=r.avg===null?'#9ca3af':r.avg>=100?'#22c55e':r.avg>=50?'#f97316':'#ef4444';
             const safeId=r.name.replace(/\s+/g,'-').replace(/[^a-zA-Z0-9\-]/g,'');
+            if(r.avg===null){
+              return `<tr style="border-bottom:1px solid #f3f4f6;opacity:.45;">
+                <td style="padding:8px 12px;font-weight:600;color:#374151;">${r.name}</td>
+                <td style="padding:8px 12px;"><span style="font-size:.62rem;background:${r.color}22;color:${r.color};padding:2px 8px;border-radius:99px;font-weight:700;">${r.team.replace('Team ','')}</span></td>
+                <td style="padding:8px 12px;text-align:center;color:#9ca3af;">0</td>
+                <td style="padding:8px 12px;text-align:center;color:#9ca3af;">—</td>
+                <td style="padding:8px 12px;text-align:center;"><span style="background:#f3f4f6;color:#9ca3af;padding:2px 8px;border-radius:99px;font-size:.7rem;">no leads</span></td>
+                <td style="padding:8px 12px;" colspan="2"><span style="font-size:.7rem;color:#9ca3af;font-style:italic;">No active leads today</span></td>
+              </tr>`;
+            }
             const gapHtml=r.gapLeads.length===0
               ?'<div style="color:#22c55e;font-size:.73rem;padding:8px 0;">✅ All leads are on cadence!</div>'
               :`<div style="font-size:.71rem;color:#6b7280;margin-bottom:6px;font-weight:600;">Not contacted today (${r.gapLeads.length}):</div>
@@ -6619,10 +6630,22 @@ function renderHSLeads(){
     const avgCadPct=Math.round(statsBase.reduce((s,l)=>s+(l.cadencePct||0),0)/Math.max(1,statsBase.length));
     const cadColor=avgCadPct>=100?'#22c55e':avgCadPct>=50?'#f97316':'#ef4444';
     const CARD='background:#fff;border:1px solid #f0f0f0;border-radius:12px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.05);';
-    // Per-agent cadence breakdown
-    const agentNames=[...new Set(statsBase.map(l=>l.ownerName).filter(Boolean))].sort();
+    // Per-agent cadence breakdown — include ALL roster agents from visible teams, even those with 0 leads
+    const allowedTeamsArr=_hsTeamFilter?[_hsTeamFilter]:[...HS_ALLOWED_TEAMS];
+    const allRosterNames=rosterAgents.filter(ag=>allowedTeamsArr.includes(ag.tl)).map(ag=>ag.name);
+    const leadAgentNames=[...new Set(statsBase.map(l=>l.ownerName).filter(Boolean))];
+    const agentNames=[...new Set([...allRosterNames,...leadAgentNames])].sort();
     const agentRows=agentNames.map(name=>{
       const al=statsBase.filter(l=>l.ownerName===name);
+      if(!al.length){
+        return `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #f9fafb;opacity:.5;">
+          <div style="width:130px;font-size:.72rem;font-weight:600;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${name}</div>
+          <div style="flex:1;background:#f3f4f6;border-radius:99px;height:8px;"></div>
+          <div style="font-size:.7rem;color:#9ca3af;width:34px;text-align:right;">—</div>
+          <div style="font-size:.65rem;color:#9ca3af;width:70px;text-align:right;">no leads</div>
+          <div style="font-size:.62rem;color:#9ca3af;">–</div>
+        </div>`;
+      }
       const done=al.filter(l=>(l.cadencePct||0)>=100).length;
       const gaps=al.length-done;
       const pct=Math.round(al.reduce((s,l)=>s+(l.cadencePct||0),0)/Math.max(1,al.length));
@@ -7858,15 +7881,20 @@ async function renderCadAgentPanel(){
 
   // Build today's per-agent stats (no leads list needed); exclude REST/day-off leads from % calc
   const agMap={};
+  // Seed agMap with ALL roster agents from allowed teams so they always appear (even with 0 leads)
+  rosterAgents.filter(ag=>HS_ALLOWED_TEAMS.has(ag.tl)).forEach(ag=>{
+    agMap[ag.name]={name:ag.name,team:ag.tl,total:0,contacted:0,pct:null};
+  });
   _hsLeads.filter(l=>!l.isRestDay).forEach(l=>{
-    if(!agMap[l.ownerName]) agMap[l.ownerName]={name:l.ownerName,team:'',total:0,contacted:0,pct:0};
+    if(!agMap[l.ownerName]) agMap[l.ownerName]={name:l.ownerName,team:'',total:0,contacted:0,pct:null};
     const s=agMap[l.ownerName];
     const ag=rosterAgents.find(a=>a.name===l.ownerName);
     if(ag)s.team=ag.tl||'';
     s.total++;
     if((l.cadencePct||0)>=100)s.contacted++;
   });
-  Object.values(agMap).forEach(s=>{s.pct=s.total?Math.round(s.contacted/s.total*100):100;});
+  // pct=null means no active leads today (shown as "No leads")
+  Object.values(agMap).forEach(s=>{s.pct=s.total>0?Math.round(s.contacted/s.total*100):null;});
 
   // Load 14-day snapshots (cached)
   if(!_cadAgentSnaps14){
@@ -7894,11 +7922,16 @@ async function renderCadAgentPanel(){
   });
   const weekAvg=ag=>weekPct[ag]&&weekPct[ag].days?Math.round(weekPct[ag].sum/weekPct[ag].days):null;
 
-  // Filter + sort (non-compliant first)
+  // Filter + sort (non-compliant first; no-leads agents at bottom)
   let rows=Object.values(agMap);
   if(tlFilter) rows=rows.filter(r=>r.team===tlFilter);
   if(agSearch) rows=rows.filter(r=>r.name.toLowerCase().includes(agSearch.toLowerCase()));
-  rows.sort((a,b)=>a.pct-b.pct);
+  rows.sort((a,b)=>{
+    if(a.pct===null&&b.pct===null)return a.name.localeCompare(b.name);
+    if(a.pct===null)return 1; // no-leads rows to bottom
+    if(b.pct===null)return -1;
+    return a.pct-b.pct;
+  });
 
   const compliantCount=rows.filter(r=>r.pct>=100).length;
   const teamColors={'Team Jhay Oglimen':'#3b82f6','Team Jumz Delacruz':'#22c55e','Team Florence Llait':'#f97316','Team Jersey Deguzman':'#a855f7'};
@@ -7906,24 +7939,29 @@ async function renderCadAgentPanel(){
   const TD='padding:8px 12px;border-bottom:1px solid #f3f4f6;vertical-align:middle;';
 
   const rowsHtml=rows.map(r=>{
-    const compliant=r.pct>=100;
-    const pc=r.pct>=100?'#22c55e':r.pct>=80?'#f97316':'#ef4444';
+    const noLeads=r.pct===null;
+    const compliant=!noLeads&&r.pct>=100;
+    const pc=noLeads?'#9ca3af':r.pct>=100?'#22c55e':r.pct>=80?'#f97316':'#ef4444';
     const wk=weekAvg(r.name);
     const wkC=wk===null?'#9ca3af':wk>=100?'#22c55e':wk>=80?'#f97316':'#ef4444';
     const tc=teamColors[r.team]||'#6b7280';
-    const bar=`<div style="display:flex;align-items:center;gap:6px;">
+    const bar=noLeads
+      ?`<div style="display:flex;align-items:center;gap:6px;"><div style="flex:1;height:6px;background:#f3f4f6;border-radius:99px;"></div><span style="font-size:.72rem;color:#9ca3af;min-width:36px;">—</span></div>`
+      :`<div style="display:flex;align-items:center;gap:6px;">
       <div style="flex:1;height:6px;background:#f3f4f6;border-radius:99px;overflow:hidden;">
         <div style="height:100%;width:${Math.min(r.pct,100)}%;background:${pc};border-radius:99px;"></div>
       </div>
       <span style="font-size:.78rem;font-weight:800;color:${pc};min-width:36px;">${r.pct}%</span>
     </div>`;
-    return `<tr style="background:${compliant?'#f0fdf4':'#fff7f7'};">
+    return `<tr style="background:${noLeads?'#f9fafb':compliant?'#f0fdf4':'#fff7f7'};${noLeads?'opacity:.55;':''}">
       <td style="${TD}font-weight:700;color:#111;">${r.name}</td>
       <td style="${TD}"><span style="font-size:.62rem;background:${tc}22;color:${tc};padding:2px 8px;border-radius:99px;font-weight:700;">${r.team.replace('Team ','')}</span></td>
       <td style="${TD}text-align:center;color:#6b7280;">${r.total}</td>
       <td style="${TD}min-width:130px;">${bar}</td>
       <td style="${TD}text-align:center;font-weight:700;color:${wkC};">${wk!==null?wk+'%':'—'}</td>
-      <td style="${TD}text-align:center;">${compliant
+      <td style="${TD}text-align:center;">${noLeads
+        ?'<span style="background:#f3f4f6;color:#9ca3af;border-radius:99px;padding:3px 10px;font-size:.7rem;font-weight:700;">No leads</span>'
+        :compliant
         ?'<span style="background:#dcfce7;color:#16a34a;border-radius:99px;padding:3px 10px;font-size:.7rem;font-weight:700;">✅ On Track</span>'
         :'<span style="background:#fee2e2;color:#b91c1c;border-radius:99px;padding:3px 10px;font-size:.7rem;font-weight:700;">❌ Behind</span>'}</td>
     </tr>`;
