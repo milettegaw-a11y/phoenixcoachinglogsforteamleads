@@ -4390,6 +4390,9 @@ function setupListeners(){
           const staticA=AGENTS.find(a=>a.name===n)||{};
           return {name:n, h:docs.agents.hire?.[n]||staticA.h||'2024-01-01', tl:docs.agents.teamLead?.[n]||staticA.tl||''};
         });
+      // Ensure every agent in AGENTS is present in rosterAgents — Firestore may have been
+      // edited with slightly different names, leaving some agents invisible in compliance view.
+      AGENTS.forEach(a=>{if(!rosterAgents.some(r=>r.name===a.name))rosterAgents.push({...a});});
     } else {
       rosterAgents=AGENTS.map(a=>({...a}));
     }
