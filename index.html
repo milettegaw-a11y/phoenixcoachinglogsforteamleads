@@ -3826,7 +3826,6 @@ const AGENTS=[
   {name:'Alim Sinha',           h:'2026-03-09', tl:'Team Jumz Delacruz'},
   {name:'Angelika Gonzales',    h:'2026-03-16', tl:'Team Jumz Delacruz'},
   {name:'CJ Garces',            h:'2025-05-26', tl:'Team Jumz Delacruz'},
-  {name:'Clent Valdez',         h:'2025-09-29', tl:'Team Jumz Delacruz'},
   {name:'Jardene Petines',      h:'2025-05-05', tl:'Team Jumz Delacruz'},
   {name:'Jessa Frayna',         h:'2026-03-16', tl:'Team Jumz Delacruz'},
   {name:'Rafael Viray',         h:'2026-04-06', tl:'Team Jumz Delacruz'},
@@ -3887,7 +3886,6 @@ const NO_DELETE=new Set([
   'angelikagonzales@homeaglowsalestwo.com',
   'angelomiranda@homeaglowsales.com',
   'cjgarces@homeaglowsales.com',
-  'clentvaldez@homeaglowsalestwo.com',
   'jardenepetines@homeaglowsalestwo.com',
   'jessafrayna@homeaglowsalestwo.com',
   'lestermamaril@homeaglowsalesone.com',
@@ -3919,7 +3917,6 @@ const NO_DELETE=new Set([
 const AGENTS_VIEW=new Set([
   'jardenepetines@homeaglowsalestwo.com',
   'cjgarces@homeaglowsales.com',
-  'clentvaldez@homeaglowsalestwo.com',
   'jessafrayna@homeaglowsalestwo.com',
   'alimsinha@homeaglowsalestwo.com',
   'angelikagonzales@homeaglowsalestwo.com',
@@ -3966,7 +3963,6 @@ const AGENTS_VIEW=new Set([
 const EMAIL_TO_AGENT={
   'jardenepetines@homeaglowsalestwo.com':'Jardene Petines',
   'cjgarces@homeaglowsales.com':'CJ Garces',
-  'clentvaldez@homeaglowsalestwo.com':'Clent Valdez',
   'jessafrayna@homeaglowsalestwo.com':'Jessa Frayna',
   'alimsinha@homeaglowsalestwo.com':'Alim Sinha',
   'angelikagonzales@homeaglowsalestwo.com':'Angelika Gonzales',
@@ -4388,10 +4384,12 @@ function setupListeners(){
     const docs={};
     snap.docs.forEach(d=>{docs[d.id]=d.data();});
     if(docs.agents){
-      rosterAgents=docs.agents.list.map(n=>{
-        const staticA=AGENTS.find(a=>a.name===n)||{};
-        return {name:n, h:docs.agents.hire?.[n]||staticA.h||'2024-01-01', tl:docs.agents.teamLead?.[n]||staticA.tl||''};
-      });
+      rosterAgents=docs.agents.list
+        .filter(n=>AGENTS.some(a=>a.name===n)) // drop stale Firestore names not in AGENTS
+        .map(n=>{
+          const staticA=AGENTS.find(a=>a.name===n)||{};
+          return {name:n, h:docs.agents.hire?.[n]||staticA.h||'2024-01-01', tl:docs.agents.teamLead?.[n]||staticA.tl||''};
+        });
     } else {
       rosterAgents=AGENTS.map(a=>({...a}));
     }
