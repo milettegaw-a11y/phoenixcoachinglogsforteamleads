@@ -5553,7 +5553,7 @@ function renderCadDash(){
     const avg=Math.round(al.reduce((s,l)=>s+(l.cadencePct||0),0)/al.length);
     const gapLeads=al.filter(l=>(l.cadencePct||0)<100);
     return {name:ag.name,team:ag.tl,total:al.length,done,gaps:al.length-done,avg,color,gapLeads};
-  }).sort((a,b)=>{if(a.avg===null&&b.avg===null)return 0;if(a.avg===null)return 1;if(b.avg===null)return 1;return a.avg-b.avg;});
+  }).sort((a,b)=>(a.avg??101)-(b.avg??101));
 
   const totalLeads=visibleLeads.length;
   const totalDone=complianceLeads.filter(l=>(l.cadencePct||0)>=100).length;
