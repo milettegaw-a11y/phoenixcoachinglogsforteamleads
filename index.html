@@ -7823,7 +7823,6 @@ function setCadDashTab(tab) {
   if (tab === 'tcr') renderTCRDash();
 }
 
-let _cadTrendChart = null;
 async function renderCadTrendChart() {
   const el = document.getElementById('cad-trend-canvas');
   if (!el) return;
