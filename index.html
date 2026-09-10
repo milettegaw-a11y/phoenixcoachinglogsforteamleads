@@ -5842,37 +5842,6 @@ const _emailLoaded={};
 const _aircallLoaded={};   // lid → true once Aircall data fetched for this lead
 let   _aircallUsers=[];    // [{id,name,email}] cached after first fetch
 let   _acUsersFetched=false;
-let   _aircallNumbers=[];  // [{id,name,digits,state}] cached after first fetch
-let   _acNumbersFetched=false;
-async function loadAircallNumbers(){
-  if(_acNumbersFetched && _aircallNumbers.length>0)return; // Skip if already loaded successfully
-  _acNumbersFetched=true;
-  try{
-    const r=await fetch('/api/aircall?action=numbers');
-    if(!r.ok){_acNumbersFetched=false;return;} // Allow retry if API fails
-    const d=await r.json();
-    _aircallNumbers=d.numbers||[];
-  }catch(e){_acNumbersFetched=false;} // Allow retry on network error
-}
-// Returns [{id,name,digits}] of lines the current user's team is allowed to use
-function getTeamLines(){
-  const ids=getTeamAircallLineIds(); // Set<number> or null
-  if(!ids)return _aircallNumbers;   // OMs/ATLs see all
-  return _aircallNumbers.filter(n=>ids.has(Number(n.id)));
-}
-// Filter the calls list in the lead panel to show only a specific Aircall line
-function filterCallsByLine(pid,lineId){
-  const lead=_hsLeads.find(l=>l.id===pid||l.id==pid);
-  if(!lead)return;
-  const isSmsC=c=>c.type==='sms'||c.type==='message'||(c.type||'').toLowerCase().includes('sms');
-  const allCalls=(lead.calls||[]).filter(c=>!isSmsC(c));
-  const filtered=lineId?allCalls.filter(c=>String(c.numberId)===String(lineId)):allCalls;
-  const el=document.getElementById('comm-calls-list-'+pid);
-  if(!el)return;
-  el.innerHTML=filtered.length>0
-    ?filtered.map(callHistoryItem).join('')
-    :'<div style="padding:14px;text-align:center;color:#9ca3af;font-size:.72rem;">No calls on this line</div>';
-}
 async function loadEmailTab(lid,contactId){
   if(_emailLoaded[lid])return; // already loaded
   const body=document.getElementById('comm-email-body-'+lid);
@@ -6026,15 +5995,9 @@ async function loadAircallData(lid,contactPhone){
 
     // ── Update Calls tab ──────────────────────────────────────────────────────
     if(callListEl){
-      // Respect active line filter if the user already selected one
-      const lineSel=document.getElementById('comm-line-sel-'+pid);
-      const activeLineId=lineSel?lineSel.value:'';
-      const displayCalls=activeLineId?mergedCalls.filter(c=>String(c.numberId)===activeLineId):mergedCalls;
-      callListEl.innerHTML=displayCalls.length>0
-        ?displayCalls.map(callHistoryItem).join('')
-        :mergedCalls.length>0
-          ?'<div style="padding:14px;text-align:center;color:#9ca3af;font-size:.72rem;">No calls on this line</div>'
-          :'<div style="padding:14px;text-align:center;color:#9ca3af;font-size:.72rem;">No calls recorded in the last 90 days</div>';
+      callListEl.innerHTML=mergedCalls.length>0
+        ?mergedCalls.map(callHistoryItem).join('')
+        :'<div style="padding:14px;text-align:center;color:#9ca3af;font-size:.72rem;">No calls recorded in the last 90 days</div>';
     }
     const callTab=document.getElementById('comm-tab-calls-'+pid);
     if(callTab)callTab.textContent='📞 Calls ('+mergedCalls.length+')';
@@ -6137,6 +6100,34 @@ function makeCall(phone,name){
 }
 // ────────────────────────────────────────────────────────────────────────────
 
+// Cadence badge renderers. Module scope on purpose: loadAircallData() patches the
+// badge after merging Aircall data, and while these lived inside renderHSLeads()
+// that call threw ReferenceError, which the Aircall catch turned into
+// "Aircall error: cadenceBar is not defined" over the whole call list.
+function cadenceBar(l){
+  const pct=Math.min(100,l.cadencePct||0);
+  const color=pct>=100?'#22c55e':pct>=50?'#f97316':'#ef4444';
+  const expCalls=Math.max(0,(l.expectedContacts||0)-1);
+  const label=l.expectedContacts===0?`REST day · ${pct}%`:`${l.dailyCallsMade||0}/${expCalls} calls · ${l.dailySmsCount||0}/1 SMS · ${pct}%`;
+  return `<div id="cadence-${l.id}" style="margin-top:7px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+      <span style="font-size:.6rem;color:#9ca3af;font-weight:500;">Today's cadence</span>
+      <span style="font-size:.6rem;font-weight:700;color:${color};">${label}</span>
+    </div>
+    <div style="height:4px;background:#f0f0f0;border-radius:99px;overflow:hidden;">
+      <div style="height:100%;width:${pct}%;background:${color};border-radius:99px;transition:width .3s;"></div>
+    </div>
+  </div>`;
+}
+function calledBadge(l){
+  // Days 9-15: check if ANY call exists on this lead (not just today).
+  // Don't filter by ownerId — Aircall may log under a different HubSpot user.
+  const hasCalls=(l.calls||[]).some(c=>c.type==='call');
+  const lastOwnerCall=(l.calls||[]).find(c=>c.type==='call');
+  const lastStr=lastOwnerCall?hsRelTime(lastOwnerCall.timestamp):'';
+  return `<div id="cadence-${l.id}" style="margin-top:7px;"><span style="font-size:.62rem;padding:2px 9px;border-radius:99px;font-weight:600;background:${hasCalls?'#dcfce7':'#fee2e2'};color:${hasCalls?'#15803d':'#b91c1c'};">${hasCalls?'✅ Called · '+lastStr:'⚠️ Needs to be contacted'}</span></div>`;
+}
+
 function renderHSLeads(){
   if(!_hsLeadsLoaded)return;
 
@@ -6202,29 +6193,6 @@ function renderHSLeads(){
   const _STAGE_COLORS={'1072718881':'#60a5fa','1072718882':'#60a5fa','1072718883':'#f97316','1072718884':'#f59e0b','1072805486':'#f59e0b','1072805487':'#f59e0b','1072805488':'#f59e0b','1161141150':'#a78bfa','1072805489':'#a78bfa','1072805490':'#22c55e','1072805491':'#6b7280','1072805492':'#6b7280','1072805493':'#6b7280','1072805494':'#6b7280','1072805495':'#6b7280'};
   function stageColor(id){return _STAGE_COLORS[id]||'#9ca3af';}
 
-  function cadenceBar(l){
-    const pct=Math.min(100,l.cadencePct||0);
-    const color=pct>=100?'#22c55e':pct>=50?'#f97316':'#ef4444';
-    const expCalls=Math.max(0,(l.expectedContacts||0)-1);
-    const label=l.expectedContacts===0?`REST day · ${pct}%`:`${l.dailyCallsMade||0}/${expCalls} calls · ${l.dailySmsCount||0}/1 SMS · ${pct}%`;
-    return `<div id="cadence-${l.id}" style="margin-top:7px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
-        <span style="font-size:.6rem;color:#9ca3af;font-weight:500;">Today's cadence</span>
-        <span style="font-size:.6rem;font-weight:700;color:${color};">${label}</span>
-      </div>
-      <div style="height:4px;background:#f0f0f0;border-radius:99px;overflow:hidden;">
-        <div style="height:100%;width:${pct}%;background:${color};border-radius:99px;transition:width .3s;"></div>
-      </div>
-    </div>`;
-  }
-  function calledBadge(l){
-    // Days 9-15: check if ANY call exists on this lead (not just today).
-    // Don't filter by ownerId — Aircall may log under a different HubSpot user.
-    const hasCalls=(l.calls||[]).some(c=>c.type==='call');
-    const lastOwnerCall=(l.calls||[]).find(c=>c.type==='call');
-    const lastStr=lastOwnerCall?hsRelTime(lastOwnerCall.timestamp):'';
-    return `<div id="cadence-${l.id}" style="margin-top:7px;"><span style="font-size:.62rem;padding:2px 9px;border-radius:99px;font-weight:600;background:${hasCalls?'#dcfce7':'#fee2e2'};color:${hasCalls?'#15803d':'#b91c1c'};">${hasCalls?'✅ Called · '+lastStr:'⚠️ Needs to be contacted'}</span></div>`;
-  }
 
   function commPanel(l,allCalls){
     const pid=l.id;
@@ -6268,12 +6236,6 @@ function renderHSLeads(){
         </div>
       </div>
       <div id="comm-calls-${pid}" style="display:none;">
-        <div id="comm-line-bar-${pid}" style="padding:6px 10px;background:#f9fafb;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:8px;">
-          <span style="font-size:.62rem;font-weight:600;color:#9ca3af;white-space:nowrap;">Line:</span>
-          <select id="comm-line-sel-${pid}" onchange="filterCallsByLine('${pid}',this.value)" style="font-size:.65rem;border:1px solid #e5e7eb;border-radius:6px;padding:3px 8px;background:#fff;color:#374151;flex:1;min-width:0;">
-            <option value="">All Lines</option>
-          </select>
-        </div>
         <div id="comm-calls-list-${pid}" style="max-height:300px;overflow-y:auto;">
           ${callInitial}
         </div>
@@ -6374,24 +6336,6 @@ function renderHSLeads(){
     panel.scrollTop=0;
     // Augment calls/SMS with Aircall data (async, non-blocking)
     if(l.contactPhone)setTimeout(()=>loadAircallData(l.id,l.contactPhone),80);
-    // Populate the line selector dropdown in the calls tab
-    loadAircallNumbers().then(()=>{
-      const sel=document.getElementById('comm-line-sel-'+pid);
-      if(!sel)return;
-      const lines=getTeamLines();
-      console.log('[Lines] loaded',lines.length,'lines for team. Sample:',lines.slice(0,3));
-      // Remove old options (keep "All Lines")
-      while(sel.options.length>1)sel.remove(1);
-      lines.forEach(ln=>{
-        const o=document.createElement('option');
-        o.value=String(ln.id);
-        o.textContent=ln.name||(ln.digits?ln.digits:String(ln.id));
-        sel.appendChild(o);
-      });
-      // Always keep bar visible so agents can see/use it; update label count
-      const bar=document.getElementById('comm-line-bar-'+pid);
-      if(bar&&lines.length===0)bar.style.display='none'; // hide only if API returned nothing at all
-    });
   };
   window.closeLeadPanel=function(){
     document.getElementById('lead-panel-overlay').style.display='none';
