@@ -65,6 +65,14 @@ const callConnectInfo = (dispositionId) => {
   return { disposition: CALL_DISPOSITIONS[id] || '', connected: CONNECTED_DISPOSITIONS.has(id) };
 };
 
+// Owner id -> display name, for every HubSpot owner (not just this app's roster).
+// Activity on a 2nd-week lead is often the previous team's, so most agent ids on a
+// lead are outside HS_OWNERS and would otherwise render as a bare number.
+// Cached across warm invocations: the list is ~1 request and changes rarely.
+let _ownersCache = null;
+let _ownersCacheAt = 0;
+const OWNERS_TTL_MS = 30 * 60 * 1000;
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -121,6 +129,26 @@ export default async function handler(req, res) {
   const h = {
     'Authorization': 'Bearer ' + HS_TOKEN,
     'Content-Type': 'application/json'
+  };
+
+  const loadOwners = async () => {
+    if (_ownersCache && Date.now() - _ownersCacheAt < OWNERS_TTL_MS) return _ownersCache;
+    const map = {};
+    let after = '';
+    for (let page = 0; page < 12; page++) {
+      const r = await hsFetch('https://api.hubapi.com/crm/v3/owners?limit=500' + (after ? '&after=' + after : ''), { headers: h });
+      if (!r.ok) break;
+      const d = await r.json().catch(() => ({}));
+      for (const o of (d.results || [])) {
+        const nm = [o.firstName, o.lastName].filter(Boolean).join(' ').trim() || o.email || '';
+        if (nm) map[String(o.id)] = nm;
+      }
+      after = (d.paging && d.paging.next && d.paging.next.after) || '';
+      if (!after) break;
+    }
+    // Keep the previous cache on a failed refresh rather than blanking every name.
+    if (Object.keys(map).length) { _ownersCache = map; _ownersCacheAt = Date.now(); }
+    return _ownersCache || map;
   };
 
   const tsMs = ts => { if (!ts) return 0; const n = Number(ts); return isNaN(n) ? new Date(ts).getTime() : n; };
@@ -511,7 +539,17 @@ export default async function handler(req, res) {
       };
     });
 
-    return res.status(200).json({ results: enriched, paging: ticketData.paging });
+    // Names are returned as one lookup map rather than stamped on each activity:
+    // a page carries ~1,000 activities but only ~36 distinct agents.
+    const ownerIds = new Set();
+    for (const t of enriched) for (const a of (t.calls || [])) if (a.ownerId) ownerIds.add(String(a.ownerId));
+    let owners = {};
+    try {
+      const all = await loadOwners();
+      for (const id of ownerIds) if (all[id]) owners[id] = all[id];
+    } catch (e) { owners = {}; }   // names are a nicety; never fail the whole fetch
+
+    return res.status(200).json({ results: enriched, paging: ticketData.paging, owners });
 
   } catch (e) {
     return res.status(500).json({ error: e.message });

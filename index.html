@@ -5244,6 +5244,27 @@ const HS_CADENCE=[0,3,3,0,3,3,1,3,1,1,1,1,1,1,1,1];
 const TEAM_DAY_OFF={'Jhay':[0,6],'Jumz':[2,3],'Florence':[5,6]}; // 0=Sun,1=Mon,...,6=Sat
 function hsGetCumulativeExpected(day){let t=0;for(let d=1;d<=Math.min(day,15);d++)t+=HS_CADENCE[d]||0;return t;}
 function hsTs(dt){if(!dt)return 0;const n=Number(dt);return isNaN(n)?new Date(dt).getTime():n;}
+// Agent-name lookup for activity on a lead. Filled from each page's `owners` map,
+// which covers EVERY HubSpot owner — most touches on a 2nd-week lead were made by
+// the previous team, whose ids are not in HS_OWNERS.
+let _hsAgentNames={};
+function hsAgentName(c){
+  if(!c)return '';
+  return c.ownerName||_hsAgentNames[String(c.ownerId||'')]||HS_OWNERS[String(c.ownerId||'')]||'';
+}
+// True when the agent is on one of this app's four teams — lets the panel show at a
+// glance whether a past conversation was ours or the earlier (Apex) team's.
+function hsIsOurAgent(name){return !!name&&HS_ALLOWED_NAMES.has(String(name).toLowerCase());}
+function hsAgentTag(c){
+  const n=hsAgentName(c);
+  if(!n)return '';
+  const ours=hsIsOurAgent(n);
+  const short=n.split(' ').slice(0,2).join(' ');
+  const title=ours?n:n+' — not on your teams (earlier team\'s contact)';
+  return `<span title="${title}" style="font-size:.55rem;font-weight:600;padding:1px 6px;border-radius:99px;white-space:nowrap;`
+    +(ours?'background:#f3f4f6;color:#6b7280;':'background:#f3e8ff;color:#7e22ce;')
+    +`">${ours?'':'↗ '}${short}</span>`;
+}
 // The working day runs 06:00 CDT to 00:00 CDT (midnight). Activity outside that
 // window is not counted toward cadence — anything logged between midnight and
 // 06:00 CDT belongs to no working day.
@@ -5337,6 +5358,7 @@ async function fetchHSLeads(){
       const out=[]; let after;
       do{
         const data=await _hsFetchPage(lo,hi,after);
+        Object.assign(_hsAgentNames,data.owners||{});
         for(const r of (data.results||[]))out.push(r);
         after=data.paging?.next?.after;
       }while(after&&out.length<10000);
@@ -5905,7 +5927,7 @@ function callHistoryItem(c){
   return `<div style="padding:6px 10px;border-bottom:1px solid #f3f4f6;">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;">
       <span style="font-size:.67rem;color:var(--g500);">${typeLabel} · ${ts}${dur}</span>
-      <span style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">${rec}${tag}${badge}</span>
+      <span style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">${hsAgentTag(c)}${rec}${tag}${badge}</span>
     </div>${body}${summary}${topics}
   </div>`;
 }
@@ -6008,7 +6030,8 @@ async function loadAircallData(lid,contactPhone){
       const src=c.source==='aircall'?'<span style="font-size:.55rem;background:#e0f2fe;color:#0369a1;padding:1px 5px;border-radius:4px;margin-left:4px;">Aircall</span>':'';
       return '<div style="display:flex;flex-direction:column;align-items:'+(isOut?'flex-end':'flex-start')+';margin-bottom:8px;">'
         +'<div style="max-width:82%;background:'+(isOut?'#ff7a59':'#f3f4f6')+';color:'+(isOut?'#fff':'#111')+';padding:8px 12px;border-radius:'+(isOut?'12px 12px 2px 12px':'12px 12px 12px 2px')+';font-size:.75rem;line-height:1.5;">'+body+'</div>'
-        +'<div style="font-size:.59rem;color:#9ca3af;margin-top:2px;">'+(isOut?'Out · ':'In · ')+tsStr+src+'</div></div>';
+        +'<div style="font-size:.59rem;color:#9ca3af;margin-top:2px;display:flex;align-items:center;gap:4px;flex-wrap:wrap;">'
+        +(isOut?'Out · ':'In · ')+tsStr+src+(isOut?hsAgentTag(c):'')+'</div></div>';
     };
     if(smsListEl){
       const sorted=[...mergedMsgs].sort((a,b)=>hsTs(a.timestamp)-hsTs(b.timestamp));
@@ -6208,7 +6231,7 @@ function renderHSLeads(){
       const src=c.source==='aircall'?'<span style="font-size:.55rem;background:#e0f2fe;color:#0369a1;padding:1px 5px;border-radius:4px;margin-left:4px;">Aircall</span>':'';
       return `<div style="display:flex;flex-direction:column;align-items:${isOut?'flex-end':'flex-start'};margin-bottom:8px;">
         <div style="max-width:82%;background:${isOut?'#ff7a59':'#f3f4f6'};color:${isOut?'#fff':'#111'};padding:8px 12px;border-radius:${isOut?'12px 12px 2px 12px':'12px 12px 12px 2px'};font-size:.75rem;line-height:1.5;">${body}</div>
-        <div style="font-size:.59rem;color:#9ca3af;margin-top:2px;">${isOut?'Out · ':'In · '}${ts}${src}</div>
+        <div style="font-size:.59rem;color:#9ca3af;margin-top:2px;display:flex;align-items:center;gap:4px;flex-wrap:wrap;">${isOut?'Out · ':'In · '}${ts}${src}${isOut?hsAgentTag(c):''}</div>
       </div>`;
     };
     // Loading placeholder — replaced by loadAircallData once Aircall responds
