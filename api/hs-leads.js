@@ -135,6 +135,25 @@ export default async function handler(req, res) {
   // Requires a positive "Sent by" match to count as agent-sent: anything we cannot
   // read is treated as inbound and left out, so a template change under-counts
   // loudly rather than silently crediting lead replies again.
+  // The Aircall body is HTML and prefixes the real text with a header line:
+  //   "SMS Sent by <agent> on <team> : <loc> to <contact>   Message: <actual text>"
+  // Keep what follows "Message:", drop the header otherwise, flatten the markup, and
+  // escape the result: the panel inserts this via innerHTML, and the inbound half is
+  // text a customer wrote, so it must not be able to inject markup.
+  const smsMessageText = body => {
+    let t = (body || '')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/(?:div|p)>/gi, '\n')
+      .replace(/<[^>]+>/g, ' ');
+    t = t.replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&').replace(/&lt;/gi, '<')
+         .replace(/&gt;/gi, '>').replace(/&quot;/gi, '"').replace(/&#0?39;/gi, "'");
+    t = t.replace(/[ \t]+/g, ' ').replace(/\n\s*\n+/g, '\n').trim();
+    const m = t.match(/Message:\s*([\s\S]*)$/i);
+    t = (m ? m[1] : t.replace(/^\s*(?:SMS|MMS)\s+(?:Sent\s+by|Received\s+from)[^\n]*\n?/i, '')).trim();
+    return t.slice(0, 600)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  };
+
   const smsIsOutbound = body =>
     /^\s*(?:SMS|MMS)\s+Sent\s+by\b/i.test((body || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim());
 
@@ -281,6 +300,7 @@ export default async function handler(req, res) {
           disposition: '',
           connected: false,
           direction: smsIsOutbound(p.hs_communication_body) ? 'OUTBOUND' : 'INBOUND',
+          body: smsMessageText(p.hs_communication_body),
           durationMs: 0,
           ownerId: String(p.hubspot_owner_id || '')
         };
@@ -413,6 +433,7 @@ export default async function handler(req, res) {
         disposition: '',
         connected: false,
         direction: smsIsOutbound(p.hs_communication_body) ? 'OUTBOUND' : 'INBOUND',
+        body: smsMessageText(p.hs_communication_body),
         durationMs: 0,
         ownerId: String(p.hubspot_owner_id || '')
       };
