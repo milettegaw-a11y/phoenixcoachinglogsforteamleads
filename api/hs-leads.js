@@ -125,6 +125,13 @@ export default async function handler(req, res) {
 
   const tsMs = ts => { if (!ts) return 0; const n = Number(ts); return isNaN(n) ? new Date(ts).getTime() : n; };
 
+  // SMS carries NO direction property — hs_communication_logged_from is 'CRM' on
+  // every record, inbound or not. Aircall states the direction in the body text
+  // ("SMS Sent by <agent> ... to <contact>"), so that is the only signal there is.
+  // DIAGNOSTIC: returning a short prefix to establish the real shape of these
+  // bodies before any counting is made to depend on them. No behaviour change yet.
+  const smsBodyPrefix = body => (body || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 28);
+
   try {
     // ── Step 1: Search tickets ────────────────────────────────────────────────
     const ticketResp = await hsFetch('https://api.hubapi.com/crm/v3/objects/tickets/search', {
@@ -240,7 +247,7 @@ export default async function handler(req, res) {
           filterGroups: [{ filters: [timeGTE, timeLT, contactIn,
             { propertyName: 'hs_communication_channel_type', operator: 'EQ', value: 'SMS' }
           ]}],
-          properties: ['hs_timestamp','hs_communication_channel_type','hubspot_owner_id','hs_communication_logged_from'],
+          properties: ['hs_timestamp','hs_communication_channel_type','hubspot_owner_id','hs_communication_logged_from','hs_communication_body'],
           limit: 200
         })
       ]);
@@ -264,6 +271,7 @@ export default async function handler(req, res) {
         todaySmsDetailMap[String(s.id)] = {
           type: 'sms',
           timestamp: p.hs_timestamp || '',
+          bodyPrefix: smsBodyPrefix(p.hs_communication_body),
           status: 'SENT',
           disposition: '',
           connected: false,
@@ -345,7 +353,7 @@ export default async function handler(req, res) {
         ? batchRead(
             'https://api.hubapi.com/crm/v3/objects/communications/batch/read',
             ticketSmsIdList,
-            ['hs_timestamp','hs_communication_channel_type','hubspot_owner_id','hs_communication_logged_from']
+            ['hs_timestamp','hs_communication_channel_type','hubspot_owner_id','hs_communication_logged_from','hs_communication_body']
           )
         : Promise.resolve([])
     ]);
@@ -396,6 +404,7 @@ export default async function handler(req, res) {
       smsDetailMap[String(s.id)] = {
         type: channel === 'SMS' ? 'sms' : (channel || 'message'),
         timestamp: p.hs_timestamp || '',
+        bodyPrefix: smsBodyPrefix(p.hs_communication_body),
         status: 'SENT',
         disposition: '',
         connected: false,
