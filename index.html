@@ -5156,7 +5156,17 @@ const HS_PIPELINE_SEG='736937559';
 const HS_SUBJECT_2ND_WEEK='Sales Call Required (2nd Week)';
 // HubSpot portal id — used to rebuild call-recording links client-side.
 const HS_PORTAL_ID='45809585';
-const HS_STAGE_LABELS={'1072718881':'New','1072718882':'Assigned','1072718883':'In Progress','1072718884':'2nd Attempt','1072805486':'3rd Attempt','1072805487':'4th Attempt','1072805488':'5th Attempt','1161141150':'Declined (Follow-up)','1072805489':'24hr Callback','1072805490':'Closed - Sold','1072805491':'Closed - Not Interested','1072805492':'Closed - Bad Number','1072805493':'Closed - Already Member','1072805494':'Closed - DNC','1072805495':'Admin Close'};
+// Verified against HubSpot's own hs_pipeline_stage options. The previous map was
+// wrong on five stages — most seriously it called 1072805493 'Already Member'
+// when it is 'Closed as Do not call again', and 1072805494 'Closed - DNC' when it
+// is actually an ADMIN-OPEN stage.
+const HS_STAGE_LABELS={'1072718881':'New','1072718882':'Assigned','1072718883':'In Progress',
+'1072718884':'In Progress (For 2nd Attempt)','1072805486':'In Progress (For 3rd Attempt)',
+'1072805487':'In Progress (For 4th Attempt)','1072805488':'In Progress (For 5th Attempt)',
+'1161141150':'In Progress (Declined but for follow-up)','1072805489':'Explicit 24 hour call back request',
+'1072805490':'Closed as a Sale','1072805491':'Closed as Declined','1072805492':'Closed as No Answer',
+'1072805493':'Closed as Do not call again','1072805494':'for ADMINs ONLY|OPEN',
+'1072805495':'for ADMINs ONLY|CLOSED'};
 const HS_STAGE_ATTEMPTS={'1072718881':0,'1072718882':0,'1072718883':1,'1072718884':1,'1072805486':2,'1072805487':3,'1072805488':4,'1161141150':1,'1072805489':1};
 const HS_OWNERS={'3817861':'Jimmy Barnachea','17052290':'Kristine Rivera','49682868':'Rayan Jaime','64681504':'Monica Bautista','66232384':'Mark Lim','75448319':'Luzielle Orbillo','75448329':'Mark Tadeo','75448337':'Jerome Manuit','75448338':'Christian Bolano','75448340':'Kimberly Santos','75448342':'Jeremiah Mendoza','75448346':'Robin Castillo','75448907':'John Adrian','75448908':'April Capulso','75624739':'Neil Bajande','76257948':'Gerlie Sarmiento','76257998':'Rose Tejedor','76258000':'Mary Sotto','76258005':'Catherine Gayoso','76258017':'King Martinez','76754051':'Vanessa Inocencio','76791020':'Jazz Karasig','76791092':'Jo Vincent Feraren','76791093':'Kristine Villanueva','77597264':'Arah Sacro','77597279':'Carlyn Ordona','77597297':'Allan Chua','77814217':'Dioreza Tomilloso','78073879':'Trixia Robles','78073906':'Angelo Mararac','78073945':'Joan Estarez','78073956':'Noemi Galon','78296623':'Ramille Borja','78296624':'Jacquelou Rondez','78653037':'Cristine Paguipolar','78708745':'John Babila','78708760':'Mary Opena','78928026':'Bernadette Espinas','78928079':'Mark Bautista','78973871':'Nenelyn Kuo','79004888':'Joy Espinar','79004894':'Regner Sol','79004895':'John De Leon','79190901':'Michael Aleta','79363109':'Ace Amantiad','79523705':'Rina Galang','79523733':'Princess Mamandis','79523738':'Janelle Casabuena','79523747':'Michael Santiago','79523753':'Loseta Labarro','79695298':'Jaydi Miranda','79870132':'Asher Balway','80071272':'Wilrose Menguito','80071316':'Racine Mercado','80225569':'Aaron Tuico','80225602':'Jenalynn Paya','80225605':'Nikka Tejana','80225613':'Jardene Petines','80225617':'Kimberly Sabandal','80225636':'MJ Flomentera','80422418':'Merven Panganiban','80422449':'Iris Neri','80564719':'Jondelle Miranda','80564753':'Jennifer Trinidad','80564786':'Odirose Amuyot','80564815':'Anna Pascual','80746376':'Kelly Cruz','80746379':'CJ Garces','80746403':'Supremo Cabalo','80746421':'Emilyn Buenafe','80746444':'Jann Adriano','80746448':'Jowee-Anne Barbastro','80746452':'Nicole Canlas','80746664':'Ian Ibañez','80922738':'Irene Virgo','80922767':'Kaile Laquindanum','80922772':'Erwin Garcia','80922782':'Richie Sabado','80922793':'Lynn Villahermosa','80922800':'Elvis Maste','80922823':'Roxanne Balcita','81103164':'Paulo Moreno','81284986':'Lara Hongayo','81285040':'Romeo Sandoval','81285041':'Kathrina Tabaquin','81285050':'Angelica Lorenzana','81463171':'Krizelle Taino','81488398':'Russell Cabang','81611466':'Princess Punzalan','81612598':'Jemy Morong','81786552':'Gyle Gelle',
 '1122781944':'Jersey Deguzman','203852543':'Amer Ismael',
@@ -5316,7 +5326,9 @@ async function fetchHSLeads(){
   if(avEl)avEl.innerHTML=loading;
   if(tlEl)tlEl.innerHTML=loading;
   // Only exclude Sold + DNC — Admin Close / Bad Number / Not Interested / Already Member are still tracked
-  const closedStages=['1072805490','1072805494'];
+  // Sale and Do-not-call. 1072805494 used to be listed here as 'DNC', but it is
+  // 'for ADMINs ONLY|OPEN'; the real DNC stage is 1072805493.
+  const closedStages=['1072805490','1072805493'];
   // Build server-side owner filter — only fetch tickets for the 4 allowed teams
   const allowedOwnerIds=Object.entries(HS_OWNERS)
     .filter(([,name])=>HS_ALLOWED_NAMES.has(name.toLowerCase()))
@@ -5696,6 +5708,15 @@ function toggleCadAgentRow(safeId){
 let _cadTrendChart=null;
 
 let _agentCadTrendChart=null;
+const HS_DNC_STAGE='1072805493';
+const HS_SALE_STAGE='1072805490';
+// The outcomes an agent can set from here. Same ids and wording as HubSpot, so the
+// app and the CRM never disagree about what a stage is called.
+const HS_SETTABLE_STAGES=['1072805490','1072805491','1072805492','1072805493','1072805489'];
+const HS_SALE_TYPES=['first_cleaning_free','DHJ voucher','one_time_cleaning','trial_cleaning'];
+function hsStageLabel(id){return HS_STAGE_LABELS[String(id)]||('Stage '+id);}
+function hsIsDnc(id){return String(id)===HS_DNC_STAGE;}
+
 /* ── Waiting On You board ────────────────────────────────────────────────────
    Leads where the CUSTOMER spoke last, so the ball is in the agent's court.
    Deliberately its own data path: it fetches the agent's tickets across ALL
@@ -5743,6 +5764,50 @@ async function loadAgentReplies(force){
   }catch(e){ _avReplies=_avReplies||[]; }
   finally{ _avRepliesLoading=false; renderAgentReplies(); }
 }
+// Handled leads are remembered against the timestamp of the reply that put them on
+// the board, so clearing one hides THAT conversation — if the customer writes again
+// the card comes straight back rather than staying dismissed forever.
+function avDismissKey(){return 'av_handled_'+((CU&&CU.agentName)||'agent');}
+function avLoadDismissed(){try{return new Set(JSON.parse(localStorage.getItem(avDismissKey())||'[]'));}catch(e){return new Set();}}
+function avSaveDismissed(set){try{localStorage.setItem(avDismissKey(),JSON.stringify([...set].slice(-500)));}catch(e){}}
+let _avDismissed=avLoadDismissed();
+function avTicketKey(t){const a=avLastActivity(t);return t.id+':'+(a?hsTs(a.timestamp):0);}
+function avHandled(t){_avDismissed.add(avTicketKey(t));avSaveDismissed(_avDismissed);renderAgentReplies();}
+function avUnhandleAll(){_avDismissed=new Set();avSaveDismissed(_avDismissed);renderAgentReplies();}
+
+// Set the ticket outcome straight from the board. Closing as a Sale reveals the
+// same sub-form HubSpot asks for, because a Sale written without its date and type
+// is an incomplete record.
+function avToggleSale(pid){
+  const sel=document.getElementById('av-stage-'+pid), box=document.getElementById('av-sale-'+pid);
+  if(box)box.style.display=(sel&&sel.value===HS_SALE_STAGE)?'block':'none';
+}
+async function avSetStage(pid){
+  const sel=document.getElementById('av-stage-'+pid);
+  if(!sel||!sel.value)return;
+  const stageId=sel.value, btn=document.getElementById('av-save-'+pid);
+  const props={};
+  if(stageId===HS_SALE_STAGE){
+    const d=document.getElementById('av-saledate-'+pid), ty=document.getElementById('av-saletype-'+pid);
+    if(!d||!d.value){alert('Add the date of sale before saving.');return;}
+    props.did_we_make_a_sale='Yes';
+    props.date_of_sale=d.value;
+    if(ty&&ty.value)props.i_made_a_sale_and_it_s_a___=ty.value;
+  }
+  if(btn){btn.disabled=true;btn.textContent='Saving…';}
+  try{
+    const r=await fetch('/api/hs-update',{method:'PATCH',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ticketId:String(pid),stageId,properties:props})});
+    if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.message||('HubSpot '+r.status));}
+    const t=(_avReplies||[]).find(x=>String(x.id)===String(pid));
+    if(t){t.properties=t.properties||{};t.properties.hs_pipeline_stage=stageId;}
+    if(btn){btn.textContent='Saved ✓';}
+    setTimeout(renderAgentReplies,600);
+  }catch(err){
+    if(btn){btn.disabled=false;btn.textContent='Save';}
+    alert('Could not update the ticket: '+err.message);
+  }
+}
 function avReplyCard(t){
   const p=t.properties||{};
   const subj=(p.subject||'').trim();
@@ -5753,17 +5818,35 @@ function avReplyCard(t){
   const msg=last&&avIsSms(last)?String(last.body==null?'':last.body).trim():'';
   const kind=isW2?'2nd Week':(subj.replace(/\s+/g,' ')||'Ticket');
   const kindBg=isW2?'#fff3e0':'#eef2ff', kindFg=isW2?'#c2410c':'#4338ca';
-  return `<a href="https://app.hubspot.com/contacts/45809585/ticket/${t.id}" target="_blank" rel="noopener"
-    style="display:block;background:#fff;border:1px solid #e5e7eb;border-left:3px solid #22c55e;border-radius:0 8px 8px 0;padding:10px 12px;margin-bottom:8px;text-decoration:none;color:inherit;"
-    onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='#fff'">
+  const stage=String(p.hs_pipeline_stage||'');
+  const dnc=hsIsDnc(stage);
+  const stBg=dnc?'#fee2e2':stage===HS_SALE_STAGE?'#dcfce7':'#f3f4f6';
+  const stFg=dnc?'#b91c1c':stage===HS_SALE_STAGE?'#15803d':'#6b7280';
+  const opts=HS_SETTABLE_STAGES.map(id=>`<option value="${id}"${id===stage?' selected':''}>${hsStageLabel(id)}</option>`).join('');
+  const today=new Date(Date.now()-5*3600000).toISOString().slice(0,10);
+  return `<div style="background:#fff;border:1px solid ${dnc?'#fca5a5':'#e5e7eb'};border-left:3px solid ${dnc?'#ef4444':'#22c55e'};border-radius:0 8px 8px 0;padding:10px 12px;margin-bottom:8px;">
     <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
-      <span style="font-size:.78rem;font-weight:700;color:#111;">${name}</span>
+      <a href="https://app.hubspot.com/contacts/45809585/ticket/${t.id}" target="_blank" rel="noopener" style="font-size:.78rem;font-weight:700;color:#111;text-decoration:none;">${name} ↗</a>
       <span style="font-size:.55rem;font-weight:700;padding:1px 7px;border-radius:99px;background:${kindBg};color:${kindFg};white-space:nowrap;">${kind}</span>
+      <span title="Current ticket status in HubSpot" style="font-size:.55rem;font-weight:700;padding:1px 7px;border-radius:99px;background:${stBg};color:${stFg};white-space:nowrap;">${dnc?'⛔ ':''}${hsStageLabel(stage)}</span>
       <span style="margin-left:auto;font-size:.62rem;color:#16a34a;font-weight:700;white-space:nowrap;">replied ${when}</span>
     </div>
-    ${msg?`<div style="font-size:.72rem;color:#57534e;line-height:1.45;">“${msg.length>110?msg.slice(0,110)+'…':msg}”</div>`
-         :`<div style="font-size:.72rem;color:#9ca3af;font-style:italic;">Inbound call — no message text</div>`}
-  </a>`;
+    ${msg?`<div style="font-size:.72rem;color:#57534e;line-height:1.45;margin-bottom:8px;">“${msg.length>110?msg.slice(0,110)+'…':msg}”</div>`
+         :`<div style="font-size:.72rem;color:#9ca3af;font-style:italic;margin-bottom:8px;">Inbound call — no message text</div>`}
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+      <select id="av-stage-${t.id}" onchange="avToggleSale('${t.id}')" style="font-size:.65rem;font-weight:600;border:1.5px solid #e5e7eb;border-radius:7px;padding:3px 7px;background:#fff;color:#374151;cursor:pointer;font-family:inherit;max-width:190px;">${opts}</select>
+      <button type="button" id="av-save-${t.id}" onclick="avSetStage('${t.id}')" style="padding:3px 10px;font-size:.63rem;font-weight:700;color:#fff;background:#ff7a59;border:none;border-radius:7px;cursor:pointer;font-family:inherit;">Save</button>
+      <button type="button" onclick="avHandled('${t.id}')" title="Hide until this customer replies again" style="margin-left:auto;padding:3px 10px;font-size:.63rem;font-weight:700;color:#6b7280;background:#fff;border:1px solid #e5e7eb;border-radius:7px;cursor:pointer;font-family:inherit;">✓ Handled</button>
+    </div>
+    <div id="av-sale-${t.id}" style="display:none;margin-top:7px;padding-top:7px;border-top:1px dashed #e5e7eb;">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+        <label style="font-size:.6rem;color:#9ca3af;font-weight:700;">Date of sale
+          <input type="date" id="av-saledate-${t.id}" value="${today}" style="margin-left:4px;font-size:.65rem;border:1.5px solid #e5e7eb;border-radius:6px;padding:2px 6px;font-family:inherit;"/></label>
+        <label style="font-size:.6rem;color:#9ca3af;font-weight:700;">Type
+          <select id="av-saletype-${t.id}" style="margin-left:4px;font-size:.65rem;border:1.5px solid #e5e7eb;border-radius:6px;padding:2px 6px;font-family:inherit;">${HS_SALE_TYPES.map(v=>`<option value="${v}">${v.replace(/_/g,' ')}</option>`).join('')}</select></label>
+      </div>
+    </div>
+  </div>`;
 }
 function renderAgentReplies(){
   const el=document.getElementById('av-replies-body');
@@ -5771,8 +5854,10 @@ function renderAgentReplies(){
   if(_avRepliesLoading&&!_avReplies){
     el.innerHTML='<div style="color:#9ca3af;font-size:.78rem;padding:18px 0;text-align:center;">Checking who replied…</div>';return;
   }
-  const all=(_avReplies||[]).filter(avCustomerSpokeLast)
+  const replied=(_avReplies||[]).filter(avCustomerSpokeLast)
     .sort((a,b)=>hsTs((avLastActivity(b)||{}).timestamp)-hsTs((avLastActivity(a)||{}).timestamp));
+  const all=replied.filter(t=>!_avDismissed.has(avTicketKey(t)));
+  const hiddenCount=replied.length-all.length;
   const w2 =all.filter(t=>((t.properties||{}).subject||'').trim().toLowerCase()===HS_SUBJECT_2ND_WEEK.toLowerCase());
   const oth=all.filter(t=>((t.properties||{}).subject||'').trim().toLowerCase()!==HS_SUBJECT_2ND_WEEK.toLowerCase());
   const col=(title,hint,list)=>`
@@ -5787,7 +5872,11 @@ function renderAgentReplies(){
   el.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;">
       ${col('2nd Week — replied','Your cadence leads who answered back',w2)}
       ${col('Other tickets — replied','Inbound SMS/Call and anything not 2nd Week',oth)}
-    </div>`;
+    </div>
+    ${hiddenCount?`<div style="margin-top:12px;padding-top:10px;border-top:1px solid #f0f0f0;font-size:.68rem;color:#9ca3af;">
+      ${hiddenCount} handled ${hiddenCount===1?'lead':'leads'} hidden ·
+      <button type="button" onclick="avUnhandleAll()" style="padding:2px 8px;font-size:.63rem;font-weight:700;color:#6b7280;background:#fff;border:1px solid #e5e7eb;border-radius:99px;cursor:pointer;font-family:inherit;">Show all again</button>
+    </div>`:''}`;
 }
 // Not-Contacted chips, and the Day 1-8 filter over them. An agent can carry 170+
 // uncontacted leads at once; without a day filter the oldest ones — the ones about
