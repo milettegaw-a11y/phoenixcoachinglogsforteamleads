@@ -5221,24 +5221,6 @@ const TEAM_AIRCALL_LINES={
   // 'amp': new Set([...]) — add line IDs once identified
 };
 
-/** Returns the Set of Aircall line IDs the current user is allowed to see,
- *  or null if no restriction applies (OM, ATL, unlisted team). */
-function getTeamAircallLineIds(){
-  if(!CU||CU.isOM) return null;       // OMs see everything
-  let team='';
-  if(CU.isAgentView){
-    const rec=(typeof AGENTS!=='undefined'?AGENTS:[]).find(a=>a.name===CU.agentName);
-    team=rec?.tl||'';
-  } else {
-    team=myTeam();                     // TL's own team
-  }
-  if(!team) return null;              // ATL or unknown role → no restriction
-  for(const [key,ids] of Object.entries(TEAM_AIRCALL_LINES)){
-    if(team.toLowerCase().includes(key.toLowerCase())) return ids;
-  }
-  return null;                        // team not mapped → no restriction
-}
-
 let _hsLeads=[];
 let _hsLeadsLoaded=false;
 let _hsLastFetched=0; // epoch ms of last successful fetchHSLeads
@@ -5955,17 +5937,11 @@ async function loadAircallData(lid,contactPhone){
     }
     const data=await r.json();
 
-    // Filter calls/SMS to the current user's team lines only
+    // Show every touch on this lead, whoever made it and on whichever line. This used
+    // to be filtered to the viewer's own team lines, which hid the earlier team's
+    // first contact — the history an agent most needs before dialling.
     let acCalls=data.calls||[];
     let acMsgs =data.messages||[];
-    const _teamLineIds=getTeamAircallLineIds();
-    if(_teamLineIds){
-      // Only exclude a call if it has a positive numberId that is NOT in the team's set.
-      // Calls with no numberId (API didn't return number field) pass through so nothing is silently hidden.
-      const inTeam=c=>{const nid=Number(c.numberId||0);return !nid||_teamLineIds.has(nid);};
-      acCalls=acCalls.filter(inTeam);
-      acMsgs =acMsgs.filter(inTeam);
-    }
     // Only show calls/SMS on or after the ticket was created (prevents phantom calls from other leads sharing the same number)
     const ticketCreatedMs=lead.createdMs||0;
     if(ticketCreatedMs>0){
