@@ -5250,15 +5250,22 @@ function hsTs(dt){if(!dt)return 0;const n=Number(dt);return isNaN(n)?new Date(dt
 let _hsAgentNames={};
 function hsAgentName(c){
   if(!c)return '';
-  return c.ownerName||_hsAgentNames[String(c.ownerId||'')]||HS_OWNERS[String(c.ownerId||'')]||'';
+  const id=String(c.ownerId||'');
+  // HS_OWNERS first so our own agents read the same here as everywhere else in the
+  // app: HubSpot spells some of them differently ("Jersey Relly De Guzman" vs
+  // "Jersey Deguzman"). _hsAgentNames covers everyone outside the roster.
+  return HS_OWNERS[id]||c.ownerName||_hsAgentNames[id]||'';
 }
-// True when the agent is on one of this app's four teams — lets the panel show at a
-// glance whether a past conversation was ours or the earlier (Apex) team's.
-function hsIsOurAgent(name){return !!name&&HS_ALLOWED_NAMES.has(String(name).toLowerCase());}
+// Whether the agent is on one of this app's four teams. Matched on owner ID, never
+// on name — HubSpot's spelling differs from the roster's for several agents, and
+// matching by name flagged them as an outside team.
+const HS_TEAM_OWNER_IDS=new Set(Object.entries(HS_OWNERS)
+  .filter(([,n])=>HS_ALLOWED_NAMES.has(String(n).toLowerCase())).map(([id])=>String(id)));
+function hsIsOurAgent(c){return !!c&&HS_TEAM_OWNER_IDS.has(String(c.ownerId||''));}
 function hsAgentTag(c){
   const n=hsAgentName(c);
   if(!n)return '';
-  const ours=hsIsOurAgent(n);
+  const ours=hsIsOurAgent(c);
   const short=n.split(' ').slice(0,2).join(' ');
   const title=ours?n:n+' — not on your teams (earlier team\'s contact)';
   return `<span title="${title}" style="font-size:.55rem;font-weight:600;padding:1px 6px;border-radius:99px;white-space:nowrap;`
