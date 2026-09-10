@@ -292,28 +292,35 @@ export default async function handler(req, res) {
     const cdtDate  = new Date(cdtMs);
     const todayStartUTC = Date.UTC(cdtDate.getUTCFullYear(), cdtDate.getUTCMonth(), cdtDate.getUTCDate()) + 5 * 3600000;
     const todayEndUTC   = todayStartUTC + 86400000;
+    // Contact-level activity used to be searched for TODAY only, so anything older
+    // surfaced only if it happened to be associated with THIS ticket. The earlier
+    // team's work is (they created the tickets it hangs off); our own agents' work is
+    // not — which is why Phoenix showed 0 calls and 0 SMS before today while other
+    // teams showed ~48,000. Widened to the same 9-day window the app displays.
+    const HISTORY_DAYS    = 9;
+    const historyStartUTC = todayStartUTC - (HISTORY_DAYS - 1) * 86400000;
 
     const allOwnerIds = [...new Set(tickets.map(t => t.properties.hubspot_owner_id).filter(Boolean))];
 
-    // contactId → [today's callIds / smsIds from search]
-    const contactTodayCallMap = {};
-    const contactTodaySmsMap  = {};
-    // Pre-populated detail maps from today's search results
-    const todayCallDetailMap  = {};
-    const todaySmsDetailMap   = {};
+    // contactId → [recent callIds / smsIds from search]
+    const contactRecentCallMap = {};
+    const contactRecentSmsMap  = {};
+    // Pre-populated detail maps from the recent-activity search
+    const recentCallDetailMap  = {};
+    const recentSmsDetailMap   = {};
 
     // Search by contact association — Aircall calls often have no hubspot_owner_id set,
     // so filtering by owner misses them. Filtering by contact IDs finds all today's
     // activity on those contacts regardless of how the call was logged.
     if (allContactIds.length > 0) {
-      const timeGTE    = { propertyName: 'hs_timestamp', operator: 'GTE', value: String(todayStartUTC) };
+      const timeGTE    = { propertyName: 'hs_timestamp', operator: 'GTE', value: String(historyStartUTC) };
       const timeLT     = { propertyName: 'hs_timestamp', operator: 'LT',  value: String(todayEndUTC)   };
       // HubSpot IN operator supports up to 300 values
       const contactSlice = allContactIds.slice(0, 300);
       const contactIn  = { propertyName: 'associations.contact', operator: 'IN', values: contactSlice };
 
-      // Search today's calls and SMS in parallel
-      const [todayCallList, todaySmsList] = await Promise.all([
+      // Search recent calls and SMS in parallel
+      const [recentCallList, recentSmsList] = await Promise.all([
         searchAll('https://api.hubapi.com/crm/v3/objects/calls/search', {
           filterGroups: [{ filters: [timeGTE, timeLT, contactIn] }],
           properties: ['hs_timestamp','hs_call_status','hs_call_disposition','hs_call_direction','hs_call_duration','hubspot_owner_id','hs_call_body','hs_call_recording_url'],
@@ -329,9 +336,9 @@ export default async function handler(req, res) {
       ]);
 
       // Build today's detail maps directly from search results (no extra batch-read needed)
-      for (const c of todayCallList) {
+      for (const c of recentCallList) {
         const p = c.properties;
-        todayCallDetailMap[String(c.id)] = {
+        recentCallDetailMap[String(c.id)] = {
           type: 'call',
           timestamp: p.hs_timestamp || '',
           status: p.hs_call_status || '',
@@ -348,9 +355,9 @@ export default async function handler(req, res) {
           ownerId: String(p.hubspot_owner_id || '')
         };
       }
-      for (const s of todaySmsList) {
+      for (const s of recentSmsList) {
         const p = s.properties;
-        todaySmsDetailMap[String(s.id)] = {
+        recentSmsDetailMap[String(s.id)] = {
           type: 'sms',
           timestamp: p.hs_timestamp || '',
           status: 'SENT',
@@ -363,32 +370,32 @@ export default async function handler(req, res) {
         };
       }
 
-      // Reverse-associate: find which contacts each today's call/SMS belongs to
-      const todayCallIds2 = todayCallList.map(c => String(c.id));
-      const todaySmsIds2  = todaySmsList.map(s => String(s.id));
+      // Reverse-associate: find which contacts each recent call/SMS belongs to
+      const recentCallIds2 = recentCallList.map(c => String(c.id));
+      const recentSmsIds2  = recentSmsList.map(s => String(s.id));
 
       const [callContactAssoc, smsContactAssoc] = await Promise.all([
-        todayCallIds2.length > 0
+        recentCallIds2.length > 0
           ? hsFetch('https://api.hubapi.com/crm/v4/associations/calls/contacts/batch/read', {
               method: 'POST', headers: h,
-              body: JSON.stringify({ inputs: todayCallIds2.map(id => ({ id })) })
+              body: JSON.stringify({ inputs: recentCallIds2.map(id => ({ id })) })
             }).then(r => r.json()).catch(() => ({ results: [] }))
           : Promise.resolve({ results: [] }),
-        todaySmsIds2.length > 0
+        recentSmsIds2.length > 0
           ? hsFetch('https://api.hubapi.com/crm/v4/associations/communications/contacts/batch/read', {
               method: 'POST', headers: h,
-              body: JSON.stringify({ inputs: todaySmsIds2.map(id => ({ id })) })
+              body: JSON.stringify({ inputs: recentSmsIds2.map(id => ({ id })) })
             }).then(r => r.json()).catch(() => ({ results: [] }))
           : Promise.resolve({ results: [] })
       ]);
 
-      // Build contactId → [today's callIds]
+      // Build contactId → [recent callIds]
       for (const r of callContactAssoc.results || []) {
         const callId = String(r.from.id);
         for (const contact of r.to || []) {
           const cid = String(contact.toObjectId);
-          if (!contactTodayCallMap[cid]) contactTodayCallMap[cid] = [];
-          contactTodayCallMap[cid].push(callId);
+          if (!contactRecentCallMap[cid]) contactRecentCallMap[cid] = [];
+          contactRecentCallMap[cid].push(callId);
         }
       }
       // Build contactId → [today's smsIds]
@@ -396,8 +403,8 @@ export default async function handler(req, res) {
         const smsId = String(r.from.id);
         for (const contact of r.to || []) {
           const cid = String(contact.toObjectId);
-          if (!contactTodaySmsMap[cid]) contactTodaySmsMap[cid] = [];
-          contactTodaySmsMap[cid].push(smsId);
+          if (!contactRecentSmsMap[cid]) contactRecentSmsMap[cid] = [];
+          contactRecentSmsMap[cid].push(smsId);
         }
       }
     }
@@ -462,7 +469,7 @@ export default async function handler(req, res) {
     }
 
     // Merge today's search details with ticket-direct details
-    const callDetailMap = { ...todayCallDetailMap };
+    const callDetailMap = { ...recentCallDetailMap };
     for (const c of ticketCallResults) {
       if (callDetailMap[String(c.id)]) continue; // already populated from today's search
       const p = c.properties;
@@ -482,7 +489,7 @@ export default async function handler(req, res) {
       };
     }
 
-    const smsDetailMap = { ...todaySmsDetailMap };
+    const smsDetailMap = { ...recentSmsDetailMap };
     for (const s of ticketSmsResults) {
       if (smsDetailMap[String(s.id)]) continue;
       const p = s.properties;
@@ -509,14 +516,14 @@ export default async function handler(req, res) {
       const notes = nIds.map(id => noteMap[id]).filter(Boolean);
       notes.sort((a, b) => tsMs(b.timestamp) - tsMs(a.timestamp));
 
-      // Merge ticket-direct + today's contact-level calls/SMS (from Phase 1.5 search)
+      // Merge ticket-direct + recent contact-level calls/SMS (from Phase 1.5 search)
       const callIds = [...new Set([
         ...(ticketCallMap[ticket.id] || []),
-        ...cIds.flatMap(cid => contactTodayCallMap[cid] || [])
+        ...cIds.flatMap(cid => contactRecentCallMap[cid] || [])
       ])];
       const smsIds = [...new Set([
         ...(ticketSmsMap[ticket.id] || []),
-        ...cIds.flatMap(cid => contactTodaySmsMap[cid] || [])
+        ...cIds.flatMap(cid => contactRecentSmsMap[cid] || [])
       ])];
 
       const calls   = callIds.map(id => callDetailMap[String(id)]).filter(Boolean);
