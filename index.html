@@ -6060,19 +6060,13 @@ async function loadAircallData(lid,contactPhone){
     // Persist on lead object so re-opens skip the fetch
     lead.calls=[...mergedCalls,...mergedMsgs].sort((a,b)=>hsTs(b.timestamp)-hsTs(a.timestamp));
 
-    // Recompute cadence from the now-merged Aircall+HubSpot data and patch the card badge
+    // Cadence is NOT recomputed here. It is measured once in fetchHSLeads from the
+    // lead owner's OWN activity today, outbound SMS only. This panel deliberately
+    // merges 30 days of history from every agent for the SMS/Calls tabs, and
+    // recomputing from that merged set counted other agents' calls and the
+    // customer's inbound replies — so simply opening a lead moved its cadence %.
+    // Display-only here: re-render the badge from the values already computed.
     (()=>{
-      const isSms=c=>c.type==='sms'||c.type==='message'||(c.type||'').toLowerCase().includes('sms');
-      // Same 06:00-24:00 CDT window as the main cadence calc — this used the browser's
-      // local midnight, so re-opening a card from PH recomputed cadence on the wrong day.
-      const {start:todayStart,end:todayEnd}=hsCdtDayWindow();
-      const todayAct=lead.calls.filter(c=>c.timestamp&&hsTs(c.timestamp)>=todayStart&&hsTs(c.timestamp)<todayEnd);
-      lead.dailyCallsMade=todayAct.filter(c=>!isSms(c)).length;
-      lead.dailySmsCount =todayAct.filter(isSms).length;
-      const actual=lead.dailyCallsMade+lead.dailySmsCount;
-      lead.cadencePct=lead.expectedContacts>0?Math.min(100,Math.round(actual/lead.expectedContacts*100)):100;
-      lead.lacksCadence=lead.cadencePct<100;
-      lead.actualContacts=actual;
       const barEl=document.getElementById('cadence-'+lead.id);
       if(barEl){
         barEl.outerHTML=lead.ageBucket==='3rd-week'?calledBadge(lead):cadenceBar(lead);
