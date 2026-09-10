@@ -6040,17 +6040,27 @@ async function loadAircallData(lid,contactPhone){
       acMsgs =acMsgs.filter(c=>hsTs(c.timestamp)>=minTs);
     }
 
-    // Merge with HubSpot activities, dedup by timestamp ±60 s
+    // Merge with HubSpot activities, dedup by timestamp ±60 s.
+    // HubSpot rows go in FIRST and win a collision. This used to be the other way
+    // round, and since the Aircall copy of a call carries no AI summary, key topics,
+    // outcome tag or recording link, every call both sources knew about lost exactly
+    // the detail the panel exists to show. Aircall-only fields are copied onto the
+    // surviving row so nothing is lost either way.
     const isSmsC=c=>c.type==='sms'||c.type==='message'||(c.type||'').toLowerCase().includes('sms');
     const existing=(lead.calls||[]).filter(c=>c.source!=='aircall');
     const hsCalls=existing.filter(c=>!isSmsC(c));
     const hsMsgs =existing.filter(isSmsC);
     const mergeDedup=(acArr,hsArr)=>{
-      const out=[...acArr];
-      for(const h of hsArr){
-        const hts=hsTs(h.timestamp);
-        const dup=acArr.find(a=>Math.abs(hsTs(a.timestamp)-hts)<60000);
-        if(!dup)out.push(h);
+      const out=[...hsArr];
+      for(const a of acArr){
+        const ats=hsTs(a.timestamp);
+        const hit=out.find(h=>Math.abs(hsTs(h.timestamp)-ats)<60000);
+        if(hit){
+          if(!hit.ownerName&&a.ownerName)hit.ownerName=a.ownerName;
+          if(!hit.numberName&&a.numberName)hit.numberName=a.numberName;
+          if(!hit.durationMs&&a.durationMs)hit.durationMs=a.durationMs;
+          if(!(hit.body||'').trim()&&(a.body||'').trim())hit.body=a.body;
+        }else out.push(a);
       }
       return out.sort((a,b)=>hsTs(b.timestamp)-hsTs(a.timestamp));
     };
