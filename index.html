@@ -5717,6 +5717,214 @@ const HS_SALE_TYPES=['first_cleaning_free','DHJ voucher','one_time_cleaning','tr
 function hsStageLabel(id){return HS_STAGE_LABELS[String(id)]||('Stage '+id);}
 function hsIsDnc(id){return String(id)===HS_DNC_STAGE;}
 
+/* ── Team Needs-Action board (Team Lead + OM) ───────────────────────────────
+   High-level counterpart to the agent board. A TL sees only their own agents; an
+   OM sees every Phoenix team. Its own fetch and its own state — never _hsLeads —
+   so nothing on this board can move a compliance number.
+   Scoped server-side by hs_lastactivitydate so a whole team costs a few pages
+   rather than a full 14-day sweep of every ticket.                            */
+let _tlLeadTab='leads';
+let _tlAttn=null, _tlAttnLoading=false;
+const TL_ATTN_ACTIVITY_H=48;
+
+function tlAttnScope(){
+  // TL -> their own team's agents. OM / ATL -> every allowed team.
+  const team=(CU&&!CU.isOM&&TL_TEAM_MAP[CU.email])||'';
+  const names=rosterAgents
+    .filter(a=>HS_ALLOWED_TEAMS.has(a.tl)&&(!team||a.tl===team))
+    .map(a=>a.name.toLowerCase());
+  const ids=Object.entries(HS_OWNERS).filter(([,n])=>names.includes(String(n).toLowerCase())).map(([id])=>id);
+  return {team,ids};
+}
+function setTlLeadTab(tab){
+  _tlLeadTab=tab;
+  renderHSLeads();
+  if(tab==='attention')loadTeamAttention();
+}
+async function loadTeamAttention(force){
+  if(_tlAttnLoading)return;
+  if(_tlAttn&&!force)return renderTeamAttention();
+  const {ids}=tlAttnScope();
+  if(!ids.length){_tlAttn=[];return renderTeamAttention();}
+  _tlAttnLoading=true; renderTeamAttention();
+  const out=[]; let after;
+  try{
+    do{
+      const body={filterGroups:[{filters:[
+        {propertyName:'hs_pipeline',operator:'EQ',value:HS_PIPELINE_SEG},
+        {propertyName:'hs_lastactivitydate',operator:'GTE',value:String(Date.now()-TL_ATTN_ACTIVITY_H*3600000)},
+        {propertyName:'hubspot_owner_id',operator:'IN',values:ids}
+      ]}],
+      properties:['subject','hs_pipeline_stage','hubspot_owner_id','createdate','hs_lastactivitydate'],
+      limit:100,sorts:[{propertyName:'hs_lastactivitydate',direction:'DESCENDING'}]};
+      if(after)body.after=after;
+      const r=await fetch('/api/hs-leads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      if(!r.ok)break;
+      const d=await r.json();
+      if(d.error)break;
+      Object.assign(_hsAgentNames,d.owners||{});
+      out.push(...(d.results||[]));
+      after=d.paging?.next?.after;
+    }while(after&&out.length<1200);
+    _tlAttn=out;
+  }catch(e){ _tlAttn=_tlAttn||[]; }
+  finally{ _tlAttnLoading=false; renderTeamAttention(); }
+}
+function tlAttnRow(t,kind){
+  const p=t.properties||{};
+  attNormalizeLead(t);
+  const agent=HS_OWNERS[String(p.hubspot_owner_id||'')]||'—';
+  const last=attLast(t);
+  const msg=last&&attIsSms(last)?String(last.body==null?'':last.body).trim():'';
+  const stage=String(p.hs_pipeline_stage||'');
+  const dnc=hsIsDnc(stage);
+  const other=attRepliedToOtherTeam(t);
+  const w2=attIs2ndWeek(t);
+  return `<tr onclick="attOpenPanel('${t.id}')" style="cursor:pointer;background:#fff;" onmouseenter="this.style.background='#fafafa'" onmouseleave="this.style.background='#fff'">
+    <td style="padding:8px 10px;border-bottom:1px solid #f3f4f6;font-size:.74rem;font-weight:700;color:#111;white-space:nowrap;">${agent.split(' ')[0]}</td>
+    <td style="padding:8px 10px;border-bottom:1px solid #f3f4f6;font-size:.74rem;color:#111;">
+      ${(t.contactName||p.subject||'Lead').replace(/</g,'&lt;')}
+      ${w2?'':'<span style="font-size:.54rem;font-weight:700;background:#eef2ff;color:#4338ca;padding:1px 6px;border-radius:99px;margin-left:5px;">inbound</span>'}
+      ${other?`<span title="Customer was answering ${hsAgentName({ownerId:other})||'another team'}; ticket is now with ${agent}" style="font-size:.54rem;font-weight:700;background:#f3e8ff;color:#7e22ce;padding:1px 6px;border-radius:99px;margin-left:5px;">↗ other line</span>`:''}
+      ${dnc?'<span style="font-size:.54rem;font-weight:700;background:#fee2e2;color:#b91c1c;padding:1px 6px;border-radius:99px;margin-left:5px;">⛔ DNC</span>':''}
+      ${msg?`<div style="font-size:.68rem;color:#6b7280;margin-top:2px;">“${msg.length>72?msg.slice(0,72)+'…':msg}”</div>`:''}
+    </td>
+    <td style="padding:8px 10px;border-bottom:1px solid #f3f4f6;font-size:.68rem;color:#6b7280;white-space:nowrap;">${last?hsRelTime(last.timestamp):''}</td>
+  </tr>`;
+}
+function renderTeamAttention(){
+  const el=document.getElementById('tl-attention-body');
+  if(!el)return;
+  if(_tlAttnLoading&&!_tlAttn){
+    el.innerHTML='<div style="color:#9ca3af;font-size:.8rem;padding:24px;text-align:center;">Checking which leads are waiting…</div>';return;
+  }
+  const rows=_tlAttn||[];
+  const waiting=rows.filter(t=>attAwaitingReply(t,24));
+  const missed =rows.filter(t=>attMissedCallNoReturn(t,48)&&!waiting.includes(t));
+  const byAgent={};
+  const bump=(t,k)=>{const n=HS_OWNERS[String((t.properties||{}).hubspot_owner_id||'')]||'—';
+    (byAgent[n]=byAgent[n]||{w:0,m:0,o:0})[k]++;
+    if(k==='w'&&attRepliedToOtherTeam(t))byAgent[n].o++;};
+  waiting.forEach(t=>bump(t,'w')); missed.forEach(t=>bump(t,'m'));
+  const agents=Object.entries(byAgent).sort((a,b)=>(b[1].w+b[1].m)-(a[1].w+a[1].m));
+  const {team}=tlAttnScope();
+  const CARD='background:#fff;border:1px solid #f0f0f0;border-radius:12px;padding:16px 18px;box-shadow:0 1px 4px rgba(0,0,0,.05);';
+  const table=(title,hint,list)=>`
+    <div style="${CARD}margin-bottom:14px;">
+      <div style="display:flex;align-items:baseline;gap:9px;margin-bottom:2px;">
+        <span style="font-size:.82rem;font-weight:700;color:#374151;">${title}</span>
+        <span style="font-size:.62rem;font-weight:700;color:#fff;background:${list.length?'#ef4444':'#d1d5db'};border-radius:99px;padding:1px 8px;">${list.length}</span>
+      </div>
+      <div style="font-size:.68rem;color:#9ca3af;margin-bottom:10px;">${hint}</div>
+      ${list.length?`<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;">
+        <thead><tr>
+          <th style="text-align:left;padding:6px 10px;font-size:.6rem;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;border-bottom:1px solid #e5e7eb;">Agent</th>
+          <th style="text-align:left;padding:6px 10px;font-size:.6rem;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;border-bottom:1px solid #e5e7eb;">Lead</th>
+          <th style="text-align:left;padding:6px 10px;font-size:.6rem;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;border-bottom:1px solid #e5e7eb;">When</th>
+        </tr></thead>
+        <tbody>${list.slice(0,60).map(t=>tlAttnRow(t)).join('')}</tbody></table>
+        ${list.length>60?`<div style="font-size:.66rem;color:#9ca3af;padding:8px 10px;">Showing the 60 most recent of ${list.length}.</div>`:''}</div>`
+      :'<div style="font-size:.74rem;color:#9ca3af;padding:8px 0;">Nothing waiting.</div>'}
+    </div>`;
+  el.innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px;">
+      <div style="${CARD}"><div style="font-size:1.7rem;font-weight:800;color:#ef4444;line-height:1;">${waiting.length}</div>
+        <div style="font-size:.7rem;color:#9ca3af;margin-top:5px;font-weight:600;">Awaiting a reply</div></div>
+      <div style="${CARD}"><div style="font-size:1.7rem;font-weight:800;color:#f97316;line-height:1;">${missed.length}</div>
+        <div style="font-size:.7rem;color:#9ca3af;margin-top:5px;font-weight:600;">Missed call, no callback</div></div>
+      <div style="${CARD}"><div style="font-size:1.7rem;font-weight:800;color:#7e22ce;line-height:1;">${waiting.filter(attRepliedToOtherTeam).length}</div>
+        <div style="font-size:.7rem;color:#9ca3af;margin-top:5px;font-weight:600;">Replied to another line</div></div>
+      <div style="${CARD}"><div style="font-size:1.7rem;font-weight:800;color:#374151;line-height:1;">${agents.length}</div>
+        <div style="font-size:.7rem;color:#9ca3af;margin-top:5px;font-weight:600;">${team?'Agents on '+team.replace('Team ',''):'Agents across all teams'}</div></div>
+    </div>
+    ${agents.length?`<div style="${CARD}margin-bottom:14px;">
+      <div style="font-size:.82rem;font-weight:700;color:#374151;margin-bottom:10px;">By agent — most waiting first</div>
+      ${agents.map(([n,v])=>`<div style="display:flex;align-items:center;gap:9px;padding:5px 0;border-bottom:1px solid #f9fafb;">
+        <span style="width:150px;font-size:.74rem;font-weight:600;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${n}</span>
+        <span style="font-size:.64rem;font-weight:700;color:#b91c1c;background:#fee2e2;border-radius:99px;padding:1px 8px;">${v.w} awaiting</span>
+        ${v.m?`<span style="font-size:.64rem;font-weight:700;color:#c2410c;background:#ffedd5;border-radius:99px;padding:1px 8px;">${v.m} no callback</span>`:''}
+        ${v.o?`<span style="font-size:.64rem;font-weight:700;color:#7e22ce;background:#f3e8ff;border-radius:99px;padding:1px 8px;">${v.o} other line</span>`:''}
+      </div>`).join('')}
+    </div>`:''}
+    ${table('Awaiting a reply','Customer spoke last in the past 24h and no one has answered. Click a row for the full history.',waiting)}
+    ${table('Missed call — no callback','They rang, nobody rang back (last 48h).',missed)}`;
+}
+
+/* ── Needs-Action engine (shared by agent, TL and OM boards) ────────────────
+   Two things put the ball in our court, and neither is a cadence dial:
+     - the customer spoke last and nobody has answered since;
+     - the customer called, we did not pick up, and no one has called back.
+   Tickets here are fetched across ALL subjects (the cadence board is filtered to
+   2nd Week, which hides the Inbound SMS/Call tickets agents also carry) and are
+   kept out of _hsLeads so nothing here can move a compliance number.          */
+function attIsSms(c){return c&&c.type!=='call';}
+function attLast(t){return ((t&&t.calls)||[]).slice().sort((a,b)=>hsTs(b.timestamp)-hsTs(a.timestamp))[0]||null;}
+function attInbound(c){return !!c&&(c.direction||'').toUpperCase()==='INBOUND';}
+
+// Customer's MESSAGE is the last thing on the ticket and nobody has answered.
+// Deliberately SMS-only: an inbound call is also "the customer spoke last", but it
+// belongs in the missed-call queue, and counting it here swallowed that queue whole.
+function attAwaitingReply(t,windowH){
+  const last=attLast(t);
+  if(!attInbound(last)||!attIsSms(last))return false;
+  return hsTs(last.timestamp)>=Date.now()-(windowH||24)*3600000;
+}
+// Customer called, nobody answered, and no outbound call since.
+function attMissedCallNoReturn(t,windowH){
+  const acts=((t&&t.calls)||[]).filter(c=>!attIsSms(c)).sort((a,b)=>hsTs(b.timestamp)-hsTs(a.timestamp));
+  const lastInbound=acts.find(attInbound);
+  if(!lastInbound)return false;
+  if(lastInbound.connected)return false;                       // it was answered
+  if(hsTs(lastInbound.timestamp)<Date.now()-(windowH||48)*3600000)return false;
+  // any outbound call after it means someone already called back
+  return !acts.some(c=>!attInbound(c)&&hsTs(c.timestamp)>hsTs(lastInbound.timestamp));
+}
+// The last agent-side touch before the customer's message, when it was not ours.
+function attRepliedToOtherTeam(t){
+  const acts=((t&&t.calls)||[]).slice().sort((a,b)=>hsTs(b.timestamp)-hsTs(a.timestamp));
+  for(let i=1;i<acts.length;i++){
+    const o=String(acts[i].ownerId||'');
+    if(o)return !HS_TEAM_OWNER_IDS.has(o)?o:'';
+  }
+  return '';
+}
+function attIs2ndWeek(t){
+  return (((t&&t.properties)||{}).subject||'').trim().toLowerCase()===HS_SUBJECT_2ND_WEEK.toLowerCase();
+}
+
+// Raw tickets are not lead-shaped, so the side panel cannot read them directly.
+// Normalising here lets the SAME panel open from every board.
+const _attAux={};
+function attNormalizeLead(t){
+  const p=t.properties||{};
+  const created=hsTs(p.createdate);
+  const stageId=p.hs_pipeline_stage||'';
+  const l={
+    id:String(t.id),
+    subject:p.subject||'(no name)',
+    ownerId:String(p.hubspot_owner_id||''),
+    ownerName:HS_OWNERS[String(p.hubspot_owner_id||'')]||'Owner #'+p.hubspot_owner_id,
+    stageId,stageName:hsStageLabel(stageId),
+    createdMs:created,
+    ageDays:created?Math.max(1,hsCdtDayIndex(Date.now())-hsCdtDayIndex(created)+1):1,
+    cadencePct:null,isRestDay:false,expectedContacts:0,dailyCallsMade:0,dailySmsCount:0,
+    ageBucket:'2nd-week',
+    contactId:t.contactId||null,contactName:t.contactName||null,
+    contactPhone:t.contactPhone||null,contactEmail:t.contactEmail||null,
+    contactFrequency:t.contactFrequency||'',latestNote:t.latestNote||null,
+    calls:t.calls||[]
+  };
+  _attAux[l.id]=l;
+  return l;
+}
+// Look a lead up in the cadence population first, then the aux store. Aux rows are
+// deliberately NEVER pushed into _hsLeads: that array is the cadence population, and
+// an inbound ticket carrying cadencePct=null would drag every average toward zero.
+function attFindLead(lid){
+  return _hsLeads.find(x=>String(x.id)===String(lid))||_attAux[String(lid)]||null;
+}
+function attOpenPanel(id){ openLeadPanel(String(id)); }
+
 /* ── Waiting On You board ────────────────────────────────────────────────────
    Leads where the CUSTOMER spoke last, so the ball is in the agent's court.
    Deliberately its own data path: it fetches the agent's tickets across ALL
@@ -5753,9 +5961,12 @@ function avRepliedTo(t){
   }
   return '';
 }
+// SMS-only, for the same reason as attAwaitingReply: missed calls have their own
+// column and must not be absorbed by this one.
 function avCustomerSpokeLast(t){
   const last=avLastActivity(t);
   if(!last||(last.direction||'').toUpperCase()!=='INBOUND')return false;
+  if(!avIsSms(last))return false;
   return hsTs(last.timestamp)>=Date.now()-AV_REPLY_WINDOW_H*3600000;
 }
 async function loadAgentReplies(force){
@@ -5866,9 +6077,10 @@ function avReplyCard(t){
   const stFg=dnc?'#b91c1c':stage===HS_SALE_STAGE?'#15803d':'#6b7280';
   const opts=HS_SETTABLE_STAGES.map(id=>`<option value="${id}"${id===stage?' selected':''}>${hsStageLabel(id)}</option>`).join('');
   const today=new Date(Date.now()-5*3600000).toISOString().slice(0,10);
+  attNormalizeLead(t);   // make it openable in the side panel
   return `<div style="background:#fff;border:1px solid ${dnc?'#fca5a5':'#e5e7eb'};border-left:3px solid ${dnc?'#ef4444':'#22c55e'};border-radius:0 8px 8px 0;padding:10px 12px;margin-bottom:8px;">
     <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
-      <a href="https://app.hubspot.com/contacts/45809585/ticket/${t.id}" target="_blank" rel="noopener" style="font-size:.78rem;font-weight:700;color:#111;text-decoration:none;">${name} ↗</a>
+      <span onclick="attOpenPanel('${t.id}')" title="Open the full call and SMS history" style="font-size:.78rem;font-weight:700;color:#111;cursor:pointer;text-decoration:underline;text-decoration-style:dotted;">${name}</span>
       <span style="font-size:.55rem;font-weight:700;padding:1px 7px;border-radius:99px;background:${kindBg};color:${kindFg};white-space:nowrap;">${kind}</span>
       ${covChip}${priorChip}
       <span title="Current ticket status in HubSpot" style="font-size:.55rem;font-weight:700;padding:1px 7px;border-radius:99px;background:${stBg};color:${stFg};white-space:nowrap;">${dnc?'⛔ ':''}${hsStageLabel(stage)}</span>
@@ -5899,6 +6111,12 @@ function renderAgentReplies(){
   }
   const replied=(_avReplies||[]).filter(avCustomerSpokeLast)
     .sort((a,b)=>hsTs((avLastActivity(b)||{}).timestamp)-hsTs((avLastActivity(a)||{}).timestamp));
+  // Missed inbound calls with no callback are a separate queue: the customer rang
+  // and nobody has rung back, which no reply-based check would catch.
+  const missed=(_avReplies||[]).filter(t=>attMissedCallNoReturn(t,48))
+    .filter(t=>!replied.includes(t))
+    .sort((a,b)=>hsTs((attLast(b)||{}).timestamp)-hsTs((attLast(a)||{}).timestamp))
+    .filter(t=>!_avDismissed.has(avTicketKey(t)));
   const all=replied.filter(t=>!_avDismissed.has(avTicketKey(t)));
   const hiddenCount=replied.length-all.length;
   const w2 =all.filter(t=>((t.properties||{}).subject||'').trim().toLowerCase()===HS_SUBJECT_2ND_WEEK.toLowerCase())
@@ -5916,6 +6134,7 @@ function renderAgentReplies(){
   el.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;">
       ${col('2nd Week — replied',`Answered in the last 24h · ${w2.filter(avInCoverage).length} in coverage, ${w2.length-w2.filter(avInCoverage).length} past day 8`,w2)}
       ${col('Other tickets — replied','Inbound SMS/Call and anything not 2nd Week, last 24h',oth)}
+      ${col('Missed call — no callback','They rang, nobody rang back (last 48h)',missed)}
     </div>
     ${hiddenCount?`<div style="margin-top:12px;padding-top:10px;border-top:1px solid #f0f0f0;font-size:.68rem;color:#9ca3af;">
       ${hiddenCount} handled ${hiddenCount===1?'lead':'leads'} hidden ·
@@ -6103,7 +6322,7 @@ async function saveContactEdit(lid,contactId){
     const d=await r.json();
     if(!r.ok)throw new Error(d.message||d.error||'Update failed');
     // Update in-memory lead object so panel refreshes correctly
-    const l=_hsLeads.find(x=>x.id===lid||x.id==lid);
+    const l=attFindLead(lid);
     if(l){
       const parts=(name||'').trim().split(/\s+/).filter(Boolean);
       if(name)l.contactName=name;
@@ -6290,7 +6509,7 @@ let _histLoaded={};
 // against what the bulk refresh already attached, by type + timestamp within 60s.
 async function loadLeadHistory(lid,contactId){
   if(_histLoaded[lid])return;
-  const lead=_hsLeads.find(x=>x.id===lid||x.id==lid);
+  const lead=attFindLead(lid);
   if(!lead)return;
   try{
     const r=await fetch('/api/hs-leads',{method:'POST',headers:{'Content-Type':'application/json'},
@@ -6337,7 +6556,7 @@ async function loadAircallData(lid,contactPhone){
   if(!contactPhone)return;
   if(_aircallLoaded[lid])return;
   _aircallLoaded[lid]=true;
-  const lead=_hsLeads.find(l=>l.id===lid);
+  const lead=attFindLead(lid);
   if(!lead)return;
 
   const pid=lid;
@@ -6687,7 +6906,7 @@ function renderHSLeads(){
 
   // ── Right-side lead panel ──────────────────────────────────────────────
   window.openLeadPanel=function(lid){
-    const l=_hsLeads.find(x=>x.id===lid||x.id==lid);
+    const l=attFindLead(lid);
     if(!l)return;
     const pid=l.id;
     const allCalls=l.calls||[];
@@ -6929,6 +7148,17 @@ function renderHSLeads(){
       tlEl.innerHTML='<div style="color:var(--g400);font-size:.8rem;padding:8px 0;">No leads found in the last 15 days.</div>';
       return;
     }
+    // Lead Compliance splits into two tabs: the cadence board, and the needs-action
+    // board (replies and missed calls). The second is a different population — all
+    // ticket types, not just 2nd Week — so it is fetched separately.
+    const _tlTabBtn=(id,label)=>`<button type="button" onclick="setTlLeadTab('${id}')" style="padding:6px 15px;border:none;background:${_tlLeadTab===id?'#ff7a59':'#f3f4f6'};color:${_tlLeadTab===id?'#fff':'#6b7280'};font-size:.75rem;font-weight:700;cursor:pointer;font-family:inherit;">${label}</button>`;
+    const _tlTabs=`<div style="display:flex;border:1.5px solid #e5e7eb;border-radius:8px;overflow:hidden;width:max-content;margin-bottom:14px;">
+      ${_tlTabBtn('leads','2nd Week Cadence')}${_tlTabBtn('attention','⚠ Needs Action')}</div>`;
+    if(_tlLeadTab==='attention'){
+      tlEl.innerHTML=_tlTabs+'<div id="tl-attention-body"><div style="color:#9ca3af;font-size:.8rem;padding:24px;text-align:center;">Checking which leads are waiting…</div></div>';
+      renderTeamAttention();
+      return;
+    }
     // Apply same day + age-bucket filters as activeDays so TL stats match agent view
     let allActiveForStats=_hsDayFilter>0?_hsLeads.filter(l=>l.ageDays===_hsDayFilter):[..._hsLeads];
     if(_hsAgeBucket) allActiveForStats=allActiveForStats.filter(l=>l.ageBucket===_hsAgeBucket);
@@ -7001,7 +7231,7 @@ function renderHSLeads(){
     const filterRowWithGaps=dayFilterHtml.replace('<!--GAPS_SLOT-->',gapsBtn);
     const w2=activeDays.filter(l=>l.ageBucket==='2nd-week');
     const w3=activeDays.filter(l=>l.ageBucket==='3rd-week');
-    let html=filterRowWithGaps+summary+agentBreakdown;
+    let html=_tlTabs+filterRowWithGaps+summary+agentBreakdown;
     if(w2.length>0) html+=renderSection('tl-w2','2nd Week Leads — Days 1–8','📋',w2,true,_hsViewMode);
     if(w3.length>0) html+=renderSection('tl-w3','3rd Week Leads — Days 9–15','⏰',w3,true,_hsViewMode);
     if(w2.length===0&&w3.length===0) html+=`<div style="color:var(--g400);font-size:.8rem;padding:6px 0;">${_hsGapsOnly?'No cadence gaps found — team is all caught up! ✅':'No leads on Day '+_hsDayFilter+'.'}</div>`;
