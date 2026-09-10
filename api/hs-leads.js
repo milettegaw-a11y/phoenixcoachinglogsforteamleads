@@ -182,7 +182,7 @@ export default async function handler(req, res) {
       .replace(/<[^>]+>/g, ' ')
       .replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&').replace(/&lt;/gi, '<').replace(/&gt;/gi, '>')
       .replace(new RegExp('^\\s*' + label + '\\s*:\\s*', 'i'), '')
-      .replace(/\s+/g, ' ').trim().slice(0, 700)
+      .replace(/\s+/g, ' ').trim().slice(0, 2000)   // 27% of summaries hit the old 700 cap
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   };
 

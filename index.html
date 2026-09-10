@@ -5927,6 +5927,17 @@ function hnFind(re,texts){
   for(const t of texts){ if(!t)continue; const m=String(t).match(re); if(m)return m[1]; }
   return '';
 }
+// Expand/collapse the handover summary. Clamped to 3 lines by default so the note
+// stays scannable; the full text is always in the DOM, never truncated away.
+function toggleHandoverSummary(lid){
+  const el=document.getElementById('hn-sum-'+lid), btn=document.getElementById('hn-btn-'+lid);
+  if(!el)return;
+  const open=el.getAttribute('data-open')==='1';
+  el.setAttribute('data-open',open?'0':'1');
+  el.style.webkitLineClamp=open?'3':'unset';
+  el.style.display='-webkit-box';
+  if(btn)btn.textContent=open?'Show more ▾':'Show less ▴';
+}
 function buildHandoverNote(lead){
   const acts=lead.calls||[];
   const isSms=c=>c.type!=='call';
@@ -5963,7 +5974,10 @@ function buildHandoverNote(lead){
   return `<div style="background:#fffaf8;border:1px solid #ffd9cc;border-left:3px solid #ff7a59;border-radius:0 10px 10px 0;padding:12px 14px;margin-bottom:12px;">
     <div style="font-size:.6rem;font-weight:800;color:#ff7a59;text-transform:uppercase;letter-spacing:.08em;margin-bottom:9px;">Handover note · built from previous contact</div>
     ${cells?`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px 14px;">${cells}</div>`:''}
-    ${lastSummary?`<div style="margin-top:${cells?'10px':'0'};padding-top:${cells?'9px':'0'};${cells?'border-top:1px dashed #ffd9cc;':''}font-size:.73rem;color:#57534e;line-height:1.5;">${lastSummary.length>260?lastSummary.slice(0,260)+'…':lastSummary}</div>`:''}
+    ${lastSummary?`<div style="margin-top:${cells?'10px':'0'};padding-top:${cells?'9px':'0'};${cells?'border-top:1px dashed #ffd9cc;':''}">
+      <div id="hn-sum-${lead.id}" data-open="0" style="font-size:.73rem;color:#57534e;line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">${lastSummary}</div>
+      ${lastSummary.length>200?`<button type="button" id="hn-btn-${lead.id}" onclick="toggleHandoverSummary('${lead.id}')" style="margin-top:5px;padding:2px 9px;font-size:.62rem;font-weight:700;color:#ff7a59;background:#fff;border:1px solid #ffd9cc;border-radius:99px;cursor:pointer;font-family:inherit;">Show more ▾</button>`:''}
+    </div>`:''}
   </div>`;
 }
 function callHistoryItem(c){
