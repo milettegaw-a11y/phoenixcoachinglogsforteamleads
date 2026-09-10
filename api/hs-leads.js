@@ -125,12 +125,18 @@ export default async function handler(req, res) {
 
   const tsMs = ts => { if (!ts) return 0; const n = Number(ts); return isNaN(n) ? new Date(ts).getTime() : n; };
 
-  // SMS carries NO direction property — hs_communication_logged_from is 'CRM' on
-  // every record, inbound or not. Aircall states the direction in the body text
-  // ("SMS Sent by <agent> ... to <contact>"), so that is the only signal there is.
-  // DIAGNOSTIC: returning a short prefix to establish the real shape of these
-  // bodies before any counting is made to depend on them. No behaviour change yet.
-  const smsBodyPrefix = body => (body || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 28);
+  // SMS carries NO direction property — hs_communication_logged_from reads 'CRM' on
+  // every record, inbound or not, so it cannot be used. These are written by the
+  // Aircall integration, which states direction in the body text alone:
+  //   "SMS Sent by <agent> on <team> to <contact>"   -> outbound
+  //   "SMS Received from <contact>"                  -> inbound
+  // Measured over a 9-day window, all 23,686 SMS matched one of four shapes:
+  // SMS Sent by 21,740 | SMS Received from 1,910 | MMS Sent by 32 | MMS Received 4.
+  // Requires a positive "Sent by" match to count as agent-sent: anything we cannot
+  // read is treated as inbound and left out, so a template change under-counts
+  // loudly rather than silently crediting lead replies again.
+  const smsIsOutbound = body =>
+    /^\s*(?:SMS|MMS)\s+Sent\s+by\b/i.test((body || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim());
 
   try {
     // ── Step 1: Search tickets ────────────────────────────────────────────────
@@ -271,11 +277,10 @@ export default async function handler(req, res) {
         todaySmsDetailMap[String(s.id)] = {
           type: 'sms',
           timestamp: p.hs_timestamp || '',
-          bodyPrefix: smsBodyPrefix(p.hs_communication_body),
           status: 'SENT',
           disposition: '',
           connected: false,
-          direction: (p.hs_communication_logged_from || '').toUpperCase() === 'CONTACT' ? 'INBOUND' : 'OUTBOUND',
+          direction: smsIsOutbound(p.hs_communication_body) ? 'OUTBOUND' : 'INBOUND',
           durationMs: 0,
           ownerId: String(p.hubspot_owner_id || '')
         };
@@ -404,11 +409,10 @@ export default async function handler(req, res) {
       smsDetailMap[String(s.id)] = {
         type: channel === 'SMS' ? 'sms' : (channel || 'message'),
         timestamp: p.hs_timestamp || '',
-        bodyPrefix: smsBodyPrefix(p.hs_communication_body),
         status: 'SENT',
         disposition: '',
         connected: false,
-        direction: (p.hs_communication_logged_from || 'AGENT').toUpperCase() === 'CONTACT' ? 'INBOUND' : 'OUTBOUND',
+        direction: smsIsOutbound(p.hs_communication_body) ? 'OUTBOUND' : 'INBOUND',
         durationMs: 0,
         ownerId: String(p.hubspot_owner_id || '')
       };

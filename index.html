@@ -5373,7 +5373,9 @@ async function fetchHSLeads(){
       const {start:todayStartMs,end:todayEndMs}=hsCdtDayWindow(now2.getTime());
       const dailyOwnerAct=allActivity.filter(c=>c.timestamp&&hsTs(c.timestamp)>=todayStartMs&&hsTs(c.timestamp)<todayEndMs&&(!c.ownerId||c.ownerId===ownerId));
       const rawCallsMade=dailyOwnerAct.filter(c=>c.type==='call').length;
-      const rawSmsCount=dailyOwnerAct.filter(c=>c.type==='sms'||c.type==='message').length;
+      // Only SMS the agent sent counts toward cadence. Lead replies come back as
+      // direction INBOUND (derived from the Aircall body text in api/hs-leads.js).
+      const rawSmsCount=dailyOwnerAct.filter(c=>(c.type==='sms'||c.type==='message')&&(c.direction||'').toUpperCase()==='OUTBOUND').length;
       const cdtDow=new Date(Date.now()-5*3600000).getUTCDay();
       const agentTeamStr=rosterAgents.find(a=>a.name===ownerName)?.tl||'';
       const teamKey=Object.keys(TEAM_DAY_OFF).find(k=>agentTeamStr.includes(k))||'';
