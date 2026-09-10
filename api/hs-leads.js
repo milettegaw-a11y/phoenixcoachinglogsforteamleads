@@ -140,6 +140,24 @@ export default async function handler(req, res) {
   // Keep what follows "Message:", drop the header otherwise, flatten the markup, and
   // escape the result: the panel inserts this via innerHTML, and the inbound half is
   // text a customer wrote, so it must not be able to inject markup.
+  // Aircall writes its AI output into hs_call_body as tagged divs:
+  //   <div id="aircall-call-summary"><strong>Call Summary:</strong> ...
+  //   <div id="aircall-call-key-topics"><strong>Key Topics:</strong> ...
+  // HubSpot's own hs_call_summary is empty on every call in this portal and
+  // hs_call_has_transcript is false everywhere, so this is the only AI content there
+  // is. Parsed here into small fields: the raw bodies run ~1.2KB and a refresh pulls
+  // tens of thousands of calls, so they must not be shipped to the browser whole.
+  const aircallSection = (body, divId, label) => {
+    const m = (body || '').match(new RegExp('<div id="' + divId + '">([\\s\\S]*?)<\\/div>', 'i'));
+    if (!m) return '';
+    return m[1]
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&').replace(/&lt;/gi, '<').replace(/&gt;/gi, '>')
+      .replace(new RegExp('^\\s*' + label + '\\s*:\\s*', 'i'), '')
+      .replace(/\s+/g, ' ').trim().slice(0, 700)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  };
+
   const smsMessageText = body => {
     let t = (body || '')
       .replace(/<br\s*\/?>/gi, '\n')
@@ -270,7 +288,7 @@ export default async function handler(req, res) {
       const [todayCallList, todaySmsList] = await Promise.all([
         searchAll('https://api.hubapi.com/crm/v3/objects/calls/search', {
           filterGroups: [{ filters: [timeGTE, timeLT, contactIn] }],
-          properties: ['hs_timestamp','hs_call_status','hs_call_disposition','hs_call_direction','hs_call_duration','hubspot_owner_id'],
+          properties: ['hs_timestamp','hs_call_status','hs_call_disposition','hs_call_direction','hs_call_duration','hubspot_owner_id','hs_call_body','hs_call_recording_url'],
           limit: 200
         }),
         searchAll('https://api.hubapi.com/crm/v3/objects/communications/search', {
@@ -291,6 +309,12 @@ export default async function handler(req, res) {
           status: p.hs_call_status || '',
           disposition: callConnectInfo(p.hs_call_disposition).disposition,
           connected: callConnectInfo(p.hs_call_disposition).connected,
+          summary: aircallSection(p.hs_call_body, 'aircall-call-summary', 'Call Summary'),
+          topics: aircallSection(p.hs_call_body, 'aircall-call-key-topics', 'Key Topics'),
+          // Only a flag + id: the full recording URL is ~140 chars and would add
+          // megabytes per refresh. The browser rebuilds it from the portal template.
+          hasRecording: !!String(p.hs_call_recording_url || '').trim(),
+          callId: String(c.id),
           direction: p.hs_call_direction || '',
           durationMs: parseInt(p.hs_call_duration || '0') || 0,
           ownerId: String(p.hubspot_owner_id || '')
@@ -376,7 +400,7 @@ export default async function handler(req, res) {
         ? batchRead(
             'https://api.hubapi.com/crm/v3/objects/calls/batch/read',
             ticketCallIdList,
-            ['hs_timestamp','hs_call_status','hs_call_disposition','hs_call_direction','hs_call_duration','hubspot_owner_id']
+            ['hs_timestamp','hs_call_status','hs_call_disposition','hs_call_direction','hs_call_duration','hubspot_owner_id','hs_call_body','hs_call_recording_url']
           )
         : Promise.resolve([]),
       ticketSmsIdList.length > 0
@@ -420,6 +444,10 @@ export default async function handler(req, res) {
         status: p.hs_call_status || '',
         disposition: callConnectInfo(p.hs_call_disposition).disposition,
         connected: callConnectInfo(p.hs_call_disposition).connected,
+        summary: aircallSection(p.hs_call_body, 'aircall-call-summary', 'Call Summary'),
+        topics: aircallSection(p.hs_call_body, 'aircall-call-key-topics', 'Key Topics'),
+        hasRecording: !!String(p.hs_call_recording_url || '').trim(),
+        callId: String(c.id),
         direction: p.hs_call_direction || '',
         durationMs: parseInt(p.hs_call_duration || '0') || 0,
         ownerId: String(p.hubspot_owner_id || '')

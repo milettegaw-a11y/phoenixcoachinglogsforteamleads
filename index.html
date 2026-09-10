@@ -5154,6 +5154,8 @@ const HS_PIPELINE_SEG='736937559';
 // The pipeline also holds 1st Sales Call, 3rd/5th Week, Revisited Lead and
 // Inbound SMS/Call tickets — only the 2nd Week ones belong in this app.
 const HS_SUBJECT_2ND_WEEK='Sales Call Required (2nd Week)';
+// HubSpot portal id — used to rebuild call-recording links client-side.
+const HS_PORTAL_ID='45809585';
 const HS_STAGE_LABELS={'1072718881':'New','1072718882':'Assigned','1072718883':'In Progress','1072718884':'2nd Attempt','1072805486':'3rd Attempt','1072805487':'4th Attempt','1072805488':'5th Attempt','1161141150':'Declined (Follow-up)','1072805489':'24hr Callback','1072805490':'Closed - Sold','1072805491':'Closed - Not Interested','1072805492':'Closed - Bad Number','1072805493':'Closed - Already Member','1072805494':'Closed - DNC','1072805495':'Admin Close'};
 const HS_STAGE_ATTEMPTS={'1072718881':0,'1072718882':0,'1072718883':1,'1072718884':1,'1072805486':2,'1072805487':3,'1072805488':4,'1161141150':1,'1072805489':1};
 const HS_OWNERS={'3817861':'Jimmy Barnachea','17052290':'Kristine Rivera','49682868':'Rayan Jaime','64681504':'Monica Bautista','66232384':'Mark Lim','75448319':'Luzielle Orbillo','75448329':'Mark Tadeo','75448337':'Jerome Manuit','75448338':'Christian Bolano','75448340':'Kimberly Santos','75448342':'Jeremiah Mendoza','75448346':'Robin Castillo','75448907':'John Adrian','75448908':'April Capulso','75624739':'Neil Bajande','76257948':'Gerlie Sarmiento','76257998':'Rose Tejedor','76258000':'Mary Sotto','76258005':'Catherine Gayoso','76258017':'King Martinez','76754051':'Vanessa Inocencio','76791020':'Jazz Karasig','76791092':'Jo Vincent Feraren','76791093':'Kristine Villanueva','77597264':'Arah Sacro','77597279':'Carlyn Ordona','77597297':'Allan Chua','77814217':'Dioreza Tomilloso','78073879':'Trixia Robles','78073906':'Angelo Mararac','78073945':'Joan Estarez','78073956':'Noemi Galon','78296623':'Ramille Borja','78296624':'Jacquelou Rondez','78653037':'Cristine Paguipolar','78708745':'John Babila','78708760':'Mary Opena','78928026':'Bernadette Espinas','78928079':'Mark Bautista','78973871':'Nenelyn Kuo','79004888':'Joy Espinar','79004894':'Regner Sol','79004895':'John De Leon','79190901':'Michael Aleta','79363109':'Ace Amantiad','79523705':'Rina Galang','79523733':'Princess Mamandis','79523738':'Janelle Casabuena','79523747':'Michael Santiago','79523753':'Loseta Labarro','79695298':'Jaydi Miranda','79870132':'Asher Balway','80071272':'Wilrose Menguito','80071316':'Racine Mercado','80225569':'Aaron Tuico','80225602':'Jenalynn Paya','80225605':'Nikka Tejana','80225613':'Jardene Petines','80225617':'Kimberly Sabandal','80225636':'MJ Flomentera','80422418':'Merven Panganiban','80422449':'Iris Neri','80564719':'Jondelle Miranda','80564753':'Jennifer Trinidad','80564786':'Odirose Amuyot','80564815':'Anna Pascual','80746376':'Kelly Cruz','80746379':'CJ Garces','80746403':'Supremo Cabalo','80746421':'Emilyn Buenafe','80746444':'Jann Adriano','80746448':'Jowee-Anne Barbastro','80746452':'Nicole Canlas','80746664':'Ian Ibañez','80922738':'Irene Virgo','80922767':'Kaile Laquindanum','80922772':'Erwin Garcia','80922782':'Richie Sabado','80922793':'Lynn Villahermosa','80922800':'Elvis Maste','80922823':'Roxanne Balcita','81103164':'Paulo Moreno','81284986':'Lara Hongayo','81285040':'Romeo Sandoval','81285041':'Kathrina Tabaquin','81285050':'Angelica Lorenzana','81463171':'Krizelle Taino','81488398':'Russell Cabang','81611466':'Princess Punzalan','81612598':'Jemy Morong','81786552':'Gyle Gelle',
@@ -5899,10 +5901,30 @@ function callHistoryItem(c){
   const dur=!isSms&&c.durationMs&&c.durationMs>0?` · ${Math.round(c.durationMs/60000)}m`:'';
   const bodyStr=c.body!=null?String(c.body):'';
   const body=bodyStr.trim()?`<div style="color:var(--g600);font-style:italic;line-height:1.4;margin-top:2px;">"${bodyStr.slice(0,200)}${bodyStr.length>200?'…':''}"</div>`:'';
+  // Aircall's outcome tag — more specific than the Connected/No Answer badge.
+  const tag=(c.disposition||'').trim()
+    ?`<span style="font-size:.57rem;color:#6b7280;background:#f3f4f6;padding:1px 6px;border-radius:99px;">${c.disposition}</span>`:'';
+  // Aircall's AI summary. Only ~3.5% of calls have one, so the block is omitted
+  // entirely rather than showing an empty placeholder on every row.
+  const summary=(c.summary||'').trim()
+    ?`<div style="margin-top:4px;padding:6px 8px;background:#f9fafb;border-left:2px solid #ff7a59;border-radius:0 6px 6px 0;">
+        <div style="font-size:.55rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;">Call summary</div>
+        <div style="font-size:.68rem;color:#374151;line-height:1.45;">${c.summary}</div>
+      </div>`:'';
+  const topics=(c.topics||'').trim()
+    ?`<div style="margin-top:3px;display:flex;flex-wrap:wrap;gap:3px;">`
+      +String(c.topics).split(',').map(t=>t.trim()).filter(Boolean).slice(0,6)
+        .map(t=>`<span style="font-size:.55rem;color:#0369a1;background:#e0f2fe;padding:1px 6px;border-radius:99px;">${t}</span>`).join('')
+      +`</div>`:'';
+  // Rebuilt from the portal template — the proxy sends only a flag and the id,
+  // because the full URL is ~140 chars on ~71% of calls (megabytes per refresh).
+  const rec=(!isSms&&c.hasRecording&&c.callId)
+    ?`<a href="https://api-na1.hubspot.com/recording/auth/provider/hublets/v1/external-url-retriever/getAuthRecording/portal/${HS_PORTAL_ID}/engagement/${c.callId}" target="_blank" rel="noopener" style="font-size:.57rem;font-weight:700;color:#ff7a59;text-decoration:none;white-space:nowrap;">▶ Recording</a>`:'';
   return `<div style="padding:6px 10px;border-bottom:1px solid #f3f4f6;">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;">
-      <span style="font-size:.67rem;color:var(--g500);">${typeLabel} · ${ts}${dur}</span>${badge}
-    </div>${body}
+      <span style="font-size:.67rem;color:var(--g500);">${typeLabel} · ${ts}${dur}</span>
+      <span style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">${rec}${tag}${badge}</span>
+    </div>${body}${summary}${topics}
   </div>`;
 }
 async function loadAircallData(lid,contactPhone){
