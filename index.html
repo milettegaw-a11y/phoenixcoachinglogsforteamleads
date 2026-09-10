@@ -5911,6 +5911,61 @@ function smsBubble(c){
     </div>`;
 }
 
+/* ── Handover note ───────────────────────────────────────────────────────────
+   Auto-built from what is already on the lead. There is no field in HubSpot for
+   rooms, baths or sq ft — only `hag__selected_cleaning_frequency` exists — so
+   those are read out of the Aircall call summaries and the customer's own SMS.
+   Sources are kept apart on purpose: what the CUSTOMER told us (summaries and
+   inbound SMS) is a fact about their home; a price in an agent's outbound SMS is
+   only what WE offered, and must never be reported as something they said.      */
+const HN_BED  =/(\d+)[\s-]*(?:bed(?:room)?s?|br\b)/i;
+const HN_BATH =/(\d+(?:\.5)?)[\s-]*(?:bath(?:room)?s?|ba\b)/i;
+const HN_SQFT =/([\d,]{3,6})\s*(?:sq\.?\s?(?:ft|feet)|square\s?f)/i;
+const HN_FREQ =/\b(weekly|bi-?weekly|every other week|monthly|one[\s-]?time|recurring)\b/i;
+const HN_PRICE=/\$\s?(\d[\d,]*)/;
+function hnFind(re,texts){
+  for(const t of texts){ if(!t)continue; const m=String(t).match(re); if(m)return m[1]; }
+  return '';
+}
+function buildHandoverNote(lead){
+  const acts=lead.calls||[];
+  const isSms=c=>c.type!=='call';
+  // What the customer told us
+  const said=[...acts.filter(c=>(c.summary||'').trim()).map(c=>c.summary),
+              ...acts.filter(c=>isSms(c)&&(c.direction||'').toUpperCase()==='INBOUND').map(c=>c.body)];
+  // What we offered them
+  const offered=acts.filter(c=>isSms(c)&&(c.direction||'').toUpperCase()==='OUTBOUND').map(c=>c.body);
+  const bed=hnFind(HN_BED,said), bath=hnFind(HN_BATH,said), sqft=hnFind(HN_SQFT,said);
+  const freq=(lead.contactFrequency||'').trim()||hnFind(HN_FREQ,said)||hnFind(HN_FREQ,offered);
+  const freqFromField=!!(lead.contactFrequency||'').trim();
+  const price=hnFind(HN_PRICE,said)||hnFind(HN_PRICE,offered);
+  const priceSaid=!!hnFind(HN_PRICE,said);
+  // Most recent completed conversation
+  const calls=acts.filter(c=>!isSms(c)).sort((a,b)=>hsTs(b.timestamp)-hsTs(a.timestamp));
+  const lastCall=calls[0];
+  const lastSummary=(calls.find(c=>(c.summary||'').trim())||{}).summary||'';
+  const rows=[];
+  const home=[bed?bed+' bed':'',bath?bath+' bath':'',sqft?sqft.replace(/,/g,'')+' sq ft':''].filter(Boolean).join(' · ');
+  if(home)  rows.push(['Home',home,'customer']);
+  if(freq)  rows.push(['Frequency',freq,freqFromField?'HubSpot':'customer']);
+  if(price) rows.push([priceSaid?'Price discussed':'Offer sent','$'+price,priceSaid?'customer':'our SMS']);
+  if(lastCall){
+    const who=hsAgentName(lastCall)||'unknown agent';
+    const tag=(lastCall.disposition||'').trim();
+    rows.push(['Last call',`${hsRelTime(lastCall.timestamp)}${tag?' · '+tag:''} · ${who}`,'']);
+  }
+  if(!rows.length&&!lastSummary)return '';
+  const cells=rows.map(([k,v,src])=>`
+    <div style="min-width:0;">
+      <div style="font-size:.55rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.07em;">${k}</div>
+      <div style="font-size:.78rem;font-weight:600;color:#111;line-height:1.35;">${v}${src?`<span style="font-weight:400;color:#9ca3af;font-size:.62rem;"> · ${src}</span>`:''}</div>
+    </div>`).join('');
+  return `<div style="background:#fffaf8;border:1px solid #ffd9cc;border-left:3px solid #ff7a59;border-radius:0 10px 10px 0;padding:12px 14px;margin-bottom:12px;">
+    <div style="font-size:.6rem;font-weight:800;color:#ff7a59;text-transform:uppercase;letter-spacing:.08em;margin-bottom:9px;">Handover note · built from previous contact</div>
+    ${cells?`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px 14px;">${cells}</div>`:''}
+    ${lastSummary?`<div style="margin-top:${cells?'10px':'0'};padding-top:${cells?'9px':'0'};${cells?'border-top:1px dashed #ffd9cc;':''}font-size:.73rem;color:#57534e;line-height:1.5;">${lastSummary.length>260?lastSummary.slice(0,260)+'…':lastSummary}</div>`:''}
+  </div>`;
+}
 function callHistoryItem(c){
   const ts=c.timestamp?(()=>{const ms=hsTs(c.timestamp);return ms?new Date(ms).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):''})():'';
   const isSms=c.type==='sms'||c.type==='message'||(c.type||'').toLowerCase().includes('sms');
@@ -5992,6 +6047,8 @@ function refreshLeadPanelActivity(lead){
     const ml=(lead.calls||[]).filter(isSms).sort((a,b)=>hsTs(a.timestamp)-hsTs(b.timestamp));
     if(ml.length){smsEl.innerHTML=ml.map(smsBubble).join('');smsEl.scrollTop=smsEl.scrollHeight;}
   }
+  const hn=document.getElementById('lead-handover-'+pid);
+  if(hn)hn.outerHTML=`<div id="lead-handover-${pid}">${buildHandoverNote(lead)}</div>`;
   const ct=document.getElementById('comm-tab-calls-'+pid);
   if(ct)ct.textContent='📞 Calls ('+(lead.calls||[]).filter(c=>!isSms(c)).length+')';
   const st=document.getElementById('comm-tab-msgs-'+pid);
@@ -6411,7 +6468,7 @@ function renderHSLeads(){
     const actionsHtml=`<div style="padding:10px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #f0f0f0;flex-wrap:wrap;">${stageDropdown(l)}<a href="https://app.hubspot.com/contacts/45809585/ticket/${l.id}" target="_blank" style="font-size:.67rem;color:#ff7a59;text-decoration:none;font-weight:600;border:1px solid #ff7a59;padding:3px 8px;border-radius:6px;">🔗 HubSpot</a><button onclick="openMyActionModal('${l.id}','${(l.contactName||l.subject||'').replace(/'/g,'')}');closeLeadPanel();" style="font-size:.67rem;color:#3b82f6;font-weight:600;border:1px solid #3b82f6;padding:3px 8px;border-radius:6px;background:#fff;cursor:pointer;">🗓️ Schedule Follow-Up</button></div>`;
     document.getElementById('lead-panel-name').textContent=displayName;
     document.getElementById('lead-panel-sub').textContent=(l.contactPhone||'')+(l.stageName?' · '+l.stageName:'');
-    document.getElementById('lead-panel-body').innerHTML=summaryHtml+gridHtml+actionsHtml+commPanel(l,allCalls);
+    document.getElementById('lead-panel-body').innerHTML=summaryHtml+`<div id="lead-handover-${l.id}">`+buildHandoverNote(l)+`</div>`+gridHtml+actionsHtml+commPanel(l,allCalls);
     document.getElementById('lead-panel-overlay').style.display='block';
     const panel=document.getElementById('lead-side-panel');
     panel.style.display='flex';

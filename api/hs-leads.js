@@ -481,7 +481,7 @@ export default async function handler(req, res) {
         ? batchRead(
             'https://api.hubapi.com/crm/v3/objects/contacts/batch/read',
             allContactIds,
-            ['firstname','lastname','phone','mobilephone','email','lifecyclestage','createdate']
+            ['firstname','lastname','phone','mobilephone','email','lifecyclestage','createdate','hag__selected_cleaning_frequency']
           )
         : Promise.resolve([]),
       noteIdList.length > 0
@@ -516,7 +516,11 @@ export default async function handler(req, res) {
         phone: p.mobilephone || p.phone || '',
         email: p.email || '',
         lifecycle: p.lifecyclestage || null,
-        createdate: p.createdate || null
+        createdate: p.createdate || null,
+        // The only structured home-detail field that is actually populated in this
+        // portal. Rooms, baths and sq ft have no field at all, so the handover note
+        // has to read those out of the call summary text.
+        frequency: p.hag__selected_cleaning_frequency || ''
       };
     }
 
@@ -599,6 +603,7 @@ export default async function handler(req, res) {
         contactPhone:      contact?.phone || null,
         contactEmail:      contact?.email || null,
         contactLifecycle:  contact?.lifecycle || null,
+        contactFrequency:  contact?.frequency || '',
         contactCreatedate: contact?.createdate || null,
         latestNote: notes[0] ? { body: notes[0].body, timestamp: notes[0].timestamp } : null,
         // All activity for this ticket — owner filter applied client-side in index.html
