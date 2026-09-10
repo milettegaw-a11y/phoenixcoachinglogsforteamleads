@@ -5903,7 +5903,7 @@ async function ensureAircallUsers(){
 function smsBubble(c){
     const isOut=(c.direction||'').toUpperCase()!=='INBOUND';
     const ts=c.timestamp?(()=>{const ms=hsTs(c.timestamp);return ms?new Date(ms).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):''})():'';
-    const body=(c.body||'').trim()||'(no message body)';
+    const body=String(c.body==null?'':c.body).trim()||'(no message body)';
     const src=c.source==='aircall'?'<span style="font-size:.55rem;background:#e0f2fe;color:#0369a1;padding:1px 5px;border-radius:4px;margin-left:4px;">Aircall</span>':'';
     return `<div style="display:flex;flex-direction:column;align-items:${isOut?'flex-end':'flex-start'};margin-bottom:8px;">
       <div style="max-width:82%;background:${isOut?'#ff7a59':'#f3f4f6'};color:${isOut?'#fff':'#111'};padding:8px 12px;border-radius:${isOut?'12px 12px 2px 12px':'12px 12px 12px 2px'};font-size:.75rem;line-height:1.5;">${body}</div>
@@ -6059,7 +6059,8 @@ async function loadAircallData(lid,contactPhone){
           if(!hit.ownerName&&a.ownerName)hit.ownerName=a.ownerName;
           if(!hit.numberName&&a.numberName)hit.numberName=a.numberName;
           if(!hit.durationMs&&a.durationMs)hit.durationMs=a.durationMs;
-          if(!(hit.body||'').trim()&&(a.body||'').trim())hit.body=a.body;
+          const aBody=String(a.body==null?'':a.body);
+          if(!String(hit.body==null?'':hit.body).trim()&&aBody.trim())hit.body=aBody;
         }else out.push(a);
       }
       return out.sort((a,b)=>hsTs(b.timestamp)-hsTs(a.timestamp));
@@ -6096,7 +6097,7 @@ async function loadAircallData(lid,contactPhone){
     const smsBubbleAc=c=>{
       const isOut=(c.direction||'').toUpperCase()!=='INBOUND';
       const tsStr=c.timestamp?(()=>{const ms=hsTs(c.timestamp);return ms?new Date(ms).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):''})():'';
-      const body=(c.body||'').trim()||'(no message body)';
+      const body=String(c.body==null?'':c.body).trim()||'(no message body)';
       const src=c.source==='aircall'?'<span style="font-size:.55rem;background:#e0f2fe;color:#0369a1;padding:1px 5px;border-radius:4px;margin-left:4px;">Aircall</span>':'';
       return '<div style="display:flex;flex-direction:column;align-items:'+(isOut?'flex-end':'flex-start')+';margin-bottom:8px;">'
         +'<div style="max-width:82%;background:'+(isOut?'#ff7a59':'#f3f4f6')+';color:'+(isOut?'#fff':'#111')+';padding:8px 12px;border-radius:'+(isOut?'12px 12px 2px 12px':'12px 12px 12px 2px')+';font-size:.75rem;line-height:1.5;">'+body+'</div>'

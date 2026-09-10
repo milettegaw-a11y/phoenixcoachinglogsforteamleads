@@ -137,7 +137,11 @@ export default async function handler(req, res) {
         timestamp:  String(startMs),
         status:     c.status || 'done',
         connected:  isConn,
-        body:       c.comments || '',
+        // Aircall returns `comments` as an ARRAY of comment objects, not a string.
+        // Passing it through made (body||'').trim() throw in the panel's merge.
+        body:       Array.isArray(c.comments)
+                      ? c.comments.map(x => (x && (x.content || x.body)) || '').filter(Boolean).join(' · ')
+                      : String(c.comments || ''),
         direction:  (c.direction || 'inbound').toUpperCase(),
         durationMs: (c.duration || 0) * 1000,
         ownerId:    String((c.user && c.user.id) || ''),
@@ -158,7 +162,7 @@ export default async function handler(req, res) {
         timestamp:  String(tsMs),
         status:     'delivered',
         connected:  false,
-        body:       m.content || '',
+        body:       typeof m.content === 'string' ? m.content : String(m.content || ''),
         direction:  (m.direction || 'outbound').toUpperCase(),
         durationMs: 0,
         ownerId:    String((m.user && m.user.id) || ''),
