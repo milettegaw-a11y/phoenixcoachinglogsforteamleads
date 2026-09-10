@@ -5260,6 +5260,17 @@ const HS_CADENCE=[0,3,3,0,3,3,1,3,1,1,1,1,1,1,1,1];
 const TEAM_DAY_OFF={'Jhay':[0,6],'Jumz':[2,3],'Florence':[5,6]}; // 0=Sun,1=Mon,...,6=Sat
 function hsGetCumulativeExpected(day){let t=0;for(let d=1;d<=Math.min(day,15);d++)t+=HS_CADENCE[d]||0;return t;}
 function hsTs(dt){if(!dt)return 0;const n=Number(dt);return isNaN(n)?new Date(dt).getTime():n;}
+// The working day runs 06:00 CDT to 00:00 CDT (midnight). Activity outside that
+// window is not counted toward cadence — anything logged between midnight and
+// 06:00 CDT belongs to no working day.
+// Always CDT, never the browser's local zone: agents work from PH, where 05:15 CDT
+// is 18:15 the same evening, so a local-time boundary files activity on the wrong day.
+const HS_DAY_START_HOUR_CDT=6;
+function hsCdtDayWindow(nowMs){
+  const cdt=new Date((nowMs||Date.now())-5*3600000);
+  const midnightCdt=Date.UTC(cdt.getUTCFullYear(),cdt.getUTCMonth(),cdt.getUTCDate())+5*3600000;
+  return {start:midnightCdt+HS_DAY_START_HOUR_CDT*3600000,end:midnightCdt+86400000};
+}
 function hsRelTime(dt){const ms=hsTs(dt);if(!ms||isNaN(ms))return '?';const s=Math.floor((Date.now()-ms)/1000);if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
 function hsFormatDur(ms){if(!ms)return '';const m=Math.round(ms/60000);return m+'m';}
 function toggleSection(id){const b=document.getElementById('sect-body-'+id),a=document.getElementById('sect-arrow-'+id);if(!b)return;const h=b.style.display==='none';b.style.display=h?'':'none';if(a)a.textContent=h?'▼':'▶';}
@@ -5358,11 +5369,8 @@ async function fetchHSLeads(){
       const ownerId=p.hubspot_owner_id;const ownerName=HS_OWNERS[ownerId]||'Owner #'+ownerId;
       const stageId=p.hs_pipeline_stage;const stageName=HS_STAGE_LABELS[stageId]||'Stage '+stageId;
       const attempts=HS_STAGE_ATTEMPTS[stageId]??0;
-      const _cdtNow=new Date(now2.getTime()-5*3600000);
-      const todayStart=new Date(Date.UTC(_cdtNow.getUTCFullYear(),_cdtNow.getUTCMonth(),_cdtNow.getUTCDate())+5*3600000);
-      const todayEnd=new Date(todayStart.getTime()+86400000);
       const allActivity=t.calls||[];
-      const todayStartMs=todayStart.getTime(),todayEndMs=todayEnd.getTime();
+      const {start:todayStartMs,end:todayEndMs}=hsCdtDayWindow(now2.getTime());
       const dailyOwnerAct=allActivity.filter(c=>c.timestamp&&hsTs(c.timestamp)>=todayStartMs&&hsTs(c.timestamp)<todayEndMs&&(!c.ownerId||c.ownerId===ownerId));
       const rawCallsMade=dailyOwnerAct.filter(c=>c.type==='call').length;
       const rawSmsCount=dailyOwnerAct.filter(c=>c.type==='sms'||c.type==='message').length;
@@ -5988,9 +5996,9 @@ async function loadAircallData(lid,contactPhone){
     // Recompute cadence from the now-merged Aircall+HubSpot data and patch the card badge
     (()=>{
       const isSms=c=>c.type==='sms'||c.type==='message'||(c.type||'').toLowerCase().includes('sms');
-      const now2=new Date();
-      const todayStart=new Date(now2.getFullYear(),now2.getMonth(),now2.getDate()).getTime();
-      const todayEnd=todayStart+86400000;
+      // Same 06:00-24:00 CDT window as the main cadence calc — this used the browser's
+      // local midnight, so re-opening a card from PH recomputed cadence on the wrong day.
+      const {start:todayStart,end:todayEnd}=hsCdtDayWindow();
       const todayAct=lead.calls.filter(c=>c.timestamp&&hsTs(c.timestamp)>=todayStart&&hsTs(c.timestamp)<todayEnd);
       lead.dailyCallsMade=todayAct.filter(c=>!isSms(c)).length;
       lead.dailySmsCount =todayAct.filter(isSms).length;
