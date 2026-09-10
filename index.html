@@ -5696,6 +5696,31 @@ function toggleCadAgentRow(safeId){
 let _cadTrendChart=null;
 
 let _agentCadTrendChart=null;
+// Not-Contacted chips, and the Day 1-8 filter over them. An agent can carry 170+
+// uncontacted leads at once; without a day filter the oldest ones — the ones about
+// to age out — are buried under a wall of Day 1 chips.
+let _avGapDay=0;
+let _avGapLeads=[];
+function avGapChips(leads){
+  if(!leads.length)return '<div style="color:#9ca3af;font-size:.75rem;padding:8px 0;">No uncontacted leads on this day.</div>';
+  return leads.map(l=>`<a href="https://app.hubspot.com/contacts/45809585/ticket/${l.id}" target="_blank"
+    title="Day ${l.ageDays} — ${l.cadencePct||0}% cadence"
+    style="display:inline-flex;align-items:center;gap:5px;background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;border-radius:8px;padding:5px 12px;font-size:.72rem;font-weight:600;text-decoration:none;"
+    onmouseover="this.style.background='#fecaca'" onmouseout="this.style.background='#fee2e2'">
+    🔗 ${(l.subject||l.contactName||'Lead').replace(/</g,'&lt;')}
+    <span style="background:#ef4444;color:#fff;border-radius:99px;padding:1px 6px;font-size:.6rem;">Day ${l.ageDays}</span>
+  </a>`).join('');
+}
+function avFilterGapDay(v){
+  _avGapDay=Number(v)||0;
+  const shown=_avGapDay?_avGapLeads.filter(l=>l.ageDays===_avGapDay):_avGapLeads;
+  const box=document.getElementById('av-gap-chips');
+  if(box)box.innerHTML=avGapChips(shown);
+  const cnt=document.getElementById('av-gap-count');
+  if(cnt)cnt.textContent=_avGapDay
+    ? `Day ${_avGapDay} — not fully contacted today (${shown.length}):`
+    : `Leads you haven't fully contacted today (${shown.length}):`;
+}
 async function renderAgentCadence(){
   const el=document.getElementById('av-mycad-body');
   if(!el)return;
@@ -5712,19 +5737,29 @@ async function renderAgentCadence(){
   const avg=myLeads.length?Math.round(myLeads.reduce((s,l)=>s+(l.cadencePct||0),0)/myLeads.length):100;
   const gapLeads=myLeads.filter(l=>(l.cadencePct||0)<100);
   const bc=avg>=100?'#22c55e':avg>=80?'#22c55e':avg>=50?'#f97316':'#ef4444';
+  _avGapLeads=[...gapLeads].sort((a,b)=>(a.ageDays||0)-(b.ageDays||0)||(a.cadencePct||0)-(b.cadencePct||0));
+  const dayCounts={};
+  _avGapLeads.forEach(l=>{dayCounts[l.ageDays]=(dayCounts[l.ageDays]||0)+1;});
+  const dayOpts=[`<option value="0">All days (${_avGapLeads.length})</option>`]
+    .concat(Object.keys(dayCounts).map(Number).sort((a,b)=>a-b)
+      .map(d=>`<option value="${d}"${_avGapDay===d?' selected':''}>Day ${d} (${dayCounts[d]})</option>`)).join('');
   const gapHtml=gapLeads.length===0
     ?'<div style="color:#22c55e;font-size:.8rem;padding:12px 0;font-weight:600;">✅ You\'re on cadence with all your leads today!</div>'
-    :`<div style="font-size:.78rem;font-weight:700;color:#374151;margin-bottom:8px;">Leads you haven\'t fully contacted today (${gapLeads.length}):</div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px;">
-        ${gapLeads.map(l=>`<a href="https://app.hubspot.com/contacts/45809585/ticket/${l.id}" target="_blank"
-          title="Day ${l.ageDays} — ${l.cadencePct||0}% cadence"
-          style="display:inline-flex;align-items:center;gap:5px;background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;border-radius:8px;padding:5px 12px;font-size:.72rem;font-weight:600;text-decoration:none;"
-          onmouseover="this.style.background='#fecaca'" onmouseout="this.style.background='#fee2e2'">
-          🔗 ${(l.subject||l.contactName||'Lead').replace(/</g,'&lt;')}
-          <span style="background:#ef4444;color:#fff;border-radius:99px;padding:1px 6px;font-size:.6rem;">Day ${l.ageDays}</span>
-        </a>`).join('')}
-      </div>`;
+    :`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+        <div id="av-gap-count" style="font-size:.78rem;font-weight:700;color:#374151;">Leads you haven\'t fully contacted today (${_avGapLeads.length}):</div>
+        <label style="margin-left:auto;display:flex;align-items:center;gap:6px;font-size:.7rem;color:#9ca3af;font-weight:600;">
+          Prioritise
+          <select id="av-gap-day" onchange="avFilterGapDay(this.value)" style="font-size:.72rem;font-weight:600;border:1.5px solid #e5e7eb;border-radius:8px;padding:4px 9px;background:#fff;color:#374151;cursor:pointer;font-family:inherit;">${dayOpts}</select>
+        </label>
+      </div>
+      <div id="av-gap-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px;">${avGapChips(_avGapDay?_avGapLeads.filter(l=>l.ageDays===_avGapDay):_avGapLeads)}</div>`;
   el.innerHTML=`
+    <div style="background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;padding:16px;margin-bottom:20px;">
+      <div style="font-size:.82rem;font-weight:700;color:#374151;margin-bottom:2px;">My Compliance Trend (14 days)</div>
+      <div style="font-size:.7rem;color:#9ca3af;margin-bottom:12px;">Daily cadence % from saved snapshots</div>
+      <div style="position:relative;height:200px;"><canvas id="agent-cad-trend-chart"></canvas></div>
+      <div id="agent-cad-trend-msg" style="display:none;color:#9ca3af;font-size:.75rem;text-align:center;padding:20px 0;">Loading…</div>
+    </div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;">
       <div style="background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;padding:14px;text-align:center;">
         <div style="font-size:1.8rem;font-weight:800;color:${bc};">${avg}%</div>
@@ -5743,12 +5778,7 @@ async function renderAgentCadence(){
       <div style="font-size:.82rem;font-weight:700;color:#374151;margin-bottom:10px;">⚠️ Not Contacted Leads</div>
       ${gapHtml}
     </div>
-    <div style="background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;padding:16px;">
-      <div style="font-size:.82rem;font-weight:700;color:#374151;margin-bottom:2px;">My Compliance Trend (14 days)</div>
-      <div style="font-size:.7rem;color:#9ca3af;margin-bottom:12px;">Daily cadence % from saved snapshots</div>
-      <div style="position:relative;height:200px;"><canvas id="agent-cad-trend-chart"></canvas></div>
-      <div id="agent-cad-trend-msg" style="display:none;color:#9ca3af;font-size:.75rem;text-align:center;padding:20px 0;">Loading…</div>
-    </div>`;
+`;
   // Load trend
   const msgEl=document.getElementById('agent-cad-trend-msg');
   const tctx=document.getElementById('agent-cad-trend-chart');
