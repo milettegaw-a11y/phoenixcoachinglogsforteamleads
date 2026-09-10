@@ -5726,14 +5726,19 @@ function hsIsDnc(id){return String(id)===HS_DNC_STAGE;}
    number — replying to an inbound message is not a cadence dial.                */
 let _avReplies=null;          // null = not loaded yet
 let _avRepliesLoading=false;
-const AV_REPLY_DAYS=14;
+const AV_REPLY_DAYS=14;      // how far back tickets are fetched
+// Only replies from the last 24 hours make the board. Tickets are still fetched
+// over 14 days, because a lead created two weeks ago can answer today — it is the
+// REPLY that has to be recent, not the ticket.
+const AV_REPLY_WINDOW_H=24;
 function avIsSms(c){return c.type!=='call';}
 function avLastActivity(t){
   return (t.calls||[]).slice().sort((a,b)=>hsTs(b.timestamp)-hsTs(a.timestamp))[0]||null;
 }
 function avCustomerSpokeLast(t){
   const last=avLastActivity(t);
-  return !!last&&(last.direction||'').toUpperCase()==='INBOUND';
+  if(!last||(last.direction||'').toUpperCase()!=='INBOUND')return false;
+  return hsTs(last.timestamp)>=Date.now()-AV_REPLY_WINDOW_H*3600000;
 }
 async function loadAgentReplies(force){
   if(_avRepliesLoading)return;
@@ -5867,11 +5872,11 @@ function renderAgentReplies(){
         <span style="font-size:.62rem;font-weight:700;color:#fff;background:${list.length?'#22c55e':'#d1d5db'};border-radius:99px;padding:1px 8px;">${list.length}</span>
       </div>
       <div style="font-size:.63rem;color:#9ca3af;margin-bottom:8px;">${hint}</div>
-      ${list.length?list.map(avReplyCard).join(''):'<div style="font-size:.72rem;color:#9ca3af;padding:10px 0;">Nobody waiting here.</div>'}
+      ${list.length?list.map(avReplyCard).join(''):'<div style="font-size:.72rem;color:#9ca3af;padding:10px 0;">No replies in the last 24 hours.</div>'}
     </div>`;
   el.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;">
-      ${col('2nd Week — replied','Your cadence leads who answered back',w2)}
-      ${col('Other tickets — replied','Inbound SMS/Call and anything not 2nd Week',oth)}
+      ${col('2nd Week — replied','Your cadence leads who answered in the last 24h',w2)}
+      ${col('Other tickets — replied','Inbound SMS/Call and anything not 2nd Week, last 24h',oth)}
     </div>
     ${hiddenCount?`<div style="margin-top:12px;padding-top:10px;border-top:1px solid #f0f0f0;font-size:.68rem;color:#9ca3af;">
       ${hiddenCount} handled ${hiddenCount===1?'lead':'leads'} hidden ·
@@ -5961,7 +5966,7 @@ async function renderAgentCadence(){
         <div style="font-size:.82rem;font-weight:700;color:#374151;">💬 Waiting On You</div>
         <button type="button" onclick="loadAgentReplies(true)" style="margin-left:auto;padding:3px 10px;font-size:.65rem;font-weight:700;color:#16a34a;background:#fff;border:1px solid #bbf7d0;border-radius:99px;cursor:pointer;font-family:inherit;">↻ Refresh</button>
       </div>
-      <div style="font-size:.7rem;color:#9ca3af;margin-bottom:12px;">Leads where the customer spoke last — they are waiting on a reply. Not part of your cadence.</div>
+      <div style="font-size:.7rem;color:#9ca3af;margin-bottom:12px;">Customers who replied in the last 24 hours and are waiting on you. Not part of your cadence.</div>
       <div id="av-replies-body"><div style="color:#9ca3af;font-size:.78rem;padding:18px 0;text-align:center;">Checking who replied…</div></div>
     </div>
     <div style="background:#fff;border:1.5px solid ${gaps>0?'#fca5a5':'#86efac'};border-radius:10px;padding:16px;margin-bottom:20px;">
