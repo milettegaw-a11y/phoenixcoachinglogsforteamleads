@@ -150,7 +150,12 @@ export default async function handler(req, res) {
     t = t.replace(/[ \t]+/g, ' ').replace(/\n\s*\n+/g, '\n').trim();
     const m = t.match(/Message:\s*([\s\S]*)$/i);
     t = (m ? m[1] : t.replace(/^\s*(?:SMS|MMS)\s+(?:Sent\s+by|Received\s+from)[^\n]*\n?/i, '')).trim();
-    return t.slice(0, 600)
+    // Aircall also appends a footer: "Status: delivered  (See the full conversation)".
+    // Anchored at the end so a message that merely mentions the word is left alone.
+    t = t.replace(/\s*\(See the full conversation\)\s*$/i, '')
+         .replace(/\n\s*Status:\s*[^\n]*$/i, '').trim();
+    const clipped = t.length > 600;
+    return (clipped ? t.slice(0, 600).trimEnd() + '…' : t)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   };
 
