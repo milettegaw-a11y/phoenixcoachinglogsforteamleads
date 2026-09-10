@@ -208,6 +208,69 @@ export default async function handler(req, res) {
   const smsIsOutbound = body =>
     /^\s*(?:SMS|MMS)\s+Sent\s+by\b/i.test((body || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim());
 
+  // ── Panel history: all calls + SMS for ONE contact, any agent ───────────────
+  // Fetched only when a lead panel opens, so the bulk refresh stays fast. Covers
+  // every agent, ours and the earlier team's, which the ticket-association path
+  // alone does not: our own agents' work is not linked to these tickets.
+  if (req.body && req.body.historyContactId) {
+    try {
+      const cid  = String(req.body.historyContactId);
+      const days = Math.min(Math.max(Number(req.body.historyDays) || 30, 1), 120);
+      const sinceMs = Date.now() - days * 86400000;
+      const contactIs = { propertyName: 'associations.contact', operator: 'IN', values: [cid] };
+      const since     = { propertyName: 'hs_timestamp', operator: 'GTE', value: String(sinceMs) };
+      const [callRows, smsRows] = await Promise.all([
+        searchAll('https://api.hubapi.com/crm/v3/objects/calls/search', {
+          filterGroups: [{ filters: [since, contactIs] }],
+          properties: ['hs_timestamp','hs_call_status','hs_call_disposition','hs_call_direction','hs_call_duration','hubspot_owner_id','hs_call_body','hs_call_recording_url'],
+          limit: 200
+        }, 400),
+        searchAll('https://api.hubapi.com/crm/v3/objects/communications/search', {
+          filterGroups: [{ filters: [since, contactIs,
+            { propertyName: 'hs_communication_channel_type', operator: 'EQ', value: 'SMS' }
+          ]}],
+          properties: ['hs_timestamp','hs_communication_channel_type','hubspot_owner_id','hs_communication_logged_from','hs_communication_body'],
+          limit: 200
+        }, 400)
+      ]);
+      const calls = callRows.map(c => {
+        const p = c.properties || {};
+        return {
+          type: 'call', timestamp: p.hs_timestamp || '', status: p.hs_call_status || '',
+          disposition: callConnectInfo(p.hs_call_disposition).disposition,
+          connected:   callConnectInfo(p.hs_call_disposition).connected,
+          summary: aircallSection(p.hs_call_body, 'aircall-call-summary', 'Call Summary'),
+          topics:  aircallSection(p.hs_call_body, 'aircall-call-key-topics', 'Key Topics'),
+          hasRecording: !!String(p.hs_call_recording_url || '').trim(),
+          callId: String(c.id),
+          direction: p.hs_call_direction || '',
+          durationMs: parseInt(p.hs_call_duration || '0') || 0,
+          ownerId: String(p.hubspot_owner_id || '')
+        };
+      });
+      const messages = smsRows.map(m => {
+        const p = m.properties || {};
+        return {
+          type: 'sms', timestamp: p.hs_timestamp || '', status: 'SENT', disposition: '',
+          connected: false,
+          body: smsMessageText(p.hs_communication_body),
+          direction: smsIsOutbound(p.hs_communication_body) ? 'OUTBOUND' : 'INBOUND',
+          durationMs: 0,
+          ownerId: String(p.hubspot_owner_id || '')
+        };
+      });
+      const ownerIds = new Set([...calls, ...messages].map(a => a.ownerId).filter(Boolean));
+      let owners = {};
+      try {
+        const all = await loadOwners();
+        for (const id of ownerIds) if (all[id]) owners[id] = all[id];
+      } catch (e) { owners = {}; }
+      return res.status(200).json({ calls, messages, owners, days });
+    } catch (e) {
+      return res.status(500).json({ error: e.message });
+    }
+  }
+
   try {
     // ── Step 1: Search tickets ────────────────────────────────────────────────
     const ticketResp = await hsFetch('https://api.hubapi.com/crm/v3/objects/tickets/search', {
@@ -292,13 +355,10 @@ export default async function handler(req, res) {
     const cdtDate  = new Date(cdtMs);
     const todayStartUTC = Date.UTC(cdtDate.getUTCFullYear(), cdtDate.getUTCMonth(), cdtDate.getUTCDate()) + 5 * 3600000;
     const todayEndUTC   = todayStartUTC + 86400000;
-    // Contact-level activity used to be searched for TODAY only, so anything older
-    // surfaced only if it happened to be associated with THIS ticket. The earlier
-    // team's work is (they created the tickets it hangs off); our own agents' work is
-    // not — which is why Phoenix showed 0 calls and 0 SMS before today while other
-    // teams showed ~48,000. Widened to the same 9-day window the app displays.
-    const HISTORY_DAYS    = 9;
-    const historyStartUTC = todayStartUTC - (HISTORY_DAYS - 1) * 86400000;
+    // The bulk refresh deliberately searches contact activity for TODAY only: that
+    // is all the cadence maths needs, and widening it to 9 days took the refresh
+    // from 44s/17.9MB to 117s/40.6MB. A lead's full history is fetched per-contact
+    // by the `historyContactId` branch below, when a panel is actually opened.
 
     const allOwnerIds = [...new Set(tickets.map(t => t.properties.hubspot_owner_id).filter(Boolean))];
 
@@ -313,7 +373,7 @@ export default async function handler(req, res) {
     // so filtering by owner misses them. Filtering by contact IDs finds all today's
     // activity on those contacts regardless of how the call was logged.
     if (allContactIds.length > 0) {
-      const timeGTE    = { propertyName: 'hs_timestamp', operator: 'GTE', value: String(historyStartUTC) };
+      const timeGTE    = { propertyName: 'hs_timestamp', operator: 'GTE', value: String(todayStartUTC) };
       const timeLT     = { propertyName: 'hs_timestamp', operator: 'LT',  value: String(todayEndUTC)   };
       // HubSpot IN operator supports up to 300 values
       const contactSlice = allContactIds.slice(0, 300);

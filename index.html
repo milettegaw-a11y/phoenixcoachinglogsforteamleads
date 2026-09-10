@@ -5898,6 +5898,19 @@ async function ensureAircallUsers(){
   }catch(_){}
 }
 
+// SMS bubble. Module scope so the panel's in-place re-render can reuse it after
+// loadLeadHistory() merges in older messages.
+function smsBubble(c){
+    const isOut=(c.direction||'').toUpperCase()!=='INBOUND';
+    const ts=c.timestamp?(()=>{const ms=hsTs(c.timestamp);return ms?new Date(ms).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):''})():'';
+    const body=(c.body||'').trim()||'(no message body)';
+    const src=c.source==='aircall'?'<span style="font-size:.55rem;background:#e0f2fe;color:#0369a1;padding:1px 5px;border-radius:4px;margin-left:4px;">Aircall</span>':'';
+    return `<div style="display:flex;flex-direction:column;align-items:${isOut?'flex-end':'flex-start'};margin-bottom:8px;">
+      <div style="max-width:82%;background:${isOut?'#ff7a59':'#f3f4f6'};color:${isOut?'#fff':'#111'};padding:8px 12px;border-radius:${isOut?'12px 12px 2px 12px':'12px 12px 12px 2px'};font-size:.75rem;line-height:1.5;">${body}</div>
+      <div style="font-size:.59rem;color:#9ca3af;margin-top:2px;display:flex;align-items:center;gap:4px;flex-wrap:wrap;">${isOut?'Out · ':'In · '}${ts}${src}${isOut?hsAgentTag(c):''}</div>
+    </div>`;
+}
+
 function callHistoryItem(c){
   const ts=c.timestamp?(()=>{const ms=hsTs(c.timestamp);return ms?new Date(ms).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):''})():'';
   const isSms=c.type==='sms'||c.type==='message'||(c.type||'').toLowerCase().includes('sms');
@@ -5937,6 +5950,52 @@ function callHistoryItem(c){
       <span style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">${hsAgentTag(c)}${rec}${tag}${badge}</span>
     </div>${body}${summary}${topics}
   </div>`;
+}
+let _histLoaded={};
+// One contact's full recent calls + SMS from HubSpot, merged into the lead. Dedups
+// against what the bulk refresh already attached, by type + timestamp within 60s.
+async function loadLeadHistory(lid,contactId){
+  if(_histLoaded[lid])return;
+  const lead=_hsLeads.find(x=>x.id===lid||x.id==lid);
+  if(!lead)return;
+  try{
+    const r=await fetch('/api/hs-leads',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({historyContactId:String(contactId),historyDays:30})});
+    if(!r.ok)return;
+    const d=await r.json();
+    if(d.error)return;
+    Object.assign(_hsAgentNames,d.owners||{});
+    const incoming=[...(d.calls||[]),...(d.messages||[])];
+    const have=lead.calls||[];
+    const isSms=c=>c.type!=='call';
+    const dup=n=>have.some(h=>isSms(h)===isSms(n)&&Math.abs(hsTs(h.timestamp)-hsTs(n.timestamp))<60000);
+    const added=incoming.filter(n=>!dup(n));
+    if(added.length){
+      lead.calls=[...have,...added].sort((x,y)=>hsTs(y.timestamp)-hsTs(x.timestamp));
+      _histLoaded[lid]=true;
+      if(typeof refreshLeadPanelActivity==='function')refreshLeadPanelActivity(lead);
+    }else{_histLoaded[lid]=true;}
+  }catch(e){/* history is additive — never block the panel */}
+}
+// Re-render the panel's SMS and Calls lists in place after history merges in.
+function refreshLeadPanelActivity(lead){
+  const pid=lead.id;
+  const isSms=c=>c.type==='sms'||c.type==='message'||(c.type||'').toLowerCase().includes('sms');
+  const smsEl=document.getElementById('comm-sms-list-'+pid);
+  const callEl=document.getElementById('comm-calls-list-'+pid);
+  if(callEl){
+    const cl=(lead.calls||[]).filter(c=>!isSms(c));
+    callEl.innerHTML=cl.length?cl.map(callHistoryItem).join('')
+      :'<div style="padding:14px;text-align:center;color:#9ca3af;font-size:.72rem;">No calls recorded</div>';
+  }
+  if(smsEl){
+    const ml=(lead.calls||[]).filter(isSms).sort((a,b)=>hsTs(a.timestamp)-hsTs(b.timestamp));
+    if(ml.length){smsEl.innerHTML=ml.map(smsBubble).join('');smsEl.scrollTop=smsEl.scrollHeight;}
+  }
+  const ct=document.getElementById('comm-tab-calls-'+pid);
+  if(ct)ct.textContent='📞 Calls ('+(lead.calls||[]).filter(c=>!isSms(c)).length+')';
+  const st=document.getElementById('comm-tab-msgs-'+pid);
+  if(st)st.textContent='💬 SMS ('+(lead.calls||[]).filter(isSms).length+')';
 }
 async function loadAircallData(lid,contactPhone){
   if(!contactPhone)return;
@@ -6231,16 +6290,6 @@ function renderHSLeads(){
     const nm=((l.contactName||l.subject||'Lead').split(' ')[0]).replace(/'/g,"\\'");
     const cid=l.contactId||'';
     const hasPhone=!!l.contactPhone;
-    const smsBubble=c=>{
-      const isOut=(c.direction||'').toUpperCase()!=='INBOUND';
-      const ts=c.timestamp?(()=>{const ms=hsTs(c.timestamp);return ms?new Date(ms).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):''})():'';
-      const body=(c.body||'').trim()||'(no message body)';
-      const src=c.source==='aircall'?'<span style="font-size:.55rem;background:#e0f2fe;color:#0369a1;padding:1px 5px;border-radius:4px;margin-left:4px;">Aircall</span>':'';
-      return `<div style="display:flex;flex-direction:column;align-items:${isOut?'flex-end':'flex-start'};margin-bottom:8px;">
-        <div style="max-width:82%;background:${isOut?'#ff7a59':'#f3f4f6'};color:${isOut?'#fff':'#111'};padding:8px 12px;border-radius:${isOut?'12px 12px 2px 12px':'12px 12px 12px 2px'};font-size:.75rem;line-height:1.5;">${body}</div>
-        <div style="font-size:.59rem;color:#9ca3af;margin-top:2px;display:flex;align-items:center;gap:4px;flex-wrap:wrap;">${isOut?'Out · ':'In · '}${ts}${src}${isOut?hsAgentTag(c):''}</div>
-      </div>`;
-    };
     // Loading placeholder — replaced by loadAircallData once Aircall responds
     const loadingPlaceholder='<div id="ac-loading-'+pid+'" style="padding:16px;text-align:center;color:#9ca3af;font-size:.72rem;">🔄 Loading history…</div>';
     const smsInitial=smsList.length>0?smsList.map(smsBubble).join('')+loadingPlaceholder:loadingPlaceholder;
@@ -6362,8 +6411,13 @@ function renderHSLeads(){
     const panel=document.getElementById('lead-side-panel');
     panel.style.display='flex';
     panel.scrollTop=0;
-    // Augment calls/SMS with Aircall data (async, non-blocking)
-    if(l.contactPhone)setTimeout(()=>loadAircallData(l.id,l.contactPhone),80);
+    // Pull this contact's full recent history (all agents, ours and the earlier
+    // team's) then let Aircall augment. The bulk refresh only carries today's
+    // activity — widening that made the refresh 117s, so it is fetched per lead.
+    if(l.contactId)loadLeadHistory(l.id,l.contactId).finally(()=>{
+      if(l.contactPhone)loadAircallData(l.id,l.contactPhone);
+    });
+    else if(l.contactPhone)setTimeout(()=>loadAircallData(l.id,l.contactPhone),80);
   };
   window.closeLeadPanel=function(){
     document.getElementById('lead-panel-overlay').style.display='none';
