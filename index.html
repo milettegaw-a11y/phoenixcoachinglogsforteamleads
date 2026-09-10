@@ -5794,8 +5794,18 @@ function avDismissKey(){return 'av_handled_'+((CU&&CU.agentName)||'agent');}
 function avLoadDismissed(){try{return new Set(JSON.parse(localStorage.getItem(avDismissKey())||'[]'));}catch(e){return new Set();}}
 function avSaveDismissed(set){try{localStorage.setItem(avDismissKey(),JSON.stringify([...set].slice(-500)));}catch(e){}}
 let _avDismissed=avLoadDismissed();
-function avTicketKey(t){const a=avLastActivity(t);return t.id+':'+(a?hsTs(a.timestamp):0);}
-function avHandled(t){_avDismissed.add(avTicketKey(t));avSaveDismissed(_avDismissed);renderAgentReplies();}
+function avTicketKey(t){if(!t||!t.id)return '';const a=avLastActivity(t);return String(t.id)+':'+(a?hsTs(a.timestamp):0);}
+// Takes the ticket ID, because that is what the button can pass through onclick.
+// It previously took the ticket object, so avTicketKey read .id off a string and
+// stored "undefined:0" — a key that never matched, and the card never cleared.
+function avHandled(pid){
+  const t=(_avReplies||[]).find(x=>String(x.id)===String(pid));
+  const key=avTicketKey(t);
+  if(!key)return;
+  _avDismissed.add(key);
+  avSaveDismissed(_avDismissed);
+  renderAgentReplies();
+}
 function avUnhandleAll(){_avDismissed=new Set();avSaveDismissed(_avDismissed);renderAgentReplies();}
 
 // Set the ticket outcome straight from the board. Closing as a Sale reveals the
