@@ -5735,6 +5735,24 @@ function avIsSms(c){return c.type!=='call';}
 function avLastActivity(t){
   return (t.calls||[]).slice().sort((a,b)=>hsTs(b.timestamp)-hsTs(a.timestamp))[0]||null;
 }
+// A 2nd Week ticket only counts for cadence on days 1-8. Past that it is still a
+// 2nd Week lead and still needs answering — it just no longer carries a cadence
+// obligation, so it is labelled rather than quietly filed with the inbound tickets.
+function avAgeDays(t){
+  const c=hsTs(((t.properties||{}).createdate)||0);
+  return c?Math.max(1,hsCdtDayIndex(Date.now())-hsCdtDayIndex(c)+1):1;
+}
+function avInCoverage(t){return avAgeDays(t)<=8;}
+// Which agent the customer was replying to — the last agent-side touch before the
+// inbound message. A lead can be reassigned to us after answering the earlier team.
+function avRepliedTo(t){
+  const acts=(t.calls||[]).slice().sort((a,b)=>hsTs(b.timestamp)-hsTs(a.timestamp));
+  for(let i=1;i<acts.length;i++){
+    const o=String(acts[i].ownerId||'');
+    if(o)return o;
+  }
+  return '';
+}
 function avCustomerSpokeLast(t){
   const last=avLastActivity(t);
   if(!last||(last.direction||'').toUpperCase()!=='INBOUND')return false;
@@ -5823,6 +5841,15 @@ function avReplyCard(t){
   const msg=last&&avIsSms(last)?String(last.body==null?'':last.body).trim():'';
   const kind=isW2?'2nd Week':(subj.replace(/\s+/g,' ')||'Ticket');
   const kindBg=isW2?'#fff3e0':'#eef2ff', kindFg=isW2?'#c2410c':'#4338ca';
+  const age=avAgeDays(t), inCov=avInCoverage(t);
+  const covChip=isW2
+    ?(inCov?`<span style="font-size:.55rem;font-weight:700;padding:1px 7px;border-radius:99px;background:#f3f4f6;color:#6b7280;white-space:nowrap;">Day ${age}</span>`
+           :`<span title="Past day 8 — still needs a reply, but no longer counts toward cadence" style="font-size:.55rem;font-weight:700;padding:1px 7px;border-radius:99px;background:#fef3c7;color:#b45309;white-space:nowrap;">Out of coverage · Day ${age}</span>`)
+    :'';
+  const prior=avRepliedTo(t);
+  const priorChip=(prior&&!HS_TEAM_OWNER_IDS.has(prior))
+    ?`<span title="The customer was answering ${hsAgentName({ownerId:prior})||'another team'}; the ticket is yours now" style="font-size:.55rem;font-weight:700;padding:1px 7px;border-radius:99px;background:#f3e8ff;color:#7e22ce;white-space:nowrap;">↗ replied to ${(hsAgentName({ownerId:prior})||'another team').split(' ')[0]}</span>`
+    :'';
   const stage=String(p.hs_pipeline_stage||'');
   const dnc=hsIsDnc(stage);
   const stBg=dnc?'#fee2e2':stage===HS_SALE_STAGE?'#dcfce7':'#f3f4f6';
@@ -5833,6 +5860,7 @@ function avReplyCard(t){
     <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
       <a href="https://app.hubspot.com/contacts/45809585/ticket/${t.id}" target="_blank" rel="noopener" style="font-size:.78rem;font-weight:700;color:#111;text-decoration:none;">${name} ↗</a>
       <span style="font-size:.55rem;font-weight:700;padding:1px 7px;border-radius:99px;background:${kindBg};color:${kindFg};white-space:nowrap;">${kind}</span>
+      ${covChip}${priorChip}
       <span title="Current ticket status in HubSpot" style="font-size:.55rem;font-weight:700;padding:1px 7px;border-radius:99px;background:${stBg};color:${stFg};white-space:nowrap;">${dnc?'⛔ ':''}${hsStageLabel(stage)}</span>
       <span style="margin-left:auto;font-size:.62rem;color:#16a34a;font-weight:700;white-space:nowrap;">replied ${when}</span>
     </div>
@@ -5863,7 +5891,8 @@ function renderAgentReplies(){
     .sort((a,b)=>hsTs((avLastActivity(b)||{}).timestamp)-hsTs((avLastActivity(a)||{}).timestamp));
   const all=replied.filter(t=>!_avDismissed.has(avTicketKey(t)));
   const hiddenCount=replied.length-all.length;
-  const w2 =all.filter(t=>((t.properties||{}).subject||'').trim().toLowerCase()===HS_SUBJECT_2ND_WEEK.toLowerCase());
+  const w2 =all.filter(t=>((t.properties||{}).subject||'').trim().toLowerCase()===HS_SUBJECT_2ND_WEEK.toLowerCase())
+    .sort((a,b)=>(avInCoverage(b)?1:0)-(avInCoverage(a)?1:0));   // in-coverage first
   const oth=all.filter(t=>((t.properties||{}).subject||'').trim().toLowerCase()!==HS_SUBJECT_2ND_WEEK.toLowerCase());
   const col=(title,hint,list)=>`
     <div style="min-width:0;">
@@ -5875,7 +5904,7 @@ function renderAgentReplies(){
       ${list.length?list.map(avReplyCard).join(''):'<div style="font-size:.72rem;color:#9ca3af;padding:10px 0;">No replies in the last 24 hours.</div>'}
     </div>`;
   el.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;">
-      ${col('2nd Week — replied','Your cadence leads who answered in the last 24h',w2)}
+      ${col('2nd Week — replied',`Answered in the last 24h · ${w2.filter(avInCoverage).length} in coverage, ${w2.length-w2.filter(avInCoverage).length} past day 8`,w2)}
       ${col('Other tickets — replied','Inbound SMS/Call and anything not 2nd Week, last 24h',oth)}
     </div>
     ${hiddenCount?`<div style="margin-top:12px;padding-top:10px;border-top:1px solid #f0f0f0;font-size:.68rem;color:#9ca3af;">
