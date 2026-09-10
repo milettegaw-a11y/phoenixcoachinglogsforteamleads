@@ -5696,6 +5696,99 @@ function toggleCadAgentRow(safeId){
 let _cadTrendChart=null;
 
 let _agentCadTrendChart=null;
+/* ── Waiting On You board ────────────────────────────────────────────────────
+   Leads where the CUSTOMER spoke last, so the ball is in the agent's court.
+   Deliberately its own data path: it fetches the agent's tickets across ALL
+   subjects (the main board is filtered to 2nd Week, which hides the Inbound
+   SMS/Call tickets they also carry) into _avReplies, and never touches _hsLeads.
+   Cadence is measured only from _hsLeads, so nothing here can move a compliance
+   number — replying to an inbound message is not a cadence dial.                */
+let _avReplies=null;          // null = not loaded yet
+let _avRepliesLoading=false;
+const AV_REPLY_DAYS=14;
+function avIsSms(c){return c.type!=='call';}
+function avLastActivity(t){
+  return (t.calls||[]).slice().sort((a,b)=>hsTs(b.timestamp)-hsTs(a.timestamp))[0]||null;
+}
+function avCustomerSpokeLast(t){
+  const last=avLastActivity(t);
+  return !!last&&(last.direction||'').toUpperCase()==='INBOUND';
+}
+async function loadAgentReplies(force){
+  if(_avRepliesLoading)return;
+  if(_avReplies&&!force)return renderAgentReplies();
+  const oid=Object.keys(HS_OWNERS).find(k=>HS_OWNERS[k]===(CU&&CU.agentName));
+  if(!oid){_avReplies=[];return renderAgentReplies();}
+  _avRepliesLoading=true; renderAgentReplies();
+  const out=[]; let after;
+  try{
+    do{
+      const body={filterGroups:[{filters:[
+        {propertyName:'hs_pipeline',operator:'EQ',value:HS_PIPELINE_SEG},
+        {propertyName:'createdate',operator:'GTE',value:String(Date.now()-AV_REPLY_DAYS*86400000)},
+        {propertyName:'hubspot_owner_id',operator:'EQ',value:oid}
+      ]}],
+      properties:['subject','hs_pipeline_stage','hubspot_owner_id','createdate'],
+      limit:100,sorts:[{propertyName:'createdate',direction:'DESCENDING'}]};
+      if(after)body.after=after;
+      const r=await fetch('/api/hs-leads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      if(!r.ok)break;
+      const d=await r.json();
+      if(d.error)break;
+      Object.assign(_hsAgentNames,d.owners||{});
+      out.push(...(d.results||[]));
+      after=d.paging?.next?.after;
+    }while(after&&out.length<600);
+    _avReplies=out;
+  }catch(e){ _avReplies=_avReplies||[]; }
+  finally{ _avRepliesLoading=false; renderAgentReplies(); }
+}
+function avReplyCard(t){
+  const p=t.properties||{};
+  const subj=(p.subject||'').trim();
+  const isW2=subj.toLowerCase()===HS_SUBJECT_2ND_WEEK.toLowerCase();
+  const name=(t.contactName||subj||'Lead').replace(/</g,'&lt;');
+  const last=avLastActivity(t);
+  const when=last?hsRelTime(last.timestamp):'';
+  const msg=last&&avIsSms(last)?String(last.body==null?'':last.body).trim():'';
+  const kind=isW2?'2nd Week':(subj.replace(/\s+/g,' ')||'Ticket');
+  const kindBg=isW2?'#fff3e0':'#eef2ff', kindFg=isW2?'#c2410c':'#4338ca';
+  return `<a href="https://app.hubspot.com/contacts/45809585/ticket/${t.id}" target="_blank" rel="noopener"
+    style="display:block;background:#fff;border:1px solid #e5e7eb;border-left:3px solid #22c55e;border-radius:0 8px 8px 0;padding:10px 12px;margin-bottom:8px;text-decoration:none;color:inherit;"
+    onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='#fff'">
+    <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
+      <span style="font-size:.78rem;font-weight:700;color:#111;">${name}</span>
+      <span style="font-size:.55rem;font-weight:700;padding:1px 7px;border-radius:99px;background:${kindBg};color:${kindFg};white-space:nowrap;">${kind}</span>
+      <span style="margin-left:auto;font-size:.62rem;color:#16a34a;font-weight:700;white-space:nowrap;">replied ${when}</span>
+    </div>
+    ${msg?`<div style="font-size:.72rem;color:#57534e;line-height:1.45;">“${msg.length>110?msg.slice(0,110)+'…':msg}”</div>`
+         :`<div style="font-size:.72rem;color:#9ca3af;font-style:italic;">Inbound call — no message text</div>`}
+  </a>`;
+}
+function renderAgentReplies(){
+  const el=document.getElementById('av-replies-body');
+  if(!el)return;
+  if(_avRepliesLoading&&!_avReplies){
+    el.innerHTML='<div style="color:#9ca3af;font-size:.78rem;padding:18px 0;text-align:center;">Checking who replied…</div>';return;
+  }
+  const all=(_avReplies||[]).filter(avCustomerSpokeLast)
+    .sort((a,b)=>hsTs((avLastActivity(b)||{}).timestamp)-hsTs((avLastActivity(a)||{}).timestamp));
+  const w2 =all.filter(t=>((t.properties||{}).subject||'').trim().toLowerCase()===HS_SUBJECT_2ND_WEEK.toLowerCase());
+  const oth=all.filter(t=>((t.properties||{}).subject||'').trim().toLowerCase()!==HS_SUBJECT_2ND_WEEK.toLowerCase());
+  const col=(title,hint,list)=>`
+    <div style="min-width:0;">
+      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px;">
+        <span style="font-size:.74rem;font-weight:700;color:#374151;">${title}</span>
+        <span style="font-size:.62rem;font-weight:700;color:#fff;background:${list.length?'#22c55e':'#d1d5db'};border-radius:99px;padding:1px 8px;">${list.length}</span>
+      </div>
+      <div style="font-size:.63rem;color:#9ca3af;margin-bottom:8px;">${hint}</div>
+      ${list.length?list.map(avReplyCard).join(''):'<div style="font-size:.72rem;color:#9ca3af;padding:10px 0;">Nobody waiting here.</div>'}
+    </div>`;
+  el.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;">
+      ${col('2nd Week — replied','Your cadence leads who answered back',w2)}
+      ${col('Other tickets — replied','Inbound SMS/Call and anything not 2nd Week',oth)}
+    </div>`;
+}
 // Not-Contacted chips, and the Day 1-8 filter over them. An agent can carry 170+
 // uncontacted leads at once; without a day filter the oldest ones — the ones about
 // to age out — are buried under a wall of Day 1 chips.
@@ -5774,11 +5867,20 @@ async function renderAgentCadence(){
         <div style="font-size:.65rem;color:#9ca3af;font-weight:600;margin-top:4px;text-transform:uppercase;">Not Contacted</div>
       </div>
     </div>
+    <div style="background:#fff;border:1.5px solid #bbf7d0;border-radius:10px;padding:16px;margin-bottom:20px;">
+      <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:2px;">
+        <div style="font-size:.82rem;font-weight:700;color:#374151;">💬 Waiting On You</div>
+        <button type="button" onclick="loadAgentReplies(true)" style="margin-left:auto;padding:3px 10px;font-size:.65rem;font-weight:700;color:#16a34a;background:#fff;border:1px solid #bbf7d0;border-radius:99px;cursor:pointer;font-family:inherit;">↻ Refresh</button>
+      </div>
+      <div style="font-size:.7rem;color:#9ca3af;margin-bottom:12px;">Leads where the customer spoke last — they are waiting on a reply. Not part of your cadence.</div>
+      <div id="av-replies-body"><div style="color:#9ca3af;font-size:.78rem;padding:18px 0;text-align:center;">Checking who replied…</div></div>
+    </div>
     <div style="background:#fff;border:1.5px solid ${gaps>0?'#fca5a5':'#86efac'};border-radius:10px;padding:16px;margin-bottom:20px;">
       <div style="font-size:.82rem;font-weight:700;color:#374151;margin-bottom:10px;">⚠️ Not Contacted Leads</div>
       ${gapHtml}
     </div>
 `;
+  loadAgentReplies();   // own fetch, own state — never merged into _hsLeads
   // Load trend
   const msgEl=document.getElementById('agent-cad-trend-msg');
   const tctx=document.getElementById('agent-cad-trend-chart');
