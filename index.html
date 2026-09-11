@@ -3811,13 +3811,13 @@ const AGENTS=[
   {name:'Emmanuel Maturana',    h:'2026-06-01', tl:'Team Florence Llait'},
   {name:'Jennylyn Balagtas',    h:'2026-03-30', tl:'Team Florence Llait'},
   {name:'Melcah Paras',         h:'2026-03-09', tl:'Team Florence Llait'},
-  // ── Team Jersey Deguzman ──
-  {name:'Bienyl Salvador',      h:'2026-04-13', tl:'Team Jersey Deguzman'},
-  {name:'Edin Rivas',           h:'2026-04-06', tl:'Team Jersey Deguzman'},
+  // ── Former Team Jersey Deguzman — dissolved, agents reassigned ──
+  {name:'Bienyl Salvador',      h:'2026-04-13', tl:'Team Jhay Oglimen'},
   {name:'Jersey Deguzman',      h:'2024-01-01', tl:'Team Jhay Oglimen'},
-  {name:'Lance Dabu',           h:'2026-04-06', tl:'Team Jersey Deguzman'},
-  {name:'Leslie Logan',         h:'2026-04-13', tl:'Team Jersey Deguzman'},
-  {name:'Roxanne Hila',         h:'2026-04-13', tl:'Team Jersey Deguzman'},
+  {name:'Edin Rivas',           h:'2026-04-06', tl:'Team Jumz Delacruz'},
+  {name:'Lance Dabu',           h:'2026-04-06', tl:'Team Jumz Delacruz'},
+  {name:'Leslie Logan',         h:'2026-04-13', tl:'Team Jumz Delacruz'},
+  {name:'Roxanne Hila',         h:'2026-04-13', tl:'Team Jumz Delacruz'},
   // ── Team Jhay Oglimen ──
   {name:'Amer Ismael',          h:'2024-11-18', tl:'Team Jhay Oglimen'},
   {name:'Ericka Condecion',     h:'2026-03-23', tl:'Team Jhay Oglimen'},
@@ -3841,7 +3841,6 @@ const DEFAULT_TLS=[
   'Team Jhay Oglimen',
   'Team Jumz Delacruz',
   'Team Florence Llait',
-  'Team Jersey Deguzman',
   'Phoenix Transition Team',
   'Genevieve Palec',
   'Renilou Uyutuc',
@@ -5258,7 +5257,7 @@ let _hsTzFilter='';   // '' = every time zone; otherwise a TZ_ZONES key, or 'unk
 let _hsLeadSearch=''; // '' = no search filter
 let _hsGapsOnly=false; // true = show only leads lacking cadence
 // Only show leads assigned to these four teams
-const HS_ALLOWED_TEAMS=new Set(['Team Jhay Oglimen','Team Jumz Delacruz','Team Florence Llait','Team Jersey Deguzman']);
+const HS_ALLOWED_TEAMS=new Set(['Team Jhay Oglimen','Team Jumz Delacruz','Team Florence Llait']);
 const HS_ALLOWED_NAMES=new Set(AGENTS.filter(a=>HS_ALLOWED_TEAMS.has(a.tl)).map(a=>a.name.toLowerCase()));
 // Cadence plan: expected contacts per day (index = day number, 0 = unused)
 // Day 1=3, Day 2=3, Day 3=0(rest), Day 4=3, Day 5=3, Day 6=1, Day 7=3, Day 8=1
@@ -5532,7 +5531,7 @@ function renderCadDash(){
     const hm=d.toISOString().slice(11,16);
     tsEl.textContent='as of '+hm+' CDT';
   }
-  const teamColors={'Team Jhay Oglimen':'#3b82f6','Team Jumz Delacruz':'#22c55e','Team Florence Llait':'#f97316','Team Jersey Deguzman':'#a855f7'};
+  const teamColors={'Team Jhay Oglimen':'#3b82f6','Team Jumz Delacruz':'#22c55e','Team Florence Llait':'#f97316'};
   const defColors=['#3b82f6','#22c55e','#f97316','#a855f7','#ef4444','#14b8a6'];
   // TLs only see their own team; OMs see all
   const myTLTeam=CU&&!CU.isOM&&!CU.isAgentView&&TL_TEAM_MAP[CU.email]?TL_TEAM_MAP[CU.email]:null;
@@ -5569,7 +5568,7 @@ function renderCadDash(){
   // visibleLeads includes ALL leads for the header count; complianceLeads excludes REST/day-off leads
   const visibleLeads=(myTLTeam?_hsLeads.filter(l=>{const ag=rosterAgents.find(a=>a.name===l.ownerName);return ag&&ag.tl===myTLTeam;}):_hsLeads);
   const complianceLeads=visibleLeads.filter(l=>!l.isRestDay);
-  // Include all roster agents even with 0 leads so Jersey/Amer always appear
+  // Include all roster agents even with 0 leads so quiet agents still appear
   const agentRows=rosterAgents.filter(ag=>myTLTeam?ag.tl===myTLTeam:HS_ALLOWED_TEAMS.has(ag.tl)).map((ag,ti)=>{
     const al=complianceLeads.filter(l=>l.ownerName===ag.name);
     const color=teamColors[ag.tl]||defColors[ti%defColors.length];
@@ -8917,7 +8916,7 @@ async function renderCadAgentPanel(){
   });
 
   const compliantCount=rows.filter(r=>r.pct>=100).length;
-  const teamColors={'Team Jhay Oglimen':'#3b82f6','Team Jumz Delacruz':'#22c55e','Team Florence Llait':'#f97316','Team Jersey Deguzman':'#a855f7'};
+  const teamColors={'Team Jhay Oglimen':'#3b82f6','Team Jumz Delacruz':'#22c55e','Team Florence Llait':'#f97316'};
   const TH='padding:8px 12px;text-align:left;font-weight:700;color:#374151;border-bottom:2px solid #e5e7eb;font-size:.68rem;text-transform:uppercase;letter-spacing:.04em;';
   const TD='padding:8px 12px;border-bottom:1px solid #f3f4f6;vertical-align:middle;';
 
@@ -9075,7 +9074,7 @@ async function renderCadTrendChart() {
   }
   document.getElementById('cad-trend-empty').style.display = 'none';
   el.style.display = '';
-  const teamColors={'Team Jhay Oglimen':'#3b82f6','Team Jumz Delacruz':'#22c55e','Team Florence Llait':'#f97316','Team Jersey Deguzman':'#a855f7'};
+  const teamColors={'Team Jhay Oglimen':'#3b82f6','Team Jumz Delacruz':'#22c55e','Team Florence Llait':'#f97316'};
   const teams = [...HS_ALLOWED_TEAMS];
   const labels = history.map(h => h.dayLabel);
   const datasets = [
