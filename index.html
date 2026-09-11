@@ -13835,12 +13835,17 @@ document.addEventListener('keydown', function(e) {
    ═════════════════════════════════════════════════════════════════════════ */
 const CVR_TGT=3.0;
 const CVR_WIN={w2:7,w23:14,life:35};                 // days from ticket open to sale
+// Counted by date, not by the clock: a ticket opened on the 1st still counts if
+// it closes on the 8th, whatever time of day either happened. Both dates are
+// read on CDT boundaries, the same day the rest of the app runs on.
+function cvrDayIdx(ms){return Math.floor((ms-5*3600000)/86400000);}
+function cvrDaysBetween(aMs,bMs){return cvrDayIdx(bMs)-cvrDayIdx(aMs);}
 const CVR_CLOSED=['1072805490','1072805491','1072805492','1072805493','1072805494','1072805495'];
 const CVR_WK_EPOCH=Date.UTC(2016,0,4);               // WK1 Monday — matches the source sheets
 const CVR_TTL=10*60*1000;                            // a cached week is fresh for 10 minutes
 const CVR_POLL=3*60*1000;                            // how often we ask HubSpot for a new sale count
 const CVR_DRAWER=8;                                  // leads shown per agent in the drawer
-const CVR_SCHEMA=2;                                  // bump to make cached weeks rebuild
+const CVR_SCHEMA=3;                                  // bump to make cached weeks rebuild
 
 let _cvrData={};        // wk → snapshot
 let _cvrRevisit={};     // wk → {set:Set, checked:n, done:bool}
@@ -14003,15 +14008,16 @@ function cvrAggregate(wk,rows){
     if(sold){
       a.sales++;sales++;
       const c=Date.parse(p.createdate||''), cl=Date.parse(p.closed_date||'');
-      const age=(c&&cl)?(cl-c)/86400000:0;
+      const age=(c&&cl)?cvrDaysBetween(c,cl):0;
       if(age<=CVR_WIN.w2)a.w2++;
       if(age<=CVR_WIN.w23)a.w23++;
       if(age<=CVR_WIN.life)a.life++;
     }else if(CVR_CLOSED.indexOf(stage)>=0){a.lost++;}
     else{
       a.open++;
-      const day=Math.max(1,Math.floor((now-Date.parse(p.createdate||now))/86400000)+1);
-      if(day<=CVR_WIN.w2)a.openW2++;     // still able to land inside its own W2 window
+      const age=cvrDaysBetween(Date.parse(p.createdate||now),now);
+      const day=Math.max(1,age+1);       // day 1 is the day the ticket opened
+      if(age<=CVR_WIN.w2)a.openW2++;     // still able to land inside its own W2 window
       if(!isRev)a.list.push({id:String(t.id),name:null,
         stage:HS_STAGE_LABELS[stage]||'—',
         day:day,
@@ -14349,7 +14355,7 @@ function cvrDefsHtml(snap){
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:9px 18px;font-size:.68rem;color:#52525b;line-height:1.5;">
       <div><b style="color:#18181b;">Where the lead comes from</b><br>A HubSpot ticket in the Segmented pipeline titled “Sales Call Required (2nd Week)”, owned by a Cluster Lette agent. Leads never assigned to Phoenix are not in the cohort at all.</div>
       <div><b style="color:#18181b;">Which week it belongs to</b><br>The week the ticket was <b>created</b> — the lead entering its 2nd week. Monday to Sunday on CDT boundaries, numbered so WK${cvrCurWk()} is the week of ${new Date(cvrMonISO(cvrCurWk())+'T12:00:00Z').toLocaleDateString('en-US',{month:'long',day:'numeric',timeZone:'UTC'})}.</div>
-      <div><b style="color:#18181b;">How a sale is counted</b><br>Stage “Closed as a Sale”. <b>W2</b> counts it only if it closed within 7 days of the ticket opening, <b>W2&amp;3</b> within 14, <b>lifetime</b> within 35 — W2 through W6.</div>
+      <div><b style="color:#18181b;">How a sale is counted</b><br>Stage “Closed as a Sale”. <b>W2</b> counts it only if it closed within 7 days of the ticket opening, <b>W2&amp;3</b> within 14, <b>lifetime</b> within 35 — W2 through W6. Days are counted <b>by date, not by the clock</b>: a lead opened on the 1st still counts on the 8th, whatever time of day. Each lead has its own window, running from the day its own ticket opened.</div>
       <div><b style="color:#18181b;">Who is credited</b><br>The agent and team who <b>closed the sale</b>. Where a team lead has reassigned a ticket inside this app, both the lead and any sale on it follow the new agent; HubSpot ownership is untouched.</div>
       <div><b style="color:#18181b;">Revisited leads</b><br>An old lead that came back to the site already carries a ticket from before Phoenix. Those are left out of the lead count — they are not fresh leads — but a sale on one still counts. ${snap.revDone?`<b>${cvrNum(rev)}</b> excluded this week.`:'<span style="color:#b45309;">Audit still running.</span>'}</div>
       <div><b style="color:#18181b;">Rounding</b><br>Half up to one decimal: 1.65 shows as 1.7%, 1.80 stays 1.8%.</div>
@@ -14420,7 +14426,7 @@ function cvrDeficitHtml(snap,sc){
         <td style="${CVR_NTD}color:${(r.openW2||0)<r.deficit?'#b91c1c':'#71717a'};">${r.openW2||0}${(r.openW2||0)<r.deficit?' ⚠':''}</td></tr>`;}).join('')}</tbody>
     </table></div>
     <div style="padding:9px 12px;border-top:1px solid #f4f4f5;font-size:.65rem;color:#a1a1aa;">
-      W2 sales are those closed within 7 days of the ticket opening — 7×24 hours from the moment the ticket was created, measured per lead — which is the basis of the ${CVR_TGT}% target.
+      W2 sales are those closed within 7 days of the ticket opening, counted by date and not by the clock — a lead opened on the 1st still counts if it closes on the 8th, whatever time either happened. That is the basis of the ${CVR_TGT}% target.
       ⚠ marks an agent whose leads still inside their 7 days are fewer than their shortfall — they cannot reach ${CVR_TGT}% on this cohort even by closing every one of them.
     </div></div>`;
 }
@@ -14485,7 +14491,7 @@ function cvrWorkableHtml(snap,sc){
         ${open?cvrDrawerHtml(r,snap,sc,canAssign):''}`;}).join('')}</tbody>
     </table></div>
     <div style="padding:9px 12px;border-top:1px solid #f4f4f5;font-size:.65rem;color:#a1a1aa;">
-      Close rate required is the shortfall divided by the leads still inside their 7 days — only those can add to W2, which is what the ${CVR_TGT}% target measures. Leads past day ${CVR_WIN.w2} are still worth closing; the sale just lands outside this week's W2.
+      Close rate required is the shortfall divided by the leads still inside their 7 days — only those can add to W2, which is what the ${CVR_TGT}% target measures. Leads past that are still worth closing; the sale just lands outside this week's W2.
     </div></div>`;
 }
 function cvrDrawerHtml(r,snap,sc,canAssign){
@@ -14500,7 +14506,7 @@ function cvrDrawerHtml(r,snap,sc,canAssign){
           <span style="font-size:.72rem;font-weight:600;color:#18181b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${e(l.name||'(no name)')}</span>
           <span style="margin-left:auto;font-size:.63rem;font-weight:700;color:${l.quiet>=96?'#b91c1c':l.quiet>=48?'#b45309':'#71717a'};white-space:nowrap;">${l.quiet==null?'—':Math.round(l.quiet/24)+'d quiet'}</span></div>
         <div style="font-size:.62rem;color:#a1a1aa;margin-top:2px;">Day ${l.day} · ${e(l.stage)}
-          ${l.day>CVR_WIN.w2?'<span style="color:#b91c1c;font-weight:700;"> · past W2</span>':'<span style="color:#b45309;font-weight:700;"> · '+(CVR_WIN.w2-l.day+1)+'d left</span>'}</div>
+          ${l.day>CVR_WIN.w2+1?'<span style="color:#b91c1c;font-weight:700;"> · past W2</span>':'<span style="color:#b45309;font-weight:700;"> · '+(CVR_WIN.w2+2-l.day)+'d left</span>'}</div>
         ${l.ra?`<div style="margin-top:4px;font-size:.58rem;font-weight:700;color:#7c3aed;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:5px;padding:2px 6px;display:inline-block;">↔ reassigned from ${e(l.ra.fromName||'—')}</div>`:''}
         ${canAssign?`<div style="margin-top:5px;display:flex;gap:4px;align-items:center;" onclick="event.stopPropagation()">
           <select id="cvr-as-${l.id}" style="flex:1;min-width:0;border:1px solid #e4e4e7;border-radius:6px;padding:2px 5px;font-size:.62rem;font-family:inherit;color:#3f3f46;background:#fff;">
