@@ -14393,7 +14393,7 @@ function cvrDeficitHtml(snap,sc){
       <tbody>${Object.entries(teams).sort((a,b)=>b[1].deficit-a[1].deficit).map(([t,v])=>{
         const nd=Math.ceil(v.leads*CVR_TGT/100);
         return `<tr><td style="${CVR_TD}font-weight:600;color:#18181b;">${e(t)}</td>
-        <td style="${CVR_NTD}">${cvrNum(v.leads)}</td><td style="${CVR_NTD}color:#71717a;">${v.w2}${v.sales>v.w2?`<span style="font-size:.62rem;color:#a1a1aa;"> +${v.sales-v.w2}</span>`:''}</td>
+        <td style="${CVR_NTD}">${cvrNum(v.leads)}</td><td style="${CVR_NTD}color:#71717a;">${v.w2}</td>
         <td style="${CVR_NTD}font-weight:700;color:${cvrTone(cvrPct(v.w2,v.leads))};">${cvrP1(cvrPct(v.w2,v.leads))}</td>
         <td style="${CVR_NTD}color:#71717a;">${nd}</td>
         <td style="${CVR_NTD}font-weight:700;color:${nd-v.w2>0?'#b91c1c':'#15803d'};">${Math.max(0,nd-v.w2)||'met'}</td></tr>`;}).join('')}</tbody>
@@ -14413,14 +14413,14 @@ function cvrDeficitHtml(snap,sc){
         <td style="${CVR_TD}font-weight:600;color:#18181b;">${e(r.name)}${me?' <span style="font-size:.58rem;font-weight:700;color:#b45309;">YOU</span>':''}</td>
         <td style="${CVR_TD}font-size:.7rem;color:#71717a;white-space:nowrap;">${e(cvrTeamShort(r.team))}</td>
         <td style="${CVR_NTD}">${r.leads}</td>
-        <td style="${CVR_NTD}color:#71717a;">${r.w2}${r.sales>r.w2?`<span style="font-size:.62rem;color:#a1a1aa;" title="${r.sales-r.w2} more sale(s) closed after the 7-day window"> +${r.sales-r.w2}</span>`:''}</td>
+        <td style="${CVR_NTD}color:#71717a;">${r.w2}</td>
         <td style="${CVR_NTD}font-weight:700;color:${cvrTone(r.cvr)};">${cvrP1(r.cvr)}</td>
         <td style="${CVR_NTD}color:#71717a;">${r.need}</td>
         <td style="${CVR_NTD}font-weight:700;color:${r.deficit?'#b91c1c':'#15803d'};">${r.deficit||'met'}</td>
         <td style="${CVR_NTD}color:${(r.openW2||0)<r.deficit?'#b91c1c':'#71717a'};">${r.openW2||0}${(r.openW2||0)<r.deficit?' ⚠':''}</td></tr>`;}).join('')}</tbody>
     </table></div>
     <div style="padding:9px 12px;border-top:1px solid #f4f4f5;font-size:.65rem;color:#a1a1aa;">
-      W2 sales are those closed within 7 days of the ticket opening — the basis of the ${CVR_TGT}% target. A grey <b>+n</b> is sales that landed after that window: real revenue, but outside this measure.
+      W2 sales are those closed within 7 days of the ticket opening — 7×24 hours from the moment the ticket was created, measured per lead — which is the basis of the ${CVR_TGT}% target.
       ⚠ marks an agent whose leads still inside their 7 days are fewer than their shortfall — they cannot reach ${CVR_TGT}% on this cohort even by closing every one of them.
     </div></div>`;
 }
