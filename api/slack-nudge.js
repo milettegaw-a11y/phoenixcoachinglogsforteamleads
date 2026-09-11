@@ -1,0 +1,103 @@
+/* Slack nudge — tells one agent, in a DM, which of their leads have gone quiet.
+ *
+ * Needs a Slack bot token in the SLACK_BOT_TOKEN environment variable, with the
+ * chat:write scope, plus users:read.email if you want the app to find people by
+ * their work email instead of storing Slack member IDs.
+ *
+ * POST body:
+ *   agent     "Shimonni Pigaredo"      — who the nudge is about, used in the text
+ *   slackId   "U01ABCDEF"              — the Slack member ID to DM (optional)
+ *   email     "name@homeaglowsales.com"— looked up when slackId is missing
+ *   leads     [{id,name,quiet,day,stage,left}]
+ *   wk        558
+ *   from      "Jhay Oglimen"           — who is sending it
+ *   dry       true                     — render the message and return it, send nothing
+ *
+ * `dry` exists so the app can show the sender exactly what will land before it
+ * does, and so this route can be tested without messaging a real person.
+ */
+const PORTAL = '45809585';
+
+export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  const b = req.body || {};
+  const leads = Array.isArray(b.leads) ? b.leads.slice(0, 25) : [];
+  const agent = String(b.agent || '').trim();
+  const from  = String(b.from || '').trim();
+  const wk    = String(b.wk || '');
+  if (!agent)        return res.status(400).json({ error: 'No agent named.' });
+  if (!leads.length) return res.status(400).json({ error: 'No leads to nudge about.' });
+
+  // ── the message ───────────────────────────────────────────────────────────
+  const esc = s => String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const quietOf = l => {
+    const h = Number(l.quiet);
+    if (!isFinite(h)) return 'no activity logged';
+    return h < 48 ? Math.round(h) + 'h quiet' : Math.round(h / 24) + 'd quiet';
+  };
+  const line = l => {
+    const url  = 'https://app.hubspot.com/contacts/' + PORTAL + '/ticket/' + encodeURIComponent(l.id);
+    const bits = [quietOf(l)];
+    if (l.day)   bits.push('day ' + l.day);
+    if (l.stage) bits.push(esc(l.stage));
+    if (l.left)  bits.push('*' + esc(l.left) + '*');
+    return '• <' + url + '|' + esc(l.name || 'Lead ' + l.id) + '>  —  ' + bits.join(' · ');
+  };
+  const headline = leads.length === 1
+    ? '1 of your leads has gone quiet'
+    : leads.length + ' of your leads have gone quiet';
+  const body =
+    '*' + headline + '*' + (wk ? '  ·  WK' + wk : '') + '\n' +
+    '_Still open, still inside the 7-day window that counts toward CVR. Ranked by time since the last logged activity._\n\n' +
+    leads.map(line).join('\n') +
+    '\n\n_Sent by ' + (esc(from) || 'a team lead') + ' from the Phoenix Coaching Log. Tap a name to open the ticket in HubSpot._';
+  const fallback = headline + (wk ? ' (WK' + wk + ')' : '');
+
+  if (b.dry) return res.status(200).json({ dry: true, text: body, leads: leads.length });
+
+  const TOKEN = process.env.SLACK_BOT_TOKEN;
+  if (!TOKEN) return res.status(503).json({
+    error: 'Slack is not connected yet. Add a SLACK_BOT_TOKEN environment variable in Vercel (scopes: chat:write, users:read.email) and redeploy.',
+    needsSetup: true
+  });
+
+  const slack = async (method, payload) => {
+    const r = await fetch('https://slack.com/api/' + method, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json; charset=utf-8', Authorization: 'Bearer ' + TOKEN },
+      body: JSON.stringify(payload)
+    });
+    return r.json();
+  };
+
+  try {
+    let channel = String(b.slackId || '').trim();
+    if (!channel) {
+      const email = String(b.email || '').trim();
+      if (!email) return res.status(400).json({
+        error: 'No Slack member ID or email for ' + agent + '. Add one in the nudge dialog.',
+        needsSetup: true
+      });
+      const look = await slack('users.lookupByEmail', { email });
+      if (!look.ok || !look.user) return res.status(404).json({
+        error: 'Slack could not find anyone at ' + email + (look.error ? ' (' + look.error + ')' : ''),
+        needsSetup: true
+      });
+      channel = look.user.id;
+    }
+    const post = await slack('chat.postMessage', {
+      channel, text: fallback, unfurl_links: false, unfurl_media: false,
+      blocks: [{ type: 'section', text: { type: 'mrkdwn', text: body } }]
+    });
+    if (!post.ok) return res.status(502).json({ error: 'Slack refused the message: ' + (post.error || 'unknown') });
+    return res.status(200).json({ ok: true, channel, ts: post.ts, leads: leads.length });
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
+}
