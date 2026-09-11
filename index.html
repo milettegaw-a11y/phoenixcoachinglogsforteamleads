@@ -11430,9 +11430,10 @@ let tt;
    It never writes an answer of its own — if nothing scores well enough it
    says so and offers the closest articles, so a wrong answer is never
    invented and read out to a customer.                                    */
-let _ahIdx=null, _ahLang='en', _ahOpen=false, _ahTurn=0;
+let _ahIdx=null, _ahLang='en', _ahOpen=false, _ahTurn=0, _ahDf={}, _ahN=0;
 const AH_STOP=new Set(('the a an is are am do does did can could i my me we our you your to of for in on at it its with and or be been will would should they them their about when what how why where who if no not yes so as from have has had any there this that these those please help need want tell say').split(' ')
-  .concat('ang ng mga sa ay ba po ako namin natin kung ano paano bakit saan sino yung yun may meron dapat pwede ito iyan'.split(' ')));
+  .concat('ang ng mga sa ay ba po ako namin natin kung ano paano bakit saan sino yung yun may meron dapat pwede ito iyan'.split(' '))
+  .concat(['homeaglow','homeglow','glow']));
 // Words agents actually use, mapped onto the vocabulary the articles use.
 const AH_SYN={
   price:['cost','costs','fee','fees','charge','charges','rate','rates','expensive','pricing','magkano','presyo','bayad','price'],
@@ -11447,7 +11448,7 @@ const AH_SYN={
   booking:['book','booking','schedule','scheduling','appointment','reschedule','rebook','slot'],
   cleaner:['cleaner','cleaners','pro','professional','maid','housekeeper','tagalinis'],
   insured:['insured','insurance','bonded','bond','liability','damage','broke','broken'],
-  pets:['pet','pets','dog','dogs','cat','cats','litter','animal'],
+  pets:['pet','pets','dog','dogs','cat','cats','litter','animal','poop','mess','waste','accident','fur','hair'],
   laundry:['laundry','ironing','iron','clothes','washing'],
   windows:['window','windows','blinds','vents','vent','fan','fans','ceiling'],
   outside:['garage','patio','porch','yard','outdoor','outside','balcony'],
@@ -11470,13 +11471,13 @@ function ahStrip(h){return String(h||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,
 // synonym map carry less, so "15% fee" still lands on the 15% article rather
 // than every article that mentions pricing.
 function ahTok(q){
-  const raw=String(q||'').toLowerCase().replace(/[^a-z0-9\s]/g,' ').split(/\s+/).filter(Boolean);
+  const raw=String(q||'').toLowerCase().replace(/['\u2018\u2019]/g,'').replace(/[^a-z0-9\s]/g,' ').split(/\s+/).filter(Boolean);
   const w={};
   raw.forEach(t=>{
     if(AH_STOP.has(t)||t.length<2)return;
     w[t]=1;
     (AH_SYN_LOOKUP[t]||[]).forEach(k=>AH_SYN[k].forEach(sy=>{
-      if(sy.indexOf(' ')<0&&!w[sy])w[sy]=0.4;
+      if(sy.indexOf(' ')<0&&!w[sy])w[sy]=0.5;
     }));
   });
   return Object.keys(w).map(t=>({t,w:w[t]}));
@@ -11508,27 +11509,53 @@ function ahIndex(){
       text:(label+' '+fields.map(f=>f.k+' '+f.v).join(' ')).toLowerCase(),
       html:html,htmlAlt:''});
   });
+  out.forEach(it=>{
+    it.titleN=ahNorm(it.title+' '+(it.titleAlt||''));
+    it.tagsN =ahNorm(it.tags);
+    it.textN =ahNorm(it.text);
+  });
+  // Down-weight words that appear all over the library — "homeaglow", "cleaning",
+  // "cleaner". They carry no signal about WHICH article is wanted, and on their
+  // own they were enough to push an out-of-scope question over the threshold.
+  const df={};
+  out.forEach(it=>{
+    new Set((it.title+' '+it.titleAlt+' '+it.tags).toLowerCase().match(/[a-z0-9]+/g)||[])
+      .forEach(w=>{df[w]=(df[w]||0)+1;});
+  });
+  const n=out.length;
+  _ahDf=df; _ahN=n;
   _ahIdx=out;
   return out;
 }
+// 1 for a word unique to one article, sliding to ~0 for one that is everywhere.
+function ahIdf(t){
+  if(!_ahN)return 1;
+  const d=_ahDf[t]||0;
+  if(!d)return 1;
+  return Math.max(0.06,Math.min(1,Math.log(_ahN/d)/Math.log(_ahN/1.5)));
+}
+function ahNorm(t){return ' '+String(t||'').toLowerCase().replace(/['\u2018\u2019]/g,'').replace(/[^a-z0-9]+/g,' ').trim()+' ';}
+const AH_MIN_SCORE=20;      // below this the helper says it does not know
+const AH_MIN_IDF=0.35;      // and it must be a word that actually picks an article
+const AH_SURE_SCORE=55;     // below this the answer is offered as the closest match, not the answer
 function ahSearch(q){
   const toks=ahTok(q);
   if(!toks.length)return [];
   const ql=String(q).toLowerCase().trim();
   return ahIndex().map(it=>{
-    let s=0,body=0;
-    const title=it.title.toLowerCase()+' '+(it.titleAlt||'').toLowerCase();
+    let s=0,body=0,strong=false;
     toks.forEach(o=>{
-      const t=o.t;
-      const rx=new RegExp('\\b'+t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b');
-      if(rx.test(title))s+=12*o.w;       // the article is *about* this word
-      else if(title.indexOf(t)>=0)s+=8*o.w;
-      if(it.tags.indexOf(t)>=0)s+=6*o.w;
-      else if(it.text.indexOf(t)>=0)body+=2*o.w;
+      const t=o.t, idf=ahIdf(t), w=o.w*idf, pad=' '+t+' ';
+      let hit=false;
+      if(it.titleN.indexOf(pad)>=0){s+=16*w;hit=true;}      // the article is *about* this word
+      else if(it.titleN.indexOf(t)>=0){s+=11*w;hit=true;}
+      if(it.tagsN.indexOf(pad)>=0){s+=8*w;hit=true;}
+      else if(it.textN.indexOf(pad)>=0)body+=2.5*w;
+      if(hit&&idf>=AH_MIN_IDF&&(o.w===1||idf>=0.55))strong=true;   // a word that actually picks an article
     });
     s+=Math.min(body,10);                // a long article shouldn't win on bulk alone
-    if(ql.length>8&&it.text.indexOf(ql)>=0)s+=14;   // near-verbatim question
-    return {it,s:Math.round(s)};
+    if(ql.length>8&&it.text.indexOf(ql)>=0){s+=14;strong=true;}   // near-verbatim question
+    return {it,s:Math.round(s),strong};
   }).filter(r=>r.s>0).sort((a,b)=>b.s-a.s);
 }
 function ahEsc(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
@@ -11548,7 +11575,7 @@ function ahAnswer(q){
   const hits=ahSearch(q);
   const top=hits[0];
   // Nothing scored on a title or a tag — say so instead of guessing.
-  if(!top||top.s<8){
+  if(!top||top.s<AH_MIN_SCORE||!top.strong){
     const near=hits.slice(0,3);
     ahBubbleBot(`<div style="font-weight:600;margin-bottom:5px;">I don't have that in the knowledge base.</div>
       <div style="color:#78716c;font-size:.74rem;">Everything here comes from the 36 Knowledge Base articles and the rebuttal manual — if it isn't in there I won't guess at it. Check with your Team Lead, and ask them to add it.</div>
@@ -11556,9 +11583,11 @@ function ahAnswer(q){
     return;
   }
   const it=top.it;
+  const unsure=top.s<AH_SURE_SCORE;
   const useAlt=_ahLang==='fil'&&it.htmlAlt;
-  const rel=hits.slice(1,4).filter(h=>h.s>=6);
+  const rel=hits.slice(1,4).filter(h=>h.s>=AH_MIN_SCORE*0.55&&h.strong);
   ahBubbleBot(`
+    ${unsure?'<div style="font-size:.66rem;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:4px 8px;margin-bottom:7px;">Closest article I have — check it actually answers the question.</div>':''}
     <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:6px;flex-wrap:wrap;">
       <span>${it.icon}</span><span style="font-weight:700;">${ahEsc(it.title)}</span>
       <span style="margin-left:auto;font-size:.6rem;font-weight:700;color:#a8a29e;text-transform:uppercase;letter-spacing:.05em;">${it.src}</span>
