@@ -4568,7 +4568,7 @@ function finishLogin(email){
   // ── OM ──
   if(email===OM){
     try{
-      CU={email,role:'Operations Manager',isOM:true};
+      CU={email,role:'Operations Manager',isOM:true}; ahSync();
       document.getElementById('login-page').style.display='none';
       document.getElementById('app').classList.add('on');
       document.getElementById('hdr-user').textContent='Operations Manager';
@@ -4589,7 +4589,7 @@ function finishLogin(email){
   // ── TEAM LEAD ──
   const tlTeam=TL_TEAM_MAP[email];
   if(tlTeam){
-    CU={email,role:tlTeam,isOM:false};
+    CU={email,role:tlTeam,isOM:false}; ahSync();
     document.getElementById('login-page').style.display='none';
     document.getElementById('app').classList.add('on');
     document.getElementById('hdr-user').textContent=tlTeam;
@@ -4604,7 +4604,7 @@ function finishLogin(email){
 
   // ── AGENT ──
   const agentName=EMAIL_TO_AGENT[email]||email.split('@')[0];
-  CU={email,role:agentName,isOM:false,isAgentView:true,agentName};
+  CU={email,role:agentName,isOM:false,isAgentView:true,agentName}; ahSync();
   document.getElementById('login-page').style.display='none';
   document.getElementById('app').classList.add('on');
   document.getElementById('hdr-user').textContent=agentName;
@@ -7804,6 +7804,12 @@ document.addEventListener('keydown',ev=>{
 function showView(id){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+  ahSync();
+}
+// The helper belongs to a signed-in session, so it only appears once CU is set.
+function ahSync(){
+  const l=document.getElementById('ah-launch');
+  if(l)l.style.display=(typeof CU!=='undefined'&&CU&&!_ahOpen)?'flex':'none';
 }
 
 function toggleSbGroup(id,lbl){
@@ -11417,6 +11423,197 @@ document.addEventListener('click',ev=>{
 });
 
 let tt;
+/* ── ASK HOMEAGLOW — in-page service helper ───────────────────────────────
+   Agents get service questions mid-call and need the approved answer, not a
+   paraphrase. This answers only from what the app already carries: the 36
+   Knowledge Base articles and the 11 objection cards in the rebuttal manual.
+   It never writes an answer of its own — if nothing scores well enough it
+   says so and offers the closest articles, so a wrong answer is never
+   invented and read out to a customer.                                    */
+let _ahIdx=null, _ahLang='en', _ahOpen=false, _ahTurn=0;
+const AH_STOP=new Set(('the a an is are am do does did can could i my me we our you your to of for in on at it its with and or be been will would should they them their about when what how why where who if no not yes so as from have has had any there this that these those please help need want tell say').split(' ')
+  .concat('ang ng mga sa ay ba po ako namin natin kung ano paano bakit saan sino yung yun may meron dapat pwede ito iyan'.split(' ')));
+// Words agents actually use, mapped onto the vocabulary the articles use.
+const AH_SYN={
+  price:['cost','costs','fee','fees','charge','charges','rate','rates','expensive','pricing','magkano','presyo','bayad','price'],
+  payment:['pay','paying','card','visa','mastercard','paypal','billing','charged','payment'],
+  refund:['refund','money back','reimburse','chargeback'],
+  membership:['membership','member','subscription','subscribe','plan','monthly fee'],
+  cancel:['cancel','cancellation','pause','stop','quit','end','terminate','unsubscribe'],
+  supplies:['supplies','supply','equipment','tools','vacuum','mop','bucket','products','chemicals','bring','brings','dala'],
+  included:['included','include','includes','covered','cover','covers','kasama','scope'],
+  premium:['premium','extra','add on','addon','addons','additional','upgrade'],
+  hours:['hour','hours','oras','duration','long','time','voucher'],
+  booking:['book','booking','schedule','scheduling','appointment','reschedule','rebook','slot'],
+  cleaner:['cleaner','cleaners','pro','professional','maid','housekeeper','tagalinis'],
+  insured:['insured','insurance','bonded','bond','liability','damage','broke','broken'],
+  pets:['pet','pets','dog','dogs','cat','cats','litter','animal'],
+  laundry:['laundry','ironing','iron','clothes','washing'],
+  windows:['window','windows','blinds','vents','vent','fan','fans','ceiling'],
+  outside:['garage','patio','porch','yard','outdoor','outside','balcony'],
+  tip:['tip','tips','tipping','gratuity'],
+  referral:['refer','referral','referred','credit','friend'],
+  same:['same','consistent','regular','favorite','favourite','preferred','repeat'],
+  language:['english','speak','speaking','language','communicate'],
+  late:['late','delay','delayed','no show','noshow','missed','absent'],
+  contact:['contact','message','reach','call','text','chat','support'],
+  location:['located','location','based','office','address','headquarters','where'],
+  spam:['spam','scam','fraud','flagged','blocked','suspicious'],
+  bedroom:['bedroom','bedrooms','room','rooms','den','office','studio'],
+  home:['home','house','present','away','key','lockbox','entry'],
+  tax:['tax','taxes','vat'],
+  deep:['deep','move out','moveout','move in','movein','construction']
+};
+const AH_SYN_LOOKUP=(()=>{const m={};for(const k in AH_SYN)AH_SYN[k].forEach(w=>{(m[w]=m[w]||[]).push(k);});return m;})();
+function ahStrip(h){return String(h||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();}
+// Words the agent actually typed carry full weight; words pulled in by the
+// synonym map carry less, so "15% fee" still lands on the 15% article rather
+// than every article that mentions pricing.
+function ahTok(q){
+  const raw=String(q||'').toLowerCase().replace(/[^a-z0-9\s]/g,' ').split(/\s+/).filter(Boolean);
+  const w={};
+  raw.forEach(t=>{
+    if(AH_STOP.has(t)||t.length<2)return;
+    w[t]=1;
+    (AH_SYN_LOOKUP[t]||[]).forEach(k=>AH_SYN[k].forEach(sy=>{
+      if(sy.indexOf(' ')<0&&!w[sy])w[sy]=0.4;
+    }));
+  });
+  return Object.keys(w).map(t=>({t,w:w[t]}));
+}
+// Built once, from the two bodies of approved content already in the page.
+function ahIndex(){
+  if(_ahIdx)return _ahIdx;
+  const out=[];
+  (typeof KB!=='undefined'?KB:[]).forEach(k=>{
+    out.push({id:'kb-'+k.id,src:'Knowledge Base',icon:k.icon||'📘',cat:k.cat,
+      title:k.q_en,titleAlt:k.q_fil,
+      tags:(k.tags||[]).join(' ').toLowerCase(),
+      text:(k.q_en+' '+k.q_fil+' '+ahStrip(k.a_en)).toLowerCase(),
+      html:k.a_en,htmlAlt:k.a_fil});
+  });
+  document.querySelectorAll('.rm-obj-card').forEach((c,i)=>{
+    const label=(c.querySelector('.rm-obj-label')||{}).textContent||('Objection '+(i+1));
+    const fields=[...c.querySelectorAll('.rm-obj-field')].map(f=>({
+      k:((f.querySelector('.rm-obj-field-label')||{}).textContent||'').trim(),
+      v:((f.querySelector('.rm-obj-field-val')||{}).textContent||'').trim()
+    })).filter(f=>f.v);
+    if(!fields.length)return;
+    const html='<div style="display:flex;flex-direction:column;gap:7px;">'+fields.map(f=>
+      `<div><div style="font-size:.6rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.05em;">${f.k}</div>
+       <div style="font-size:.76rem;color:#374151;line-height:1.5;">${f.v.replace(/</g,'&lt;')}</div></div>`).join('')+'</div>';
+    out.push({id:'obj-'+i,src:'Rebuttal manual',icon:'🛡',cat:'objection',
+      title:'Objection — '+label.replace(/^"|"$/g,''),titleAlt:'',
+      tags:('objection rebuttal '+label).toLowerCase(),
+      text:(label+' '+fields.map(f=>f.k+' '+f.v).join(' ')).toLowerCase(),
+      html:html,htmlAlt:''});
+  });
+  _ahIdx=out;
+  return out;
+}
+function ahSearch(q){
+  const toks=ahTok(q);
+  if(!toks.length)return [];
+  const ql=String(q).toLowerCase().trim();
+  return ahIndex().map(it=>{
+    let s=0,body=0;
+    const title=it.title.toLowerCase()+' '+(it.titleAlt||'').toLowerCase();
+    toks.forEach(o=>{
+      const t=o.t;
+      const rx=new RegExp('\\b'+t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b');
+      if(rx.test(title))s+=12*o.w;       // the article is *about* this word
+      else if(title.indexOf(t)>=0)s+=8*o.w;
+      if(it.tags.indexOf(t)>=0)s+=6*o.w;
+      else if(it.text.indexOf(t)>=0)body+=2*o.w;
+    });
+    s+=Math.min(body,10);                // a long article shouldn't win on bulk alone
+    if(ql.length>8&&it.text.indexOf(ql)>=0)s+=14;   // near-verbatim question
+    return {it,s:Math.round(s)};
+  }).filter(r=>r.s>0).sort((a,b)=>b.s-a.s);
+}
+function ahEsc(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function ahPush(html){
+  const b=document.getElementById('ah-msgs');
+  if(!b)return;
+  b.insertAdjacentHTML('beforeend',html);
+  b.scrollTop=b.scrollHeight;
+}
+function ahBubbleUser(t){
+  ahPush(`<div style="align-self:flex-end;max-width:86%;background:#ff7a59;color:#fff;border-radius:12px 12px 3px 12px;padding:7px 11px;font-size:.78rem;line-height:1.45;">${ahEsc(t)}</div>`);
+}
+function ahBubbleBot(inner){
+  ahPush(`<div style="align-self:flex-start;max-width:96%;background:#fff;border:1px solid #ececec;border-radius:12px 12px 12px 3px;padding:10px 12px;font-size:.78rem;line-height:1.5;color:#1c1917;">${inner}</div>`);
+}
+function ahAnswer(q){
+  const hits=ahSearch(q);
+  const top=hits[0];
+  // Nothing scored on a title or a tag — say so instead of guessing.
+  if(!top||top.s<8){
+    const near=hits.slice(0,3);
+    ahBubbleBot(`<div style="font-weight:600;margin-bottom:5px;">I don't have that in the knowledge base.</div>
+      <div style="color:#78716c;font-size:.74rem;">Everything here comes from the 36 Knowledge Base articles and the rebuttal manual — if it isn't in there I won't guess at it. Check with your Team Lead, and ask them to add it.</div>
+      ${near.length?`<div style="margin-top:8px;font-size:.7rem;color:#a8a29e;">Closest articles:</div>${near.map(h=>ahRelBtn(h.it)).join('')}`:''}`);
+    return;
+  }
+  const it=top.it;
+  const useAlt=_ahLang==='fil'&&it.htmlAlt;
+  const rel=hits.slice(1,4).filter(h=>h.s>=6);
+  ahBubbleBot(`
+    <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:6px;flex-wrap:wrap;">
+      <span>${it.icon}</span><span style="font-weight:700;">${ahEsc(it.title)}</span>
+      <span style="margin-left:auto;font-size:.6rem;font-weight:700;color:#a8a29e;text-transform:uppercase;letter-spacing:.05em;">${it.src}</span>
+    </div>
+    <div class="ah-ans">${useAlt?it.htmlAlt:it.html}</div>
+    ${it.htmlAlt?`<button type="button" onclick="ahFlip(this,'${it.id}')" style="margin-top:7px;font-size:.63rem;font-weight:700;color:#ff7a59;background:#fff;border:1px solid #ffd9cc;border-radius:99px;padding:2px 10px;cursor:pointer;font-family:inherit;">${useAlt?'🇺🇸 English':'🇵🇭 Filipino'}</button>`:''}
+    ${rel.length?`<div style="margin-top:9px;padding-top:7px;border-top:1px dashed #f0f0f0;"><div style="font-size:.62rem;font-weight:700;color:#a8a29e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Related</div>${rel.map(h=>ahRelBtn(h.it)).join('')}</div>`:''}`);
+}
+function ahRelBtn(it){
+  return `<button type="button" onclick="ahAsk(${JSON.stringify(it.title).replace(/"/g,'&quot;')})"
+    style="display:block;width:100%;text-align:left;margin-top:4px;font-size:.71rem;color:#44403c;background:#fafaf9;border:1px solid #ececec;border-radius:7px;padding:5px 9px;cursor:pointer;font-family:inherit;">${it.icon} ${ahEsc(it.title)}</button>`;
+}
+function ahFlip(btn,id){
+  const it=ahIndex().find(x=>x.id===id);
+  if(!it)return;
+  const box=btn.parentElement.querySelector('.ah-ans');
+  const showingAlt=btn.textContent.indexOf('English')>=0;
+  box.innerHTML=showingAlt?it.html:it.htmlAlt;
+  btn.textContent=showingAlt?'🇵🇭 Filipino':'🇺🇸 English';
+}
+function ahAsk(preset){
+  const inp=document.getElementById('ah-inp');
+  const q=(preset!=null?preset:(inp?inp.value:'')||'').trim();
+  if(!q)return;
+  if(inp&&preset==null)inp.value='';
+  ahBubbleUser(q);
+  if(/^(hi|hello|hey|kumusta|kamusta|good (morning|afternoon|evening))\b/i.test(q)&&q.length<24){
+    ahBubbleBot('Hello. Ask me anything about the Homeaglow service — what a clean includes, pricing and fees, bookings, cleaners, or how to handle an objection.');
+    return;
+  }
+  _ahTurn++;
+  setTimeout(()=>ahAnswer(q),90);
+}
+function ahChips(){
+  return ['What is included in the standard cleaning?','What is NOT included?','What is the 15% transaction fee for?',
+          'How many voucher hours should I recommend?','Are your cleaners bonded and insured?','Objection — too expensive']
+    .map(t=>`<button type="button" onclick="ahAsk(${JSON.stringify(t).replace(/"/g,'&quot;')})" style="font-size:.68rem;color:#44403c;background:#fff;border:1px solid #e7e5e4;border-radius:99px;padding:3px 10px;cursor:pointer;font-family:inherit;">${ahEsc(t)}</button>`).join('');
+}
+function ahToggle(){
+  const p=document.getElementById('ah-panel'), l=document.getElementById('ah-launch');
+  if(!p)return;
+  _ahOpen=!_ahOpen;
+  p.style.display=_ahOpen?'flex':'none';
+  if(l)l.style.display=_ahOpen?'none':'flex';
+  if(_ahOpen){
+    const b=document.getElementById('ah-msgs');
+    if(b&&!b.childElementCount){
+      const n=ahIndex().length;
+      ahBubbleBot(`Ask me anything about the Homeaglow cleaning service. I answer from the ${n} articles and objection cards already in this app — nothing invented.
+        <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:5px;">${ahChips()}</div>`);
+    }
+    const i=document.getElementById('ah-inp'); if(i)i.focus();
+  }
+}
+
 function toast(msg){
   const el=document.getElementById('toast');
   el.textContent=msg;el.classList.add('on');
@@ -13467,6 +13664,39 @@ document.addEventListener('keydown', function(e) {
       <button onclick="saveMyAction()" id="ma-save-btn" style="padding:8px 20px;background:#ff7a59;color:#fff;border:none;border-radius:8px;font-size:.8rem;font-weight:700;cursor:pointer;">Save Action</button>
     </div>
     <div id="ma-status" style="font-size:.72rem;color:#22c55e;text-align:center;min-height:16px;"></div>
+  </div>
+</div>
+<style>
+#ah-panel .ah-ans p{margin:0 0 6px;}
+#ah-panel .ah-ans table{width:100%;border-collapse:collapse;font-size:.7rem;margin:6px 0;}
+#ah-panel .ah-ans th,#ah-panel .ah-ans td{border:1px solid #ececec;padding:3px 6px;text-align:left;}
+#ah-panel .ah-ans ul,#ah-panel .ah-ans ol{margin:4px 0 6px;padding-left:18px;}
+#ah-panel .ah-ans li{margin-bottom:3px;}
+#ah-panel .ah-ans .spiel{background:#fffaf8;border-left:3px solid #ff7a59;border-radius:0 7px 7px 0;padding:7px 9px;margin:6px 0;}
+#ah-panel .ah-ans .spiel-lbl{font-size:.58rem;font-weight:700;color:#ff7a59;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;}
+#ah-msgs::-webkit-scrollbar{width:7px;} #ah-msgs::-webkit-scrollbar-thumb{background:#e7e5e4;border-radius:99px;}
+@media(max-width:520px){#ah-panel{left:12px!important;right:12px!important;width:auto!important;}}
+</style>
+<button id="ah-launch" onclick="ahToggle()" title="Ask about the Homeaglow service"
+  style="display:none;position:fixed;bottom:88px;right:22px;z-index:9990;align-items:center;gap:7px;background:#ff7a59;color:#fff;border:none;border-radius:99px;padding:11px 17px;font-size:.79rem;font-weight:700;font-family:inherit;cursor:pointer;box-shadow:0 4px 14px rgba(255,122,89,.4);">
+  <span style="font-size:1rem;">💬</span> Ask Homeaglow
+</button>
+<div id="ah-panel" style="display:none;position:fixed;bottom:88px;right:22px;width:390px;max-height:min(640px,78vh);z-index:9991;flex-direction:column;background:#fafaf9;border:1px solid #e7e5e4;border-radius:14px;box-shadow:0 10px 38px rgba(0,0,0,.18);overflow:hidden;">
+  <div style="display:flex;align-items:center;gap:8px;padding:12px 14px;background:#fff;border-bottom:1px solid #e7e5e4;">
+    <span style="font-size:1rem;">💬</span>
+    <div style="min-width:0;">
+      <div style="font-size:.84rem;font-weight:700;color:#1c1917;">Ask Homeaglow</div>
+      <div style="font-size:.63rem;color:#a8a29e;">Answers from the Knowledge Base &amp; rebuttal manual</div>
+    </div>
+    <button type="button" onclick="ahToggle()" title="Close"
+      style="margin-left:auto;background:none;border:none;font-size:1.05rem;color:#a8a29e;cursor:pointer;line-height:1;padding:2px 4px;font-family:inherit;">&times;</button>
+  </div>
+  <div id="ah-msgs" style="flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:9px;"></div>
+  <div style="display:flex;gap:6px;padding:10px;background:#fff;border-top:1px solid #e7e5e4;">
+    <input id="ah-inp" type="text" placeholder="e.g. what is not included?" onkeydown="if(event.key==='Enter')ahAsk();"
+      style="flex:1;font-size:.77rem;border:1px solid #e7e5e4;border-radius:9px;padding:8px 11px;outline:none;background:#fff;font-family:inherit;" />
+    <button type="button" onclick="ahAsk()"
+      style="padding:8px 15px;background:#ff7a59;color:#fff;border:none;border-radius:9px;font-size:.75rem;font-weight:700;cursor:pointer;font-family:inherit;">Ask</button>
   </div>
 </div>
 </body>
