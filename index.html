@@ -14460,7 +14460,7 @@ function cvrWorkableHtml(snap,sc){
         return `<tr onclick="cvrToggleDrawer('${r.id}')" style="cursor:pointer;">
         <td style="${CVR_TD}font-weight:600;color:#18181b;"><span style="display:inline-block;width:11px;color:#a1a1aa;font-size:.6rem;">${open?'▾':'▸'}</span>${e(r.name)}</td>
         <td style="${CVR_TD}font-size:.7rem;color:#71717a;white-space:nowrap;">${e(cvrTeamShort(r.team))}</td>
-        <td style="${CVR_TD}">${bar(r.open,r.lost,r.sales,r.leads)}<span style="margin-left:8px;font-size:.68rem;color:#a1a1aa;">${r.leads}</span></td>
+        <td style="${CVR_TD}white-space:nowrap;">${bar(r.open,r.lost,r.sales,r.leads)}<span style="margin-left:8px;font-size:.68rem;color:#a1a1aa;">${r.leads}</span></td>
         <td style="${CVR_NTD}font-weight:600;color:#2563eb;">${r.open}</td>
         <td style="${CVR_NTD}color:${r.deficit?'#b91c1c':'#15803d'};font-weight:700;">${r.deficit||'met'}</td>
         <td style="${CVR_NTD}">${r.deficit===0?'<span style="color:#15803d;font-weight:700;">target met</span>'
