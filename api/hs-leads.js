@@ -271,6 +271,107 @@ export default async function handler(req, res) {
     }
   }
 
+  // ── CVR cohort scan: ticket search only, no enrichment ─────────────────────
+  // One CVR week is ~4,000 tickets over ~40 pages. Running the association and
+  // activity enrichment the main path does on every one of those pages would
+  // take minutes and eat the HubSpot rate limit, and none of it is needed — the
+  // CVR maths reads four ticket properties. `cvrNames:true` resolves contact
+  // names, and is meant only for the handful of tickets the workable-leads
+  // drawer actually shows.
+  if (req.body && req.body.cvrScan) {
+    try {
+      const body = { ...req.body };
+      const wantNames = body.cvrNames === true;
+      delete body.cvrScan; delete body.cvrNames;
+      const r = await hsFetch('https://api.hubapi.com/crm/v3/objects/tickets/search', {
+        method: 'POST', headers: h, body: JSON.stringify(body)
+      });
+      const d = await r.json();
+      if (!r.ok) return res.status(r.status).json(d);
+      const rows = d.results || [];
+      if (wantNames && rows.length) {
+        const ids = rows.map(t => t.id);
+        const CHUNK = 100, chunks = [];
+        for (let i = 0; i < ids.length; i += CHUNK) chunks.push(ids.slice(i, i + CHUNK));
+        const parts = await Promise.all(chunks.map(c =>
+          hsFetch('https://api.hubapi.com/crm/v4/associations/tickets/contacts/batch/read', {
+            method: 'POST', headers: h, body: JSON.stringify({ inputs: c.map(id => ({ id })) })
+          }).then(x => x.json()).catch(() => ({ results: [] }))
+        ));
+        const ticketContact = {};
+        for (const p of parts) for (const a of (p.results || [])) {
+          const to = (a.to || [])[0];
+          if (to) ticketContact[a.from.id] = String(to.toObjectId);
+        }
+        const contacts = await batchRead(
+          'https://api.hubapi.com/crm/v3/objects/contacts/batch/read',
+          [...new Set(Object.values(ticketContact))], ['firstname', 'lastname']);
+        const nameOf = {};
+        for (const c of contacts) {
+          const p = c.properties || {};
+          nameOf[c.id] = [p.firstname, p.lastname].filter(Boolean).join(' ').trim();
+        }
+        for (const t of rows) {
+          const cid = ticketContact[t.id];
+          t.contactId = cid || null;
+          t.contactName = (cid && nameOf[cid]) || null;
+        }
+      }
+      return res.status(200).json({ results: rows, paging: d.paging, total: d.total });
+    } catch (e) {
+      return res.status(500).json({ error: e.message });
+    }
+  }
+
+  // ── CVR revisit audit: does each of these tickets' contacts have an earlier
+  // ticket in the same pipeline? A "revisited" lead is an old lead that came
+  // back to the site, so its contact carries a ticket from well before the one
+  // in the cohort. Takes up to 100 ticket ids and answers per ticket.
+  if (req.body && req.body.cvrRevisit) {
+    try {
+      const ids = (req.body.cvrRevisit || []).slice(0, 100).map(String);
+      const before = String(req.body.beforeMs || Date.now());
+      const pipeline = String(req.body.pipeline || '');
+      if (!ids.length) return res.status(200).json({ revisits: [] });
+      const assoc = await hsFetch('https://api.hubapi.com/crm/v4/associations/tickets/contacts/batch/read', {
+        method: 'POST', headers: h, body: JSON.stringify({ inputs: ids.map(id => ({ id })) })
+      }).then(x => x.json()).catch(() => ({ results: [] }));
+      const ticketContact = {}, contactTickets = {};
+      for (const a of (assoc.results || [])) {
+        const to = (a.to || [])[0];
+        if (!to) continue;
+        const cid = String(to.toObjectId);
+        ticketContact[a.from.id] = cid;
+        (contactTickets[cid] = contactTickets[cid] || []).push(a.from.id);
+      }
+      const cids = [...new Set(Object.values(ticketContact))];
+      if (!cids.length) return res.status(200).json({ revisits: [] });
+      const filters = [
+        { propertyName: 'associations.contact', operator: 'IN', values: cids },
+        { propertyName: 'createdate', operator: 'LT', value: before }
+      ];
+      if (pipeline) filters.push({ propertyName: 'hs_pipeline', operator: 'EQ', value: pipeline });
+      const prior = await searchAll('https://api.hubapi.com/crm/v3/objects/tickets/search', {
+        filterGroups: [{ filters }], properties: ['createdate'], limit: 100
+      }, 600);
+      // Which contacts have any prior ticket at all
+      const priorAssoc = prior.length ? await hsFetch(
+        'https://api.hubapi.com/crm/v4/associations/tickets/contacts/batch/read', {
+          method: 'POST', headers: h,
+          body: JSON.stringify({ inputs: prior.slice(0, 100).map(t => ({ id: t.id })) })
+        }).then(x => x.json()).catch(() => ({ results: [] })) : { results: [] };
+      const hasPrior = new Set();
+      for (const a of (priorAssoc.results || [])) {
+        const to = (a.to || [])[0];
+        if (to) hasPrior.add(String(to.toObjectId));
+      }
+      const revisits = ids.filter(id => hasPrior.has(ticketContact[id]));
+      return res.status(200).json({ revisits, checked: ids.length });
+    } catch (e) {
+      return res.status(500).json({ error: e.message });
+    }
+  }
+
   try {
     // ── Step 1: Search tickets ────────────────────────────────────────────────
     const ticketResp = await hsFetch('https://api.hubapi.com/crm/v3/objects/tickets/search', {
