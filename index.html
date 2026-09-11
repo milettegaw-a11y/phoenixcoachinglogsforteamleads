@@ -830,7 +830,6 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
       </div>
       <div class="sb-section-lbl" onclick="toggleSbGroup('om-grp-res',this)">RESOURCES<span class="sb-grp-arrow">›</span></div>
       <div class="sb-group" id="om-grp-res">
-        <div class="sb-item" data-tab="kb" onclick="switchOM('kb')"><span class="sb-icon">📖</span><span>Knowledge Base</span></div>
         <div class="sb-item agent-hide" onclick="openDocsModal()"><span class="sb-icon">📁</span><span>Documents</span></div>
         <div class="sb-item" data-tab="calendar" onclick="switchOM('calendar')"><span class="sb-icon">📅</span><span>Calendar</span></div>
         <div class="sb-item" data-tab="settings" onclick="switchOM('settings')"><span class="sb-icon">⚙️</span><span>Settings</span></div>
@@ -873,7 +872,6 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
       </div>
       <div class="sb-section-lbl" onclick="toggleSbGroup('tl-grp-res',this)">RESOURCES<span class="sb-grp-arrow">›</span></div>
       <div class="sb-group" id="tl-grp-res">
-        <div class="sb-item" id="tl-nav-kb" onclick="tlShowView('kb')"><span class="sb-icon">📖</span><span>Knowledge Base</span></div>
         <div class="sb-item" onclick="openDocsModal()"><span class="sb-icon">📁</span><span>Documents</span></div>
         <div class="sb-item" id="tl-nav-calendar" onclick="tlShowView('calendar')"><span class="sb-icon">📅</span><span>Calendar</span></div>
         <div class="sb-item" id="tl-nav-settings" onclick="tlShowView('settings')"><span class="sb-icon">⚙️</span><span>Settings</span></div>
@@ -905,7 +903,6 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
       </div>
       <div class="sb-section-lbl" onclick="toggleSbGroup('ag-grp-res',this)">RESOURCES<span class="sb-grp-arrow">›</span></div>
       <div class="sb-group" id="ag-grp-res">
-        <div class="sb-item" data-tab="kb" onclick="switchAgentTab('kb')"><span class="sb-icon">📖</span><span>Knowledge Base</span></div>
         <div class="sb-item" data-tab="library" onclick="switchAgentTab('library')"><span class="sb-icon">🎵</span><span>Call Library</span></div>
         <div class="sb-item" onclick="openRainmakerGuide()"><span class="sb-icon">🌧️</span><span>Rainmaker Guide</span></div>
         <div class="sb-item" data-tab="settings" onclick="switchAgentTab('settings')"><span class="sb-icon">⚙️</span><span>Settings</span></div>
@@ -7808,8 +7805,11 @@ function showView(id){
 }
 // The helper belongs to a signed-in session, so it only appears once CU is set.
 function ahSync(){
-  const l=document.getElementById('ah-launch');
-  if(l)l.style.display=(typeof CU!=='undefined'&&CU&&!_ahOpen)?'flex':'none';
+  const b=document.getElementById('ah-bubble');
+  if(!b)return;
+  const show=(typeof CU!=='undefined'&&CU&&!_ahOpen);
+  b.style.display=show?'flex':'none';
+  if(show){ahInitShell();ahPlace(b,'bubble',el=>[innerWidth-el.offsetWidth-24,innerHeight-el.offsetHeight-24]);}
 }
 
 function toggleSbGroup(id,lbl){
@@ -11566,39 +11566,41 @@ function ahPush(html){
   b.scrollTop=b.scrollHeight;
 }
 function ahBubbleUser(t){
-  ahPush(`<div style="align-self:flex-end;max-width:86%;background:#ff7a59;color:#fff;border-radius:12px 12px 3px 12px;padding:7px 11px;font-size:.78rem;line-height:1.45;">${ahEsc(t)}</div>`);
+  ahPush(`<div style="align-self:flex-end;max-width:85%;background:#18181b;color:#fff;border-radius:11px 11px 3px 11px;padding:8px 12px;font-size:.77rem;line-height:1.45;">${ahEsc(t)}</div>`);
 }
 function ahBubbleBot(inner){
-  ahPush(`<div style="align-self:flex-start;max-width:96%;background:#fff;border:1px solid #ececec;border-radius:12px 12px 12px 3px;padding:10px 12px;font-size:.78rem;line-height:1.5;color:#1c1917;">${inner}</div>`);
+  ahPush(`<div style="align-self:flex-start;max-width:97%;background:#fff;border:1px solid #e4e4e7;border-radius:11px 11px 11px 3px;padding:11px 13px;font-size:.77rem;line-height:1.55;color:#27272a;">${inner}</div>`);
 }
 function ahAnswer(q){
   const hits=ahSearch(q);
   const top=hits[0];
-  // Nothing scored on a title or a tag — say so instead of guessing.
+  // Nothing matched on a title, a tag, or a word that distinguishes one article
+  // from another — say so rather than dressing up the nearest thing as an answer.
   if(!top||top.s<AH_MIN_SCORE||!top.strong){
     const near=hits.slice(0,3);
-    ahBubbleBot(`<div style="font-weight:600;margin-bottom:5px;">I don't have that in the knowledge base.</div>
-      <div style="color:#78716c;font-size:.74rem;">Everything here comes from the 36 Knowledge Base articles and the rebuttal manual — if it isn't in there I won't guess at it. Check with your Team Lead, and ask them to add it.</div>
-      ${near.length?`<div style="margin-top:8px;font-size:.7rem;color:#a8a29e;">Closest articles:</div>${near.map(h=>ahRelBtn(h.it)).join('')}`:''}`);
+    ahBubbleBot(`<div style="font-weight:650;margin-bottom:4px;color:#18181b;">I don't have that in the knowledge base.</div>
+      <div style="color:#71717a;font-size:.73rem;line-height:1.5;">Everything here comes from the articles and objection cards in this app. If it isn't in there I won't guess — check with your Team Lead, and ask them to have it added.</div>
+      ${near.length?`<div style="margin-top:9px;font-size:.62rem;font-weight:700;color:#a1a1aa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Closest articles</div>${near.map(h=>ahRelBtn(h.it)).join('')}`:''}`);
     return;
   }
-  const it=top.it;
-  const unsure=top.s<AH_SURE_SCORE;
+  ahRenderAnswer(top.it,top.s<AH_SURE_SCORE,hits.slice(1,4).filter(h=>h.s>=AH_MIN_SCORE*0.55&&h.strong).map(h=>h.it));
+}
+// Shared by a question and by picking an article out of Browse.
+function ahRenderAnswer(it,unsure,rel){
   const useAlt=_ahLang==='fil'&&it.htmlAlt;
-  const rel=hits.slice(1,4).filter(h=>h.s>=AH_MIN_SCORE*0.55&&h.strong);
   ahBubbleBot(`
-    ${unsure?'<div style="font-size:.66rem;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:4px 8px;margin-bottom:7px;">Closest article I have — check it actually answers the question.</div>':''}
-    <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:6px;flex-wrap:wrap;">
-      <span>${it.icon}</span><span style="font-weight:700;">${ahEsc(it.title)}</span>
-      <span style="margin-left:auto;font-size:.6rem;font-weight:700;color:#a8a29e;text-transform:uppercase;letter-spacing:.05em;">${it.src}</span>
+    ${unsure?'<div style="font-size:.66rem;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:5px 8px;margin-bottom:8px;line-height:1.45;">Closest article I have — check it actually answers the question.</div>':''}
+    <div style="display:flex;align-items:baseline;gap:7px;margin-bottom:7px;flex-wrap:wrap;">
+      <span style="font-weight:650;color:#18181b;flex:1;min-width:0;">${ahEsc(it.title)}</span>
+      <span style="font-size:.58rem;font-weight:700;color:#a1a1aa;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;">${it.src}</span>
     </div>
     <div class="ah-ans">${useAlt?it.htmlAlt:it.html}</div>
-    ${it.htmlAlt?`<button type="button" onclick="ahFlip(this,'${it.id}')" style="margin-top:7px;font-size:.63rem;font-weight:700;color:#ff7a59;background:#fff;border:1px solid #ffd9cc;border-radius:99px;padding:2px 10px;cursor:pointer;font-family:inherit;">${useAlt?'🇺🇸 English':'🇵🇭 Filipino'}</button>`:''}
-    ${rel.length?`<div style="margin-top:9px;padding-top:7px;border-top:1px dashed #f0f0f0;"><div style="font-size:.62rem;font-weight:700;color:#a8a29e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Related</div>${rel.map(h=>ahRelBtn(h.it)).join('')}</div>`:''}`);
+    ${it.htmlAlt?`<button type="button" onclick="ahFlip(this,'${it.id}')" style="margin-top:8px;font-size:.64rem;font-weight:650;color:#3f3f46;background:#fff;border:1px solid #e4e4e7;border-radius:7px;padding:3px 10px;cursor:pointer;font-family:inherit;">${useAlt?'English':'Filipino'}</button>`:''}
+    ${rel&&rel.length?`<div style="margin-top:10px;padding-top:8px;border-top:1px solid #f4f4f5;"><div style="font-size:.6rem;font-weight:700;color:#a1a1aa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;">Related</div>${rel.map(ahRelBtn).join('')}</div>`:''}`);
 }
 function ahRelBtn(it){
-  return `<button type="button" onclick="ahAsk(${JSON.stringify(it.title).replace(/"/g,'&quot;')})"
-    style="display:block;width:100%;text-align:left;margin-top:4px;font-size:.71rem;color:#44403c;background:#fafaf9;border:1px solid #ececec;border-radius:7px;padding:5px 9px;cursor:pointer;font-family:inherit;">${it.icon} ${ahEsc(it.title)}</button>`;
+  return `<button type="button" onclick="ahOpenArticle('${it.id}')"
+    style="display:block;width:100%;text-align:left;margin-top:4px;font-size:.71rem;color:#3f3f46;background:#fafafa;border:1px solid #e4e4e7;border-radius:8px;padding:6px 10px;cursor:pointer;font-family:inherit;line-height:1.4;">${ahEsc(it.title)}</button>`;
 }
 function ahFlip(btn,id){
   const it=ahIndex().find(x=>x.id===id);
@@ -11624,25 +11626,143 @@ function ahAsk(preset){
 function ahChips(){
   return ['What is included in the standard cleaning?','What is NOT included?','What is the 15% transaction fee for?',
           'How many voucher hours should I recommend?','Are your cleaners bonded and insured?','Objection — too expensive']
-    .map(t=>`<button type="button" onclick="ahAsk(${JSON.stringify(t).replace(/"/g,'&quot;')})" style="font-size:.68rem;color:#44403c;background:#fff;border:1px solid #e7e5e4;border-radius:99px;padding:3px 10px;cursor:pointer;font-family:inherit;">${ahEsc(t)}</button>`).join('');
+    .map(t=>`<button type="button" onclick="ahAsk(${JSON.stringify(t).replace(/"/g,'&quot;')})" style="font-size:.68rem;color:#3f3f46;background:#fff;border:1px solid #e4e4e7;border-radius:99px;padding:4px 11px;cursor:pointer;font-family:inherit;">${ahEsc(t)}</button>`).join('');
+}
+/* ── Floating shell: drag, tabs, browse ──────────────────────────────────
+   The bubble and the panel can be dragged anywhere and remember where they
+   were left, per browser. Positions are stored as left/top and re-clamped on
+   resize, so a window that shrinks can never strand the helper off-screen. */
+const AH_POS_KEY='ah_pos_v1';
+function ahPos(){try{return JSON.parse(localStorage.getItem(AH_POS_KEY)||'{}');}catch(e){return {};}}
+function ahSavePos(k,x,y){
+  const p=ahPos(); p[k]={x:Math.round(x),y:Math.round(y)};
+  try{localStorage.setItem(AH_POS_KEY,JSON.stringify(p));}catch(e){}
+}
+function ahClamp(el,x,y){
+  const w=el.offsetWidth||52,h=el.offsetHeight||52,m=8;
+  return [Math.max(m,Math.min(x,innerWidth-w-m)),Math.max(m,Math.min(y,innerHeight-h-m))];
+}
+function ahPlace(el,key,fallback){
+  const p=ahPos()[key];
+  let x,y;
+  if(p){x=p.x;y=p.y;}else{const f=fallback(el);x=f[0];y=f[1];}
+  const c=ahClamp(el,x,y);
+  el.style.left=c[0]+'px'; el.style.top=c[1]+'px';
+  el.style.right='auto'; el.style.bottom='auto';
+}
+// A drag that never swallows the click: under 4px of travel is still a click.
+function ahDraggable(el,handle,key){
+  let sx=0,sy=0,ox=0,oy=0,moved=false,on=false;
+  handle.addEventListener('pointerdown',ev=>{
+    if(ev.button!==0)return;
+    if(ev.target.closest('button')&&ev.target.closest('button')!==el)return;  // header buttons stay clickable
+    const r=el.getBoundingClientRect();
+    on=true; moved=false; sx=ev.clientX; sy=ev.clientY; ox=r.left; oy=r.top;
+    el.style.right='auto'; el.style.bottom='auto'; el.style.left=r.left+'px'; el.style.top=r.top+'px';
+    handle.setPointerCapture(ev.pointerId);
+  });
+  handle.addEventListener('pointermove',ev=>{
+    if(!on)return;
+    const dx=ev.clientX-sx, dy=ev.clientY-sy;
+    if(!moved&&Math.abs(dx)+Math.abs(dy)<4)return;
+    moved=true; ev.preventDefault();
+    const c=ahClamp(el,ox+dx,oy+dy);
+    el.style.left=c[0]+'px'; el.style.top=c[1]+'px';
+  });
+  const end=ev=>{
+    if(!on)return;
+    on=false;
+    try{handle.releasePointerCapture(ev.pointerId);}catch(e){}
+    if(moved){ahSavePos(key,parseFloat(el.style.left),parseFloat(el.style.top));}
+    el.dataset.dragged=moved?'1':'';
+  };
+  handle.addEventListener('pointerup',end);
+  handle.addEventListener('pointercancel',end);
+}
+let _ahInit=false;
+function ahInitShell(){
+  if(_ahInit)return;
+  const bub=document.getElementById('ah-bubble'), pan=document.getElementById('ah-panel');
+  if(!bub||!pan)return;
+  _ahInit=true;
+  ahDraggable(bub,bub,'bubble');
+  ahDraggable(pan,document.getElementById('ah-head'),'panel');
+  addEventListener('resize',()=>{
+    [[bub,'bubble'],[pan,'panel']].forEach(([el])=>{
+      if(el.style.left){const c=ahClamp(el,parseFloat(el.style.left),parseFloat(el.style.top));
+        el.style.left=c[0]+'px'; el.style.top=c[1]+'px';}
+    });
+  });
+}
+function ahResetPos(ev){
+  if(ev)ev.stopPropagation();
+  try{localStorage.removeItem(AH_POS_KEY);}catch(e){}
+  const bub=document.getElementById('ah-bubble'), pan=document.getElementById('ah-panel');
+  ahPlace(bub,'bubble',el=>[innerWidth-el.offsetWidth-24,innerHeight-el.offsetHeight-24]);
+  ahPlace(pan,'panel', el=>[innerWidth-el.offsetWidth-24,Math.max(12,innerHeight-el.offsetHeight-24)]);
+  toast('Position reset');
+}
+function ahTab(which){
+  ['ask','browse'].forEach(t=>{
+    const p=document.getElementById('ah-pane-'+t), b=document.getElementById('ah-tab-'+t);
+    if(p)p.classList.toggle('on',t===which);
+    if(b)b.classList.toggle('on',t===which);
+  });
+  if(which==='browse')ahRenderBrowse();
+  else{const i=document.getElementById('ah-inp'); if(i)i.focus();}
+}
+const AH_CAT_NAMES={time:'Timing & voucher hours',included:'What is included',premium:'Premium tasks',
+  notcovered:'Not included',booking:'Booking & scheduling',billing:'Billing & payments',
+  cleaners:'Cleaning Professionals',support:'Support & company',objection:'Objection handling'};
+let _ahCatOpen={};
+// Everything the removed Knowledge Base tab used to show, grouped by category.
+function ahRenderBrowse(){
+  const box=document.getElementById('ah-browse');
+  if(!box)return;
+  const groups={};
+  ahIndex().forEach(it=>{(groups[it.cat]=groups[it.cat]||[]).push(it);});
+  const order=Object.keys(AH_CAT_NAMES).filter(c=>groups[c]).concat(Object.keys(groups).filter(c=>!AH_CAT_NAMES[c]));
+  box.innerHTML=order.map(c=>{
+    const list=groups[c], open=!!_ahCatOpen[c];
+    return `<div class="ah-cat">
+      <button type="button" onclick="ahCat('${c}')">
+        <span style="color:#a1a1aa;font-size:.7rem;">${open?'▾':'▸'}</span>
+        ${AH_CAT_NAMES[c]||c}<span class="ah-n">${list.length}</span></button>
+      ${open?`<ul>${list.map(it=>`<li><button type="button" onclick="ahOpenArticle('${it.id}')">${ahEsc(it.title)}</button></li>`).join('')}</ul>`:''}
+    </div>`;
+  }).join('');
+}
+function ahCat(c){_ahCatOpen[c]=!_ahCatOpen[c];ahRenderBrowse();}
+function ahOpenArticle(id){
+  const it=ahIndex().find(x=>x.id===id);
+  if(!it)return;
+  ahTab('ask');
+  ahBubbleUser(it.title);
+  ahRenderAnswer(it,false,[]);
 }
 function ahToggle(){
-  const p=document.getElementById('ah-panel'), l=document.getElementById('ah-launch');
+  const p=document.getElementById('ah-panel'), b=document.getElementById('ah-bubble');
   if(!p)return;
+  if(b&&b.dataset.dragged==='1'){b.dataset.dragged='';return;}   // that was a drag, not a click
+  ahInitShell();
   _ahOpen=!_ahOpen;
-  p.style.display=_ahOpen?'flex':'none';
-  if(l)l.style.display=_ahOpen?'none':'flex';
   if(_ahOpen){
-    const b=document.getElementById('ah-msgs');
-    if(b&&!b.childElementCount){
-      const n=ahIndex().length;
-      ahBubbleBot(`Ask me anything about the Homeaglow cleaning service. I answer from the ${n} articles and objection cards already in this app — nothing invented.
-        <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:5px;">${ahChips()}</div>`);
-    }
+    p.style.display='flex';
+    ahPlace(p,'panel',el=>[innerWidth-el.offsetWidth-24,Math.max(12,innerHeight-el.offsetHeight-24)]);
+    if(b)b.style.display='none';
+    const c=document.getElementById('ah-count'); if(c)c.textContent=ahIndex().length;
+    const m=document.getElementById('ah-msgs');
+    if(m&&!m.childElementCount)ahGreet();
     const i=document.getElementById('ah-inp'); if(i)i.focus();
+  }else{
+    p.style.display='none';
+    ahSync();
   }
 }
-
+function ahGreet(){
+  ahBubbleBot(`Ask anything about the Homeaglow service. Answers come from the ${ahIndex().length} knowledge base articles and objection cards in this app — nothing is invented.
+    <div style="margin-top:9px;display:flex;flex-wrap:wrap;gap:5px;">${ahChips()}</div>`);
+}
 function toast(msg){
   const el=document.getElementById('toast');
   el.textContent=msg;el.classList.add('on');
@@ -13696,37 +13816,96 @@ document.addEventListener('keydown', function(e) {
   </div>
 </div>
 <style>
-#ah-panel .ah-ans p{margin:0 0 6px;}
-#ah-panel .ah-ans table{width:100%;border-collapse:collapse;font-size:.7rem;margin:6px 0;}
-#ah-panel .ah-ans th,#ah-panel .ah-ans td{border:1px solid #ececec;padding:3px 6px;text-align:left;}
-#ah-panel .ah-ans ul,#ah-panel .ah-ans ol{margin:4px 0 6px;padding-left:18px;}
-#ah-panel .ah-ans li{margin-bottom:3px;}
-#ah-panel .ah-ans .spiel{background:#fffaf8;border-left:3px solid #ff7a59;border-radius:0 7px 7px 0;padding:7px 9px;margin:6px 0;}
-#ah-panel .ah-ans .spiel-lbl{font-size:.58rem;font-weight:700;color:#ff7a59;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;}
-#ah-msgs::-webkit-scrollbar{width:7px;} #ah-msgs::-webkit-scrollbar-thumb{background:#e7e5e4;border-radius:99px;}
-@media(max-width:520px){#ah-panel{left:12px!important;right:12px!important;width:auto!important;}}
+:root{--ah-bd:#e4e4e7;--ah-tx:#18181b;--ah-mu:#71717a;--ah-fa:#a1a1aa;--ah-bg:#fafafa;--ah-ac:#ff7a59;}
+#ah-bubble{position:fixed;z-index:9990;display:none;align-items:center;justify-content:center;
+  width:52px;height:52px;border-radius:50%;background:#18181b;color:#fff;border:none;cursor:grab;
+  box-shadow:0 4px 16px rgba(0,0,0,.22),0 1px 3px rgba(0,0,0,.12);transition:transform .14s,box-shadow .14s;touch-action:none;}
+#ah-bubble:hover{transform:scale(1.06);box-shadow:0 6px 22px rgba(0,0,0,.28);}
+#ah-bubble:active{cursor:grabbing;transform:scale(.97);}
+#ah-bubble .ah-dot{position:absolute;top:-2px;right:-2px;width:12px;height:12px;border-radius:50%;background:var(--ah-ac);border:2px solid #fff;}
+#ah-panel{position:fixed;z-index:9991;display:none;flex-direction:column;width:396px;height:min(620px,82vh);
+  background:#fff;border:1px solid var(--ah-bd);border-radius:14px;overflow:hidden;
+  box-shadow:0 16px 48px rgba(0,0,0,.18),0 2px 8px rgba(0,0,0,.06);font-family:inherit;}
+#ah-head{display:flex;align-items:center;gap:10px;padding:12px 13px;border-bottom:1px solid var(--ah-bd);
+  background:#fff;cursor:grab;user-select:none;touch-action:none;flex-shrink:0;}
+#ah-head:active{cursor:grabbing;}
+#ah-head .ah-mark{width:30px;height:30px;border-radius:8px;background:#18181b;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+#ah-head h3{margin:0;font-size:.85rem;font-weight:650;color:var(--ah-tx);letter-spacing:-.01em;line-height:1.2;}
+#ah-head p{margin:1px 0 0;font-size:.65rem;color:var(--ah-fa);line-height:1.2;}
+#ah-head button{background:none;border:none;color:var(--ah-fa);cursor:pointer;padding:3px 5px;border-radius:6px;line-height:1;font-family:inherit;}
+#ah-head button:hover{background:#f4f4f5;color:var(--ah-tx);}
+#ah-tabs{display:flex;gap:2px;padding:7px 10px 0;border-bottom:1px solid var(--ah-bd);background:#fff;flex-shrink:0;}
+#ah-tabs button{background:none;border:none;border-bottom:2px solid transparent;padding:6px 11px 8px;font-size:.73rem;
+  font-weight:600;color:var(--ah-mu);cursor:pointer;font-family:inherit;margin-bottom:-1px;}
+#ah-tabs button.on{color:var(--ah-tx);border-bottom-color:var(--ah-ac);}
+#ah-tabs .ah-pill{font-size:.6rem;font-weight:700;color:var(--ah-fa);background:#f4f4f5;border-radius:99px;padding:1px 6px;margin-left:5px;}
+.ah-pane{flex:1;min-height:0;display:none;flex-direction:column;}
+.ah-pane.on{display:flex;}
+#ah-msgs{flex:1;overflow-y:auto;padding:13px;display:flex;flex-direction:column;gap:10px;background:var(--ah-bg);}
+#ah-foot{display:flex;gap:7px;padding:10px;border-top:1px solid var(--ah-bd);background:#fff;flex-shrink:0;}
+#ah-inp{flex:1;font-size:.78rem;border:1px solid var(--ah-bd);border-radius:9px;padding:9px 11px;outline:none;font-family:inherit;color:var(--ah-tx);}
+#ah-inp:focus{border-color:#a1a1aa;}
+#ah-send{padding:9px 15px;background:#18181b;color:#fff;border:none;border-radius:9px;font-size:.75rem;font-weight:650;cursor:pointer;font-family:inherit;}
+#ah-send:hover{background:#27272a;}
+#ah-browse{flex:1;overflow-y:auto;background:var(--ah-bg);padding:11px;}
+.ah-cat{background:#fff;border:1px solid var(--ah-bd);border-radius:10px;margin-bottom:7px;overflow:hidden;}
+.ah-cat>button{width:100%;display:flex;align-items:center;gap:8px;background:none;border:none;padding:10px 12px;
+  font-size:.77rem;font-weight:650;color:var(--ah-tx);cursor:pointer;font-family:inherit;text-align:left;}
+.ah-cat>button:hover{background:#fafafa;}
+.ah-cat .ah-n{margin-left:auto;font-size:.63rem;font-weight:700;color:var(--ah-fa);}
+.ah-cat ul{list-style:none;margin:0;padding:0 0 5px;border-top:1px solid #f4f4f5;}
+.ah-cat li button{width:100%;text-align:left;background:none;border:none;padding:7px 13px 7px 32px;font-size:.73rem;
+  color:#3f3f46;cursor:pointer;font-family:inherit;line-height:1.4;}
+.ah-cat li button:hover{background:#fafafa;color:var(--ah-tx);}
+#ah-panel .ah-ans p{margin:0 0 6px;} #ah-panel .ah-ans p:last-child{margin-bottom:0;}
+#ah-panel .ah-ans table{width:100%;border-collapse:collapse;font-size:.7rem;margin:7px 0;}
+#ah-panel .ah-ans th,#ah-panel .ah-ans td{border:1px solid #f4f4f5;padding:4px 7px;text-align:left;}
+#ah-panel .ah-ans th{background:#fafafa;font-weight:650;color:var(--ah-mu);}
+#ah-panel .ah-ans ul,#ah-panel .ah-ans ol{margin:5px 0 7px;padding-left:17px;}
+#ah-panel .ah-ans li{margin-bottom:4px;}
+#ah-panel .ah-ans .spiel{background:#fafafa;border-left:2px solid var(--ah-ac);border-radius:0 7px 7px 0;padding:8px 10px;margin:7px 0;}
+#ah-panel .ah-ans .spiel-lbl{font-size:.57rem;font-weight:700;color:var(--ah-ac);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px;}
+#ah-msgs::-webkit-scrollbar,#ah-browse::-webkit-scrollbar{width:8px;}
+#ah-msgs::-webkit-scrollbar-thumb,#ah-browse::-webkit-scrollbar-thumb{background:#e4e4e7;border-radius:99px;}
+@media(max-width:520px){#ah-panel{width:calc(100vw - 24px)!important;left:12px!important;right:auto!important;}}
 </style>
-<button id="ah-launch" onclick="ahToggle()" title="Ask about the Homeaglow service"
-  style="display:none;position:fixed;bottom:88px;right:22px;z-index:9990;align-items:center;gap:7px;background:#ff7a59;color:#fff;border:none;border-radius:99px;padding:11px 17px;font-size:.79rem;font-weight:700;font-family:inherit;cursor:pointer;box-shadow:0 4px 14px rgba(255,122,89,.4);">
-  <span style="font-size:1rem;">💬</span> Ask Homeaglow
+<button id="ah-bubble" onclick="ahToggle()" title="Ask about the Homeaglow service — drag to move">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.9 8.9 0 0 1-3.8-.8L3 21l1.9-5A8.4 8.4 0 0 1 12 3.1a8.4 8.4 0 0 1 9 8.4Z"/>
+    <path d="M9.6 9.4a2.4 2.4 0 0 1 4.7.7c0 1.6-2.3 2.2-2.3 2.2"/><path d="M12 15.6h.01"/>
+  </svg>
+  <span class="ah-dot"></span>
 </button>
-<div id="ah-panel" style="display:none;position:fixed;bottom:88px;right:22px;width:390px;max-height:min(640px,78vh);z-index:9991;flex-direction:column;background:#fafaf9;border:1px solid #e7e5e4;border-radius:14px;box-shadow:0 10px 38px rgba(0,0,0,.18);overflow:hidden;">
-  <div style="display:flex;align-items:center;gap:8px;padding:12px 14px;background:#fff;border-bottom:1px solid #e7e5e4;">
-    <span style="font-size:1rem;">💬</span>
-    <div style="min-width:0;">
-      <div style="font-size:.84rem;font-weight:700;color:#1c1917;">Ask Homeaglow</div>
-      <div style="font-size:.63rem;color:#a8a29e;">Answers from the Knowledge Base &amp; rebuttal manual</div>
+<div id="ah-panel" role="dialog" aria-label="Ask Homeaglow">
+  <div id="ah-head">
+    <span class="ah-mark">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.9 8.9 0 0 1-3.8-.8L3 21l1.9-5A8.4 8.4 0 0 1 12 3.1a8.4 8.4 0 0 1 9 8.4Z"/>
+      </svg>
+    </span>
+    <div style="min-width:0;flex:1;">
+      <h3>Service Assistant</h3>
+      <p>Homeaglow knowledge base &amp; rebuttals</p>
     </div>
-    <button type="button" onclick="ahToggle()" title="Close"
-      style="margin-left:auto;background:none;border:none;font-size:1.05rem;color:#a8a29e;cursor:pointer;line-height:1;padding:2px 4px;font-family:inherit;">&times;</button>
+    <button type="button" onclick="ahResetPos(event)" title="Reset position">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+    </button>
+    <button type="button" onclick="ahToggle()" title="Close">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
   </div>
-  <div id="ah-msgs" style="flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:9px;"></div>
-  <div style="display:flex;gap:6px;padding:10px;background:#fff;border-top:1px solid #e7e5e4;">
-    <input id="ah-inp" type="text" placeholder="e.g. what is not included?" onkeydown="if(event.key==='Enter')ahAsk();"
-      style="flex:1;font-size:.77rem;border:1px solid #e7e5e4;border-radius:9px;padding:8px 11px;outline:none;background:#fff;font-family:inherit;" />
-    <button type="button" onclick="ahAsk()"
-      style="padding:8px 15px;background:#ff7a59;color:#fff;border:none;border-radius:9px;font-size:.75rem;font-weight:700;cursor:pointer;font-family:inherit;">Ask</button>
+  <div id="ah-tabs">
+    <button type="button" id="ah-tab-ask" class="on" onclick="ahTab('ask')">Ask</button>
+    <button type="button" id="ah-tab-browse" onclick="ahTab('browse')">Browse<span class="ah-pill" id="ah-count">0</span></button>
   </div>
+  <div id="ah-pane-ask" class="ah-pane on">
+    <div id="ah-msgs"></div>
+    <div id="ah-foot">
+      <input id="ah-inp" type="text" placeholder="Ask about the service…" onkeydown="if(event.key==='Enter')ahAsk();" />
+      <button type="button" id="ah-send" onclick="ahAsk()">Ask</button>
+    </div>
+  </div>
+  <div id="ah-pane-browse" class="ah-pane"><div id="ah-browse"></div></div>
 </div>
 </body>
 </html>
