@@ -14476,7 +14476,12 @@ function cvrWorkableHtml(snap,sc){
     <div style="padding:15px 20px 0;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;">
       <span style="font-size:.95rem;font-weight:700;color:#18181b;">Workable leads — WK${snap.wk}</span>
       <span style="font-size:.7rem;color:#71717a;">${e(who)} · still open, and what closing them would be worth</span>
-      ${canAssign&&mine?`<button onclick="cvrReturnAll()" style="margin-left:auto;padding:4px 11px;border:1px solid #e4e4e7;border-radius:8px;background:#fff;font-size:.68rem;font-weight:600;color:#3f3f46;font-family:inherit;cursor:pointer;">↩ Return all ${mine} reassigned</button>`:''}
+      <span style="margin-left:auto;display:flex;gap:7px;align-items:center;">
+      ${canAssign&&mine?`<button onclick="cvrReturnAll()" style="padding:4px 11px;border:1px solid #e4e4e7;border-radius:8px;background:#fff;font-size:.68rem;font-weight:600;color:#3f3f46;font-family:inherit;cursor:pointer;">↩ Return all ${mine} reassigned</button>`:''}
+      ${sc.kind==='om'?`<button onclick="cvrOpenTeamNudge()" style="display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border:1px solid #e4e4e7;border-radius:8px;background:#fff;font-size:.68rem;font-weight:600;color:#4a154b;font-family:inherit;cursor:pointer;">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="M16 9a4 4 0 0 1 0 6"/><path d="M19 6.5a8 8 0 0 1 0 11"/></svg>
+        Nudge team leads</button>`:''}
+      </span>
     </div>
     ${cvrKpis([
       [cvrNum(T.open),'Still workable',cvrP1(cvrPct(T.open,T.leads))+' of the cohort','#2563eb'],
@@ -14623,6 +14628,8 @@ async function cvrOpenNudge(agentId){
   const ag=snap.agents.find(a=>a.id===agentId);
   if(!ag)return;
   await cvrLoadSlack();
+  // Try the workspace directory before falling back to a typed-in ID.
+  if(!_cvrSlack[ag.name])await cvrSyncSlack(true);
   // Default to the quiet ones that can still count: open, in window, a day or
   // more since anyone touched them.
   const picked={};
@@ -14732,7 +14739,10 @@ function cvrRenderNudge(){
       <div style="${CVR_LBL}margin-bottom:7px;">Send to</div>
       <input id="cvr-nudge-id" value="${e(dir.slackId||dir.email||'')}" placeholder="Slack member ID (U01ABC…) or work email"
         style="width:100%;box-sizing:border-box;padding:8px 11px;border:1px solid #e4e4e7;border-radius:9px;font-size:.78rem;font-family:inherit;color:#3f3f46;">
-      <div style="font-size:.66rem;color:#a1a1aa;margin-top:5px;">Saved after the first successful send, so you only type it once. A member ID comes from Slack → profile → ⋮ → Copy member ID.</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap;">
+        <span style="font-size:.66rem;color:#a1a1aa;flex:1;min-width:160px;">${dir.slackId||dir.email?'Found in the Slack workspace and saved.':'Not found in the Slack workspace — paste a member ID or work email. Slack → profile → ⋮ → Copy member ID.'}</span>
+        <button onclick="cvrSyncSlack(false).then(()=>cvrRenderNudge())" style="padding:3px 10px;border:1px solid #e4e4e7;border-radius:7px;background:#fff;font-size:.65rem;font-weight:600;color:#3f3f46;font-family:inherit;cursor:pointer;white-space:nowrap;">Re-match from Slack</button>
+      </div>
 
       ${n.msg?`<div style="${CVR_LBL}margin:16px 0 7px;">What ${e(ag.name)} will see</div>
         <div style="background:#fafafa;border:1px solid #f4f4f5;border-radius:10px;padding:12px 14px;font-size:.73rem;color:#3f3f46;line-height:1.6;white-space:pre-wrap;word-break:break-word;">${e(n.msg).replace(/&lt;(https?:[^|]+)\|([^&]*?)&gt;/g,'<span style="color:#1264a3;text-decoration:underline;">$2</span>').replace(/\*(.+?)\*/g,'<b>$1</b>').replace(/_(.+?)_/g,'<i>$1</i>')}</div>`:''}
@@ -14743,6 +14753,166 @@ function cvrRenderNudge(){
       <button onclick="cvrCloseNudge()" style="padding:8px 16px;border:1px solid #e4e4e7;border-radius:9px;background:#fff;font-size:.78rem;font-weight:600;color:#3f3f46;font-family:inherit;cursor:pointer;">Cancel</button>
       <button onclick="cvrSendNudge()" ${(!picked||n.sending)?'disabled':''} style="padding:8px 18px;border:none;border-radius:9px;background:${(!picked||n.sending)?'#d4d4d8':'#4a154b'};color:#fff;font-size:.78rem;font-weight:700;font-family:inherit;cursor:${(!picked||n.sending)?'default':'pointer'};">${n.sending?'Sending…':'Send on Slack'}</button>
     </div>`}
+  </div>`;
+}
+
+
+/* ── Matching the roster to Slack ─────────────────────────────────────────────
+   Pulls the workspace directory once and matches each roster name against it,
+   so nobody types thirty member IDs. Names are compared with every non-letter
+   stripped, which is what makes "Deguzman" meet "De Guzman". Only unambiguous
+   matches are kept — anything with two candidates is left for a human. */
+let _cvrDirectory=null;
+let _cvrSyncing=false;
+const cvrNameKey=s=>String(s||'').toLowerCase().replace(/[^a-z]/g,'');
+
+async function cvrFetchDirectory(){
+  if(_cvrDirectory)return _cvrDirectory;
+  const r=await fetch('/api/slack-nudge',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({directory:true})});
+  const d=await r.json();
+  if(!r.ok||d.error)throw new Error(d.error||('Slack returned '+r.status));
+  _cvrDirectory=d.people||[];
+  return _cvrDirectory;
+}
+// Returns {matched:{name:{slackId,email,via}}, unmatched:[names]}
+function cvrMatchRoster(people,names){
+  const byKey={};
+  const bump=(k,p)=>{if(!k)return;(byKey[k]=byKey[k]||[]).push(p);};
+  people.forEach(p=>{
+    bump(cvrNameKey(p.real),p);
+    if(cvrNameKey(p.display)!==cvrNameKey(p.real))bump(cvrNameKey(p.display),p);
+    if(p.email)bump(cvrNameKey(p.email.split('@')[0]),p);
+  });
+  const matched={},unmatched=[];
+  names.forEach(n=>{
+    const hits=byKey[cvrNameKey(n)];
+    if(hits&&hits.length===1){matched[n]={slackId:hits[0].id,email:hits[0].email||'',via:'name'};}
+    else unmatched.push(n);
+  });
+  return {matched:matched,unmatched:unmatched};
+}
+// Team leads never need matching — TL_TEAM_MAP already holds their work emails.
+function cvrTlEmail(team){
+  for(const em in TL_TEAM_MAP) if(TL_TEAM_MAP[em]===team) return em;
+  return '';
+}
+async function cvrSyncSlack(quiet){
+  if(_cvrSyncing)return null;
+  _cvrSyncing=true;
+  try{
+    const people=await cvrFetchDirectory();
+    const res=cvrMatchRoster(people,rosterAgents.map(a=>a.name));
+    if(FSB){
+      for(const name in res.matched){
+        const rec=res.matched[name];
+        try{await FSB.collection('slack_directory').doc(name).set(rec,{merge:true});}catch(err){}
+        _cvrSlack[name]=Object.assign({},_cvrSlack[name],rec);
+      }
+    }else{
+      for(const name in res.matched)_cvrSlack[name]=res.matched[name];
+    }
+    if(!quiet)alert('Matched '+Object.keys(res.matched).length+' of '+rosterAgents.length+
+      ' agents to Slack.'+(res.unmatched.length?'\n\nNot in the workspace: '+res.unmatched.join(', '):''));
+    return res;
+  }catch(err){
+    if(!quiet)alert('Could not read the Slack directory: '+err.message);
+    return null;
+  }finally{_cvrSyncing=false;}
+}
+
+/* ── OM → team lead: one summary per team ──────────────────────────────────── */
+let _cvrTeamNudge=null;
+function cvrTeamTotals(snap){
+  const by={};
+  (snap.agents||[]).forEach(a=>{
+    const t=by[a.team]=by[a.team]||{team:a.team,leads:0,w2:0,sales:0,open:0,openW2:0,agents:[]};
+    t.leads+=a.leads;t.w2+=a.w2;t.sales+=a.sales;t.open+=a.open;t.openW2+=(a.openW2||0);
+    const need=Math.ceil(a.leads*CVR_TGT/100);
+    t.agents.push({name:a.name,open:a.open,inWindow:a.openW2||0,needed:Math.max(0,need-a.w2)});
+  });
+  return Object.values(by).map(t=>{
+    const need=Math.ceil(t.leads*CVR_TGT/100), df=Math.max(0,need-t.w2);
+    t.needed=df;
+    t.rate=t.openW2?cvrP1(cvrPct(df,t.openW2)):'—';
+    t.cvr=cvrP1(cvrPct(t.w2,t.leads));
+    t.agents.sort((a,b)=>b.open-a.open);
+    return t;
+  }).sort((a,b)=>b.needed-a.needed);
+}
+async function cvrOpenTeamNudge(){
+  const snap=_cvrData[_cvrSel];
+  if(!snap)return;
+  _cvrTeamNudge={teams:cvrTeamTotals(snap),picked:{},sending:'',done:{},err:''};
+  _cvrTeamNudge.teams.forEach(t=>{_cvrTeamNudge.picked[t.team]=true;});
+  cvrRenderTeamNudge();
+}
+function cvrCloseTeamNudge(){_cvrTeamNudge=null;const el=document.getElementById('cvr-teamnudge');if(el)el.remove();}
+function cvrTeamToggle(team){if(!_cvrTeamNudge)return;_cvrTeamNudge.picked[team]=!_cvrTeamNudge.picked[team];cvrRenderTeamNudge();}
+async function cvrSendTeamNudges(){
+  if(!_cvrTeamNudge)return;
+  const picks=_cvrTeamNudge.teams.filter(t=>_cvrTeamNudge.picked[t.team]);
+  if(!picks.length)return;
+  if(!confirm('Send a team summary to '+picks.length+' team lead'+(picks.length>1?'s':'')+'?\n\n'+
+    picks.map(t=>'• '+cvrTeamShort(t.team)).join('\n')))return;
+  for(const t of picks){
+    _cvrTeamNudge.sending=t.team;_cvrTeamNudge.err='';cvrRenderTeamNudge();
+    const email=cvrTlEmail(t.team);
+    if(!email){_cvrTeamNudge.done[t.team]='no email on file';continue;}
+    try{
+      const r=await fetch('/api/slack-nudge',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({agent:cvrTeamShort(t.team),from:cvrNudgeFrom(),wk:_cvrSel,email:email,
+          team:{name:cvrTeamShort(t.team),open:t.open,inWindow:t.openW2,needed:t.needed,
+                rate:t.rate,cvr:t.cvr,target:CVR_TGT,agents:t.agents}})});
+      const d=await r.json();
+      _cvrTeamNudge.done[t.team]=(!r.ok||d.error)?('failed — '+(d.error||r.status)):'sent';
+    }catch(err){_cvrTeamNudge.done[t.team]='failed — '+err.message;}
+  }
+  _cvrTeamNudge.sending='';cvrRenderTeamNudge();
+}
+function cvrRenderTeamNudge(){
+  let el=document.getElementById('cvr-teamnudge');
+  if(!_cvrTeamNudge){if(el)el.remove();return;}
+  if(!el){
+    el=document.createElement('div');el.id='cvr-teamnudge';
+    el.style.cssText='position:fixed;inset:0;background:rgba(9,9,11,.45);z-index:9400;display:flex;align-items:center;justify-content:center;padding:20px;';
+    el.onclick=ev=>{if(ev.target===el)cvrCloseTeamNudge();};
+    document.body.appendChild(el);
+  }
+  const n=_cvrTeamNudge, picked=n.teams.filter(t=>n.picked[t.team]).length;
+  el.innerHTML=`<div style="background:#fff;border-radius:16px;width:620px;max-width:96vw;max-height:90vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.3);">
+    <div style="padding:18px 22px 14px;border-bottom:1px solid #f4f4f5;display:flex;align-items:flex-start;gap:12px;">
+      <div style="width:36px;height:36px;border-radius:10px;background:#4a154b;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.95rem;font-weight:700;">#</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:.95rem;font-weight:700;color:#18181b;">Nudge team leads — WK${_cvrSel}</div>
+        <div style="font-size:.7rem;color:#71717a;margin-top:2px;">Each lead gets their own team's totals and a line per agent. Addressed by their work email, so nothing to look up.</div>
+      </div>
+      <button onclick="cvrCloseTeamNudge()" style="border:none;background:none;font-size:1.15rem;color:#a1a1aa;cursor:pointer;line-height:1;padding:2px 4px;">×</button>
+    </div>
+    <div style="padding:16px 22px;">
+      ${n.teams.map(t=>{const st=n.done[t.team];const email=cvrTlEmail(t.team);
+        return `<label style="display:flex;align-items:flex-start;gap:11px;padding:11px 13px;border:1px solid ${n.picked[t.team]?'#d4d4d8':'#f4f4f5'};border-radius:10px;margin-bottom:7px;cursor:pointer;background:${n.picked[t.team]?'#fff':'#fafafa'};">
+        <input type="checkbox" ${n.picked[t.team]?'checked':''} onchange="cvrTeamToggle('${e(t.team)}')" style="width:15px;height:15px;margin-top:2px;flex-shrink:0;cursor:pointer;">
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;">
+            <span style="font-size:.82rem;font-weight:700;color:#18181b;">${e(cvrTeamShort(t.team))}</span>
+            <span style="font-size:.66rem;color:#a1a1aa;">${e(email||'no email on file')}</span>
+            ${st?`<span style="margin-left:auto;font-size:.66rem;font-weight:700;color:${st==='sent'?'#15803d':'#b91c1c'};">${e(st)}</span>`
+              :n.sending===t.team?'<span style="margin-left:auto;font-size:.66rem;color:#b45309;">sending…</span>':''}
+          </div>
+          <div style="font-size:.71rem;color:#52525b;margin-top:4px;">
+            <b>${cvrNum(t.open)}</b> open · <b>${cvrNum(t.openW2)}</b> still inside 7 days ·
+            <b style="color:${t.needed?'#b91c1c':'#15803d'};">${t.needed||'target met'}</b>${t.needed?' more sales needed':''} ·
+            CVR ${t.cvr}
+          </div>
+          <div style="font-size:.65rem;color:#a1a1aa;margin-top:3px;">${t.agents.length} agents listed</div>
+        </div></label>`;}).join('')}
+      ${n.err?`<div style="margin-top:12px;padding:10px 13px;background:#fef2f2;border:1px solid #fecaca;border-radius:9px;font-size:.72rem;color:#b91c1c;">${e(n.err)}</div>`:''}
+    </div>
+    <div style="padding:13px 22px 18px;display:flex;gap:9px;justify-content:flex-end;border-top:1px solid #f4f4f5;">
+      <button onclick="cvrCloseTeamNudge()" style="padding:8px 16px;border:1px solid #e4e4e7;border-radius:9px;background:#fff;font-size:.78rem;font-weight:600;color:#3f3f46;font-family:inherit;cursor:pointer;">Close</button>
+      <button onclick="cvrSendTeamNudges()" ${(!picked||n.sending)?'disabled':''} style="padding:8px 18px;border:none;border-radius:9px;background:${(!picked||n.sending)?'#d4d4d8':'#4a154b'};color:#fff;font-size:.78rem;font-weight:700;font-family:inherit;cursor:${(!picked||n.sending)?'default':'pointer'};">${n.sending?'Sending…':'Send to '+picked+' team lead'+(picked===1?'':'s')}</button>
+    </div>
   </div>`;
 }
 
