@@ -2410,14 +2410,13 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
       <div style="font-size:.74rem;color:var(--g500);margin-top:2px;">All open Sales Call Required (2nd week) leads from HubSpot, by agent</div>
     </div>
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-      <input type="text" id="hs-search" placeholder="🔍 Search lead name…" oninput="setHSSearch(this.value)" style="font-size:.72rem;border:1.5px solid #e5e7eb;border-radius:8px;padding:5px 10px;background:#fff;color:#374151;min-width:140px;outline:none;" />
-      <div style="display:flex;border:1.5px solid #e5e7eb;border-radius:8px;overflow:hidden;">
-        <button id="hs-btn-kanban" onclick="setHSView('kanban')" title="Kanban" style="padding:5px 12px;border:none;background:#ff7a59;color:#fff;font-size:.95rem;font-weight:700;cursor:pointer;">⊞</button>
-        <button id="hs-btn-list" onclick="setHSView('list')" title="List" style="padding:5px 12px;border:none;background:#fff;color:#6b7280;font-size:.95rem;font-weight:700;cursor:pointer;">☰</button>
+      <input type="text" id="hs-search" placeholder="Search lead or agent…" oninput="setHSSearch(this.value)" style="font-size:.72rem;border:1px solid #e4e4e7;border-radius:8px;padding:6px 11px;background:#fff;color:#3f3f46;min-width:170px;outline:none;font-family:inherit;" />
+      <select id="hs-team-filter" onchange="setHSTeamFilter(this.value)" style="font-size:.72rem;border:1px solid #e4e4e7;border-radius:8px;padding:5px 10px;background:#fff;color:#3f3f46;cursor:pointer;font-family:inherit;"><option value="">All Teams</option></select>
+      <select id="hs-owner-filter" onchange="setHSOwnerFilter(this.value)" style="font-size:.72rem;border:1px solid #e4e4e7;border-radius:8px;padding:5px 10px;background:#fff;color:#3f3f46;cursor:pointer;font-family:inherit;"><option value="">All Owners</option></select>
+      <div style="display:flex;border:1px solid #e4e4e7;border-radius:8px;overflow:hidden;margin-left:auto;">
+        <button id="hs-btn-list" onclick="setHSView('list')" title="Table" style="padding:5px 11px;border:none;background:#ffc94a;color:#2e2200;font-size:.9rem;font-weight:700;cursor:pointer;">☰</button>
+        <button id="hs-btn-kanban" onclick="setHSView('kanban')" title="Cards" style="padding:5px 11px;border:none;background:#fff;color:#71717a;font-size:.9rem;font-weight:700;cursor:pointer;">⊞</button>
       </div>
-      <select id="hs-team-filter" onchange="setHSTeamFilter(this.value)" style="font-size:.72rem;border:1.5px solid #e5e7eb;border-radius:8px;padding:5px 10px;background:#fff;color:#374151;cursor:pointer;"><option value="">All Teams</option></select>
-      <select id="hs-owner-filter" onchange="setHSOwnerFilter(this.value)" style="font-size:.72rem;border:1.5px solid #e5e7eb;border-radius:8px;padding:5px 10px;background:#fff;color:#374151;cursor:pointer;"><option value="">All Owners</option></select>
-      <button onclick="fetchHSLeads()" style="padding:6px 14px;border:1.5px solid #ff7a59;border-radius:8px;background:#fff;color:#ff7a59;font-size:.78rem;font-weight:700;cursor:pointer;">↻ Refresh</button>
     </div>
   </div>
   <div id="tl-hs-leads-body"><div style="color:var(--g400);font-size:.8rem;padding:16px 0;text-align:center;">Loading HubSpot leads…</div></div>
@@ -5250,7 +5249,7 @@ let _hsLeads=[];
 let _hsLeadsLoaded=false;
 let _hsLastFetched=0; // epoch ms of last successful fetchHSLeads
 let _hsAutoRefreshTimer=null;
-let _hsViewMode='kanban'; // 'kanban' or 'list'
+let _hsViewMode='list'; // 'list' (default) or 'kanban' — the card grid
 let _hsDayFilter=0; // 0 = All days
 let _hsAgeBucket=''; // '' = all, '2nd-week' = Day 1-8, '3rd-week' = Day 9-15
 let _hsOwnerFilter=''; // '' = all owners
@@ -5318,22 +5317,6 @@ function hsRelTime(dt){const ms=hsTs(dt);if(!ms||isNaN(ms))return '?';const s=Ma
 function hsFormatDur(ms){if(!ms)return '';const m=Math.round(ms/60000);return m+'m';}
 function toggleSection(id){const b=document.getElementById('sect-body-'+id),a=document.getElementById('sect-arrow-'+id);if(!b)return;const h=b.style.display==='none';b.style.display=h?'':'none';if(a)a.textContent=h?'▼':'▶';}
 function toggleLeadDetail(lid){const el=document.getElementById('ld-'+lid);if(!el)return;el.style.display=el.style.display==='none'?'':'none';}
-async function updateLeadStage(ticketId,stageId,sel){
-  sel.disabled=true;
-  const orig=sel.dataset.orig||sel.value;
-  try{
-    const r=await fetch('/api/hs-update',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticketId,stageId})});
-    if(!r.ok)throw new Error('HTTP '+r.status);
-    const lead=_hsLeads.find(l=>l.id===ticketId);
-    if(lead){lead.stageId=stageId;lead.stageName=HS_STAGE_LABELS[stageId]||stageId;}
-    sel.style.border='1.5px solid #22c55e';
-    setTimeout(()=>{sel.style.border='';sel.disabled=false;},1800);
-  }catch(e){
-    alert('Update failed: '+e.message);
-    sel.value=orig;
-    sel.disabled=false;
-  }
-}
 
 async function fetchHSLeads(){
   const avEl=document.getElementById('av-hs-leads-body');
@@ -5463,8 +5446,8 @@ async function fetchHSLeads(){
 
 function setHSView(mode){
   _hsViewMode=mode;
-  ['hs-btn-kanban','av-hs-btn-kanban'].forEach(id=>{const b=document.getElementById(id);if(b){b.style.background=mode==='kanban'?'#ff7a59':'#fff';b.style.color=mode==='kanban'?'#fff':'#6b7280';}});
-  ['hs-btn-list','av-hs-btn-list'].forEach(id=>{const b=document.getElementById(id);if(b){b.style.background=mode==='list'?'#ff7a59':'#fff';b.style.color=mode==='list'?'#fff':'#6b7280';}});
+  ['hs-btn-kanban','av-hs-btn-kanban'].forEach(id=>{const b=document.getElementById(id);if(b){b.style.background=mode==='kanban'?'#ffc94a':'#fff';b.style.color=mode==='kanban'?'#2e2200':'#71717a';}});
+  ['hs-btn-list','av-hs-btn-list'].forEach(id=>{const b=document.getElementById(id);if(b){b.style.background=mode==='list'?'#ffc94a':'#fff';b.style.color=mode==='list'?'#2e2200':'#71717a';}});
   renderHSLeads();
 }
 
@@ -5493,6 +5476,10 @@ function setHSTzFilter(val){
 function setHSSearch(val){
   _hsLeadSearch=(val||'').trim();
   renderHSLeads();
+}
+function toggleIdleAgents(){
+  const el=document.getElementById('tl-idle-agents');
+  if(el)el.style.display=el.style.display==='none'?'block':'none';
 }
 function toggleHSGapsOnly(){
   _hsGapsOnly=!_hsGapsOnly;
@@ -6383,31 +6370,6 @@ async function saveInternalNote(lid){
   }catch(e){alert('Failed to save note: '+e.message);}
   finally{if(btn)btn.disabled=false;}
 }
-async function saveContactEdit(lid,contactId){
-  if(!contactId){alert('No contact ID — cannot update HubSpot.');return;}
-  const name=(document.getElementById('cedit-name-'+lid)||{}).value||'';
-  const phone=(document.getElementById('cedit-phone-'+lid)||{}).value||'';
-  const email=(document.getElementById('cedit-email-'+lid)||{}).value||'';
-  const status=document.getElementById('cedit-status-'+lid);
-  if(status)status.textContent='Saving…';
-  try{
-    const r=await fetch('/api/hs-contact-update',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({contactId,name,phone,email})});
-    const d=await r.json();
-    if(!r.ok)throw new Error(d.message||d.error||'Update failed');
-    // Update in-memory lead object so panel refreshes correctly
-    const l=attFindLead(lid);
-    if(l){
-      const parts=(name||'').trim().split(/\s+/).filter(Boolean);
-      if(name)l.contactName=name;
-      if(phone)l.contactPhone=phone;
-      if(email)l.contactEmail=email;
-    }
-    if(status){status.textContent='✅ Saved!';setTimeout(()=>{status.textContent='';},3000);}
-  }catch(e){
-    if(status)status.textContent='';
-    alert('Error: '+e.message);
-  }
-}
 const _emailLoaded={};
 const _aircallLoaded={};   // lid → true once Aircall data fetched for this lead
 let   _aircallUsers=[];    // [{id,name,email}] cached after first fetch
@@ -6601,6 +6563,84 @@ function tzChip(phone,big){
     style="display:inline-flex;align-items:center;gap:4px;font-size:${fs};font-weight:600;color:${ok?'#0f766e':'#b45309'};background:${ok?'#f0fdfa':'#fffbeb'};border:1px solid ${ok?'#ccfbf1':'#fde68a'};border-radius:5px;padding:1px 6px;white-space:nowrap;">
     ${z.state||'US'} · ${tzAbbr(z.iana)}${z.split?'~':''} ${tzClock(z.iana)}</span>`;
 }
+/* ── WHICH STATE TO DIAL FROM ─────────────────────────────────────────────
+   A local or neighbouring area code is answered more often than one from
+   across the country. Neighbours are ranked by (a) sharing the lead's time
+   zone — same business hours — and (b) state population, as a proxy for
+   whether a number is likely to exist there. This is a geography-based hint,
+   not a measured pick-up rate; if Aircall reports connect rate per outbound
+   number, that would be the better ranking.                                 */
+const US_ADJ={
+ AL:'FL GA MS TN', AK:'', AZ:'CA CO NM NV UT', AR:'LA MO MS OK TN TX',
+ CA:'AZ NV OR', CO:'AZ KS NE NM OK UT WY', CT:'MA NY RI', DE:'MD NJ PA',
+ DC:'MD VA', FL:'AL GA', GA:'AL FL NC SC TN', HI:'', ID:'MT NV OR UT WA WY',
+ IL:'IN IA KY MO WI', IN:'IL KY MI OH', IA:'IL MN MO NE SD WI',
+ KS:'CO MO NE OK', KY:'IL IN MO OH TN VA WV', LA:'AR MS TX', ME:'NH',
+ MD:'DE PA VA WV DC', MA:'CT NH NY RI VT', MI:'IN OH WI', MN:'IA ND SD WI',
+ MS:'AL AR LA TN', MO:'AR IL IA KS KY NE OK TN', MT:'ID ND SD WY',
+ NE:'CO IA KS MO SD WY', NV:'AZ CA ID OR UT', NH:'ME MA VT', NJ:'DE NY PA',
+ NM:'AZ CO OK TX UT', NY:'CT MA NJ PA VT', NC:'GA SC TN VA', ND:'MN MT SD',
+ OH:'IN KY MI PA WV', OK:'AR CO KS MO NM TX', OR:'CA ID NV WA',
+ PA:'DE MD NJ NY OH WV', RI:'CT MA', SC:'GA NC', SD:'IA MN MT ND NE WY',
+ TN:'AL AR GA KY MS MO NC VA', TX:'AR LA NM OK', UT:'AZ CO ID NM NV WY',
+ VT:'MA NH NY', VA:'KY MD NC TN WV DC', WA:'ID OR', WV:'KY MD OH PA VA',
+ WI:'IA IL MI MN', WY:'CO ID MT NE SD UT'
+};
+// No land neighbours — fall back to the nearest mainland states.
+const US_ADJ_FALLBACK={AK:'WA OR CA', HI:'CA WA NV', PR:'FL NY NJ', VI:'FL NY NJ'};
+const US_POP={CA:39,TX:30,FL:22.6,NY:19.6,PA:13,IL:12.6,OH:11.8,GA:11,NC:10.8,MI:10,
+ NJ:9.3,VA:8.7,WA:7.8,AZ:7.4,TN:7.1,MA:7,IN:6.9,MO:6.2,MD:6.2,WI:5.9,CO:5.9,MN:5.7,
+ SC:5.4,AL:5.1,LA:4.6,KY:4.5,OR:4.2,OK:4.1,CT:3.6,UT:3.4,IA:3.2,NV:3.2,AR:3.1,MS:2.9,
+ KS:2.9,NM:2.1,NE:2,ID:2,WV:1.8,HI:1.4,NH:1.4,ME:1.4,MT:1.1,RI:1.1,DE:1,SD:.92,ND:.78,
+ AK:.73,DC:.68,VT:.65,PR:3.2,VI:.09};
+const US_NAME={AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',CO:'Colorado',
+ CT:'Connecticut',DE:'Delaware',DC:'Washington DC',FL:'Florida',GA:'Georgia',HI:'Hawaii',ID:'Idaho',
+ IL:'Illinois',IN:'Indiana',IA:'Iowa',KS:'Kansas',KY:'Kentucky',LA:'Louisiana',ME:'Maine',
+ MD:'Maryland',MA:'Massachusetts',MI:'Michigan',MN:'Minnesota',MS:'Mississippi',MO:'Missouri',
+ MT:'Montana',NE:'Nebraska',NV:'Nevada',NH:'New Hampshire',NJ:'New Jersey',NM:'New Mexico',
+ NY:'New York',NC:'North Carolina',ND:'North Dakota',OH:'Ohio',OK:'Oklahoma',OR:'Oregon',
+ PA:'Pennsylvania',RI:'Rhode Island',SC:'South Carolina',SD:'South Dakota',TN:'Tennessee',
+ TX:'Texas',UT:'Utah',VT:'Vermont',VA:'Virginia',WA:'Washington',WV:'West Virginia',
+ WI:'Wisconsin',WY:'Wyoming',PR:'Puerto Rico',VI:'US Virgin Islands'};
+function nearestStates(st,n){
+  st=String(st||'').toUpperCase();
+  if(!st)return [];
+  const adj=(US_ADJ[st]||US_ADJ_FALLBACK[st]||'').split(' ').filter(Boolean);
+  const myZone=TZ_STATE_ZONE[st]||'';
+  return adj.map(x=>{
+    const z=TZ_STATE_ZONE[x]||'';
+    return {st:x,name:US_NAME[x]||x,zone:z,same:z===myZone,pop:US_POP[x]||0};
+  }).sort((a,b)=>a.same!==b.same?(a.same?-1:1):b.pop-a.pop).slice(0,n||3);
+}
+// The card in the lead panel: the lead's own state first, then its neighbours,
+// each with the live local time so nobody dials into the small hours.
+function tzCallFromCard(phone){
+  const z=leadZone(phone);
+  if(!z.zone)return '';
+  const near=nearestStates(z.state,3);
+  const chip=(st,name,zone,best)=>{
+    const iana=(TZ_ZONES[zone]||{}).iana||'';
+    const ok=iana?tzCallOk(iana):true;
+    return `<div style="min-width:0;border:1px solid ${best?'#ffc94a':'#e4e4e7'};background:${best?'#fffbf0':'#fff'};border-radius:9px;padding:7px 9px;">
+      <div style="display:flex;align-items:baseline;gap:4px;"><span style="font-size:.78rem;font-weight:700;color:#18181b;">${st}</span>
+      ${best?'<span style="font-size:.5rem;font-weight:700;color:#8a6200;background:#ffe9b0;border-radius:3px;padding:1px 4px;">LOCAL</span>':''}</div>
+      <div style="font-size:.62rem;color:#71717a;margin-top:2px;line-height:1.3;">${name}</div>
+      <div data-tzclock="${iana}" style="font-size:.62rem;font-weight:600;margin-top:3px;color:${ok?'#15803d':'#b45309'};">${iana?tzAbbr(iana)+' '+tzClock(iana):'—'}</div>
+    </div>`;
+  };
+  return `<div style="padding:12px 14px;border-bottom:1px solid #f0f0f0;">
+    <div style="display:flex;align-items:baseline;gap:7px;margin-bottom:8px;flex-wrap:wrap;">
+      <span style="font-size:.71rem;font-weight:700;color:#18181b;">Best line to call from</span>
+      <span style="font-size:.62rem;color:#a1a1aa;">a local or neighbouring number is answered more often</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">
+      ${chip(z.state,US_NAME[z.state]||'',z.zone,true)}${near.map(n=>chip(n.st,n.name,n.zone,false)).join('')}
+    </div>
+    ${near.length<3?`<div style="font-size:.62rem;color:#a1a1aa;margin-top:6px;">${US_NAME[z.state]||z.state} borders only ${near.length} state${near.length===1?'':'s'}.</div>`:''}
+    ${z.split?`<div style="font-size:.62rem;color:#b45309;margin-top:6px;">Area code ${z.ac} spans two time zones — confirm the local time with the customer.</div>`:''}
+  </div>`;
+}
+
 // Fuller line for the lead panel: state, zone name, local time, and a flag when
 // the local hour makes calling a bad idea.
 function tzPanelLine(phone){
@@ -6716,13 +6756,6 @@ function buildOpeners(lead){
     `Hi ${first}, this is ${me} from Homeaglow — I've taken over your cleaning request${from}. Are you still looking to get a cleaner booked? A yes or no is fine and I'll take it from there.`);
   return out;
 }
-function useOpener(pid,i){
-  const o=(_openers[pid]||[])[i];
-  const inp=document.getElementById('sms-inp-'+pid);
-  if(!o||!inp)return;
-  inp.value=o.text; inp.focus();
-  toast('Draft loaded — edit it before you send');
-}
 function copyOpener(pid,i){
   const o=(_openers[pid]||[])[i];
   if(!o)return;
@@ -6752,8 +6785,7 @@ function openerCardHtml(lead){
           <span style="font-size:.66rem;font-weight:700;color:#4c1d95;">${o.label}</span>
           <span style="font-size:.62rem;color:#a78bfa;">${esc(o.why)}</span>
           <span style="margin-left:auto;display:flex;gap:5px;">
-            <button type="button" onclick="useOpener('${lead.id}',${i})" style="font-size:.63rem;font-weight:700;color:#fff;background:#7c3aed;border:none;border-radius:6px;padding:3px 10px;cursor:pointer;font-family:inherit;">Use</button>
-            <button type="button" onclick="copyOpener('${lead.id}',${i})" style="font-size:.63rem;font-weight:700;color:#6d28d9;background:#fff;border:1px solid #ddd6fe;border-radius:6px;padding:3px 9px;cursor:pointer;font-family:inherit;">Copy</button>
+            <button type="button" onclick="copyOpener('${lead.id}',${i})" style="font-size:.63rem;font-weight:700;color:#2e2200;background:#ffc94a;border:none;border-radius:6px;padding:3px 11px;cursor:pointer;font-family:inherit;">Copy</button>
           </span>
         </div>
         <div style="font-size:.73rem;color:#3b0764;line-height:1.5;">${esc(o.text)}</div>
@@ -7030,16 +7062,6 @@ async function loadAircallData(lid,contactPhone){
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function sendSMS(lid,phone){
-  const inp=document.getElementById('sms-inp-'+lid);
-  const msg=(inp?.value||'').trim();
-  if(!msg){inp?.focus();return;}
-  inp.disabled=true;
-  try{
-    // Wire to /api/aircall-sms when Aircall is connected
-    alert('SMS sending will be enabled once Aircall is connected.\n\nNumber: '+phone);
-  } finally{inp.disabled=false;inp.value='';}
-}
 // ── Aircall phone (embedded in lead panel) ────────────────────────────────
 let _acPhone=null;
 function _initAircallPhone(){
@@ -7054,38 +7076,6 @@ function _initAircallPhone(){
     });
     console.log('[Aircall] Phone SDK initialized');
   }catch(e){console.warn('[Aircall] SDK init failed:',e.message);}
-}
-function makeCall(phone,name){
-  if(!phone){toast('No phone number for this lead');return;}
-  const clean=phone.replace(/[^\d+]/g,'');
-  // 1. Try Aircall Chrome Extension CTI API (postMessage)
-  try{
-    window.postMessage({action:'dial',phone:clean},'*');
-    console.log('[Aircall] Sent CTI dial via postMessage for',clean);
-  }catch(e){}
-  // 2. Show the phone slot with the number prominently
-  const slot=document.getElementById('ac-phone-slot');
-  if(slot)slot.style.display='flex';
-  _initAircallPhone();
-  const inner=document.getElementById('ac-phone-inner');
-  // Pre-fill the slot with the number so agent can dial manually if needed
-  if(inner&&!inner.querySelector('iframe')){
-    inner.innerHTML=`<div style="padding:24px 16px;text-align:center;">
-      <div style="font-size:.72rem;color:#9ca3af;margin-bottom:8px;">Dial in Aircall:</div>
-      <a href="tel:${clean}" style="display:block;font-size:1.5rem;font-weight:700;color:#ff7a59;font-family:monospace;letter-spacing:.05em;text-decoration:none;">${clean} 📞</a>
-      <div style="font-size:.6rem;color:#9ca3af;margin-top:4px;">(tap to dial if Aircall is your default phone app)</div>
-      <button onclick="navigator.clipboard.writeText('${clean}').then(()=>toast('✅ Copied!'))" style="margin-top:10px;padding:5px 14px;background:#ff7a59;color:#fff;border:none;border-radius:6px;font-size:.7rem;font-weight:700;cursor:pointer;">Copy Number</button>
-      <div style="font-size:.6rem;color:#9ca3af;margin-top:8px;line-height:1.4;">Or open the Aircall extension in your browser toolbar</div>
-    </div>`;
-  }
-  // 3. Also try SDK dial after 1.5s in case iframe finishes loading
-  setTimeout(()=>{
-    if(_acPhone){
-      _acPhone.send('dial_number',{phone_number:clean});
-      toast('📞 Dialing '+(name||phone)+' via Aircall…');
-      if(inner)inner.innerHTML=''; // let SDK iframe take over
-    }
-  },1500);
 }
 // ────────────────────────────────────────────────────────────────────────────
 
@@ -7161,34 +7151,31 @@ function renderHSLeads(){
   }
 
   // Age-bucket toggle buttons + day dropdown filter HTML
-  const _bb=(val,label)=>{const active=_hsAgeBucket===val;const bg=active?'#ff7a59':'#fff';const col=active?'#fff':'#6b7280';const bdr=active?'#ff7a59':'#e5e7eb';return '<button onclick="setHSAgeBucket(\''+val+'\')" style="padding:4px 12px;border:1.5px solid '+bdr+';border-radius:7px;background:'+bg+';color:'+col+';font-size:.72rem;font-weight:700;cursor:pointer;white-space:nowrap;">'+label+'</button>';};
+  const _bb=(val,label)=>{const active=_hsAgeBucket===val;return '<button onclick="setHSAgeBucket(\''+val+'\')" style="padding:5px 13px;border:none;background:'+(active?'#ffc94a':'#fff')+';color:'+(active?'#2e2200':'#52525b')+';font-size:.72rem;font-weight:'+(active?'700':'600')+';cursor:pointer;white-space:nowrap;font-family:inherit;">'+label+'</button>';};
   const _dayRange=_hsAgeBucket==='2nd-week'?{s:1,e:8}:_hsAgeBucket==='3rd-week'?{s:9,e:15}:{s:1,e:15};
   let _dayOptsHtml='<option value="0">All Days</option>';
   for(let _di=_dayRange.s;_di<=_dayRange.e;_di++) _dayOptsHtml+=`<option value="${_di}"${_hsDayFilter===_di?' selected':''}>Day ${_di}</option>`;
-  const dayFilterHtml='<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">'
-    +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">'
-    +'<span style="font-size:.72rem;font-weight:600;color:var(--g600);">Age:</span>'
-    +_bb('','All Leads')+_bb('2nd-week','Day 1–8')+_bb('3rd-week','Day 9–15')
-    +(_hsAgeBucket?'<span style="font-size:.7rem;color:#ff7a59;font-weight:600;margin-left:4px;">'+activeDays.length+' lead'+(activeDays.length!==1?'s':'')+'</span>':'')
-    +'</div>'
-    +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
-    +'<span style="font-size:.72rem;font-weight:600;color:var(--g600);">Day:</span>'
-    +'<select onchange="setHSDayFilter(this.value)" style="font-size:.72rem;border:1px solid #e5e7eb;border-radius:7px;padding:4px 10px;background:#fff;cursor:pointer;font-weight:'+(_hsDayFilter>0?'700':'400')+';color:'+(_hsDayFilter>0?'#ff7a59':'var(--g800)')+';">'+_dayOptsHtml+'</select>'
-    +(_hsDayFilter>0?'<span style="font-size:.7rem;color:#ff7a59;font-weight:600;">'+activeDays.length+' lead'+(activeDays.length!==1?'s':'')+' on Day '+_hsDayFilter+'</span><button onclick="setHSDayFilter(0)" style="font-size:.68rem;border:none;background:#fee2e2;color:#b91c1c;border-radius:6px;padding:3px 8px;cursor:pointer;font-weight:600;">✕ Clear</button>':'')
-    +'</div>'
+  // Every filter on one line. Age, day and time zone used to sit on three
+  // separate rows, which pushed the leads themselves below the fold.
+  const _TB='font-size:.72rem;border:1px solid #e4e4e7;border-radius:8px;padding:5px 10px;background:#fff;cursor:pointer;font-family:inherit;';
+  const dayFilterHtml='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;">'
+    +'<span style="display:inline-flex;border:1px solid #e4e4e7;border-radius:8px;overflow:hidden;">'
+      +_bb('','All leads')+_bb('2nd-week','Day 1–8')+_bb('3rd-week','Day 9–15')+'</span>'
+    +'<select onchange="setHSDayFilter(this.value)" style="'+_TB+'font-weight:'+(_hsDayFilter>0?'700':'400')+';color:'+(_hsDayFilter>0?'#b45309':'#3f3f46')+';">'+_dayOptsHtml+'</select>'
     // Time zone comes from the lead's area code, not from HubSpot, and the clock
     // strip is live so nobody has to work out the offset or think about DST.
-    +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
-      +'<span style="font-size:.72rem;font-weight:600;color:var(--g600);">Time zone:</span>'
-      +'<select onchange="setHSTzFilter(this.value)" title="Identified from the phone area code, not from HubSpot" style="font-size:.72rem;border:1px solid #e5e7eb;border-radius:7px;padding:4px 10px;background:#fff;cursor:pointer;font-weight:'+(_hsTzFilter?'700':'400')+';color:'+(_hsTzFilter?'#0f766e':'var(--g800)')+';">'
+    +'<select onchange="setHSTzFilter(this.value)" title="Identified from the phone area code, not from HubSpot" style="'+_TB+'font-weight:'+(_hsTzFilter?'700':'400')+';color:'+(_hsTzFilter?'#0f766e':'#3f3f46')+';">'
       +'<option value="">All US time zones</option>'
       +['ET','CT','MT','AZ','PT','AKT','HT','AST'].map(function(k){return '<option value="'+k+'"'+(_hsTzFilter===k?' selected':'')+'>'+TZ_ZONES[k].label+' ('+tzAbbr(TZ_ZONES[k].iana)+')</option>';}).join('')
       +'<option value="unknown"'+(_hsTzFilter==='unknown'?' selected':'')+'>Unknown / no number</option>'
       +'</select>'
-      +(_hsTzFilter?'<span style="font-size:.7rem;color:#0f766e;font-weight:600;">'+activeDays.length+' lead'+(activeDays.length!==1?'s':'')+'</span><button onclick="setHSTzFilter(\'\')" style="font-size:.68rem;border:none;background:#ccfbf1;color:#0f766e;border-radius:6px;padding:3px 8px;cursor:pointer;font-weight:600;">✕ Clear</button>':'')
-      +'<span style="margin-left:auto;display:flex;align-items:center;gap:6px;font-size:.68rem;color:var(--g500);flex-wrap:wrap;"><span style="font-weight:700;color:var(--g400);">RIGHT NOW</span><span id="tz-now-strip" style="display:flex;gap:6px;flex-wrap:wrap;">'+tzNowStripHtml()+'</span></span>'
-    +'</div>'
-    +'<!--GAPS_SLOT--></div>';
+    +'<!--GAPS_SLOT-->'
+    +((_hsAgeBucket||_hsDayFilter>0||_hsTzFilter)?'<span style="font-size:.7rem;font-weight:600;color:#b45309;">'+activeDays.length+' lead'+(activeDays.length!==1?'s':'')+' shown</span>'
+        +'<button onclick="setHSAgeBucket(\'\');setHSTzFilter(\'\');" style="font-size:.67rem;border:1px solid #e4e4e7;background:#fff;color:#52525b;border-radius:7px;padding:4px 9px;cursor:pointer;font-weight:600;font-family:inherit;">Clear</button>':'')
+    +'<span style="margin-left:auto;display:flex;align-items:center;gap:7px;font-size:.67rem;color:#71717a;flex-wrap:wrap;">'
+      +'<span style="font-size:.6rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#a1a1aa;">Right now</span>'
+      +'<span id="tz-now-strip" style="display:flex;gap:6px;flex-wrap:wrap;">'+tzNowStripHtml()+'</span></span>'
+    +'</div>';
 
   // ── Visual helpers ──
   const _AVATAR_COLORS=['#ff7a59','#6366f1','#10b981','#f59e0b','#ec4899','#14b8a6','#3b82f6','#8b5cf6'];
@@ -7221,21 +7208,14 @@ function renderHSLeads(){
         ${hasPhone?`<button onclick="_aircallLoaded['${pid}']=false;loadAircallData('${pid}','${ph}');" title="Refresh from Aircall" style="margin-left:auto;padding:4px 8px;font-size:.65rem;background:none;border:1px solid #e5e7eb;border-radius:6px;cursor:pointer;color:#6b7280;white-space:nowrap;">↻ Refresh</button>`:''}
       </div>
       <div id="comm-msgs-${pid}" style="display:block;">
+        <div id="lead-opener-${pid}">${openerCardHtml(l)}</div>
         <div id="comm-sms-list-${pid}" style="max-height:340px;overflow-y:auto;padding:12px;display:flex;flex-direction:column;">
           ${smsInitial}
-        </div>
-        <div id="lead-opener-${pid}">${openerCardHtml(l)}</div>
-        <div style="padding:8px 10px;border-top:1px solid #f0f0f0;display:flex;gap:6px;align-items:center;background:#f9fafb;">
-          <input id="sms-inp-${pid}" type="text" placeholder="Type a message…" onkeydown="if(event.key==='Enter')sendSMS('${pid}','${ph}');" style="flex:1;font-size:.75rem;border:1px solid #e5e7eb;border-radius:8px;padding:7px 10px;outline:none;background:#fff;" />
-          <button onclick="sendSMS('${pid}','${ph}');" style="padding:7px 14px;background:#ff7a59;color:#fff;border:none;border-radius:8px;font-size:.72rem;font-weight:700;cursor:pointer;">Send</button>
         </div>
       </div>
       <div id="comm-calls-${pid}" style="display:none;">
         <div id="comm-calls-list-${pid}" style="max-height:300px;overflow-y:auto;">
           ${callInitial}
-        </div>
-        <div style="padding:8px 10px;border-top:1px solid #f0f0f0;background:#f9fafb;display:flex;gap:8px;align-items:center;">
-          <button onclick="makeCall('${ph}','${nm}');" style="padding:7px 16px;background:#22c55e;color:#fff;border:none;border-radius:8px;font-size:.72rem;font-weight:700;cursor:pointer;">📞 Call ${nm}</button>
         </div>
       </div>
       <div id="comm-email-${pid}" style="display:none;">
@@ -7253,13 +7233,6 @@ function renderHSLeads(){
         </div>
       </div>
     </div>`;
-  }
-
-  function stageDropdown(l){
-    const opts=Object.entries(HS_STAGE_LABELS).map(([id,nm])=>`<option value="${id}"${l.stageId===id?' selected':''}>${nm}</option>`).join('');
-    return `<select onchange="updateLeadStage('${l.id}',this.value,this)" style="font-size:.68rem;border:1px solid #e5e7eb;border-radius:6px;padding:3px 7px;background:#fff;color:var(--g700);cursor:pointer;">
-      ${opts}
-    </select>`;
   }
 
   // ── Right-side lead panel ──────────────────────────────────────────────
@@ -7281,50 +7254,44 @@ function renderHSLeads(){
     const LABEL='font-size:.56rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;margin-bottom:3px;';
     const VAL='font-size:.8rem;color:#374151;';
     const noteHtml=l.latestNote?`<div style="margin-top:8px;padding:9px 11px;background:#fffbeb;border-left:3px solid #f59e0b;border-radius:4px;font-size:.72rem;color:#78350f;line-height:1.5;">${(l.latestNote.length>260?l.latestNote.slice(0,260)+'…':l.latestNote).replace(/</g,'&lt;')}</div>`:'<div style="margin-top:6px;font-size:.7rem;color:#9ca3af;font-style:italic;">No HubSpot notes found.</div>';
-    const summaryHtml=`<div style="padding:12px 14px;background:#f9fafb;border-bottom:1px solid #f0f0f0;">
-      <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#9ca3af;margin-bottom:8px;">Conversation Summary</div>
-      <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;">
-        <div style="text-align:center;"><div id="stat-calls-made-${pid}" style="font-size:1.3rem;font-weight:800;color:#3b82f6;line-height:1;">${ownerCalls.length}</div><div style="font-size:.58rem;color:#9ca3af;margin-top:2px;">Calls Made</div></div>
-        <div style="text-align:center;"><div id="stat-connected-${pid}" style="font-size:1.3rem;font-weight:800;color:#22c55e;line-height:1;">${connectedCalls.length}</div><div style="font-size:.58rem;color:#9ca3af;margin-top:2px;">Connected</div></div>
-        <div style="text-align:center;"><div id="stat-sms-sent-${pid}" style="font-size:1.3rem;font-weight:800;color:#8b5cf6;line-height:1;">${smsCnt}</div><div style="font-size:.58rem;color:#9ca3af;margin-top:2px;">SMS Sent</div></div>
-        <div style="flex:1;min-width:90px;padding-left:10px;border-left:1px solid #e5e7eb;">
-          <div style="font-size:.58rem;color:#9ca3af;margin-bottom:2px;">Last Contact</div>
-          <div style="font-size:.68rem;font-weight:600;color:#374151;">${lastConnStr}</div>
-        </div>
-      </div>
-      <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#9ca3af;margin-top:10px;margin-bottom:2px;">Latest Note</div>
-      ${noteHtml}
-    </div>`;
-    const gridHtml=`<div style="display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #f0f0f0;">
-      <div style="padding:10px 14px;border-right:1px solid #f0f0f0;border-bottom:1px solid #f0f0f0;"><div style="${LABEL}">Contact</div><div style="${VAL}font-weight:600;color:#111;">${displayName}</div></div>
-      <div style="padding:10px 14px;border-bottom:1px solid #f0f0f0;"><div style="${LABEL}">Owner</div><div style="${VAL}">${l.ownerName||'—'}</div></div>
-      <div style="padding:10px 14px;border-right:1px solid #f0f0f0;border-bottom:1px solid #f0f0f0;"><div style="${LABEL}">Phone</div><div style="${VAL}">${l.contactPhone||'—'}</div>${tzPanelLine(l.contactPhone)}</div>
-      <div style="padding:10px 14px;border-bottom:1px solid #f0f0f0;"><div style="${LABEL}">Stage</div><div style="display:flex;align-items:center;gap:5px;"><span style="width:7px;height:7px;background:${stageColor(l.stageId)};border-radius:50%;flex-shrink:0;display:inline-block;"></span><span style="${VAL}">${l.stageName||'—'}</span></div></div>
-      <div style="padding:10px 14px;border-right:1px solid #f0f0f0;border-bottom:1px solid #f0f0f0;"><div style="${LABEL}">Email</div><div style="${VAL}font-size:.72rem;word-break:break-all;">${l.contactEmail||'—'}</div></div>
-      <div style="padding:10px 14px;border-bottom:1px solid #f0f0f0;"><div style="${LABEL}">Day</div><div style="${VAL}font-weight:700;color:#ff7a59;">Day ${l.ageDays||1}</div></div>
-      <div style="padding:10px 14px;border-right:1px solid #f0f0f0;"><div style="${LABEL}">Last Call</div><div style="${VAL}font-size:.75rem;">${lastConnStr}</div></div>
-      <div style="padding:10px 14px;"><div style="${LABEL}">Cadence</div><div style="${VAL}font-weight:700;color:${_bc};">${_pct}%</div></div>
-      <div id="contact-edit-form-${l.id}" style="display:none;grid-column:1/-1;padding:12px 14px;background:#f9fafb;border-top:1px solid #f0f0f0;gap:8px;flex-direction:column;">
-        <div style="font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;margin-bottom:4px;">Edit Contact Info — syncs to HubSpot</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <div style="flex:1;min-width:120px;"><label style="font-size:.63rem;color:#9ca3af;font-weight:600;">Full Name</label><input id="cedit-name-${l.id}" type="text" value="${(displayName||'').replace(/"/g,'&quot;')}" style="width:100%;font-size:.75rem;border:1px solid #e5e7eb;border-radius:6px;padding:5px 8px;margin-top:2px;outline:none;box-sizing:border-box;" /></div>
-          <div style="flex:1;min-width:120px;"><label style="font-size:.63rem;color:#9ca3af;font-weight:600;">Phone</label><input id="cedit-phone-${l.id}" type="tel" value="${(l.contactPhone||'').replace(/"/g,'&quot;')}" style="width:100%;font-size:.75rem;border:1px solid #e5e7eb;border-radius:6px;padding:5px 8px;margin-top:2px;outline:none;box-sizing:border-box;" /></div>
-          <div style="flex:1;min-width:160px;"><label style="font-size:.63rem;color:#9ca3af;font-weight:600;">Email</label><input id="cedit-email-${l.id}" type="email" value="${(l.contactEmail||'').replace(/"/g,'&quot;')}" style="width:100%;font-size:.75rem;border:1px solid #e5e7eb;border-radius:6px;padding:5px 8px;margin-top:2px;outline:none;box-sizing:border-box;" /></div>
-        </div>
-        <div style="display:flex;gap:6px;margin-top:4px;">
-          <button onclick="saveContactEdit('${l.id}','${l.contactId||''}')" style="padding:6px 16px;background:#ff7a59;color:#fff;border:none;border-radius:7px;font-size:.72rem;font-weight:700;cursor:pointer;">Save to HubSpot</button>
-          <button onclick="document.getElementById('contact-edit-form-${l.id}').style.display='none';" style="padding:6px 14px;background:#f3f4f6;color:#374151;border:none;border-radius:7px;font-size:.72rem;font-weight:600;cursor:pointer;">Cancel</button>
-          <span id="cedit-status-${l.id}" style="font-size:.7rem;color:#22c55e;align-self:center;"></span>
-        </div>
-      </div>
-      <div style="grid-column:1/-1;padding:8px 14px;display:flex;justify-content:flex-end;border-top:1px solid #f0f0f0;background:#fafafa;">
-        <button title="Edit contact info" onclick="const f=document.getElementById('contact-edit-form-${l.id}');f.style.display=f.style.display==='none'?'flex':'none';" style="background:none;border:none;cursor:pointer;font-size:1rem;color:#9ca3af;padding:2px 6px;" >✏️</button>
+    // One labelled metric row instead of three competing coloured numbers.
+    const M='font-size:.56rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#a1a1aa;margin-top:4px;';
+    const metric=(v,lab,col)=>`<div style="flex:1;min-width:0;padding:10px 12px;">
+      <div style="font-size:1.02rem;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;color:${col||'#18181b'};">${v}</div>
+      <div style="${M}">${lab}</div></div>`;
+    const _sep='<div style="width:1px;background:#e4e4e7;"></div>';
+    const summaryHtml=`<div style="display:flex;border-bottom:1px solid #f0f0f0;background:#fafafa;">
+      ${metric('Day '+(l.ageDays||1),'Cadence day')}${_sep}
+      ${metric(_pct+'%','Cadence today',_bc)}${_sep}
+      ${metric(lastOC?hsRelTime(lastOC.timestamp).replace(' ago',''):'—','Since contact')}${_sep}
+      ${metric(ownerCalls.length+' / '+connectedCalls.length,'Calls / answered')}${_sep}
+      ${metric(smsCnt,'SMS')}
+    </div>
+    ${l.latestNote?`<div style="padding:11px 14px;border-bottom:1px solid #f0f0f0;">
+      <div style="${LABEL}">Latest HubSpot note</div>
+      <div style="font-size:.73rem;color:#52525b;line-height:1.55;">${(l.latestNote.length>260?l.latestNote.slice(0,260)+'…':l.latestNote).replace(/</g,'&lt;')}</div></div>`:''}`;
+
+    // Read-only detail grid: editing, stage changes, SMS and dialling all happen
+    // in HubSpot or Aircall, so the panel does not duplicate them.
+    const gridHtml=`<div style="padding:12px 14px;border-bottom:1px solid #f0f0f0;">
+      <div style="${LABEL}margin-bottom:9px;">Lead details</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;">
+        <div><div style="${LABEL}">Contact</div><div style="${VAL}font-weight:600;color:#18181b;">${displayName}</div></div>
+        <div><div style="${LABEL}">Owner</div><div style="${VAL}">${l.ownerName||'—'}</div></div>
+        <div><div style="${LABEL}">Phone</div><div style="${VAL}">${l.contactPhone||'—'}</div>${tzPanelLine(l.contactPhone)}</div>
+        <div><div style="${LABEL}">Ticket status</div><div style="display:flex;align-items:center;gap:5px;"><span style="width:7px;height:7px;background:${stageColor(l.stageId)};border-radius:50%;flex-shrink:0;display:inline-block;"></span><span style="${VAL}">${l.stageName||'—'}</span></div></div>
+        <div><div style="${LABEL}">Email</div><div style="${VAL}font-size:.72rem;word-break:break-all;">${l.contactEmail||'—'}</div></div>
+        <div><div style="${LABEL}">Contacts today</div><div style="${VAL}">${l.actualContacts||0} of ${l.expectedContacts||0} planned</div></div>
       </div>
     </div>`;
-    const actionsHtml=`<div style="padding:10px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #f0f0f0;flex-wrap:wrap;">${stageDropdown(l)}<a href="https://app.hubspot.com/contacts/45809585/ticket/${l.id}" target="_blank" style="font-size:.67rem;color:#ff7a59;text-decoration:none;font-weight:600;border:1px solid #ff7a59;padding:3px 8px;border-radius:6px;">🔗 HubSpot</a><button onclick="openMyActionModal('${l.id}','${(l.contactName||l.subject||'').replace(/'/g,'')}');closeLeadPanel();" style="font-size:.67rem;color:#3b82f6;font-weight:600;border:1px solid #3b82f6;padding:3px 8px;border-radius:6px;background:#fff;cursor:pointer;">🗓️ Schedule Follow-Up</button></div>`;
+    const actionsHtml=`<div style="padding:10px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #f0f0f0;flex-wrap:wrap;">
+      <a href="https://app.hubspot.com/contacts/${HS_PORTAL_ID}/ticket/${l.id}" target="_blank" rel="noopener" style="font-size:.69rem;font-weight:600;color:#3f3f46;text-decoration:none;border:1px solid #e4e4e7;padding:5px 11px;border-radius:7px;">Open in HubSpot</a>
+      <button onclick="openMyActionModal('${l.id}','${(l.contactName||l.subject||'').replace(/'/g,'')}');closeLeadPanel();" style="font-size:.69rem;font-weight:600;color:#3f3f46;border:1px solid #e4e4e7;padding:5px 11px;border-radius:7px;background:#fff;cursor:pointer;font-family:inherit;">Schedule follow-up</button>
+      <span style="margin-left:auto;font-size:.62rem;color:#a1a1aa;">Read-only · call and reply in Aircall</span>
+    </div>`;
     document.getElementById('lead-panel-name').textContent=displayName;
     document.getElementById('lead-panel-sub').textContent=(l.contactPhone||'')+(l.stageName?' · '+l.stageName:'');
-    document.getElementById('lead-panel-body').innerHTML=summaryHtml+`<div id="lead-handover-${l.id}">`+buildHandoverNote(l)+`</div>`+gridHtml+actionsHtml+commPanel(l,allCalls);
+    document.getElementById('lead-panel-body').innerHTML=summaryHtml+tzCallFromCard(l.contactPhone)+`<div id="lead-handover-${l.id}">`+buildHandoverNote(l)+`</div>`+gridHtml+actionsHtml+commPanel(l,allCalls);
     document.getElementById('lead-panel-overlay').style.display='block';
     const panel=document.getElementById('lead-side-panel');
     panel.style.display='flex';
@@ -7531,6 +7498,7 @@ function renderHSLeads(){
     const avgCadPct=Math.round(complianceBase.reduce((s,l)=>s+(l.cadencePct||0),0)/Math.max(1,complianceBase.length));
     const cadColor=avgCadPct>=100?'#22c55e':avgCadPct>=50?'#f97316':'#ef4444';
     const CARD='background:#fff;border:1px solid #f0f0f0;border-radius:12px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.05);';
+    const CARD2='background:#fff;border:1px solid #e4e4e7;border-radius:10px;';
     // Per-agent cadence breakdown — include ALL roster agents from visible teams, even those with 0 leads
     const allowedTeamsArr=_hsTeamFilter?[_hsTeamFilter]:[...HS_ALLOWED_TEAMS];
     const allRosterNames=rosterAgents.filter(ag=>allowedTeamsArr.includes(ag.tl)).map(ag=>ag.name);
@@ -7539,59 +7507,79 @@ function renderHSLeads(){
     // Ordered by cadence % ascending — lowest first, so agents needing coaching surface at the top.
     // Agents with no leads have no % and sort last (101 sentinel, same convention as the compliance list).
     // Ties fall back to alphabetical so equal percentages keep a stable, predictable order.
-    const agentRows=agentNames.map(name=>{
+    // Same numbers as before — the per-agent figure is still the mean of each
+    // lead's cadence %, and nothing here recomputes cadence.
+    const agentStats=agentNames.map(name=>{
       const al=complianceBase.filter(l=>l.ownerName===name);
-      const held=statsBase.filter(l=>l.ownerName===name).length; // incl. REST, for the empty-row label
-      return {name,al,held,pct:al.length?Math.round(al.reduce((s,l)=>s+(l.cadencePct||0),0)/Math.max(1,al.length)):null};
-    }).sort((a,b)=>(a.pct??101)-(b.pct??101)||a.name.localeCompare(b.name)).map(({name,al,held,pct})=>{
-      if(!al.length){
-        return `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #f9fafb;opacity:.5;">
-          <div style="width:130px;font-size:.72rem;font-weight:600;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${name}</div>
-          <div style="flex:1;background:#f3f4f6;border-radius:99px;height:8px;"></div>
-          <div style="font-size:.7rem;color:#9ca3af;width:34px;text-align:right;">—</div>
-          <div style="font-size:.65rem;color:#9ca3af;width:70px;text-align:right;">${held>0?'rest day':'no leads'}</div>
-          <div style="font-size:.62rem;color:#9ca3af;">–</div>
-        </div>`;
-      }
+      const held=statsBase.filter(l=>l.ownerName===name).length; // incl. REST, for the label
       const done=al.filter(l=>(l.cadencePct||0)>=100).length;
-      const gaps=al.length-done;
-      const c=pct>=100?'#22c55e':pct>=50?'#f97316':'#ef4444';
-      const barW=Math.min(100,pct);
-      return `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #f9fafb;">
-        <div style="width:130px;font-size:.72rem;font-weight:600;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${name}</div>
-        <div style="flex:1;background:#f3f4f6;border-radius:99px;height:8px;overflow:hidden;">
-          <div style="height:100%;width:${barW}%;background:${c};border-radius:99px;transition:width .4s;"></div>
-        </div>
-        <div style="font-size:.7rem;font-weight:700;color:${c};width:34px;text-align:right;">${pct}%</div>
-        <div style="font-size:.65rem;color:#9ca3af;width:70px;text-align:right;">${done}/${al.length} done</div>
-        ${gaps>0?`<div style="font-size:.62rem;font-weight:700;color:#ef4444;background:#fee2e2;padding:2px 7px;border-radius:99px;">${gaps} gap${gaps!==1?'s':''}</div>`:'<div style="font-size:.62rem;font-weight:700;color:#22c55e;">✅</div>'}
-      </div>`;
-    }).join('');
-    const agentBreakdown=agentNames.length>0?`<div style="background:#fff;border:1px solid #f0f0f0;border-radius:12px;padding:14px 18px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.04);">
-      <div style="font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#9ca3af;margin-bottom:10px;">Agent Cadence Today${_hsDayFilter>0?' · Day '+_hsDayFilter:''}</div>
-      ${agentRows}
+      return {name,al,held,done,gaps:al.length-done,
+              pct:al.length?Math.round(al.reduce((s,l)=>s+(l.cadencePct||0),0)/Math.max(1,al.length)):null};
+    }).sort((a,b)=>(a.pct??101)-(b.pct??101)||a.name.localeCompare(b.name));
+    const working=agentStats.filter(a=>a.al.length);
+    const idle=agentStats.filter(a=>!a.al.length);
+    const behind=working.filter(a=>a.gaps>0).length;
+    const TH='text-align:left;padding:8px 12px;font-size:.6rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#a1a1aa;border-bottom:1px solid #e4e4e7;white-space:nowrap;';
+    const TD='padding:8px 12px;border-bottom:1px solid #f4f4f5;font-size:.76rem;color:#27272a;';
+    const NTD=TD+'text-align:right;font-variant-numeric:tabular-nums;';
+    const pcol=p=>p>=100?'#15803d':p>=60?'#b45309':'#b91c1c';
+    const bar=(p,w)=>`<span style="display:inline-block;width:${w}px;height:5px;border-radius:99px;background:#f4f4f5;vertical-align:middle;overflow:hidden;">
+        <span style="display:block;width:${Math.min(100,p)}%;height:100%;background:${pcol(p)};"></span></span>`;
+    const agentBreakdown=working.length?`<div style="${CARD2}margin-bottom:12px;overflow:hidden;">
+      <div style="padding:13px 18px;border-bottom:1px solid #e4e4e7;display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;">
+        <span style="font-size:.85rem;font-weight:700;color:#18181b;">Cadence by agent</span>
+        <span style="font-size:.67rem;color:#a1a1aa;">today${_hsDayFilter>0?' · Day '+_hsDayFilter:''} · lowest first</span>
+      </div>
+      <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;min-width:460px;">
+        <thead><tr><th style="${TH}">Agent</th><th style="${TH}text-align:right;">Leads</th>
+          <th style="${TH}text-align:right;">Done</th><th style="${TH}text-align:right;">Gaps</th>
+          <th style="${TH}text-align:right;">Cadence</th></tr></thead>
+        <tbody>${working.map(a=>`<tr>
+          <td style="${TD}font-weight:600;color:#18181b;">${a.name}</td>
+          <td style="${NTD}">${a.al.length}</td>
+          <td style="${NTD}color:#71717a;">${a.done}</td>
+          <td style="${NTD}color:${a.gaps?'#b91c1c':'#d4d4d8'};font-weight:${a.gaps?'700':'400'};">${a.gaps||'—'}</td>
+          <td style="${TD}text-align:right;white-space:nowrap;">${bar(a.pct,80)}
+            <span style="margin-left:8px;font-size:.76rem;font-weight:700;font-variant-numeric:tabular-nums;color:${pcol(a.pct)};">${a.pct}%</span></td>
+        </tr>`).join('')}</tbody></table></div>
+      ${idle.length?`<div style="padding:9px 12px;border-top:1px solid #f4f4f5;font-size:.68rem;color:#a1a1aa;">
+        ${idle.length} other agent${idle.length===1?'':'s'} with no leads on an active day —
+        <button type="button" onclick="toggleIdleAgents()" style="background:none;border:none;padding:0;color:#3f3f46;font-size:.68rem;text-decoration:underline;text-decoration-style:dotted;cursor:pointer;font-family:inherit;">show</button>
+        <div id="tl-idle-agents" style="display:none;margin-top:7px;color:#71717a;line-height:1.7;">${idle.map(a=>a.name+(a.held>0?' <span style="color:#d4d4d8;">(rest day)</span>':'')).join(' · ')}</div>
+      </div>`:''}
     </div>`:'';
-    const gapsBtn=`<button onclick="toggleHSGapsOnly()" style="padding:5px 14px;border:1.5px solid ${_hsGapsOnly?'#ef4444':'#e5e7eb'};border-radius:8px;background:${_hsGapsOnly?'#fee2e2':'#fff'};color:${_hsGapsOnly?'#b91c1c':'#6b7280'};font-size:.72rem;font-weight:700;cursor:pointer;white-space:nowrap;">⚠️ ${_hsGapsOnly?'All Leads':'Gaps Only'}</button>`;
-    const summary=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px;">
-      <div style="${CARD}">
-        <div style="font-size:2rem;font-weight:800;color:#3b82f6;line-height:1;">${statsBase.length}</div>
-        <div style="font-size:.75rem;color:#9ca3af;margin-top:6px;font-weight:500;">Active Leads${_hsDayFilter>0?` · Day ${_hsDayFilter}`:''}</div>
+    const gapsBtn=`<button onclick="toggleHSGapsOnly()" style="padding:5px 12px;border:1px solid ${_hsGapsOnly?'#fecaca':'#e4e4e7'};border-radius:8px;background:${_hsGapsOnly?'#fef2f2':'#fff'};color:${_hsGapsOnly?'#b91c1c':'#52525b'};font-size:.72rem;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit;">${_hsGapsOnly?'Showing gaps only':'Gaps only'}</button>`;
+    // Header band: what you are looking at, when it was pulled, and the four figures.
+    const _scopeBits=[_hsOwnerFilter||(_hsTeamFilter?_hsTeamFilter.replace('Team ','')+' — '+working.length+' agent'+(working.length===1?'':'s'):'All Phoenix teams')];
+    if(_hsDayFilter>0)_scopeBits.push('Day '+_hsDayFilter);
+    if(_hsTzFilter&&TZ_ZONES[_hsTzFilter])_scopeBits.push(TZ_ZONES[_hsTzFilter].label+' time');
+    if(_hsLeadSearch)_scopeBits.push('matching “'+_hsLeadSearch+'”');
+    const LBL2='font-size:.61rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#a1a1aa;';
+    const kpi=(n,lab,note,col,click)=>`<div style="padding:15px 20px;flex:1 1 150px;min-width:0;${click?'cursor:pointer;':''}"${click?` onclick="${click}"`:''}>
+        <div style="${LBL2}margin-bottom:7px;">${lab}</div>
+        <div style="font-size:1.55rem;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;color:${col};">${n}</div>
+        <div style="font-size:.65rem;color:#a1a1aa;margin-top:5px;">${note}</div></div>`;
+    const _vsep='<div style="width:1px;background:#f4f4f5;"></div>';
+    const summary=`<div style="${CARD2}margin-bottom:12px;">
+      <div style="padding:15px 20px 0;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;">
+        <span style="font-size:.95rem;font-weight:700;color:#18181b;">2nd Week Cadence</span>
+        <span style="font-size:.7rem;color:#71717a;">${_scopeBits.join(' · ')}</span>
+        <span style="font-size:.65rem;color:#a1a1aa;margin-left:auto;">As of ${new Date(Date.now()-5*3600000).toISOString().slice(11,16)} CDT
+          <button onclick="fetchHSLeads()" style="margin-left:8px;padding:2px 10px;font-size:.64rem;font-weight:600;color:#3f3f46;background:#fff;border:1px solid #e4e4e7;border-radius:6px;cursor:pointer;font-family:inherit;">Refresh</button></span>
       </div>
-      <div style="${CARD}cursor:pointer;" onclick="toggleHSGapsOnly()">
-        <div style="font-size:2rem;font-weight:800;color:#ef4444;line-height:1;">${totalLack}</div>
-        <div style="font-size:.75rem;color:#9ca3af;margin-top:6px;font-weight:500;">Cadence Gaps ${_hsGapsOnly?'· <span style="color:#ef4444;">Filtered</span>':''}</div>
-      </div>
-      <div style="${CARD}">
-        <div style="font-size:2rem;font-weight:800;color:${cadColor};line-height:1;">${avgCadPct}%</div>
-        <div style="font-size:.75rem;color:#9ca3af;margin-top:6px;font-weight:500;">Team Cadence</div>
+      <div style="display:flex;flex-wrap:wrap;border-top:1px solid #f4f4f5;margin-top:12px;">
+        ${kpi(statsBase.length,'Active leads','On an active cadence day','#18181b')}${_vsep}
+        ${kpi(totalLack,'Cadence gaps',_hsGapsOnly?'Filtered to these':'Below plan for today','#b91c1c','toggleHSGapsOnly()')}${_vsep}
+        ${kpi(avgCadPct+'%','Team cadence','Mean of each lead’s cadence',cadColor)}${_vsep}
+        ${kpi(behind+' of '+working.length,'Agents behind','With at least one gap','#18181b')}
       </div>
     </div>`;
     const filterRowWithGaps=dayFilterHtml.replace('<!--GAPS_SLOT-->',gapsBtn);
     const w2=activeDays.filter(l=>l.ageBucket==='2nd-week');
     const w3=activeDays.filter(l=>l.ageBucket==='3rd-week');
     let html=_tlTabs+filterRowWithGaps+summary+agentBreakdown;
-    if(w2.length>0) html+=renderSection('tl-w2','2nd Week Leads — Days 1–8','📋',w2,true,_hsViewMode);
-    if(w3.length>0) html+=renderSection('tl-w3','3rd Week Leads — Days 9–15','⏰',w3,true,_hsViewMode);
+    if(w2.length>0) html+=renderSection('tl-w2','2nd Week leads — Days 1–8','',w2,true,_hsViewMode);
+    if(w3.length>0) html+=renderSection('tl-w3','3rd Week leads — Days 9–15','',w3,true,_hsViewMode);
     if(w2.length===0&&w3.length===0) html+=`<div style="color:var(--g400);font-size:.8rem;padding:6px 0;">${_hsGapsOnly?'No cadence gaps found — team is all caught up! ✅':'No leads on Day '+_hsDayFilter+'.'}</div>`;
     tlEl.innerHTML=html;
   }
