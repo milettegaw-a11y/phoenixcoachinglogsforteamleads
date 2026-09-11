@@ -13908,11 +13908,44 @@ function cvrOwners(){
   return out;
 }
 
+/* ── talking to HubSpot without tripping its search limit ───────────────── */
+// HubSpot allows a handful of searches a second per app. The proxy retries a 429
+// itself, but a cohort scan can outrun even that, so every CVR request goes
+// through here: back off and try again, and give up only after four attempts.
+async function cvrPost(body,tries){
+  const max=tries||4;
+  for(let i=0;i<max;i++){
+    const r=await fetch('/api/hs-leads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(r.status===429||r.status===503){await new Promise(z=>setTimeout(z,900*(i+1)));continue;}
+    if(!r.ok)throw new Error('HubSpot '+r.status);
+    const d=await r.json();
+    if(d.error&&/rate limit/i.test(d.error)){await new Promise(z=>setTimeout(z,900*(i+1)));continue;}
+    if(d.error)throw new Error(d.error);
+    return d;
+  }
+  throw new Error('HubSpot rate limit');
+}
+// Runs `jobs` with at most `width` in flight. Three is what the search API takes
+// comfortably; seven at once is what got us 429s.
+async function cvrPool(jobs,width){
+  const out=new Array(jobs.length);
+  let next=0;
+  const worker=async()=>{
+    while(next<jobs.length){
+      const i=next++;
+      out[i]=await jobs[i]();
+    }
+  };
+  await Promise.all(Array.from({length:Math.min(width,jobs.length)},worker));
+  return out;
+}
+
 /* ── the cohort scan ────────────────────────────────────────────────────── */
 // One week is ~4,000 tickets. Paging is a cursor walk, so we split the week into
-// its seven days and walk all seven at once — ~6 pages each instead of 40 in a
-// line. The cvrScan flag tells the proxy to skip the association and activity
-// enrichment that Lead Compliance needs and this does not.
+// its seven days and walk three of them at a time — ~6 pages each instead of 40
+// in a line, without outrunning the search limit. The cvrScan flag tells the
+// proxy to skip the association and activity enrichment that Lead Compliance
+// needs and this does not.
 async function cvrScanWeek(wk,onProg){
   const own=cvrOwners(), ids=Object.keys(own);
   if(!ids.length)throw new Error('No Phoenix owners resolved from the roster.');
@@ -13930,10 +13963,7 @@ async function cvrScanWeek(wk,onProg){
         properties:['createdate','closed_date','hs_pipeline_stage','hubspot_owner_id','hs_lastactivitydate'],
         sorts:[{propertyName:'createdate',direction:'ASCENDING'}]};
       if(after)body.after=after;
-      const r=await fetch('/api/hs-leads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-      if(!r.ok)throw new Error('HubSpot '+r.status);
-      const d=await r.json();
-      if(d.error)throw new Error(d.error);
+      const d=await cvrPost(body);
       rows=rows.concat(d.results||[]);
       seen+=(d.results||[]).length;
       if(onProg)onProg(seen);
@@ -13942,7 +13972,7 @@ async function cvrScanWeek(wk,onProg){
     }while(after&&n<40);
     return rows;
   };
-  const parts=await Promise.all([0,1,2,3,4,5,6].map(day));
+  const parts=await cvrPool([0,1,2,3,4,5,6].map(i=>()=>day(i)),3);
   return parts.reduce((a,b)=>a.concat(b),[]);
 }
 
@@ -14008,11 +14038,8 @@ async function cvrResolveNames(snap){
   for(let i=0;i<ids.length;i+=100){
     const chunk=ids.slice(i,i+100);
     try{
-      const r=await fetch('/api/hs-leads',{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({cvrScan:true,cvrNames:true,limit:100,properties:['hs_object_id'],
-          filterGroups:[{filters:[{propertyName:'hs_object_id',operator:'IN',values:chunk}]}]})});
-      if(!r.ok)continue;
-      const d=await r.json();
+      const d=await cvrPost({cvrScan:true,cvrNames:true,limit:100,properties:['hs_object_id'],
+        filterGroups:[{filters:[{propertyName:'hs_object_id',operator:'IN',values:chunk}]}]});
       (d.results||[]).forEach(t=>{name[String(t.id)]=t.contactName||null;});
     }catch(err){/* a drawer without names is still a usable drawer */}
   }
@@ -14032,23 +14059,17 @@ async function cvrRevisitAudit(wk,rows){
   for(let i=0;i<ids.length;i+=100)chunks.push(ids.slice(i,i+100));
   let checked=0,found=false,failed=false;
   const ask=async chunk=>{
+    if(failed)return;
     try{
-      const r=await fetch('/api/hs-leads',{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({cvrRevisit:chunk,beforeMs:before,pipeline:HS_PIPELINE_SEG})});
-      if(!r.ok){failed=true;return;}
-      const d=await r.json();
-      if(d.error){failed=true;return;}
+      const d=await cvrPost({cvrRevisit:chunk,beforeMs:before,pipeline:HS_PIPELINE_SEG});
       (d.revisits||[]).forEach(id=>{set.add(String(id));found=true;});
       checked+=chunk.length;
+      _cvrRevisit[wk]={set:set,checked:checked,done:false};
     }catch(err){failed=true;}
   };
-  // Five at a time: forty chunks in a line takes the best part of a minute, and
-  // any more than this and HubSpot starts answering with 429s.
-  for(let i=0;i<chunks.length;i+=5){
-    await Promise.all(chunks.slice(i,i+5).map(ask));
-    _cvrRevisit[wk]={set:set,checked:checked,done:false};
-    if(failed)break;
-  }
+  // Each chunk is three HubSpot calls of its own, so this stays narrower than the
+  // scan. It runs behind an already-drawn dashboard; there is nothing to race.
+  await cvrPool(chunks.map(c=>()=>ask(c)),2);
   _cvrRevisit[wk]={set:set,checked:checked,done:!failed&&checked>=ids.length};
   return found;
 }
@@ -14134,6 +14155,8 @@ async function cvrBackfill(from){
       while(_cvrBusy)await new Promise(r=>setTimeout(r,1500));
       await cvrBuild(w,true);
       if(_cvrSel===from)cvrRender();
+      if(!_cvrData[w])break;                       // rate-limited — leave it for the next visit
+      await new Promise(r=>setTimeout(r,2000));    // breathing room before the next week
     }
   }finally{_cvrBackfilling=false;}
 }
@@ -14147,15 +14170,12 @@ async function cvrSalePoll(){
   try{
     const ids=Object.keys(cvrOwners());
     const start=cvrMonMs(wk);
-    const r=await fetch('/api/hs-leads',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({cvrScan:true,limit:1,properties:['hs_object_id'],filterGroups:[{filters:[
+    const d=await cvrPost({cvrScan:true,limit:1,properties:['hs_object_id'],filterGroups:[{filters:[
         {propertyName:'hs_pipeline',operator:'EQ',value:HS_PIPELINE_SEG},
         {propertyName:'subject',operator:'EQ',value:HS_SUBJECT_2ND_WEEK},
         {propertyName:'hubspot_owner_id',operator:'IN',values:ids},
         {propertyName:'createdate',operator:'BETWEEN',value:String(start),highValue:String(start+7*86400000-1)},
-        {propertyName:'hs_pipeline_stage',operator:'EQ',value:HS_SALE_STAGE}]}]})});
-    if(!r.ok)return;
-    const d=await r.json();
+        {propertyName:'hs_pipeline_stage',operator:'EQ',value:HS_SALE_STAGE}]}]},2);
     if(typeof d.total==='number'&&d.total!==snap.sales)cvrBuild(wk,false);
   }catch(err){/* the poll is best-effort */}
 }
