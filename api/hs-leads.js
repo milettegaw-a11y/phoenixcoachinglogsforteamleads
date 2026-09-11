@@ -280,7 +280,7 @@ export default async function handler(req, res) {
     if (!ticketResp.ok) return res.status(ticketResp.status).json(ticketData);
 
     const tickets = ticketData.results || [];
-    if (tickets.length === 0) return res.status(200).json({ results: [], paging: ticketData.paging });
+    if (tickets.length === 0) return res.status(200).json({ results: [], paging: ticketData.paging, total: ticketData.total });
 
     const ticketIds = tickets.map(t => t.id);
 
@@ -621,7 +621,7 @@ export default async function handler(req, res) {
       for (const id of ownerIds) if (all[id]) owners[id] = all[id];
     } catch (e) { owners = {}; }   // names are a nicety; never fail the whole fetch
 
-    return res.status(200).json({ results: enriched, paging: ticketData.paging, owners });
+    return res.status(200).json({ results: enriched, paging: ticketData.paging, owners, total: ticketData.total });
 
   } catch (e) {
     return res.status(500).json({ error: e.message });
