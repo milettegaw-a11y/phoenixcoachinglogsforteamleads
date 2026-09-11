@@ -5258,6 +5258,7 @@ let _hsDayFilter=0; // 0 = All days
 let _hsAgeBucket=''; // '' = all, '2nd-week' = Day 1-8, '3rd-week' = Day 9-15
 let _hsOwnerFilter=''; // '' = all owners
 let _hsTeamFilter=''; // '' = all teams
+let _hsTzFilter='';   // '' = every time zone; otherwise a TZ_ZONES key, or 'unknown'
 let _hsLeadSearch=''; // '' = no search filter
 let _hsGapsOnly=false; // true = show only leads lacking cadence
 // Only show leads assigned to these four teams
@@ -5486,6 +5487,10 @@ function setHSOwnerFilter(val){
 function setHSTeamFilter(val){
   _hsTeamFilter=val;
   _hsOwnerFilter=''; // reset owner when team changes
+  renderHSLeads();
+}
+function setHSTzFilter(val){
+  _hsTzFilter=val||'';
   renderHSLeads();
 }
 function setHSSearch(val){
@@ -6493,6 +6498,273 @@ function toggleHandoverSummary(lid){
   el.style.display='-webkit-box';
   if(btn)btn.textContent=open?'Show more ▾':'Show less ▴';
 }
+/* ── LEAD TIME ZONE & STATE FROM AREA CODE ────────────────────────────────
+   HubSpot's state and time-zone fields are unreliable on these records, so
+   the lead's location is derived from the NANP area code of the phone number
+   instead. Local times come from the IANA zone via Intl, which means DST is
+   handled by the browser — nothing here needs changing twice a year.       */
+const TZ_STATE_CODES={
+  AL:'205 251 256 334 659 938', AK:'907', AZ:'480 520 602 623 928', AR:'479 501 870',
+  CA:'209 213 279 310 323 341 350 408 415 424 442 510 530 559 562 619 626 628 650 657 661 669 707 714 747 760 805 818 820 831 840 858 909 916 925 935 949 951',
+  CO:'303 719 720 970 983', CT:'203 475 860 959', DE:'302', DC:'202',
+  FL:'239 305 321 324 352 386 407 448 561 656 689 727 754 772 786 813 850 863 904 941 954',
+  GA:'229 404 470 478 678 706 762 770 912 943', HI:'808', ID:'208 986',
+  IL:'217 224 309 312 331 447 464 618 630 708 730 773 779 815 847 861 872',
+  IN:'219 260 317 463 574 765 812 930', IA:'319 515 563 641 712', KS:'316 620 785 913',
+  KY:'270 364 502 606 859', LA:'225 318 337 504 985', ME:'207',
+  MD:'227 240 301 410 443 667', MA:'339 351 413 508 617 774 781 857 978',
+  MI:'231 248 269 313 517 586 616 679 734 810 906 947 989',
+  MN:'218 320 507 612 651 763 924 952', MS:'228 601 662 769',
+  MO:'235 314 417 557 573 636 660 816', MT:'406', NE:'308 402 531', NV:'702 725 775',
+  NH:'603', NJ:'201 551 609 640 732 848 856 862 908 973', NM:'505 575',
+  NY:'212 315 329 332 347 363 516 518 585 607 631 646 680 716 718 838 845 914 917 929 934',
+  NC:'252 336 472 704 743 828 910 919 980 984', ND:'701',
+  OH:'216 220 234 283 326 330 380 419 440 513 567 614 740 937', OK:'405 539 572 580 918',
+  OR:'458 503 541 971',
+  PA:'215 223 267 272 412 445 484 570 582 610 717 724 814 835 878', RI:'401',
+  SC:'803 839 843 854 864', SD:'605', TN:'423 615 629 731 865 901 931',
+  TX:'210 214 254 281 325 346 361 367 409 430 432 469 512 682 713 726 737 806 817 830 832 903 915 936 940 945 956 972 979',
+  UT:'385 435 801', VT:'802', VA:'276 434 540 571 703 757 804 826 948',
+  WA:'206 253 360 425 509 564', WV:'304 681', WI:'262 274 353 414 534 608 715 920',
+  WY:'307', PR:'787 939', VI:'340', GU:'671', AS:'684', MP:'670'
+};
+const TZ_ZONES={
+  ET :{label:'Eastern',  iana:'America/New_York'},
+  CT :{label:'Central',  iana:'America/Chicago'},
+  MT :{label:'Mountain', iana:'America/Denver'},
+  AZ :{label:'Arizona',  iana:'America/Phoenix'},      // no DST
+  PT :{label:'Pacific',  iana:'America/Los_Angeles'},
+  AKT:{label:'Alaska',   iana:'America/Anchorage'},
+  HT :{label:'Hawaii',   iana:'Pacific/Honolulu'},     // no DST
+  AST:{label:'Atlantic', iana:'America/Puerto_Rico'}   // no DST
+};
+const TZ_STATE_ZONE={
+  CT:'ET',DE:'ET',DC:'ET',FL:'ET',GA:'ET',ME:'ET',MD:'ET',MA:'ET',MI:'ET',NH:'ET',
+  NJ:'ET',NY:'ET',NC:'ET',OH:'ET',PA:'ET',RI:'ET',SC:'ET',VT:'ET',VA:'ET',WV:'ET',
+  IN:'ET',KY:'ET',
+  AL:'CT',AR:'CT',IL:'CT',IA:'CT',KS:'CT',LA:'CT',MN:'CT',MS:'CT',MO:'CT',NE:'CT',
+  ND:'CT',OK:'CT',SD:'CT',TN:'CT',TX:'CT',WI:'CT',
+  CO:'MT',ID:'MT',MT:'MT',NM:'MT',UT:'MT',WY:'MT',
+  AZ:'AZ', CA:'PT',NV:'PT',OR:'PT',WA:'PT', AK:'AKT', HI:'HT', PR:'AST',VI:'AST',
+  GU:'GU',AS:'AS',MP:'MP'
+};
+// Area codes whose zone differs from their state's dominant zone.
+const TZ_CODE_ZONE={'219':'CT','270':'CT','364':'CT','850':'CT','915':'MT','423':'ET','865':'ET'};
+// Area codes that genuinely straddle two zones — shown with a ~ so the agent
+// knows to confirm rather than trust it.
+const TZ_SPLIT_CODES=new Set(['850','812','930','906','701','605','308','620','208','986','541','458','775','907','928','574']);
+const TZ_TOLLFREE=new Set(['800','833','844','855','866','877','888']);
+const TZ_AC_STATE=(()=>{const m={};for(const st in TZ_STATE_CODES)TZ_STATE_CODES[st].split(' ').forEach(c=>{m[c]=st;});return m;})();
+
+// Pull the area code out of whatever format the number arrives in.
+function tzAreaCode(phone){
+  let d=String(phone||'').replace(/\D/g,'');
+  if(d.length===11&&d[0]==='1')d=d.slice(1);
+  if(d.length===7||d.length<10)return '';
+  if(d.length>10)d=d.slice(-10);
+  return d.slice(0,3);
+}
+// { ac, state, zone, label, iana, split, tollfree } — zone '' when unknown.
+function leadZone(phone){
+  const ac=tzAreaCode(phone);
+  if(!ac)return {ac:'',state:'',zone:''};
+  if(TZ_TOLLFREE.has(ac))return {ac,state:'',zone:'',tollfree:true};
+  const state=TZ_AC_STATE[ac]||'';
+  const zone=TZ_CODE_ZONE[ac]||TZ_STATE_ZONE[state]||'';
+  const z=TZ_ZONES[zone];
+  return {ac,state,zone:z?zone:'',label:z?z.label:'',iana:z?z.iana:'',split:TZ_SPLIT_CODES.has(ac)};
+}
+// Current time where the lead is. Intl does the DST work, so EST/EDT, CST/CDT
+// and the rest flip on their own — including Arizona and Hawaii, which never do.
+function tzClock(iana){
+  if(!iana)return '';
+  try{return new Date().toLocaleTimeString('en-US',{timeZone:iana,hour:'numeric',minute:'2-digit'});}
+  catch(e){return '';}
+}
+function tzAbbr(iana){
+  if(!iana)return '';
+  try{
+    const p=new Intl.DateTimeFormat('en-US',{timeZone:iana,timeZoneName:'short'}).formatToParts(new Date());
+    return (p.find(x=>x.type==='timeZoneName')||{}).value||'';
+  }catch(e){return '';}
+}
+// Outside 8am-9pm local, a call is a bad idea — worth seeing before dialling.
+function tzCallOk(iana){
+  if(!iana)return true;
+  try{const h=+new Date().toLocaleString('en-US',{timeZone:iana,hour:'numeric',hour12:false});return h>=8&&h<21;}
+  catch(e){return true;}
+}
+// Small inline chip: state, zone abbreviation and the lead's local time.
+function tzChip(phone,big){
+  const z=leadZone(phone);
+  if(!z.zone)return z.tollfree?'<span style="font-size:.62rem;color:#9ca3af;">Toll-free number</span>':'';
+  const ok=tzCallOk(z.iana);
+  const fs=big?'.72rem':'.63rem';
+  return `<span data-tzclock="${z.iana}" data-tzok="${ok?1:0}" title="${z.state||''} · ${z.label} time${z.split?' — area code '+z.ac+' spans two time zones, confirm with the customer':''} · from area code ${z.ac}"
+    style="display:inline-flex;align-items:center;gap:4px;font-size:${fs};font-weight:600;color:${ok?'#0f766e':'#b45309'};background:${ok?'#f0fdfa':'#fffbeb'};border:1px solid ${ok?'#ccfbf1':'#fde68a'};border-radius:5px;padding:1px 6px;white-space:nowrap;">
+    ${z.state||'US'} · ${tzAbbr(z.iana)}${z.split?'~':''} ${tzClock(z.iana)}</span>`;
+}
+// Fuller line for the lead panel: state, zone name, local time, and a flag when
+// the local hour makes calling a bad idea.
+function tzPanelLine(phone){
+  const z=leadZone(phone);
+  if(!z.zone)return z.tollfree?'<div style="font-size:.64rem;color:#9ca3af;margin-top:3px;">Toll-free number — no location</div>':'';
+  const ok=tzCallOk(z.iana);
+  return `<div style="margin-top:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+    <span data-tzclock="${z.iana}" style="font-size:.72rem;font-weight:700;color:${ok?'#0f766e':'#b45309'};">${tzClock(z.iana)} ${tzAbbr(z.iana)}</span>
+    <span style="font-size:.64rem;color:#9ca3af;">${z.state} · ${z.label}${z.split?' · area code '+z.ac+' spans two zones':''} · from area code</span>
+    ${ok?'':'<span style="font-size:.6rem;font-weight:700;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:4px;padding:1px 6px;">Outside 8am–9pm local</span>'}
+  </div>`;
+}
+// One ticking loop for every clock on the page, rather than one per lead.
+let _tzTimer=null;
+function tzStartClocks(){
+  if(_tzTimer)return;
+  _tzTimer=setInterval(()=>{
+    document.querySelectorAll('[data-tzclock]').forEach(el=>{
+      const iana=el.getAttribute('data-tzclock');
+      const t=tzClock(iana);
+      if(!t)return;
+      el.innerHTML=el.innerHTML.replace(/\d{1,2}:\d{2}\s?(AM|PM)/i,t);
+    });
+    const strip=document.getElementById('tz-now-strip');
+    if(strip)strip.innerHTML=tzNowStripHtml();
+  },30000);
+}
+// "Right now: ET 9:26 PM · CT 8:26 PM · …" — reads straight across, DST included.
+function tzNowStripHtml(){
+  return ['ET','CT','MT','AZ','PT','AKT','HT'].map(k=>{
+    const z=TZ_ZONES[k];
+    return `<span style="white-space:nowrap;"><b style="color:var(--g600);">${tzAbbr(z.iana)}</b> ${tzClock(z.iana)}</span>`;
+  }).join('<span style="color:#d1d5db;">·</span>');
+}
+
+
+/* ── SUGGESTED FIRST OUTREACH (handover openers) ──────────────────────────
+   When a lead arrives carrying a conversation somebody else started — Apex,
+   or a previous Phoenix owner — the new handler's first message decides
+   whether the lead re-engages. These drafts are built from what is actually
+   on the record: the home details the customer gave, the objection they
+   raised, whether they were left without a reply. Nothing is invented and no
+   price or term is promised; anything specific is quoted back from history.
+   The card only appears while the outreach is still outstanding — once the
+   new owner has sent their own SMS it disappears.                          */
+const OP_OBJECTIONS=[
+  {k:'commitment',re:/\b(commit|contract|subscri|lock(ed)?\s*in|cancel|\d+\s*(paid\s*)?months?)\b/i,
+   label:'the length of the commitment'},
+  {k:'price',re:/\b(price|pricing|expensive|costly|cost|afford|budget|too much|cheaper)\b|\$\s?\d/i,
+   label:'the cost'},
+  {k:'trust',re:/\b(review|scam|legit|trust|safe|background check|who (is|will be) coming)\b/i,
+   label:'who would be coming to the home'},
+  {k:'timing',re:/\b(busy|later|next week|not (right )?now|bad time|think about it|call me back)\b/i,
+   label:'the timing'}
+];
+let _openers={};
+function opFirst(n){return String(n||'').trim().split(/\s+/)[0]||'';}
+function buildOpeners(lead){
+  const acts=(lead.calls||[]).slice().sort((a,b)=>hsTs(a.timestamp)-hsTs(b.timestamp));
+  if(!acts.length)return [];
+  const isSms=c=>c.type!=='call';
+  const dirOut=c=>(c.direction||'').toUpperCase()==='OUTBOUND';
+  const dirIn =c=>(c.direction||'').toUpperCase()==='INBOUND';
+  const owner=String(lead.ownerId||'');
+  // Somebody else already worked this lead …
+  const prior=acts.filter(c=>c.ownerId&&String(c.ownerId)!==owner);
+  if(!prior.length)return [];
+  // … and the current owner has not sent their own message yet.
+  if(acts.some(c=>isSms(c)&&dirOut(c)&&String(c.ownerId||'')===owner))return [];
+
+  const first=opFirst(lead.contactName)||'there';
+  const me=opFirst(lead.ownerName)||'your agent';
+  const prevName=opFirst(hsAgentName(prior[prior.length-1]))||'';
+  const from=prevName?` from ${prevName}`:'';
+  // What the customer themselves said, newest last.
+  const said=[...acts.filter(c=>isSms(c)&&dirIn(c)).map(c=>String(c.body||'')),
+              ...acts.filter(c=>!isSms(c)&&(c.summary||'').trim()).map(c=>String(c.summary))];
+  const offered=acts.filter(c=>isSms(c)&&dirOut(c)).map(c=>String(c.body||''));
+  const bed=hnFind(HN_BED,said), bath=hnFind(HN_BATH,said);
+  const freq=(lead.contactFrequency||'').trim()||hnFind(HN_FREQ,said);
+  const home=[bed?bed+' bed':'',bath?bath+' bath':''].filter(Boolean).join(', ');
+  const obj=OP_OBJECTIONS.find(o=>said.some(t=>o.re.test(t)));
+  const lastAct=acts[acts.length-1];
+  const missed=lastAct&&!isSms(lastAct)&&dirIn(lastAct)&&!lastAct.connected;
+  const unanswered=lastAct&&isSms(lastAct)&&dirIn(lastAct);
+  const everReplied=acts.some(c=>dirIn(c));
+  const out=[];
+  const add=(label,why,text)=>{if(out.length<3)out.push({label,why,text});};
+
+  if(obj){
+    const term=obj.k==='commitment'?(/(\d+)\s*(paid\s*)?months?/i.exec(said.join(' '))||[])[1]:'';
+    const txt={
+      commitment:`Hi ${first}, this is ${me} from Homeaglow — I've picked your account up${from}. I went back through your conversation and the ${term?term+'-month ':''}commitment was the part you weren't comfortable with. Before anything else I'd like to walk you through exactly what you'd be agreeing to. Can I go over it with you?`,
+      price:`Hi ${first}, this is ${me} from Homeaglow — I'm looking after your request now${from?' ('+from.trim()+')':''}. From your notes, the cost was the sticking point last time. I can lay out exactly what the first clean and the ongoing rate would be so there are no surprises. Want me to send that through?`,
+      trust:`Hi ${first}, this is ${me} from Homeaglow, now handling your request${from}. I saw you wanted more confidence about who'd be coming to your home. I can explain how cleaners are vetted and let you choose who you're comfortable with. Would that help?`,
+      timing:`Hi ${first}, this is ${me} from Homeaglow — I've taken this over${from}. Last time the timing just wasn't right for you. Has anything changed on your end? If it has, I'll work around whatever suits you.`
+    }[obj.k];
+    add('Picks up their objection','They raised '+obj.label+' in the previous conversation',txt);
+  }
+  if(home||freq){
+    const det=[home,freq?freq.toLowerCase():''].filter(Boolean).join(', ');
+    add('Opens with what we already know','They told the previous agent: '+det,
+      `Hi ${first}, this is ${me} from Homeaglow — I've taken your cleaning request over${from}. I've got your ${det} on file, so you won't have to go through it all again. Is that still what you're after?`);
+  }
+  if(missed){
+    add('Answers the missed call','Their last contact was a call nobody picked up',
+      `Hi ${first}, this is ${me} from Homeaglow — sorry I missed your call. I'm the one looking after your request now. When's a good time to reach you?`);
+  }else if(unanswered){
+    add('Acknowledges the dropped thread','Their last message was never answered',
+      `Hi ${first}, this is ${me} from Homeaglow. I've picked your account up${from} and I can see your last message didn't get a proper reply — apologies for that. I'm on it now. What can I help you sort out?`);
+  }
+  add('Short nudge',everReplied?'Neutral opener — safe if the history is thin':'They have never replied — keep it easy to answer',
+    `Hi ${first}, this is ${me} from Homeaglow — I've taken over your cleaning request${from}. Are you still looking to get a cleaner booked? A yes or no is fine and I'll take it from there.`);
+  return out;
+}
+function useOpener(pid,i){
+  const o=(_openers[pid]||[])[i];
+  const inp=document.getElementById('sms-inp-'+pid);
+  if(!o||!inp)return;
+  inp.value=o.text; inp.focus();
+  toast('Draft loaded — edit it before you send');
+}
+function copyOpener(pid,i){
+  const o=(_openers[pid]||[])[i];
+  if(!o)return;
+  navigator.clipboard?.writeText(o.text).then(()=>toast('Copied'),()=>{});
+}
+function toggleOpeners(pid){
+  const b=document.getElementById('op-body-'+pid), t=document.getElementById('op-tog-'+pid);
+  if(!b)return;
+  const open=b.style.display!=='none';
+  b.style.display=open?'none':'block';
+  if(t)t.textContent=open?'Show ▾':'Hide ▴';
+}
+function openerCardHtml(lead){
+  const arr=buildOpeners(lead);
+  _openers[lead.id]=arr;
+  if(!arr.length)return '';
+  const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return `<div style="margin:10px;border:1px solid #ddd6fe;background:#faf9ff;border-radius:10px;overflow:hidden;">
+    <div style="display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid #ede9fe;">
+      <span style="font-size:.6rem;font-weight:800;color:#6d28d9;text-transform:uppercase;letter-spacing:.07em;">Suggested first message</span>
+      <span style="font-size:.63rem;color:#a78bfa;">built from the previous conversation · review before sending</span>
+      <button type="button" id="op-tog-${lead.id}" onclick="toggleOpeners('${lead.id}')" style="margin-left:auto;font-size:.63rem;font-weight:700;color:#6d28d9;background:#fff;border:1px solid #ddd6fe;border-radius:99px;padding:2px 9px;cursor:pointer;font-family:inherit;">Hide ▴</button>
+    </div>
+    <div id="op-body-${lead.id}" style="display:block;">
+      ${arr.map((o,i)=>`<div style="padding:9px 12px;${i?'border-top:1px dashed #ede9fe;':''}">
+        <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
+          <span style="font-size:.66rem;font-weight:700;color:#4c1d95;">${o.label}</span>
+          <span style="font-size:.62rem;color:#a78bfa;">${esc(o.why)}</span>
+          <span style="margin-left:auto;display:flex;gap:5px;">
+            <button type="button" onclick="useOpener('${lead.id}',${i})" style="font-size:.63rem;font-weight:700;color:#fff;background:#7c3aed;border:none;border-radius:6px;padding:3px 10px;cursor:pointer;font-family:inherit;">Use</button>
+            <button type="button" onclick="copyOpener('${lead.id}',${i})" style="font-size:.63rem;font-weight:700;color:#6d28d9;background:#fff;border:1px solid #ddd6fe;border-radius:6px;padding:3px 9px;cursor:pointer;font-family:inherit;">Copy</button>
+          </span>
+        </div>
+        <div style="font-size:.73rem;color:#3b0764;line-height:1.5;">${esc(o.text)}</div>
+      </div>`).join('')}
+    </div>
+  </div>`;
+}
+
 function buildHandoverNote(lead){
   const acts=lead.calls||[];
   const isSms=c=>c.type!=='call';
@@ -6618,6 +6890,8 @@ function refreshLeadPanelActivity(lead){
   }
   const hn=document.getElementById('lead-handover-'+pid);
   if(hn)hn.outerHTML=`<div id="lead-handover-${pid}">${buildHandoverNote(lead)}</div>`;
+  const op=document.getElementById('lead-opener-'+pid);
+  if(op)op.innerHTML=openerCardHtml(lead);
   const ct=document.getElementById('comm-tab-calls-'+pid);
   if(ct)ct.textContent='📞 Calls ('+(lead.calls||[]).filter(c=>!isSms(c)).length+')';
   const st=document.getElementById('comm-tab-msgs-'+pid);
@@ -6847,6 +7121,7 @@ function calledBadge(l){
 }
 
 function renderHSLeads(){
+  tzStartClocks();
   if(!_hsLeadsLoaded)return;
 
   // Apply day filter + owner/team filters (TL/OM view)
@@ -6855,6 +7130,7 @@ function renderHSLeads(){
   if(_hsTeamFilter) activeDays=activeDays.filter(l=>{const ag=rosterAgents.find(a=>a.name===l.ownerName);return ag&&ag.tl===_hsTeamFilter;});
   if(_hsOwnerFilter) activeDays=activeDays.filter(l=>l.ownerName===_hsOwnerFilter);
   if(_hsLeadSearch){const q=_hsLeadSearch.toLowerCase();activeDays=activeDays.filter(l=>(l.contactName||'').toLowerCase().includes(q)||(l.subject||'').toLowerCase().includes(q)||(l.contactPhone||'').includes(q));}
+  if(_hsTzFilter)activeDays=activeDays.filter(l=>{const z=leadZone(l.contactPhone);return _hsTzFilter==='unknown'?!z.zone:z.zone===_hsTzFilter;});
   if(_hsGapsOnly) activeDays=activeDays.filter(l=>(l.cadencePct||0)<100);
 
   // Populate TL/OM owner + team dropdowns
@@ -6902,7 +7178,20 @@ function renderHSLeads(){
     +'<span style="font-size:.72rem;font-weight:600;color:var(--g600);">Day:</span>'
     +'<select onchange="setHSDayFilter(this.value)" style="font-size:.72rem;border:1px solid #e5e7eb;border-radius:7px;padding:4px 10px;background:#fff;cursor:pointer;font-weight:'+(_hsDayFilter>0?'700':'400')+';color:'+(_hsDayFilter>0?'#ff7a59':'var(--g800)')+';">'+_dayOptsHtml+'</select>'
     +(_hsDayFilter>0?'<span style="font-size:.7rem;color:#ff7a59;font-weight:600;">'+activeDays.length+' lead'+(activeDays.length!==1?'s':'')+' on Day '+_hsDayFilter+'</span><button onclick="setHSDayFilter(0)" style="font-size:.68rem;border:none;background:#fee2e2;color:#b91c1c;border-radius:6px;padding:3px 8px;cursor:pointer;font-weight:600;">✕ Clear</button>':'')
-    +'</div><!--GAPS_SLOT--></div>';
+    +'</div>'
+    // Time zone comes from the lead's area code, not from HubSpot, and the clock
+    // strip is live so nobody has to work out the offset or think about DST.
+    +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
+      +'<span style="font-size:.72rem;font-weight:600;color:var(--g600);">Time zone:</span>'
+      +'<select onchange="setHSTzFilter(this.value)" title="Identified from the phone area code, not from HubSpot" style="font-size:.72rem;border:1px solid #e5e7eb;border-radius:7px;padding:4px 10px;background:#fff;cursor:pointer;font-weight:'+(_hsTzFilter?'700':'400')+';color:'+(_hsTzFilter?'#0f766e':'var(--g800)')+';">'
+      +'<option value="">All US time zones</option>'
+      +['ET','CT','MT','AZ','PT','AKT','HT','AST'].map(function(k){return '<option value="'+k+'"'+(_hsTzFilter===k?' selected':'')+'>'+TZ_ZONES[k].label+' ('+tzAbbr(TZ_ZONES[k].iana)+')</option>';}).join('')
+      +'<option value="unknown"'+(_hsTzFilter==='unknown'?' selected':'')+'>Unknown / no number</option>'
+      +'</select>'
+      +(_hsTzFilter?'<span style="font-size:.7rem;color:#0f766e;font-weight:600;">'+activeDays.length+' lead'+(activeDays.length!==1?'s':'')+'</span><button onclick="setHSTzFilter(\'\')" style="font-size:.68rem;border:none;background:#ccfbf1;color:#0f766e;border-radius:6px;padding:3px 8px;cursor:pointer;font-weight:600;">✕ Clear</button>':'')
+      +'<span style="margin-left:auto;display:flex;align-items:center;gap:6px;font-size:.68rem;color:var(--g500);flex-wrap:wrap;"><span style="font-weight:700;color:var(--g400);">RIGHT NOW</span><span id="tz-now-strip" style="display:flex;gap:6px;flex-wrap:wrap;">'+tzNowStripHtml()+'</span></span>'
+    +'</div>'
+    +'<!--GAPS_SLOT--></div>';
 
   // ── Visual helpers ──
   const _AVATAR_COLORS=['#ff7a59','#6366f1','#10b981','#f59e0b','#ec4899','#14b8a6','#3b82f6','#8b5cf6'];
@@ -6938,6 +7227,7 @@ function renderHSLeads(){
         <div id="comm-sms-list-${pid}" style="max-height:340px;overflow-y:auto;padding:12px;display:flex;flex-direction:column;">
           ${smsInitial}
         </div>
+        <div id="lead-opener-${pid}">${openerCardHtml(l)}</div>
         <div style="padding:8px 10px;border-top:1px solid #f0f0f0;display:flex;gap:6px;align-items:center;background:#f9fafb;">
           <input id="sms-inp-${pid}" type="text" placeholder="Type a message…" onkeydown="if(event.key==='Enter')sendSMS('${pid}','${ph}');" style="flex:1;font-size:.75rem;border:1px solid #e5e7eb;border-radius:8px;padding:7px 10px;outline:none;background:#fff;" />
           <button onclick="sendSMS('${pid}','${ph}');" style="padding:7px 14px;background:#ff7a59;color:#fff;border:none;border-radius:8px;font-size:.72rem;font-weight:700;cursor:pointer;">Send</button>
@@ -7011,7 +7301,7 @@ function renderHSLeads(){
     const gridHtml=`<div style="display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #f0f0f0;">
       <div style="padding:10px 14px;border-right:1px solid #f0f0f0;border-bottom:1px solid #f0f0f0;"><div style="${LABEL}">Contact</div><div style="${VAL}font-weight:600;color:#111;">${displayName}</div></div>
       <div style="padding:10px 14px;border-bottom:1px solid #f0f0f0;"><div style="${LABEL}">Owner</div><div style="${VAL}">${l.ownerName||'—'}</div></div>
-      <div style="padding:10px 14px;border-right:1px solid #f0f0f0;border-bottom:1px solid #f0f0f0;"><div style="${LABEL}">Phone</div><div style="${VAL}">${l.contactPhone||'—'}</div></div>
+      <div style="padding:10px 14px;border-right:1px solid #f0f0f0;border-bottom:1px solid #f0f0f0;"><div style="${LABEL}">Phone</div><div style="${VAL}">${l.contactPhone||'—'}</div>${tzPanelLine(l.contactPhone)}</div>
       <div style="padding:10px 14px;border-bottom:1px solid #f0f0f0;"><div style="${LABEL}">Stage</div><div style="display:flex;align-items:center;gap:5px;"><span style="width:7px;height:7px;background:${stageColor(l.stageId)};border-radius:50%;flex-shrink:0;display:inline-block;"></span><span style="${VAL}">${l.stageName||'—'}</span></div></div>
       <div style="padding:10px 14px;border-right:1px solid #f0f0f0;border-bottom:1px solid #f0f0f0;"><div style="${LABEL}">Email</div><div style="${VAL}font-size:.72rem;word-break:break-all;">${l.contactEmail||'—'}</div></div>
       <div style="padding:10px 14px;border-bottom:1px solid #f0f0f0;"><div style="${LABEL}">Day</div><div style="${VAL}font-weight:700;color:#ff7a59;">Day ${l.ageDays||1}</div></div>
@@ -7072,7 +7362,7 @@ function renderHSLeads(){
         <div style="display:flex;align-items:flex-start;gap:10px;">
           <div style="flex:1;min-width:0;">
             <div style="font-size:.84rem;font-weight:700;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${displayName}</div>
-            <div style="font-size:.69rem;color:#9ca3af;margin-top:2px;">${l.contactPhone||'No phone'}</div>
+            <div style="font-size:.69rem;color:#9ca3af;margin-top:2px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;"><span>${l.contactPhone||'No phone'}</span>${tzChip(l.contactPhone)}</div>
             <div style="display:flex;align-items:center;gap:5px;margin-top:7px;">
               <span style="width:7px;height:7px;background:${sdot};border-radius:50%;flex-shrink:0;display:inline-block;"></span>
               <span style="font-size:.68rem;color:#6b7280;">${l.stageName}</span>
