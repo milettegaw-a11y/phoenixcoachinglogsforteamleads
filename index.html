@@ -11503,7 +11503,7 @@ function ahIndex(){
       `<div><div style="font-size:.6rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.05em;">${f.k}</div>
        <div style="font-size:.76rem;color:#374151;line-height:1.5;">${f.v.replace(/</g,'&lt;')}</div></div>`).join('')+'</div>';
     out.push({id:'obj-'+i,src:'Rebuttal manual',icon:'🛡',cat:'objection',
-      title:'Objection — '+label.replace(/^"|"$/g,''),titleAlt:'',
+      title:'Objection — '+label.replace(/["\u201c\u201d]/g,'').trim(),titleAlt:'',
       tags:('objection rebuttal '+label).toLowerCase(),
       text:(label+' '+fields.map(f=>f.k+' '+f.v).join(' ')).toLowerCase(),
       html:html,htmlAlt:''});
