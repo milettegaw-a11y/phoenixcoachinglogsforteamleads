@@ -354,14 +354,19 @@ export default async function handler(req, res) {
       const prior = await searchAll('https://api.hubapi.com/crm/v3/objects/tickets/search', {
         filterGroups: [{ filters }], properties: ['createdate'], limit: 100
       }, 600);
-      // Which contacts have any prior ticket at all
-      const priorAssoc = prior.length ? await hsFetch(
-        'https://api.hubapi.com/crm/v4/associations/tickets/contacts/batch/read', {
-          method: 'POST', headers: h,
-          body: JSON.stringify({ inputs: prior.slice(0, 100).map(t => ({ id: t.id })) })
-        }).then(x => x.json()).catch(() => ({ results: [] })) : { results: [] };
+      // Which contacts have any prior ticket at all. The association read caps at
+      // 100 inputs, and a busy contact can carry several old tickets, so chunk the
+      // whole prior list — reading only the first 100 would silently under-report.
+      const priorIds = prior.map(t => t.id);
+      const priorChunks = [];
+      for (let i = 0; i < priorIds.length; i += 100) priorChunks.push(priorIds.slice(i, i + 100));
+      const priorParts = await Promise.all(priorChunks.map(c =>
+        hsFetch('https://api.hubapi.com/crm/v4/associations/tickets/contacts/batch/read', {
+          method: 'POST', headers: h, body: JSON.stringify({ inputs: c.map(id => ({ id })) })
+        }).then(x => x.json()).catch(() => ({ results: [] }))
+      ));
       const hasPrior = new Set();
-      for (const a of (priorAssoc.results || [])) {
+      for (const part of priorParts) for (const a of (part.results || [])) {
         const to = (a.to || [])[0];
         if (to) hasPrior.add(String(to.toObjectId));
       }
