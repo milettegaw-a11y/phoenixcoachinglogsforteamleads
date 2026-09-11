@@ -5770,6 +5770,25 @@ async function loadTeamAttention(force){
   }catch(e){ _tlAttn=_tlAttn||[]; }
   finally{ _tlAttnLoading=false; renderTeamAttention(); }
 }
+// The Search / Team / Owner row above the tabs is shared with the cadence board,
+// so this board has to honour it too — otherwise picking a team changes the tab
+// underneath but leaves Needs Action showing every team. The fetch always covers
+// the viewer's full scope; these narrow what is shown, so switching is instant.
+function attMatchesFilters(t){
+  const name=HS_OWNERS[String((t.properties||{}).hubspot_owner_id||'')]||'';
+  if(_hsOwnerFilter&&name!==_hsOwnerFilter)return false;
+  if(_hsTeamFilter){
+    const ag=rosterAgents.find(a=>a.name===name);
+    if(!ag||ag.tl!==_hsTeamFilter)return false;
+  }
+  if(_hsLeadSearch){
+    const q=_hsLeadSearch.toLowerCase();
+    const lead=(t.contactName||(t.properties||{}).subject||'').toLowerCase();
+    if(lead.indexOf(q)<0&&name.toLowerCase().indexOf(q)<0)return false;
+  }
+  return true;
+}
+
 // One row of a detail table. Carries the operational detail a Team Lead needs —
 // who owns it, what the customer said, the ticket's stage, and how long it has waited.
 function tlAttnRow(t){
@@ -5806,7 +5825,7 @@ function renderTeamAttention(){
   if(_tlAttnLoading&&!_tlAttn){
     el.innerHTML='<div style="color:#a8a29e;font-size:.8rem;padding:28px;text-align:center;">Checking which leads are waiting…</div>';return;
   }
-  const rows=_tlAttn||[];
+  const rows=(_tlAttn||[]).filter(attMatchesFilters);
   const waiting=rows.filter(t=>attAwaitingReply(t,24));
   const missed =rows.filter(t=>attMissedCallNoReturn(t,48)&&waiting.indexOf(t)<0);
   const otherLine=waiting.filter(attRepliedToOtherTeam);
@@ -5817,7 +5836,10 @@ function renderTeamAttention(){
   waiting.forEach(t=>bump(t,'w')); missed.forEach(t=>bump(t,'m'));
   const agents=Object.entries(byAgent).sort((a,b)=>(b[1].w+b[1].m)-(a[1].w+a[1].m));
   const {team}=tlAttnScope();
-  const scope=team?team.replace('Team ','')+' — your agents':'All Phoenix teams';
+  const shownTeam=team||_hsTeamFilter;
+  const scope=(_hsOwnerFilter?_hsOwnerFilter
+    :shownTeam?shownTeam.replace('Team ','')+(team?' — your agents':' — all agents')
+    :'All Phoenix teams')+(_hsLeadSearch?' · matching “'+_hsLeadSearch+'”':'');
   const asOf=new Date(Date.now()-5*3600000).toISOString().slice(11,16);
   const CARD='background:#fff;border:1px solid #e7e5e4;border-radius:10px;';
   const LBL='font-size:.62rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#a8a29e;';
