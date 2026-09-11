@@ -1006,6 +1006,15 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
           <h4 style="margin:0 0 10px;font-size:.85rem;font-weight:700;color:var(--g600);">⏳ Not Yet Coached This Week</h4>
           <div id="tl-pending-body"><div style="text-align:center;color:var(--g400);font-size:.8rem;padding:12px;">Select a week above.</div></div>
         </div>
+        <!-- Pending Agent Commitments -->
+        <div id="tl-commit-pending-wrap" style="background:#fff;border:1px solid var(--g200);border-radius:12px;padding:16px 18px;margin-top:14px;">
+          <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
+            <h4 style="margin:0;font-size:.85rem;font-weight:700;color:var(--g600);">⭐ Pending Agent Commitments</h4>
+            <span id="tl-commit-pending-cnt" style="font-size:.72rem;font-weight:700;color:var(--g500);background:var(--g100,#f3f4f6);border-radius:20px;padding:1px 9px;">0</span>
+          </div>
+          <div style="font-size:.72rem;color:var(--g400);margin-bottom:10px;">Coached, but the agent has not filed their STAR commitment yet. Select a week to open that session's commitment.</div>
+          <div id="tl-commit-pending-body"><div style="text-align:center;color:var(--g400);font-size:.8rem;padding:12px;">Loading…</div></div>
+        </div>
       </div>
 
       <div class="stats-grid" style="margin-top:20px;">
@@ -1263,6 +1272,15 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
         <div style="background:#fff;border:1px solid var(--g200);border-radius:12px;padding:16px 18px;">
           <h4 style="margin:0 0 10px;font-size:.85rem;font-weight:700;color:var(--g600);">⏳ Not Yet Coached This Week</h4>
           <div id="om-pending-body"><div style="text-align:center;color:var(--g400);font-size:.8rem;padding:12px;">Select a week above.</div></div>
+        </div>
+        <!-- Pending Agent Commitments -->
+        <div id="om-commit-pending-wrap" style="background:#fff;border:1px solid var(--g200);border-radius:12px;padding:16px 18px;margin-top:14px;">
+          <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
+            <h4 style="margin:0;font-size:.85rem;font-weight:700;color:var(--g600);">⭐ Pending Agent Commitments (All Teams)</h4>
+            <span id="om-commit-pending-cnt" style="font-size:.72rem;font-weight:700;color:var(--g500);background:var(--g100,#f3f4f6);border-radius:20px;padding:1px 9px;">0</span>
+          </div>
+          <div style="font-size:.72rem;color:var(--g400);margin-bottom:10px;">Coached, but the agent has not filed their STAR commitment yet. Select a week to open that session's commitment.</div>
+          <div id="om-commit-pending-body"><div style="text-align:center;color:var(--g400);font-size:.8rem;padding:12px;">Loading…</div></div>
         </div>
       </div>
 
@@ -7596,7 +7614,7 @@ function getFilt(){
 }
 
 function renderDash(){
-  renderStats();renderTable();renderCoachingCompletion();
+  renderStats();renderTable();renderCoachingCompletion();renderPendingCommitments('tl');
   // Charts for TL/ATL view
   const rows=getFilt();
   const dayMap={};
@@ -7675,6 +7693,88 @@ function renderTable(){
   const tlPending=rows.filter(r=>{const c=DB.cm[r.id]||{};return!(c.situation||c.sit||c.task||c.action||c.act||c.result||c.res);}).length;
   const tlBadge=document.getElementById('nav-badge-tl-logs');
   if(tlBadge){tlBadge.textContent=tlPending>9?'9+':tlPending;tlBadge.style.display=tlPending>0?'':'none';}
+}
+
+
+/* ── PENDING AGENT COMMITMENTS (TL + OM views only) ───────────────────────
+   A coaching session is only finished once the agent files their STAR
+   commitment. The "Not Yet Coached" table above covers sessions that never
+   happened; this covers the other half — sessions that happened but are
+   still waiting on the agent. Grouped by agent and labelled by week, so a TL
+   can chase the specific week rather than the whole log. Every week chip
+   opens that session's commitment form. Never rendered in the agent view. */
+function pendingCommitLogs(){
+  return (DB.logs||[]).filter(l=>{
+    const c=DB.cm[l.id]||{};
+    return !(c.situation||c.sit||c.task||c.action||c.act||c.result||c.res);
+  });
+}
+function renderPendingCommitments(scope){
+  const isOM=scope==='om';
+  const wrap=document.getElementById((isOM?'om':'tl')+'-commit-pending-wrap');
+  const body=document.getElementById((isOM?'om':'tl')+'-commit-pending-body');
+  const cnt =document.getElementById((isOM?'om':'tl')+'-commit-pending-cnt');
+  if(!wrap||!body)return;
+  if(CU&&CU.isAgentView){wrap.style.display='none';return;}
+  wrap.style.display='';
+
+  const val=id=>((document.getElementById(id)||{}).value||'');
+  const tm=myTeam();                       // '' for OM / ATL — they see every team
+  let logs=pendingCommitLogs();
+  if(tm)logs=logs.filter(l=>l.tl===tm);
+  // Honour whichever filter row is on screen, so the panel agrees with the
+  // rest of the dashboard instead of quietly showing a wider set.
+  if(isOM){
+    const t=val('om-f-team'),a=val('om-f-agent'),q=val('om-f-search').toLowerCase();
+    logs=logs.filter(l=>(!t||l.tl===t)&&(!a||l.agent===a)&&
+      (!q||(l.agent||'').toLowerCase().includes(q)||(l.tl||'').toLowerCase().includes(q)));
+  }else{
+    const t=val('f-team'),a=val('f-agent');
+    logs=logs.filter(l=>(!t||l.tl===t)&&(!a||l.agent===a));
+  }
+
+  // Latest week anyone has been logged in — anything older is overdue.
+  const latestWk=Math.max(0,...(DB.logs||[]).map(l=>Number(l.wk)||0));
+  const byAgent={};
+  logs.forEach(l=>{
+    const k=l.agent||'—';
+    (byAgent[k]=byAgent[k]||{tl:l.tl||'—',items:[]}).items.push(l);
+  });
+  const agents=Object.entries(byAgent).map(([name,v])=>{
+    v.items.sort((a,b)=>(Number(b.wk)||0)-(Number(a.wk)||0));
+    const wks=v.items.map(l=>Number(l.wk)||0);
+    return {name,tl:v.tl,items:v.items,oldest:Math.min(...wks),overdue:wks.filter(w=>w<latestWk).length};
+  }).sort((a,b)=>b.items.length-a.items.length||a.oldest-b.oldest||a.name.localeCompare(b.name));
+
+  if(cnt)cnt.textContent=logs.length+(logs.length===1?' session':' sessions');
+  if(!agents.length){
+    body.innerHTML='<div style="color:#4ade80;font-weight:700;font-size:.85rem;text-align:center;padding:14px 0;">✅ Every coached agent has filed their commitment.</div>';
+    return;
+  }
+  const chip=l=>{
+    const w=Number(l.wk)||0, late=w<latestWk;
+    return `<button type="button" onclick="openCommit('${l.id}')" title="${late?'Overdue — ':''}Session on ${fd(l.date)} · open the STAR commitment"
+      style="background:${late?'#fef2f2':'#fffbeb'};color:${late?'#b91c1c':'#92400e'};border:1px solid ${late?'#fecaca':'#fde68a'};border-radius:6px;padding:2px 9px;margin:2px 4px 2px 0;font-size:.72rem;font-weight:700;cursor:pointer;font-family:inherit;">WK${w}${late?' ⚠':''}</button>`;
+  };
+  body.innerHTML=`<div class="tbl-scroll" style="max-height:300px;overflow-y:auto;">
+    <table style="width:100%;border-collapse:collapse;font-size:.82rem;">
+      <thead><tr style="color:var(--g500);font-size:.74rem;font-weight:700;border-bottom:1.5px solid var(--g200);">
+        <th style="padding:5px 10px;text-align:left">#</th>
+        <th style="padding:5px 10px;text-align:left">Agent</th>
+        ${isOM||!tm?'<th style="padding:5px 10px;text-align:left">Team Lead</th>':''}
+        <th style="padding:5px 10px;text-align:left">Week(s) pending</th>
+        <th style="padding:5px 10px;text-align:center">Open</th>
+      </tr></thead>
+      <tbody>${agents.map((a,i)=>`<tr style="border-bottom:1px solid var(--g100);">
+        <td style="padding:6px 10px;color:var(--g400);font-size:.78rem;">${i+1}</td>
+        <td style="padding:6px 10px;font-weight:600;">${e(a.name)}
+          ${a.overdue?`<div style="font-size:.68rem;color:#b91c1c;font-weight:600;margin-top:2px;">${a.overdue} past week${a.overdue===1?'':'s'} still open</div>`:''}</td>
+        ${isOM||!tm?`<td style="padding:6px 10px;font-size:.78rem;color:var(--g500);">${e(a.tl)}</td>`:''}
+        <td style="padding:5px 6px;">${a.items.map(chip).join('')}</td>
+        <td style="padding:6px 10px;text-align:center;font-weight:700;color:var(--g600);">${a.items.length}</td>
+      </tr>`).join('')}</tbody>
+    </table>
+  </div>`;
 }
 
 /* ── TL COACHING COMPLETION DASHBOARD ───────────────────────────────────── */
@@ -10570,6 +10670,7 @@ function renderOMDash(){
     if(usedWks.length) omTLWk.value=usedWks[0];
   }
   renderOMTLBreakdown();
+  renderPendingCommitments('om');
 
   const tm=(document.getElementById('om-f-team')||{}).value||'';
   const ag=(document.getElementById('om-f-agent')||{}).value||'';
