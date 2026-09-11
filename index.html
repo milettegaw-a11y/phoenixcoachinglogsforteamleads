@@ -5266,6 +5266,22 @@ const HS_CADENCE=[0,3,3,0,3,3,1,3,1,1,1,1,1,1,1,1];
 // Team day-off schedule — keys match substrings of the agent's tl field (e.g. 'Jhay' ⊂ 'Team Jhay Oglimen')
 // On a team's day off, cadence is skipped (expectedContacts=0) and dials are zeroed out.
 const TEAM_DAY_OFF={'Jhay':[0,6],'Jumz':[2,3],'Florence':[5,6]}; // 0=Sun,1=Mon,...,6=Sat
+const DOW_NAMES=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+// Which teams are off today, straight from TEAM_DAY_OFF and the CDT weekday.
+// Everything about rest days reads from here, so the dashboards agree with the
+// cadence maths rather than restating the schedule.
+function restingTeams(dow){
+  const d=(dow===undefined)?new Date(Date.now()-5*3600000).getUTCDay():dow;
+  return [...HS_ALLOWED_TEAMS].sort().filter(t=>{
+    const k=Object.keys(TEAM_DAY_OFF).find(x=>t.includes(x));
+    return k&&TEAM_DAY_OFF[k].includes(d);
+  });
+}
+// The team's scheduled days off, or null when none are configured.
+function teamRestDays(t){
+  const k=Object.keys(TEAM_DAY_OFF).find(x=>t.includes(x));
+  return k?TEAM_DAY_OFF[k].map(d=>DOW_NAMES[d]):null;
+}
 function hsGetCumulativeExpected(day){let t=0;for(let d=1;d<=Math.min(day,15);d++)t+=HS_CADENCE[d]||0;return t;}
 function hsTs(dt){if(!dt)return 0;const n=Number(dt);return isNaN(n)?new Date(dt).getTime():n;}
 // Agent-name lookup for activity on a lead. Filled from each page's `owners` map,
@@ -5584,43 +5600,107 @@ function renderCadDash(){
   const overallAvg=Math.round(complianceLeads.reduce((s,l)=>s+(l.cadencePct||0),0)/Math.max(1,complianceLeads.length));
   const ovC=overallAvg>=80?'#22c55e':overallAvg>=50?'#f97316':'#ef4444';
 
+  // ── Rest days ─────────────────────────────────────────────────────────────
+  // A resting team is expected to do nothing, so it is held out of every figure
+  // rather than being counted as 0% (which drags the average down) or as 100%
+  // (which flatters it). The banner says so in words.
+  const _resting=restingTeams();
+  const _restingVisible=_resting.filter(t=>teams.includes(t));
+  const _activeSummary=teamSummary.filter(t=>!_resting.includes(t.team));
+  const _actLeads=_activeSummary.reduce((s,t)=>s+t.total,0);
+  const _actDone =_activeSummary.reduce((s,t)=>s+t.done,0);
+  const _actAvg  =_actLeads?Math.round(_activeSummary.reduce((s,t)=>s+t.avg*t.total,0)/_actLeads):0;
+  const _aC=_actAvg>=80?'#15803d':_actAvg>=50?'#b45309':'#b91c1c';
+  const _dowName=DOW_NAMES[new Date(Date.now()-5*3600000).getUTCDay()];
+  const CARD3='background:#fff;border:1px solid #e4e4e7;border-radius:10px;';
+  const LBL3='font-size:.61rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#a1a1aa;';
+  const TH3='text-align:left;padding:8px 12px;font-size:.6rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#a1a1aa;background:#fafafa;border-bottom:1px solid #e4e4e7;white-space:nowrap;';
+  const TD3='padding:9px 12px;border-bottom:1px solid #f4f4f5;font-size:.76rem;color:#27272a;';
+  const NTD3=TD3+'text-align:right;font-variant-numeric:tabular-nums;';
+  const _pc3=p=>p>=80?'#15803d':p>=50?'#b45309':'#b91c1c';
+  const _bar3=(p,w)=>`<span style="display:inline-block;width:${w}px;height:5px;border-radius:99px;background:#f4f4f5;vertical-align:middle;overflow:hidden;">
+      <span style="display:block;width:${Math.min(100,p)}%;height:100%;background:${_pc3(p)};"></span></span>`;
+  const _kpi3=(n,l,note,col)=>`<div style="padding:15px 20px;flex:1 1 150px;min-width:0;">
+      <div style="${LBL3}margin-bottom:7px;">${l}</div>
+      <div style="font-size:1.55rem;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;color:${col};">${n}</div>
+      <div style="font-size:.65rem;color:#a1a1aa;margin-top:5px;">${note}</div></div>`;
+  const _sep3='<div style="width:1px;background:#f4f4f5;"></div>';
+  const _REST='<span style="font-size:.56rem;font-weight:700;letter-spacing:.04em;color:#3730a3;background:#e0e7ff;border:1px solid #c7d2fe;border-radius:4px;padding:1px 7px;white-space:nowrap;margin-left:6px;">REST DAY</span>';
+  // Per-day compliance across every visible team, so Day 3 can be drawn as rest
+  // rather than as a missing bar.
+  const _dayPct=DAYS.map(day=>{
+    if(HS_CADENCE[day]===0)return 'rest';
+    const dl=visibleLeads.filter(l=>l.ageDays===day&&!l.isRestDay);
+    if(!dl.length)return null;
+    return Math.round(dl.filter(l=>(l.cadencePct||0)>=100).length/dl.length*100);
+  });
+
   el.innerHTML=`
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px;">
-      <div style="background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;padding:14px 16px;text-align:center;">
-        <div style="font-size:1.6rem;font-weight:800;color:#374151;">${totalLeads}</div>
-        <div style="font-size:.68rem;color:#9ca3af;margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Active Leads</div>
+    ${_restingVisible.length?`<div style="display:flex;align-items:flex-start;gap:10px;background:#eef2ff;border:1px solid #c7d2fe;border-radius:10px;padding:11px 14px;margin-bottom:12px;">
+      <span style="font-size:.95rem;line-height:1.2;">🌙</span>
+      <div style="min-width:0;">
+        <div style="font-size:.78rem;font-weight:700;color:#312e81;">${_restingVisible.map(t=>t.replace('Team ','')).join(' and ')} ${_restingVisible.length>1?'are':'is'} on a rest day today (${_dowName})</div>
+        <div style="font-size:.68rem;color:#4338ca;margin-top:2px;line-height:1.45;">No cadence is expected of them today, so their leads are excluded from every figure below.</div>
+      </div></div>`:''}
+
+    <div style="${CARD3}margin-bottom:12px;">
+      <div style="padding:15px 20px 0;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;">
+        <span style="font-size:.95rem;font-weight:700;color:#18181b;">Cadence today</span>
+        <span style="font-size:.7rem;color:#71717a;">${myTLTeam?myTLTeam.replace('Team ',''):'All Phoenix teams'} · ${_dowName}${_restingVisible.length?' · '+_restingVisible.length+' team'+(_restingVisible.length>1?'s':'')+' on rest':''}</span>
+        <span style="font-size:.65rem;color:#a1a1aa;margin-left:auto;">As of ${new Date(Date.now()-5*3600000).toISOString().slice(11,16)} CDT
+          <button onclick="refreshCadDash()" style="margin-left:8px;padding:2px 10px;font-size:.64rem;font-weight:600;color:#3f3f46;background:#fff;border:1px solid #e4e4e7;border-radius:6px;cursor:pointer;font-family:inherit;">Refresh</button></span>
       </div>
-      <div style="background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;padding:14px 16px;text-align:center;">
-        <div style="font-size:1.6rem;font-weight:800;color:#22c55e;">${totalDone}</div>
-        <div style="font-size:.68rem;color:#9ca3af;margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">On Cadence ✅</div>
-      </div>
-      <div style="background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;padding:14px 16px;text-align:center;">
-        <div style="font-size:1.6rem;font-weight:800;color:#ef4444;">${totalLeads-totalDone}</div>
-        <div style="font-size:.68rem;color:#9ca3af;margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Gaps ⚠️</div>
-      </div>
-      <div style="background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;padding:14px 16px;text-align:center;">
-        <div style="font-size:1.6rem;font-weight:800;color:${ovC};">${overallAvg}%</div>
-        <div style="font-size:.68rem;color:#9ca3af;margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Overall Avg</div>
+      <div style="display:flex;flex-wrap:wrap;border-top:1px solid #f4f4f5;margin-top:12px;">
+        ${_kpi3(_actLeads,'Active leads',_restingVisible.length?'Excludes teams on rest':'On an active cadence day','#18181b')}${_sep3}
+        ${_kpi3(_actDone,'On cadence','Met today’s plan','#15803d')}${_sep3}
+        ${_kpi3(_actLeads-_actDone,'Gaps','Below plan today','#b91c1c')}${_sep3}
+        ${_kpi3(_actAvg+'%','Overall cadence','Weighted across active teams',_aC)}
       </div>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:24px;">
-      ${teamSummary.map(t=>{
-        const tc=t.avg>=80?'#22c55e':t.avg>=50?'#f97316':'#ef4444';
-        return `<div style="background:#fff;border:2px solid ${t.color}44;border-radius:10px;padding:14px 16px;">
-          <div style="font-size:.72rem;font-weight:700;color:${t.color};margin-bottom:10px;">${t.team}</div>
-          <div style="display:flex;justify-content:space-around;margin-bottom:10px;">
-            <div style="text-align:center;"><div style="font-size:1.25rem;font-weight:800;color:${tc};">${t.avg}%</div><div style="font-size:.6rem;color:#9ca3af;font-weight:600;">AVG</div></div>
-            <div style="text-align:center;"><div style="font-size:1.1rem;font-weight:700;color:#22c55e;">${t.done}</div><div style="font-size:.6rem;color:#9ca3af;font-weight:600;">DONE</div></div>
-            <div style="text-align:center;"><div style="font-size:1.1rem;font-weight:700;color:${t.gaps>0?'#ef4444':'#22c55e'};">${t.gaps>0?t.gaps:'✅'}</div><div style="font-size:.6rem;color:#9ca3af;font-weight:600;">GAPS</div></div>
-          </div>
-          <div style="background:#f3f4f6;border-radius:99px;height:6px;overflow:hidden;"><div style="height:100%;width:${Math.min(100,t.avg)}%;background:${t.color};border-radius:99px;"></div></div>
-        </div>`;
-      }).join('')}
+
+    <div style="${CARD3}margin-bottom:12px;overflow:hidden;">
+      <div style="padding:13px 18px;border-bottom:1px solid #e4e4e7;display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;">
+        <span style="font-size:.85rem;font-weight:700;color:#18181b;">By team</span>
+        <span style="font-size:.67rem;color:#a1a1aa;">rest days read from the team schedule</span>
+      </div>
+      <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;min-width:560px;">
+        <thead><tr><th style="${TH3}width:26%;">Team</th><th style="${TH3}">Rest days</th>
+          <th style="${TH3}text-align:right;">Leads</th><th style="${TH3}text-align:right;">Done</th>
+          <th style="${TH3}text-align:right;">Gaps</th><th style="${TH3}text-align:right;">Cadence</th></tr></thead>
+        <tbody>${teamSummary.map(t=>{
+          const off=_resting.includes(t.team), rd=teamRestDays(t.team);
+          return `<tr style="${off?'background:#fbfbff;':''}">
+            <td style="${TD3}font-weight:600;color:#18181b;white-space:nowrap;">${t.team.replace('Team ','')}${off?_REST:''}</td>
+            <td style="${TD3}font-size:.7rem;color:${rd?'#71717a':'#b45309'};white-space:nowrap;">${rd?rd.join(', '):'none set'}</td>
+            ${off?`<td style="${TD3}text-align:center;color:#6366f1;font-size:.72rem;" colspan="4">Resting today — not counted</td>`
+                :`<td style="${NTD3}">${t.total}</td><td style="${NTD3}color:#71717a;">${t.done}</td>
+                  <td style="${NTD3}color:${t.gaps?'#b91c1c':'#d4d4d8'};font-weight:${t.gaps?'700':'400'};">${t.gaps||'—'}</td>
+                  <td style="${TD3}text-align:right;white-space:nowrap;">${_bar3(t.avg,80)}
+                    <span style="margin-left:8px;font-size:.76rem;font-weight:700;font-variant-numeric:tabular-nums;color:${_pc3(t.avg)};">${t.avg}%</span></td>`}
+          </tr>`;}).join('')}</tbody>
+      </table></div>
     </div>
-    <div style="background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;padding:20px;margin-bottom:24px;">
-      <div style="font-size:.85rem;font-weight:700;color:#374151;margin-bottom:2px;">Compliance % by Day (1–15)</div>
-      <div style="font-size:.7rem;color:#9ca3af;margin-bottom:16px;">% of leads per day that completed their required cadence today — grouped by team</div>
-      <div style="position:relative;height:280px;"><canvas id="cad-bar-chart"></canvas></div>
+
+    <div style="${CARD3}margin-bottom:12px;">
+      <div style="padding:13px 18px 0;display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;">
+        <span style="font-size:.85rem;font-weight:700;color:#18181b;">Compliance by cadence day</span>
+        <span style="font-size:.67rem;color:#a1a1aa;">% of leads on each day that met their plan</span>
+      </div>
+      <div style="padding:12px 18px 6px;display:flex;gap:5px;align-items:flex-end;height:150px;">
+        ${_dayPct.map((v,i)=>{
+          const d=i+1;
+          return `<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;gap:5px;">
+            ${v==='rest'
+              ?`<div title="Day ${d} — no planned contacts" style="flex:1;width:100%;background:repeating-linear-gradient(45deg,#eef2ff,#eef2ff 5px,#e0e7ff 5px,#e0e7ff 10px);border:1px dashed #c7d2fe;border-radius:5px;display:flex;align-items:center;justify-content:center;">
+                  <span style="font-size:.55rem;font-weight:700;color:#4338ca;transform:rotate(-90deg);white-space:nowrap;">REST</span></div>`
+              :v===null
+              ?`<div title="Day ${d} — no leads" style="width:100%;height:3px;background:#f4f4f5;border-radius:99px;"></div>`
+              :`<span style="font-size:.6rem;font-weight:700;color:${_pc3(v)};font-variant-numeric:tabular-nums;">${v}%</span>
+                <div title="Day ${d} — ${v}%" style="width:100%;height:${v}%;background:${_pc3(v)};border-radius:4px 4px 0 0;"></div>`}
+            <span style="font-size:.58rem;color:#a1a1aa;">${d}</span>
+          </div>`;}).join('')}
+      </div>
+      <div style="padding:0 18px 13px;font-size:.65rem;color:#a1a1aa;">Day 3 carries no planned contacts, so it is marked as rest rather than drawn as 0%.</div>
     </div>
     <div style="background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;padding:20px;margin-bottom:24px;">
       <div style="font-size:.85rem;font-weight:700;color:#374151;margin-bottom:4px;">Agent Compliance Breakdown <span style="font-size:.7rem;font-weight:400;color:#9ca3af;">(sorted: lowest first · click row to see non-complied leads)</span></div>
@@ -5680,26 +5760,7 @@ function renderCadDash(){
       </div>
     </div>`;
 
-  // Render Chart.js grouped bar chart
-  const ctx=document.getElementById('cad-bar-chart');
-  if(!ctx)return;
-  if(_cadChart){_cadChart.destroy();_cadChart=null;}
-  _cadChart=new Chart(ctx,{
-    type:'bar',
-    data:{labels:DAYS.map(d=>'Day '+d),datasets},
-    options:{
-      responsive:true,maintainAspectRatio:false,
-      interaction:{mode:'index',intersect:false},
-      plugins:{
-        legend:{position:'top',labels:{font:{size:11},padding:14,boxWidth:12}},
-        tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y===null?'No data':c.parsed.y+'%'}`}}
-      },
-      scales:{
-        x:{grid:{display:false},ticks:{font:{size:11}}},
-        y:{min:0,max:100,ticks:{callback:v=>v+'%',font:{size:11}},grid:{color:'#f3f4f6'},title:{display:true,text:'Compliance %',font:{size:11}}}
-      }
-    }
-  });
+  // The per-day figures are drawn as bars above; no Chart.js instance here.
 }
 
 function toggleCadAgentRow(safeId){
@@ -8777,11 +8838,13 @@ async function updateMyActionsBadge() {
 ═══════════════════════════════════════════════════════ */
 async function saveDailyCadenceSnapshot() {
   if (!FSB || !_hsLeadsLoaded || !_hsLeads.length) return;
-  const today = new Date().toISOString().slice(0,10);
+  // Keyed on the CDT date, matching the cadence day everywhere else in the app.
+  // It used to use the UTC date, so anything logged between 19:00 and midnight
+  // CDT was filed under the following day.
+  const today = _cdtDate();
   const ref = FSB.collection('cadence_snapshots').doc(today);
   try {
     const existing = await ref.get();
-    // Only save once per day (overwrite if TL manually refreshes)
     const agentData = {};
     const teamData = {};
     // Exclude REST/day-off leads (isRestDay=true) from compliance counts so they don't inflate %
@@ -8804,19 +8867,35 @@ async function saveDailyCadenceSnapshot() {
     });
     Object.keys(teamSnap).forEach(k => { teamSnap[k].pct = teamSnap[k].total > 0 ? Math.round(teamSnap[k].done/teamSnap[k].total*100) : 0; });
     const overallPct = activeLeads.length > 0 ? Math.round(activeLeads.filter(l=>(l.cadencePct||0)>=100).length/activeLeads.length*100) : 0;
+    // A snapshot is written on every visit to the dashboard, so a 07:00 view with
+    // two teams loaded could replace a 23:00 view with all four. Only overwrite
+    // when the new reading covers at least as many teams and agents as the one
+    // already stored — otherwise a partial load silently destroys the day.
+    const prev = existing.exists ? (existing.data()||{}) : null;
+    const prevTeams  = prev && prev.teamData  ? Object.keys(prev.teamData).length  : 0;
+    const prevAgents = prev && prev.agentData ? Object.keys(prev.agentData).length : 0;
+    const teamCount  = Object.keys(teamSnap).length;
+    const agentCount = Object.keys(agentData).length;
+    if (prev && (teamCount < prevTeams || agentCount < prevAgents)) {
+      console.warn('[Snapshot] Kept the fuller reading for', today,
+        '— stored', prevTeams+' teams/'+prevAgents+' agents, this one had', teamCount+'/'+agentCount);
+      return;
+    }
     await ref.set({date:today, savedAt:firebase.firestore.FieldValue.serverTimestamp(), overallPct, agentData, teamData:teamSnap, totalLeads:_hsLeads.length});
-    console.log('[Snapshot] Daily cadence snapshot saved for', today, '— overall', overallPct+'%');
+    console.log('[Snapshot] Daily cadence snapshot saved for', today, '— overall', overallPct+'%',
+      '('+teamCount+' teams, '+agentCount+' agents)');
   } catch(e) { console.warn('[Snapshot] Failed to save:', e.message); }
 }
 
 async function loadCadenceHistory(days) {
   if (!FSB) return [];
   const results = [];
-  const today = new Date();
+  // CDT dates, matching the keys saveDailyCadenceSnapshot writes. This used to
+  // build local dates, so the lookup could miss the doc it was looking for.
   for (let i = days - 1; i >= 0; i--) {
-    const d = new Date(today); d.setDate(d.getDate() - i);
+    const d = new Date(Date.now() - 5*3600000 - i*86400000);
     const dateStr = d.toISOString().slice(0,10);
-    results.push({date: dateStr, dayLabel: d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})});
+    results.push({date: dateStr, dayLabel: d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',timeZone:'UTC'})});
   }
   const snaps = await Promise.all(results.map(r => FSB.collection('cadence_snapshots').doc(r.date).get().catch(()=>null)));
   return results.map((r,i) => ({...r, data: snaps[i] && snaps[i].exists ? snaps[i].data() : null}));
@@ -8844,6 +8923,92 @@ function setCadDashTab(tab) {
 let _cadAgentSnaps14=null; // cache 14-day snapshots for agent panel
 let _cadAgentTrendChart=null;
 let _cadAgentWeeklyChart=null;
+/* ── 14-day agent grid ────────────────────────────────────────────────────
+   Thirty agents over fourteen days is 420 readings. As overlapping lines that
+   is unreadable; as a grid each row is one agent and each square one day.
+   Colour is the agent's cadence that day, on one stated scale.               */
+const CAD_GRID_KEY=[['#15803d','100%'],['#4ade80','80–99%'],['#fcd34d','50–79%'],['#fca5a5','1–49%'],
+  ['#b91c1c','0%'],['repeating-linear-gradient(45deg,#eef2ff,#eef2ff 3px,#e0e7ff 3px,#e0e7ff 6px)','rest'],['#fff','no data']];
+function cadGridCell(v){
+  if(v===null)   return {bg:'#fff',bd:'#f4f4f5',t:'no snapshot saved'};
+  if(v==='rest') return {bg:'repeating-linear-gradient(45deg,#eef2ff,#eef2ff 3px,#e0e7ff 3px,#e0e7ff 6px)',bd:'#e0e7ff',t:'rest day'};
+  if(v>=100)     return {bg:'#15803d',bd:'#15803d',t:v+'%'};
+  if(v>=80)      return {bg:'#4ade80',bd:'#4ade80',t:v+'%'};
+  if(v>=50)      return {bg:'#fcd34d',bd:'#fcd34d',t:v+'%'};
+  if(v>0)        return {bg:'#fca5a5',bd:'#fca5a5',t:v+'%'};
+  return {bg:'#b91c1c',bd:'#b91c1c',t:'0%'};
+}
+function cadAgentGrid(rows){
+  const snaps=_cadAgentSnaps14||[];
+  if(!snaps.length)return '';
+  const dayOf=dt=>new Date(dt+'T12:00:00Z').getUTCDay();
+  const hist=r=>snaps.map(sn=>{
+    const off=(Object.keys(TEAM_DAY_OFF).find(k=>(r.team||'').includes(k))||'');
+    if(off&&TEAM_DAY_OFF[off].includes(dayOf(sn.date)))return 'rest';
+    if(!sn.data||!sn.data.agentData)return null;
+    const d=sn.data.agentData[r.name];
+    if(!d||!d.total)return null;
+    return Math.round(d.done/d.total*100);
+  });
+  const enriched=rows.map(r=>{
+    const h=hist(r), nums=h.filter(x=>typeof x==='number');
+    return {name:r.name,team:(r.team||'').replace('Team ','')||'—',h,
+            avg:nums.length?Math.round(nums.reduce((s,x)=>s+x,0)/nums.length):null};
+  }).sort((a,b)=>(a.avg===null?101:a.avg)-(b.avg===null?101:b.avg));
+  const TH5='text-align:left;padding:7px 10px;font-size:.6rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#a1a1aa;background:#fafafa;border-bottom:1px solid #e4e4e7;white-space:nowrap;';
+  const TD5='padding:6px 10px;border-bottom:1px solid #f4f4f5;font-size:.74rem;color:#27272a;';
+  const pc5=p=>p>=80?'#15803d':p>=50?'#b45309':'#b91c1c';
+  setTimeout(cadGridTips,0);
+  return `<div style="background:#fff;border:1px solid #e4e4e7;border-radius:10px;margin-bottom:12px;overflow:hidden;">
+    <div style="padding:13px 18px;border-bottom:1px solid #e4e4e7;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;">
+      <span style="font-size:.85rem;font-weight:700;color:#18181b;">Agent cadence, last 14 days</span>
+      <span style="font-size:.67rem;color:#a1a1aa;">one row per agent · one square per day · worst average first</span>
+      <span style="margin-left:auto;display:flex;align-items:center;gap:9px;flex-wrap:wrap;font-size:.63rem;color:#71717a;">
+        ${CAD_GRID_KEY.map(k=>`<span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:11px;height:11px;border-radius:3px;background:${k[0]};border:1px solid #e4e4e7;display:inline-block;"></span>${k[1]}</span>`).join('')}
+      </span>
+    </div>
+    <div style="overflow-x:auto;"><table style="width:100%;border-collapse:separate;border-spacing:0;min-width:720px;">
+      <thead><tr><th style="${TH5}position:sticky;left:0;background:#fafafa;z-index:1;">Agent</th>
+        ${snaps.map(sn=>`<th style="${TH5}text-align:center;padding:7px 4px;font-size:.56rem;">${sn.date.slice(8)}</th>`).join('')}
+        <th style="${TH5}text-align:right;">Avg</th></tr></thead>
+      <tbody>${enriched.map(a=>`<tr>
+        <td style="${TD5}font-weight:600;color:#18181b;white-space:nowrap;position:sticky;left:0;background:#fff;z-index:1;">${a.name}
+          <div style="font-size:.62rem;color:#a1a1aa;font-weight:400;">${a.team}</div></td>
+        ${a.h.map((v,i)=>{const c=cadGridCell(v);
+          return `<td style="padding:3px 2px;border-bottom:1px solid #f4f4f5;text-align:center;">
+            <span class="cadcell" data-agent="${a.name}" data-team="${a.team}" data-day="${snaps[i].date}" data-val="${c.t}"
+              style="display:block;width:100%;height:20px;border-radius:4px;background:${c.bg};border:1px solid ${c.bd};cursor:default;"></span></td>`;}).join('')}
+        <td style="${TD5}text-align:right;font-variant-numeric:tabular-nums;font-weight:700;color:${a.avg===null?'#d4d4d8':pc5(a.avg)};">${a.avg===null?'—':a.avg+'%'}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>
+    <div style="padding:9px 14px;border-top:1px solid #f4f4f5;font-size:.65rem;color:#a1a1aa;">
+      Blank squares are days with no saved snapshot, not days with zero cadence. Hover any square for that agent's figure on that day.
+    </div>
+  </div>`;
+}
+// One delegated listener for the whole grid rather than 420.
+let _cadTipWired=false;
+function cadGridTips(){
+  if(_cadTipWired)return;
+  _cadTipWired=true;
+  const tip=document.createElement('div');
+  tip.id='cad-tip';
+  tip.style.cssText='position:fixed;display:none;z-index:9999;pointer-events:none;background:#18181b;color:#fff;'
+    +'border-radius:7px;padding:6px 9px;font-size:.7rem;line-height:1.45;box-shadow:0 4px 14px rgba(0,0,0,.25);white-space:nowrap;';
+  document.body.appendChild(tip);
+  document.addEventListener('mouseover',e=>{
+    const c=e.target.closest&&e.target.closest('.cadcell');
+    if(!c){tip.style.display='none';return;}
+    tip.innerHTML=`<b>${c.dataset.agent}</b> · ${c.dataset.team}<br><span style="color:#a1a1aa;">${c.dataset.day}</span> &nbsp; ${c.dataset.val}`;
+    tip.style.display='block';
+  });
+  document.addEventListener('mousemove',e=>{
+    if(tip.style.display==='none')return;
+    tip.style.left=Math.min(innerWidth-tip.offsetWidth-10,e.clientX+14)+'px';
+    tip.style.top=Math.max(6,e.clientY-tip.offsetHeight-10)+'px';
+  });
+}
+
 async function renderCadAgentPanel(){
   const body=document.getElementById('cad-agent-panel-body');
   if(!body)return;
@@ -8920,103 +9085,96 @@ async function renderCadAgentPanel(){
   const TH='padding:8px 12px;text-align:left;font-weight:700;color:#374151;border-bottom:2px solid #e5e7eb;font-size:.68rem;text-transform:uppercase;letter-spacing:.04em;';
   const TD='padding:8px 12px;border-bottom:1px solid #f3f4f6;vertical-align:middle;';
 
+  // ── Rest days: an agent on a resting team owes nothing today ──────────────
+  const _resting=restingTeams();
+  const _live=rows.filter(r=>!_resting.includes(r.team)&&r.pct!==null);
+  const _noLeads=rows.filter(r=>!_resting.includes(r.team)&&r.pct===null).length;
+  const _restCount=rows.filter(r=>_resting.includes(r.team)).length;
+  const _onCad=_live.filter(r=>r.pct>=100).length;
+  const _avg=_live.length?Math.round(_live.reduce((s,r)=>s+r.pct,0)/_live.length):0;
+  const _dowName=DOW_NAMES[new Date(Date.now()-5*3600000).getUTCDay()];
+  const C4='background:#fff;border:1px solid #e4e4e7;border-radius:10px;';
+  const LBL4='font-size:.61rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#a1a1aa;';
+  const TH4='text-align:left;padding:8px 12px;font-size:.6rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#a1a1aa;background:#fafafa;border-bottom:1px solid #e4e4e7;white-space:nowrap;';
+  const TD4='padding:9px 12px;border-bottom:1px solid #f4f4f5;font-size:.76rem;color:#27272a;';
+  const NTD4=TD4+'text-align:right;font-variant-numeric:tabular-nums;';
+  const pc4=p=>p>=80?'#15803d':p>=50?'#b45309':'#b91c1c';
+  const bar4=(p,w)=>`<span style="display:inline-block;width:${w}px;height:5px;border-radius:99px;background:#f4f4f5;vertical-align:middle;overflow:hidden;">
+      <span style="display:block;width:${Math.min(100,p)}%;height:100%;background:${pc4(p)};"></span></span>`;
+  const kpi4=(n,l,note,col)=>`<div style="padding:15px 20px;flex:1 1 140px;min-width:0;">
+      <div style="${LBL4}margin-bottom:7px;">${l}</div>
+      <div style="font-size:1.5rem;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;color:${col};">${n}</div>
+      <div style="font-size:.65rem;color:#a1a1aa;margin-top:5px;">${note}</div></div>`;
+  const sep4='<div style="width:1px;background:#f4f4f5;"></div>';
+
   const rowsHtml=rows.map(r=>{
-    const noLeads=r.pct===null;
-    const compliant=!noLeads&&r.pct>=100;
-    const pc=noLeads?'#9ca3af':r.pct>=100?'#22c55e':r.pct>=80?'#f97316':'#ef4444';
     const wk=weekAvg(r.name);
-    const wkC=wk===null?'#9ca3af':wk>=100?'#22c55e':wk>=80?'#f97316':'#ef4444';
-    const tc=teamColors[r.team]||'#6b7280';
-    const bar=noLeads
-      ?`<div style="display:flex;align-items:center;gap:6px;"><div style="flex:1;height:6px;background:#f3f4f6;border-radius:99px;"></div><span style="font-size:.72rem;color:#9ca3af;min-width:36px;">—</span></div>`
-      :`<div style="display:flex;align-items:center;gap:6px;">
-      <div style="flex:1;height:6px;background:#f3f4f6;border-radius:99px;overflow:hidden;">
-        <div style="height:100%;width:${Math.min(r.pct,100)}%;background:${pc};border-radius:99px;"></div>
-      </div>
-      <span style="font-size:.78rem;font-weight:800;color:${pc};min-width:36px;">${r.pct}%</span>
-    </div>`;
-    return `<tr style="background:${noLeads?'#f9fafb':compliant?'#f0fdf4':'#fff7f7'};${noLeads?'opacity:.55;':''}">
-      <td style="${TD}font-weight:700;color:#111;">${r.name}</td>
-      <td style="${TD}"><span style="font-size:.62rem;background:${tc}22;color:${tc};padding:2px 8px;border-radius:99px;font-weight:700;">${r.team.replace('Team ','')}</span></td>
-      <td style="${TD}text-align:center;color:#6b7280;">${r.total}</td>
-      <td style="${TD}min-width:130px;">${bar}</td>
-      <td style="${TD}text-align:center;font-weight:700;color:${wkC};">${wk!==null?wk+'%':'—'}</td>
-      <td style="${TD}text-align:center;">${noLeads
-        ?'<span style="background:#f3f4f6;color:#9ca3af;border-radius:99px;padding:3px 10px;font-size:.7rem;font-weight:700;">No leads</span>'
-        :compliant
-        ?'<span style="background:#dcfce7;color:#16a34a;border-radius:99px;padding:3px 10px;font-size:.7rem;font-weight:700;">✅ On Track</span>'
-        :'<span style="background:#fee2e2;color:#b91c1c;border-radius:99px;padding:3px 10px;font-size:.7rem;font-weight:700;">❌ Behind</span>'}</td>
+    const team=(r.team||'').replace('Team ','')||'—';
+    if(_resting.includes(r.team))
+      return `<tr style="background:#fbfbff;">
+        <td style="${TD4}font-weight:600;color:#52525b;">${r.name}</td>
+        <td style="${TD4}font-size:.7rem;color:#71717a;white-space:nowrap;">${team}</td>
+        <td style="${TD4}text-align:center;color:#6366f1;font-size:.72rem;" colspan="3">Rest day — no cadence expected</td></tr>`;
+    if(r.pct===null)
+      return `<tr>
+        <td style="${TD4}font-weight:600;color:#a1a1aa;">${r.name}</td>
+        <td style="${TD4}font-size:.7rem;color:#a1a1aa;white-space:nowrap;">${team}</td>
+        <td style="${NTD4}color:#d4d4d8;">0</td>
+        <td style="${TD4}text-align:center;color:#a1a1aa;font-size:.72rem;" colspan="2">No leads due today</td></tr>`;
+    return `<tr>
+      <td style="${TD4}font-weight:600;color:#18181b;">${r.name}</td>
+      <td style="${TD4}font-size:.7rem;color:#71717a;white-space:nowrap;">${team}</td>
+      <td style="${NTD4}">${r.total}</td>
+      <td style="${TD4}text-align:right;white-space:nowrap;">${bar4(r.pct,64)}
+        <span style="margin-left:8px;font-size:.76rem;font-weight:700;font-variant-numeric:tabular-nums;color:${pc4(r.pct)};">${r.pct}%</span></td>
+      <td style="${NTD4}">${wk===null?'<span style="color:#d4d4d8;">—</span>'
+        :`<span style="font-weight:700;color:${pc4(wk)};">${wk}%</span><span style="color:#a1a1aa;font-weight:400;font-size:.66rem;"> · ${(weekPct[r.name]||{}).days||0}d</span>`}</td>
     </tr>`;
   }).join('');
 
   body.innerHTML=`
-    <div style="display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
-      <div style="background:#dcfce7;border:1.5px solid #86efac;border-radius:10px;padding:12px 20px;text-align:center;min-width:110px;">
-        <div style="font-size:1.6rem;font-weight:800;color:#16a34a;">${compliantCount}</div>
-        <div style="font-size:.62rem;color:#15803d;font-weight:700;text-transform:uppercase;">On Cadence</div>
-      </div>
-      <div style="background:#fee2e2;border:1.5px solid #fca5a5;border-radius:10px;padding:12px 20px;text-align:center;min-width:110px;">
-        <div style="font-size:1.6rem;font-weight:800;color:#ef4444;">${rows.length-compliantCount}</div>
-        <div style="font-size:.62rem;color:#b91c1c;font-weight:700;text-transform:uppercase;">Behind</div>
-      </div>
-      <div style="background:#f3f4f6;border:1.5px solid #e5e7eb;border-radius:10px;padding:12px 20px;text-align:center;min-width:110px;">
-        <div style="font-size:1.6rem;font-weight:800;color:#374151;">${rows.length}</div>
-        <div style="font-size:.62rem;color:#6b7280;font-weight:700;text-transform:uppercase;">Agents Shown</div>
-      </div>
-    </div>
-    <div style="overflow-x:auto;background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;margin-bottom:20px;">
-      <table style="width:100%;border-collapse:collapse;font-size:.78rem;">
-        <thead><tr style="background:#f9fafb;">
-          <th style="${TH}">Agent</th>
-          <th style="${TH}">Team</th>
-          <th style="${TH}text-align:center;">Leads</th>
-          <th style="${TH}">Today Compliance</th>
-          <th style="${TH}text-align:center;">Week Avg %</th>
-          <th style="${TH}text-align:center;">Status</th>
-        </tr></thead>
-        <tbody>${rowsHtml||'<tr><td colspan="6" style="padding:20px;text-align:center;color:#9ca3af;">No agents match filter.</td></tr>'}</tbody>
-      </table>
-    </div>
-    <div style="background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;padding:20px;margin-bottom:16px;">
-      <div style="font-size:.82rem;font-weight:700;color:#374151;margin-bottom:2px;">📈 Daily Compliance Trend — Agent Level (14 days)</div>
-      <div style="font-size:.7rem;color:#9ca3af;margin-bottom:14px;">Each line = one agent's daily cadence % from saved snapshots</div>
-      <div style="position:relative;height:280px;"><canvas id="cad-agent-daily-chart"></canvas></div>
-    </div>
-    <div style="background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;padding:20px;">
-      <div style="font-size:.82rem;font-weight:700;color:#374151;margin-bottom:2px;">📅 Weekly Compliance — Agent Level</div>
-      <div style="font-size:.7rem;color:#9ca3af;margin-bottom:14px;">Average cadence % per agent per week (current vs prior week)</div>
-      <div style="position:relative;height:260px;"><canvas id="cad-agent-weekly-chart"></canvas></div>
-    </div>`;
+    ${_resting.length?`<div style="display:flex;align-items:center;gap:9px;background:#eef2ff;border:1px solid #c7d2fe;border-radius:9px;padding:9px 13px;margin-bottom:12px;font-size:.73rem;color:#312e81;">
+      <span>🌙</span><span><b>${_resting.map(t=>t.replace('Team ','')).join(' and ')}</b> ${_resting.length>1?'are':'is'} resting today (${_dowName}) — ${_restCount} agent${_restCount===1?'':'s'} held out of the figures below.</span></div>`:''}
 
+    <div style="${C4}margin-bottom:12px;">
+      <div style="padding:15px 20px 0;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;">
+        <span style="font-size:.95rem;font-weight:700;color:#18181b;">Cadence by agent</span>
+        <span style="font-size:.7rem;color:#71717a;">${_live.length} agent${_live.length===1?'':'s'} working today · ${_dowName}</span>
+        <span style="font-size:.65rem;color:#a1a1aa;margin-left:auto;">As of ${new Date(Date.now()-5*3600000).toISOString().slice(11,16)} CDT</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;border-top:1px solid #f4f4f5;margin-top:12px;">
+        ${kpi4(_onCad,'On cadence','Every lead met its plan','#15803d')}${sep4}
+        ${kpi4(_live.length-_onCad,'Behind','At least one lead short','#b91c1c')}${sep4}
+        ${kpi4(_noLeads,'No leads today','Nothing due','#71717a')}${sep4}
+        ${kpi4(_avg+'%','Average','Across working agents',pc4(_avg))}
+      </div>
+    </div>
+
+    <div style="${C4}margin-bottom:12px;overflow:hidden;">
+      <div style="padding:8px 14px;background:#fafafa;border-bottom:1px solid #f4f4f5;font-size:.66rem;color:#71717a;">
+        One row per agent. <b>Today</b> is the share of that agent’s active leads that met today’s plan; <b>week avg</b> averages the daily figure over the days that had leads, so the number of days is shown beside it. The 14-day shape for each agent is in the grid below.
+      </div>
+      <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;min-width:560px;">
+        <thead><tr><th style="${TH4}width:34%;">Agent</th><th style="${TH4}">Team</th>
+          <th style="${TH4}text-align:right;">Leads</th><th style="${TH4}text-align:right;">Today</th>
+          <th style="${TH4}text-align:right;">Week avg</th></tr></thead>
+        <tbody>${rowsHtml||'<tr><td colspan="5" style="padding:20px;text-align:center;color:#9ca3af;">No agents match filter.</td></tr>'}</tbody>
+      </table></div>
+    </div>
+
+    ${cadAgentGrid(rows)}
+
+    <div style="${C4}">
+      <div style="padding:16px 18px 0;">
+        <div style="font-size:.85rem;font-weight:700;color:#18181b;margin-bottom:2px;">📅 Weekly Compliance — Agent Level</div>
+        <div style="font-size:.7rem;color:#9ca3af;margin-bottom:14px;">Average cadence % per agent per week (current vs prior week)</div>
+      </div>
+      <div style="position:relative;height:260px;padding:0 18px 18px;"><canvas id="cad-agent-weekly-chart"></canvas></div>
+    </div>`;
   // ── Build per-agent datasets from 14-day snapshots ──
   const agentNames=rows.map(r=>r.name);
-  const dateLabels=(_cadAgentSnaps14||[]).map(s=>s.date.slice(5));
   const palette=['#3b82f6','#22c55e','#f97316','#a855f7','#ec4899','#14b8a6','#f59e0b','#6366f1','#ef4444','#84cc16'];
-  const agentDatasets=agentNames.map((name,i)=>({
-    label:name,
-    borderColor:palette[i%palette.length],
-    backgroundColor:'transparent',
-    borderWidth:2,pointRadius:3,pointHoverRadius:5,tension:.3,spanGaps:true,
-    data:(_cadAgentSnaps14||[]).map(s=>{
-      if(!s.data||!s.data.agentData||!s.data.agentData[name])return null;
-      const d=s.data.agentData[name];
-      return d.total?Math.round(d.done/d.total*100):null;
-    })
-  }));
-
-  if(_cadAgentTrendChart){_cadAgentTrendChart.destroy();_cadAgentTrendChart=null;}
-  const dctx=document.getElementById('cad-agent-daily-chart');
-  if(dctx&&agentDatasets.length){
-    _cadAgentTrendChart=new Chart(dctx,{
-      type:'line',data:{labels:dateLabels,datasets:agentDatasets},
-      options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
-        plugins:{legend:{position:'top',labels:{font:{size:10},padding:8,boxWidth:8}},
-          tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y===null?'No data':c.parsed.y+'%'}`}}},
-        scales:{x:{grid:{display:false},ticks:{font:{size:10},maxRotation:40}},
-          y:{min:0,max:100,ticks:{callback:v=>v+'%',font:{size:10}},grid:{color:'#f3f4f6'}}}}
-    });
-  }
-
+  // The daily-per-agent line chart is replaced by the grid above.
   // ── Weekly grouped bar chart per agent ──
   // Group snapshots into weeks
   const wkMap={};
