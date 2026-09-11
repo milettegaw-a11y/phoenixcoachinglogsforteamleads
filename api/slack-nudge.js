@@ -25,13 +25,59 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
+  const TOKEN_EARLY = process.env.SLACK_BOT_TOKEN;
+  const noToken = () => res.status(503).json({
+    error: 'Slack is not connected yet. Add a SLACK_BOT_TOKEN environment variable in Vercel (scopes: chat:write, users:read, users:read.email) and redeploy.',
+    needsSetup: true
+  });
+
+  // ── Workspace directory ────────────────────────────────────────────────────
+  // Returns every real person in the workspace so the app can match its roster
+  // by name instead of asking a team lead to paste thirty member IDs.
+  if ((req.body || {}).directory) {
+    if (!TOKEN_EARLY) return noToken();
+    try {
+      const people = [];
+      let cursor = '';
+      for (let page = 0; page < 12; page++) {
+        const params = { limit: '200' };
+        if (cursor) params.cursor = cursor;
+        const r = await fetch('https://slack.com/api/users.list', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8',
+                     Authorization: 'Bearer ' + TOKEN_EARLY },
+          body: new URLSearchParams(params).toString()
+        });
+        const d = await r.json();
+        if (!d.ok) return res.status(502).json({ error: 'Slack refused users.list: ' + (d.error || 'unknown') });
+        for (const m of (d.members || [])) {
+          if (m.deleted || m.is_bot || m.id === 'USLACKBOT') continue;
+          const pr = m.profile || {};
+          people.push({
+            id: m.id,
+            email: pr.email || '',
+            real: pr.real_name || m.real_name || '',
+            display: pr.display_name || m.name || '',
+            title: pr.title || ''
+          });
+        }
+        cursor = (d.response_metadata && d.response_metadata.next_cursor) || '';
+        if (!cursor) break;
+      }
+      return res.status(200).json({ ok: true, people, count: people.length });
+    } catch (e) {
+      return res.status(500).json({ error: e.message });
+    }
+  }
+
   const b = req.body || {};
   const leads = Array.isArray(b.leads) ? b.leads.slice(0, 25) : [];
   const agent = String(b.agent || '').trim();
   const from  = String(b.from || '').trim();
   const wk    = String(b.wk || '');
-  if (!agent)        return res.status(400).json({ error: 'No agent named.' });
-  if (!leads.length) return res.status(400).json({ error: 'No leads to nudge about.' });
+  const team  = b.team && typeof b.team === 'object' ? b.team : null;
+  if (!agent) return res.status(400).json({ error: 'No recipient named.' });
+  if (!team && !leads.length) return res.status(400).json({ error: 'No leads to nudge about.' });
 
   // ── the message ───────────────────────────────────────────────────────────
   // The agent is @-mentioned by Slack user ID so the DM pings them, and every
@@ -63,10 +109,36 @@ export default async function handler(req, res) {
     ' — still open, still inside the 7-day window that counts toward CVR. Ranked by time since the last logged activity.\n\n' +
     leads.map(block).join('\n\n') +
     '\n\n_Sent by ' + (esc(from) || 'a team lead') + ' from the Phoenix Coaching Log._';
-  const fallback = 'Kindly work on this ticket — ' + leads.length +
-    ' lead' + (leads.length > 1 ? 's have' : ' has') + ' gone quiet' + (wk ? ' (WK' + wk + ')' : '');
+  // ── the team summary an OM sends a team lead ──────────────────────────────
+  // Totals for the whole team, then one line per agent, so a TL can see at a
+  // glance who is carrying the open leads without opening the dashboard.
+  const num = v => Number(v || 0).toLocaleString('en-US');
+  const composeTeam = mention => {
+    const t = team, rows = Array.isArray(t.agents) ? t.agents : [];
+    const head = '*Kindly work on these leads* ' + mention + '\n\n' +
+      '*' + esc(t.name || 'Your team') + '*' + (wk ? '  ·  WK' + wk : '') + '\n' +
+      '• *' + num(t.open) + '* leads still open' +
+      (t.inWindow != null ? ', *' + num(t.inWindow) + '* of them still inside their 7 days' : '') + '\n' +
+      (t.needed != null ? '• *' + num(t.needed) + '* more sales needed to reach the ' + (t.target || 3) + '% target'
+        + (t.rate ? ' — ' + esc(t.rate) + ' close rate required on what is left' : '') + '\n' : '') +
+      (t.cvr ? '• Team CVR so far: *' + esc(t.cvr) + '*\n' : '');
+    const body = rows.length
+      ? '\n*By agent* — open · still in window · sales still needed\n' +
+        rows.map(r => '• ' + esc(r.name) + '  —  ' + num(r.open) + ' open · ' +
+          num(r.inWindow) + ' in window · ' + (r.needed ? num(r.needed) + ' needed' : 'target met')).join('\n')
+      : '';
+    return head + body +
+      '\n\nOpen *2nd Week CVR → Workable leads* in the Phoenix Coaching Log for the lead-by-lead list.' +
+      '\n_Sent by ' + (esc(from) || 'Operations') + ' from the Phoenix Coaching Log._';
+  };
+  const fallback = team
+    ? 'Kindly work on these leads — ' + num(team.open) + ' still open on ' + (team.name || 'your team') +
+      (wk ? ' (WK' + wk + ')' : '')
+    : 'Kindly work on this ticket — ' + leads.length +
+      ' lead' + (leads.length > 1 ? 's have' : ' has') + ' gone quiet' + (wk ? ' (WK' + wk + ')' : '');
+  const render = mention => team ? composeTeam(mention) : compose(mention);
 
-  if (b.dry) return res.status(200).json({ dry: true, text: compose('@' + agent), leads: leads.length });
+  if (b.dry) return res.status(200).json({ dry: true, text: render('@' + agent), leads: leads.length });
 
   const TOKEN = process.env.SLACK_BOT_TOKEN;
   if (!TOKEN) return res.status(503).json({
@@ -111,7 +183,7 @@ export default async function handler(req, res) {
     }
     const post = await slackJson('chat.postMessage', {
       channel, text: fallback, unfurl_links: false, unfurl_media: false,
-      blocks: [{ type: 'section', text: { type: 'mrkdwn', text: compose('<@' + channel + '>') } }]
+      blocks: [{ type: 'section', text: { type: 'mrkdwn', text: render('<@' + channel + '>') } }]
     });
     if (!post.ok) return res.status(502).json({ error: 'Slack refused the message: ' + (post.error || 'unknown') });
     return res.status(200).json({ ok: true, channel, ts: post.ts, leads: leads.length });
