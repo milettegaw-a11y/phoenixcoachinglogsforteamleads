@@ -31,6 +31,40 @@ export default async function handler(req, res) {
     needsSetup: true
   });
 
+  // ── Diagnostic ─────────────────────────────────────────────────────────────
+  // Answers "where did that message actually go?" — the bot's own identity, the
+  // IM channel Slack opens for a given user, and what is sitting in it.
+  if ((req.body || {}).probe) {
+    if (!TOKEN_EARLY) return noToken();
+    const call = async (method, params) => {
+      const r = await fetch('https://slack.com/api/' + method, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8',
+                   Authorization: 'Bearer ' + TOKEN_EARLY },
+        body: new URLSearchParams(params || {}).toString()
+      });
+      return r.json();
+    };
+    try {
+      const out = { auth: await call('auth.test', {}) };
+      const user = String(req.body.user || '');
+      if (user) {
+        out.open = await call('conversations.open', { users: user });
+        const ch = out.open && out.open.channel && out.open.channel.id;
+        if (ch) {
+          const h = await call('conversations.history', { channel: ch, limit: '5' });
+          out.channel = ch;
+          out.history = h.ok
+            ? (h.messages || []).map(m => ({ ts: m.ts, bot: !!m.bot_id, text: String(m.text || '').slice(0, 70) }))
+            : { error: h.error };
+        }
+      }
+      return res.status(200).json(out);
+    } catch (e) {
+      return res.status(500).json({ error: e.message });
+    }
+  }
+
   // ── Workspace directory ────────────────────────────────────────────────────
   // Returns every real person in the workspace so the app can match its roster
   // by name instead of asking a team lead to paste thirty member IDs.
