@@ -14117,6 +14117,27 @@ async function cvrBuild(wk,quiet){
   }finally{_cvrBusy=false;}
 }
 
+// The trend needs the five weeks behind the current one. They are built once and
+// then sit in Firestore — a finished week's cohort never grows — so this runs
+// only on a cold cache, one week at a time so it never competes with the week
+// the user is actually looking at.
+let _cvrBackfilling=false;
+async function cvrBackfill(from){
+  if(_cvrBackfilling)return;
+  _cvrBackfilling=true;
+  try{
+    for(let i=1;i<=5;i++){
+      const w=from-i;
+      if(_cvrData[w])continue;
+      const cached=await cvrReadCache(w);
+      if(cached&&cached.agents){_cvrData[w]=cached;if(_cvrSel===from)cvrRender();continue;}
+      while(_cvrBusy)await new Promise(r=>setTimeout(r,1500));
+      await cvrBuild(w,true);
+      if(_cvrSel===from)cvrRender();
+    }
+  }finally{_cvrBackfilling=false;}
+}
+
 // Cheap check for a sale that landed since the snapshot was built: one search,
 // one row, we only read the total. This is what makes the board move the moment
 // an agent closes.
@@ -14154,14 +14175,8 @@ async function renderCVRDash(){
   }
   const snap=_cvrData[wk];
   const stale=!snap||(Date.now()-(snap.builtAt||0))>CVR_TTL;
-  if(stale)cvrBuild(wk,!!snap);
-  // Neighbouring weeks power the trend chart; take whatever is cached, cheaply.
-  for(let i=1;i<=5;i++){
-    const w=wk-i;
-    if(_cvrData[w])continue;
-    const c=await cvrReadCache(w);
-    if(c&&c.agents){_cvrData[w]=c;cvrRender();}
-  }
+  if(stale)await cvrBuild(wk,!!snap);
+  cvrBackfill(wk);
 }
 function cvrSetTab(t){_cvrTab=t;cvrRender();}
 function cvrSetWeek(v){_cvrSel=Number(v)||cvrCurWk();_cvrOpenDrawer={};renderCVRDash();}
@@ -14246,7 +14261,8 @@ function cvrOverviewHtml(snap,sc){
       [cvrP1(w2p),'WK'+snap.wk+' W2',cvrNum(T.w2)+' of '+cvrNum(T.leads)+' leads',cvrTone(w2p)],
       [cvrP1(cvrPct(T.w23,T.leads)),'W2 &amp; 3',cvrNum(T.w23)+' sales within 14 days',cvrTone(cvrPct(T.w23,T.leads))],
       [cvrP1(cvrPct(T.life,T.leads)),'Lifetime (W2–W6)',cvrNum(T.life)+' sales within 35 days',cvrTone(cvrPct(T.life,T.leads))],
-      [done.length?cvrP1(avg):'—',done.length+'-week average','Complete weeks only',done.length?cvrTone(avg):'#a1a1aa']])}
+      [done.length?cvrP1(avg):'—',done.length?done.length+'-week average':'Recent average',
+        done.length?'Complete weeks only':'Earlier weeks still loading…',done.length?cvrTone(avg):'#a1a1aa']])}
   </div>
   ${hist.length>1?`<div style="${CVR_CARD}margin-bottom:12px;">
     <div style="padding:13px 18px 0;display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;">
