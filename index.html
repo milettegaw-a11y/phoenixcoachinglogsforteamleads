@@ -807,6 +807,7 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
       <div class="sb-group grp-open" id="om-grp-overview">
         <div class="sb-item active" data-tab="dash" onclick="switchOM('dash')"><span class="sb-icon">📊</span><span>Coaching Dashboard</span></div>
         <div class="sb-item agent-hide" data-tab="caddash" onclick="switchOM('caddash')"><span class="sb-icon">📈</span><span>Cadence Dashboard</span></div>
+        <div class="sb-item" data-tab="cvr" onclick="switchOM('cvr')"><span class="sb-icon">🎯</span><span>2nd Week CVR</span></div>
         <div class="sb-item" data-tab="ranking" onclick="switchOM('ranking')"><span class="sb-icon">🏆</span><span>Agent Ranking</span></div>
       </div>
       <div class="sb-section-lbl" onclick="toggleSbGroup('om-grp-forms',this)">FORMS<span class="sb-grp-arrow">›</span></div>
@@ -849,6 +850,7 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
       <div class="sb-group grp-open" id="tl-grp-overview">
         <div class="sb-item active" id="tl-nav-dash" onclick="tlShowView('dashboard')"><span class="sb-icon">📊</span><span>Coaching Dashboard</span></div>
         <div class="sb-item" id="tl-nav-caddash" onclick="tlShowView('caddash')"><span class="sb-icon">📈</span><span>Cadence Dashboard</span></div>
+        <div class="sb-item" id="tl-nav-cvr" onclick="tlShowView('cvr')"><span class="sb-icon">🎯</span><span>2nd Week CVR</span></div>
         <div class="sb-item" id="tl-nav-ranking" onclick="tlShowView('ranking')"><span class="sb-icon">🏆</span><span>Agent Ranking</span></div>
       </div>
       <div class="sb-section-lbl" onclick="toggleSbGroup('tl-grp-forms',this)">FORMS<span class="sb-grp-arrow">›</span></div>
@@ -892,6 +894,7 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
         <div class="sb-item" data-tab="ft" onclick="switchAgentTab('ft')"><span class="sb-icon">🔄</span><span>My Follow Through</span></div>
         <div class="sb-item" data-tab="perf" onclick="switchAgentTab('perf')"><span class="sb-icon">📊</span><span>My Performance</span></div>
         <div class="sb-item" data-tab="mycad" onclick="switchAgentTab('mycad')"><span class="sb-icon">📈</span><span>My Cadence</span></div>
+        <div class="sb-item" data-tab="cvr" onclick="switchAgentTab('cvr')"><span class="sb-icon">🎯</span><span>2nd Week CVR</span></div>
         <div class="sb-item" data-tab="clhist" onclick="switchAgentTab('clhist')"><span class="sb-icon">🎧</span><span>My Call History</span></div>
         <div class="sb-item" data-tab="calc" onclick="switchAgentTab('calc')"><span class="sb-icon">🧮</span><span>Phoenix Calculator</span></div>
       </div>
@@ -2420,6 +2423,17 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
     </div>
   </div>
   <div id="tl-hs-leads-body"><div style="color:var(--g400);font-size:.8rem;padding:16px 0;text-align:center;">Loading HubSpot leads…</div></div>
+</div>
+
+<!-- 2ND WEEK LEAD CVR VIEW -->
+<div id="v-cvr" class="view">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
+    <div>
+      <div style="font-size:1rem;font-weight:700;color:var(--g800);">🎯 2nd Week Lead CVR</div>
+      <div style="font-size:.74rem;color:var(--g500);margin-top:2px;">Conversion on the leads received each week, against the 3% target</div>
+    </div>
+  </div>
+  <div id="cvr-body"></div>
 </div>
 
 <!-- CADENCE DASHBOARD VIEW -->
@@ -7886,9 +7900,9 @@ function toggleSbSub(id){
 
 function switchOM(tab){
   document.querySelectorAll('#om-nav .sb-item').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
-  const titles={dash:'Coaching Dashboard',coaching:'Coaching Logs',nte:'NTE Logs',ft:'Follow Through',cl:'Call Listening',attendance:'Attendance Points',ranking:'Agent Ranking',pwreset:'Reset Passwords',kb:'Knowledge Base',suggestions:'Suggestions & Reports',calendar:'Team Calendar',actions:'Action Items',leads:'Lead Follow-Ups',leadmgmt:'Lead Compliance',caddash:'Cadence Dashboard',myactions:'My Actions',onboard:'Onboarding / Offboarding',settings:'Settings',chat:'Team Chat'};
+  const titles={dash:'Coaching Dashboard',coaching:'Coaching Logs',nte:'NTE Logs',ft:'Follow Through',cl:'Call Listening',attendance:'Attendance Points',ranking:'Agent Ranking',cvr:'2nd Week Lead CVR',pwreset:'Reset Passwords',kb:'Knowledge Base',suggestions:'Suggestions & Reports',calendar:'Team Calendar',actions:'Action Items',leads:'Lead Follow-Ups',leadmgmt:'Lead Compliance',caddash:'Cadence Dashboard',myactions:'My Actions',onboard:'Onboarding / Offboarding',settings:'Settings',chat:'Team Chat'};
   const el=document.getElementById('tb-title'); if(el) el.textContent=titles[tab]||'';
-  const map={dash:'v-om-dash',coaching:'v-om-c',nte:'v-om-n',ft:'v-om-f',cl:'v-om-cl',attendance:'v-om-attendance',ranking:'v-ranking',pwreset:'v-om-pwreset',kb:'v-kb',suggestions:'v-om-suggestions',calendar:'v-cal',actions:'v-actions',leads:'v-leads-tl',leadmgmt:'v-leadmgmt-tl',caddash:'v-cad-dash',myactions:'v-myactions-tl',onboard:'v-onboard',settings:'v-settings',chat:'v-chat'};
+  const map={dash:'v-om-dash',coaching:'v-om-c',nte:'v-om-n',ft:'v-om-f',cl:'v-om-cl',attendance:'v-om-attendance',ranking:'v-ranking',cvr:'v-cvr',pwreset:'v-om-pwreset',kb:'v-kb',suggestions:'v-om-suggestions',calendar:'v-cal',actions:'v-actions',leads:'v-leads-tl',leadmgmt:'v-leadmgmt-tl',caddash:'v-cad-dash',myactions:'v-myactions-tl',onboard:'v-onboard',settings:'v-settings',chat:'v-chat'};
   showView(map[tab]||'v-om-dash');
   populateAllFilters();
   if(tab==='dash')renderOMDash();
@@ -7906,6 +7920,7 @@ function switchOM(tab){
   if(tab==='leads'){subscribeLeads();renderLeads();}
   if(tab==='leadmgmt')fetchHSLeads();
   if(tab==='caddash'){renderCadDash();saveDailyCadenceSnapshot();}
+  if(tab==='cvr')renderCVRDash(); else cvrStopPoll();
   if(tab==='myactions'){loadMyActionsTL();updateMyActionsBadge();}
   if(tab==='onboard'){subscribeOnboard();renderOnboardDash();}
   if(tab==='settings') renderSettingsPage();
@@ -9318,9 +9333,9 @@ async function renderCadTrendChart() {
 
 // Switch TL nav views (Dashboard / Coaching Logs / Attendance Points)
 function tlShowView(tab){
-  const viewMap={dashboard:'v-tl',logs:'v-tl-logs',nte:'v-om-n',attendance:'v-tl-attendance',ranking:'v-ranking',kb:'v-kb',calendar:'v-cal',actions:'v-actions',leads:'v-leads-tl',leadmgmt:'v-leadmgmt-tl',caddash:'v-cad-dash',myactions:'v-myactions-tl',onboard:'v-onboard',cl:'v-tl-cl',settings:'v-settings',chat:'v-chat'};
+  const viewMap={dashboard:'v-tl',logs:'v-tl-logs',nte:'v-om-n',attendance:'v-tl-attendance',ranking:'v-ranking',kb:'v-kb',calendar:'v-cal',actions:'v-actions',leads:'v-leads-tl',leadmgmt:'v-leadmgmt-tl',caddash:'v-cad-dash',cvr:'v-cvr',myactions:'v-myactions-tl',onboard:'v-onboard',cl:'v-tl-cl',settings:'v-settings',chat:'v-chat'};
   showView(viewMap[tab]||'v-tl');
-  ['dash','logs','nte','attendance','ranking','kb','calendar','actions','leads','leadmgmt','caddash','myactions','onboard','cl','settings','chat'].forEach(t=>{
+  ['dash','logs','nte','attendance','ranking','kb','calendar','actions','leads','leadmgmt','caddash','cvr','myactions','onboard','cl','settings','chat'].forEach(t=>{
     const el=document.getElementById('tl-nav-'+t);
     if(el) el.classList.toggle('active',t===tab||(t==='dash'&&tab==='dashboard'));
   });
@@ -9334,6 +9349,7 @@ function tlShowView(tab){
   if(tab==='leads'){subscribeLeads();renderLeads();}
   if(tab==='leadmgmt')fetchHSLeads();
   if(tab==='caddash'){renderCadDash();saveDailyCadenceSnapshot();}
+  if(tab==='cvr')renderCVRDash(); else cvrStopPoll();
   if(tab==='myactions'){loadMyActionsTL();updateMyActionsBadge();}
   if(tab==='onboard'){subscribeOnboard();renderOnboardDash();}
   if(tab==='cl') renderCLLogs();
@@ -12366,16 +12382,17 @@ function onEmailInput(){
 function switchAgentTab(tab){
   document.querySelectorAll('#agent-nav .sb-item').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
   document.querySelectorAll('.av-section').forEach(s=>s.style.display='none');
-  const map={coaching:'av-coaching',nte:'av-nte',ft:'av-ft',perf:'av-perf',mycad:'av-mycad',clhist:'av-cl-hist',calc:'av-calc',attendance:'av-attendance',leads:'av-leads',leadmgmt:'av-leadmgmt',myactions:'av-myactions',library:'av-lib',kb:'__kb__',settings:'__settings__',chat:'__chat__'};
+  const map={coaching:'av-coaching',nte:'av-nte',ft:'av-ft',perf:'av-perf',mycad:'av-mycad',cvr:'__cvr__',clhist:'av-cl-hist',calc:'av-calc',attendance:'av-attendance',leads:'av-leads',leadmgmt:'av-leadmgmt',myactions:'av-myactions',library:'av-lib',kb:'__kb__',settings:'__settings__',chat:'__chat__'};
   const secId=map[tab];
-  if(secId==='__kb__'){showView('v-kb');renderAll();}else if(secId==='__settings__'){showView('v-settings');renderSettingsPage();}else if(secId==='__chat__'){showView('v-chat');initChatV2();clearChatBadge();}else{showView('v-agent');if(secId){const sec=document.getElementById(secId);if(sec)sec.style.display='';}}
+  if(secId==='__kb__'){showView('v-kb');renderAll();}else if(secId==='__settings__'){showView('v-settings');renderSettingsPage();}else if(secId==='__cvr__'){showView('v-cvr');}else if(secId==='__chat__'){showView('v-chat');initChatV2();clearChatBadge();}else{showView('v-agent');if(secId){const sec=document.getElementById(secId);if(sec)sec.style.display='';}}
   if(tab==='leads'){if(!_leadUnsub)subscribeLeads();else renderLeads();}
   if(tab==='leadmgmt')fetchHSLeads();
   if(tab==='myactions'){loadMyActions();updateMyActionsBadge();}
-  const titles={coaching:'My Coaching',nte:'My NTE',ft:'My Follow Through',perf:'My Performance',mycad:'My Cadence',clhist:'My Call History',calc:'Phoenix Calculator',attendance:'My Attendance',leads:'Lead Follow-Up',leadmgmt:'Lead Compliance',myactions:'My Actions',library:'Call Library 🎵',kb:'Knowledge Base',settings:'Settings',chat:'Team Chat'};
+  const titles={coaching:'My Coaching',nte:'My NTE',ft:'My Follow Through',perf:'My Performance',mycad:'My Cadence',cvr:'2nd Week Lead CVR',clhist:'My Call History',calc:'Phoenix Calculator',attendance:'My Attendance',leads:'Lead Follow-Up',leadmgmt:'Lead Compliance',myactions:'My Actions',library:'Call Library 🎵',kb:'Knowledge Base',settings:'Settings',chat:'Team Chat'};
   const el=document.getElementById('tb-title'); if(el) el.textContent=titles[tab]||'';
   if(tab==='perf') renderAgentPerf();
   if(tab==='mycad') renderAgentCadence();
+  if(tab==='cvr') renderCVRDash(); else cvrStopPoll();
   if(tab==='calc') avCalcInit();
   if(tab==='attendance') renderAttendance();
   if(tab==='clhist') renderAgentCLHist();
@@ -13803,6 +13820,684 @@ function toggleRmObj(hdr) {
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') closeRainmakerGuide();
 });
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   2ND WEEK LEAD CVR
+   A cohort is every "Sales Call Required (2nd Week)" ticket a Cluster Lette
+   agent was given in one Monday–Sunday week (CDT). CVR is the share of that
+   cohort that reaches "Closed as a Sale"; W2 counts only the sales that landed
+   inside 7 days of the ticket opening, W2&3 inside 14, lifetime inside 35.
+
+   Deliberately isolated from Lead Compliance: its own fetch, its own state, its
+   own Firestore collection. It never touches _hsLeads or the cadence snapshot,
+   so nothing here can move a compliance number.
+   ═════════════════════════════════════════════════════════════════════════ */
+const CVR_TGT=3.0;
+const CVR_WIN={w2:7,w23:14,life:35};                 // days from ticket open to sale
+const CVR_CLOSED=['1072805490','1072805491','1072805492','1072805493','1072805494','1072805495'];
+const CVR_WK_EPOCH=Date.UTC(2016,0,4);               // WK1 Monday — matches the source sheets
+const CVR_TTL=10*60*1000;                            // a cached week is fresh for 10 minutes
+const CVR_POLL=3*60*1000;                            // how often we ask HubSpot for a new sale count
+const CVR_DRAWER=8;                                  // leads shown per agent in the drawer
+
+let _cvrData={};        // wk → snapshot
+let _cvrRevisit={};     // wk → {set:Set, checked:n, done:bool}
+let _cvrAssign={};      // ticketId → {to,toName,from,fromName,at,by,wk}
+let _cvrAssignLoaded=false;
+let _cvrSel=0;
+let _cvrTab='overview';
+let _cvrBusy=false;
+let _cvrProg='';
+let _cvrPollTimer=null;
+let _cvrOpenDrawer={};  // agent id → bool
+
+/* ── week maths ─────────────────────────────────────────────────────────── */
+function cvrMonMs(wk){return CVR_WK_EPOCH+(wk-1)*7*86400000+5*3600000;}   // Monday 00:00 CDT
+function cvrCurWk(){
+  const c=new Date(Date.now()-5*3600000);
+  const t=Date.UTC(c.getUTCFullYear(),c.getUTCMonth(),c.getUTCDate());
+  const dow=new Date(t).getUTCDay()||7;
+  return Math.floor((t-(dow-1)*86400000-CVR_WK_EPOCH)/(7*86400000))+1;
+}
+function cvrMonISO(wk){return new Date(cvrMonMs(wk)-5*3600000).toISOString().slice(0,10);}
+
+/* ── formatting ─────────────────────────────────────────────────────────── */
+// Round half up. Plain toFixed(1) reads 1.65 as 1.6 — the stored double sits a
+// hair below the midpoint. toPrecision snaps it back before Math.round decides.
+function cvrR1(v){return Math.round(Number((v*10).toPrecision(12)))/10;}
+function cvrP1(v){return cvrR1(v).toFixed(1)+'%';}
+function cvrNum(v){return Number(v||0).toLocaleString('en-US');}
+function cvrPct(a,b){return b?a/b*100:0;}
+function cvrTone(v){return v>=CVR_TGT?'#15803d':v>=CVR_TGT*0.6?'#b45309':'#b91c1c';}
+function cvrTeamShort(t){return String(t||'').replace(/^Team\s+/,'');}
+
+const CVR_CARD='background:#fff;border:1px solid #e4e4e7;border-radius:10px;';
+const CVR_TH='text-align:left;padding:8px 12px;font-size:.6rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#a1a1aa;background:#fafafa;border-bottom:1px solid #e4e4e7;white-space:nowrap;';
+const CVR_TD='padding:9px 12px;border-bottom:1px solid #f4f4f5;font-size:.76rem;color:#27272a;';
+const CVR_NTD=CVR_TD+'text-align:right;font-variant-numeric:tabular-nums;';
+const CVR_LBL='font-size:.61rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#a1a1aa;';
+
+/* ── who the viewer is allowed to see ───────────────────────────────────── */
+function cvrScope(){
+  if(typeof CU==='undefined'||!CU)return{kind:'om'};
+  if(CU.isAgentView)return{kind:'agent',name:CU.agentName||'',
+    team:(rosterAgents.find(a=>a.name===CU.agentName)||{}).tl||''};
+  if(CU.isOM)return{kind:'om'};
+  const t=myTeam();
+  return t?{kind:'tl',team:t}:{kind:'om'};
+}
+// Rows for the deficit view: a TL and an agent both see the whole team.
+function cvrRowsFor(snap,sc){
+  const rows=(snap&&snap.agents)||[];
+  if(sc.kind==='om')return rows;
+  return rows.filter(r=>r.team===sc.team);
+}
+// Rows for the workable view: an agent sees only their own leads.
+function cvrMyRows(snap,sc){
+  const rows=cvrRowsFor(snap,sc);
+  return sc.kind==='agent'?rows.filter(r=>r.name===sc.name):rows;
+}
+
+/* ── the roster, as HubSpot owner ids ───────────────────────────────────── */
+function cvrOwners(){
+  const byName={};
+  for(const id in HS_OWNERS) byName[HS_OWNERS[id]]=id;
+  const out={};
+  rosterAgents.forEach(a=>{const id=byName[a.name]; if(id)out[id]={name:a.name,team:a.tl||''};});
+  return out;
+}
+
+/* ── the cohort scan ────────────────────────────────────────────────────── */
+// One week is ~4,000 tickets. Paging is a cursor walk, so we split the week into
+// its seven days and walk all seven at once — ~6 pages each instead of 40 in a
+// line. The cvrScan flag tells the proxy to skip the association and activity
+// enrichment that Lead Compliance needs and this does not.
+async function cvrScanWeek(wk,onProg){
+  const own=cvrOwners(), ids=Object.keys(own);
+  if(!ids.length)throw new Error('No Phoenix owners resolved from the roster.');
+  const start=cvrMonMs(wk);
+  let seen=0;
+  const day=async i=>{
+    const s=start+i*86400000, e=s+86400000-1;
+    const filters=[{propertyName:'hs_pipeline',operator:'EQ',value:HS_PIPELINE_SEG},
+      {propertyName:'subject',operator:'EQ',value:HS_SUBJECT_2ND_WEEK},
+      {propertyName:'hubspot_owner_id',operator:'IN',values:ids},
+      {propertyName:'createdate',operator:'BETWEEN',value:String(s),highValue:String(e)}];
+    let after=null,rows=[],n=0;
+    do{
+      const body={cvrScan:true,filterGroups:[{filters}],limit:100,
+        properties:['createdate','closed_date','hs_pipeline_stage','hubspot_owner_id','hs_lastactivitydate'],
+        sorts:[{propertyName:'createdate',direction:'ASCENDING'}]};
+      if(after)body.after=after;
+      const r=await fetch('/api/hs-leads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      if(!r.ok)throw new Error('HubSpot '+r.status);
+      const d=await r.json();
+      if(d.error)throw new Error(d.error);
+      rows=rows.concat(d.results||[]);
+      seen+=(d.results||[]).length;
+      if(onProg)onProg(seen);
+      after=(d.paging&&d.paging.next&&d.paging.next.after)||null;
+      n++;
+    }while(after&&n<40);
+    return rows;
+  };
+  const parts=await Promise.all([0,1,2,3,4,5,6].map(day));
+  return parts.reduce((a,b)=>a.concat(b),[]);
+}
+
+/* ── cohort → per-agent figures ─────────────────────────────────────────── */
+// A revisited ticket is left out of the denominator — it is not a fresh lead the
+// agent was handed — but a sale on one still counts, exactly as asked.
+// Credit follows whoever is working the ticket: an in-app reassignment moves both
+// the lead and any sale on it to the new agent and their team. HubSpot ownership
+// is never touched.
+function cvrAggregate(wk,rows){
+  const own=cvrOwners(), now=Date.now();
+  const rev=(_cvrRevisit[wk]&&_cvrRevisit[wk].set)||null;
+  const A={};
+  const get=id=>A[id]||(A[id]={id:id,name:(own[id]||{}).name||HS_OWNERS[id]||('Owner '+id),
+    team:(own[id]||{}).team||'—',leads:0,w2:0,w23:0,life:0,sales:0,open:0,lost:0,rev:0,list:[]});
+  let sales=0,total=0,revTot=0;
+  rows.forEach(t=>{
+    const p=t.properties||{};
+    const ra=_cvrAssign[String(t.id)];
+    const oid=String((ra&&ra.to)||p.hubspot_owner_id||'');
+    if(!own[oid]&&!HS_OWNERS[oid])return;
+    const a=get(oid);
+    const isRev=rev?rev.has(String(t.id)):false;
+    const stage=String(p.hs_pipeline_stage||'');
+    const sold=stage===HS_SALE_STAGE;
+    if(isRev){a.rev++;revTot++;}else{a.leads++;total++;}
+    if(sold){
+      a.sales++;sales++;
+      const c=Date.parse(p.createdate||''), cl=Date.parse(p.closed_date||'');
+      const age=(c&&cl)?(cl-c)/86400000:0;
+      if(age<=CVR_WIN.w2)a.w2++;
+      if(age<=CVR_WIN.w23)a.w23++;
+      if(age<=CVR_WIN.life)a.life++;
+    }else if(CVR_CLOSED.indexOf(stage)>=0){a.lost++;}
+    else{
+      a.open++;
+      if(!isRev)a.list.push({id:String(t.id),name:null,
+        stage:HS_STAGE_LABELS[stage]||'—',
+        day:Math.max(1,Math.floor((now-Date.parse(p.createdate||now))/86400000)+1),
+        quiet:p.hs_lastactivitydate?Math.round((now-Date.parse(p.hs_lastactivitydate))/3600000):null,
+        ra:ra?{from:ra.from,fromName:ra.fromName}:null});
+    }
+  });
+  const agents=Object.values(A);
+  agents.forEach(a=>{
+    a.list.sort((x,y)=>(y.quiet==null?-1:y.quiet)-(x.quiet==null?-1:x.quiet));
+    a.list=a.list.slice(0,CVR_DRAWER);
+  });
+  agents.sort((a,b)=>b.leads-a.leads);
+  return {wk:wk,mon:cvrMonISO(wk),builtAt:Date.now(),agents:agents,
+    total:total,sales:sales,rev:revTot,revChecked:(_cvrRevisit[wk]||{}).checked||0,
+    revDone:!!(_cvrRevisit[wk]||{}).done};
+}
+
+/* ── names for the drawer ───────────────────────────────────────────────── */
+// Only the leads actually shown get a contact name — a few hundred ids, three
+// requests, instead of a name lookup on the whole cohort.
+async function cvrResolveNames(snap){
+  const ids=[];
+  snap.agents.forEach(a=>a.list.forEach(l=>ids.push(l.id)));
+  if(!ids.length)return;
+  const name={};
+  for(let i=0;i<ids.length;i+=100){
+    const chunk=ids.slice(i,i+100);
+    try{
+      const r=await fetch('/api/hs-leads',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({cvrScan:true,cvrNames:true,limit:100,properties:['hs_object_id'],
+          filterGroups:[{filters:[{propertyName:'hs_object_id',operator:'IN',values:chunk}]}]})});
+      if(!r.ok)continue;
+      const d=await r.json();
+      (d.results||[]).forEach(t=>{name[String(t.id)]=t.contactName||null;});
+    }catch(err){/* a drawer without names is still a usable drawer */}
+  }
+  snap.agents.forEach(a=>a.list.forEach(l=>{l.name=name[l.id]||'(no name)';}));
+}
+
+/* ── revisit audit ──────────────────────────────────────────────────────── */
+// Runs after the dashboard is already on screen, and only once per week: whether
+// a lead is a revisit depends on when its ticket was created, not on its stage,
+// so the answer survives every later refresh.
+async function cvrRevisitAudit(wk,rows){
+  if(_cvrRevisit[wk]&&_cvrRevisit[wk].done)return false;
+  const ids=rows.map(t=>String(t.id));
+  const before=cvrMonMs(wk)-8*86400000;   // a prior ticket from before the cohort week
+  const set=(_cvrRevisit[wk]&&_cvrRevisit[wk].set)||new Set();
+  let checked=0,found=false;
+  for(let i=0;i<ids.length;i+=100){
+    const chunk=ids.slice(i,i+100);
+    try{
+      const r=await fetch('/api/hs-leads',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({cvrRevisit:chunk,beforeMs:before,pipeline:HS_PIPELINE_SEG})});
+      if(!r.ok)break;
+      const d=await r.json();
+      if(d.error)break;
+      (d.revisits||[]).forEach(id=>{set.add(String(id));found=true;});
+      checked+=chunk.length;
+      _cvrRevisit[wk]={set:set,checked:checked,done:false};
+    }catch(err){break;}
+  }
+  _cvrRevisit[wk]={set:set,checked:checked,done:checked>=ids.length};
+  return found;
+}
+
+/* ── build / cache ──────────────────────────────────────────────────────── */
+async function cvrLoadAssignments(){
+  if(_cvrAssignLoaded||!FSB)return;
+  try{
+    const s=await FSB.collection('cvr_assign').get();
+    s.forEach(d=>{_cvrAssign[d.id]=d.data();});
+    _cvrAssignLoaded=true;
+  }catch(err){_cvrAssignLoaded=true;}
+}
+async function cvrReadCache(wk){
+  if(!FSB)return null;
+  try{
+    const d=await FSB.collection('cvr_weeks').doc('WK'+wk).get();
+    if(!d.exists)return null;
+    const s=d.data();
+    if(s&&s.revIds)_cvrRevisit[wk]={set:new Set(s.revIds),checked:s.revChecked||0,done:!!s.revDone};
+    return s;
+  }catch(err){return null;}
+}
+async function cvrWriteCache(snap){
+  if(!FSB)return;
+  try{
+    const r=_cvrRevisit[snap.wk];
+    await FSB.collection('cvr_weeks').doc('WK'+snap.wk).set(
+      Object.assign({},snap,{revIds:r?[...r.set]:[],revChecked:r?r.checked:0,revDone:r?r.done:false}));
+  }catch(err){/* the cache is an optimisation, never a requirement */}
+}
+
+async function cvrBuild(wk,quiet){
+  if(_cvrBusy)return;
+  _cvrBusy=true;
+  if(!quiet){_cvrProg='Reading the cohort…';cvrRender();}
+  try{
+    await cvrLoadAssignments();
+    const rows=await cvrScanWeek(wk,n=>{
+      if(quiet)return;
+      _cvrProg='Reading the cohort… '+cvrNum(n)+' leads';
+      const el=document.getElementById('cvr-progress');
+      if(el)el.textContent=_cvrProg;
+    });
+    const snap=cvrAggregate(wk,rows);
+    await cvrResolveNames(snap);
+    _cvrData[wk]=snap;
+    _cvrProg='';
+    cvrRender();
+    await cvrWriteCache(snap);
+    // The audit is slow and the dashboard is already usable, so it runs behind it.
+    if(!(_cvrRevisit[wk]&&_cvrRevisit[wk].done)){
+      await cvrRevisitAudit(wk,rows);
+      const re=cvrAggregate(wk,rows);
+      await cvrResolveNames(re);
+      _cvrData[wk]=re;
+      if(_cvrSel===wk)cvrRender();
+      await cvrWriteCache(re);
+    }
+  }catch(err){
+    _cvrProg='';
+    const el=document.getElementById('cvr-body');
+    if(el&&!quiet)el.innerHTML=`<div style="${CVR_CARD}padding:26px;text-align:center;color:#b91c1c;font-size:.8rem;">
+      Could not read the cohort — ${e(err.message||'HubSpot error')}.
+      <div style="margin-top:9px;"><button onclick="cvrRefresh()" style="padding:6px 14px;border:1px solid #e4e4e7;border-radius:8px;background:#fff;font-size:.75rem;font-weight:600;cursor:pointer;font-family:inherit;">Try again</button></div></div>`;
+  }finally{_cvrBusy=false;}
+}
+
+// Cheap check for a sale that landed since the snapshot was built: one search,
+// one row, we only read the total. This is what makes the board move the moment
+// an agent closes.
+async function cvrSalePoll(){
+  const wk=_cvrSel, snap=_cvrData[wk];
+  if(!snap||_cvrBusy)return;
+  try{
+    const ids=Object.keys(cvrOwners());
+    const start=cvrMonMs(wk);
+    const r=await fetch('/api/hs-leads',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({cvrScan:true,limit:1,properties:['hs_object_id'],filterGroups:[{filters:[
+        {propertyName:'hs_pipeline',operator:'EQ',value:HS_PIPELINE_SEG},
+        {propertyName:'subject',operator:'EQ',value:HS_SUBJECT_2ND_WEEK},
+        {propertyName:'hubspot_owner_id',operator:'IN',values:ids},
+        {propertyName:'createdate',operator:'BETWEEN',value:String(start),highValue:String(start+7*86400000-1)},
+        {propertyName:'hs_pipeline_stage',operator:'EQ',value:HS_SALE_STAGE}]}]})});
+    if(!r.ok)return;
+    const d=await r.json();
+    if(typeof d.total==='number'&&d.total!==snap.sales)cvrBuild(wk,false);
+  }catch(err){/* the poll is best-effort */}
+}
+function cvrStartPoll(){cvrStopPoll();_cvrPollTimer=setInterval(cvrSalePoll,CVR_POLL);}
+function cvrStopPoll(){if(_cvrPollTimer){clearInterval(_cvrPollTimer);_cvrPollTimer=null;}}
+
+/* ── entry point ────────────────────────────────────────────────────────── */
+async function renderCVRDash(){
+  if(!_cvrSel)_cvrSel=cvrCurWk();
+  cvrRender();
+  cvrStartPoll();
+  const wk=_cvrSel;
+  if(!_cvrData[wk]){
+    await cvrLoadAssignments();
+    const cached=await cvrReadCache(wk);
+    if(cached&&cached.agents){_cvrData[wk]=cached;cvrRender();}
+  }
+  const snap=_cvrData[wk];
+  const stale=!snap||(Date.now()-(snap.builtAt||0))>CVR_TTL;
+  if(stale)cvrBuild(wk,!!snap);
+  // Neighbouring weeks power the trend chart; take whatever is cached, cheaply.
+  for(let i=1;i<=5;i++){
+    const w=wk-i;
+    if(_cvrData[w])continue;
+    const c=await cvrReadCache(w);
+    if(c&&c.agents){_cvrData[w]=c;cvrRender();}
+  }
+}
+function cvrSetTab(t){_cvrTab=t;cvrRender();}
+function cvrSetWeek(v){_cvrSel=Number(v)||cvrCurWk();_cvrOpenDrawer={};renderCVRDash();}
+function cvrRefresh(){cvrBuild(_cvrSel,false);}
+function cvrToggleDrawer(id){_cvrOpenDrawer[id]=!_cvrOpenDrawer[id];cvrRender();}
+
+/* ── shell ──────────────────────────────────────────────────────────────── */
+function cvrRender(){
+  const el=document.getElementById('cvr-body');
+  if(!el)return;
+  const sc=cvrScope(), wk=_cvrSel||cvrCurWk(), snap=_cvrData[wk];
+  const tabs=[['overview','Overview'],['deficit','Deficit to '+CVR_TGT+'%'],['workable','Workable leads']];
+  const wkOpts=[];for(let i=0;i<12;i++){const w=cvrCurWk()-i;wkOpts.push(w);}
+  if(wkOpts.indexOf(wk)<0)wkOpts.unshift(wk);
+  const head=`<div style="display:flex;gap:2px;border-bottom:1px solid #e4e4e7;margin-bottom:12px;flex-wrap:wrap;align-items:center;">
+    ${tabs.map(([k,l])=>`<button onclick="cvrSetTab('${k}')" style="padding:6px 13px;border:none;border-bottom:2px solid ${k===_cvrTab?'#ffc94a':'transparent'};background:none;font-size:.73rem;font-weight:600;color:${k===_cvrTab?'#18181b':'#71717a'};font-family:inherit;cursor:pointer;margin-bottom:-1px;">${l}</button>`).join('')}
+    <span style="margin-left:auto;display:inline-flex;align-items:center;gap:8px;padding-bottom:4px;">
+      ${_cvrProg?`<span id="cvr-progress" style="font-size:.66rem;color:#b45309;">${e(_cvrProg)}</span>`:
+        snap?`<span style="font-size:.63rem;color:#a1a1aa;">updated ${cvrAgo(snap.builtAt)}</span>`:''}
+      <button onclick="cvrRefresh()" ${_cvrBusy?'disabled':''} style="padding:4px 11px;border:1px solid #e4e4e7;border-radius:8px;background:#fff;font-size:.7rem;font-weight:600;color:#3f3f46;font-family:inherit;cursor:${_cvrBusy?'default':'pointer'};opacity:${_cvrBusy?.5:1};">↻ Refresh</button>
+      <select onchange="cvrSetWeek(this.value)" style="border:1px solid #e4e4e7;border-radius:8px;padding:4px 9px;background:#fff;font-size:.7rem;color:#3f3f46;font-family:inherit;cursor:pointer;">
+        ${wkOpts.map(w=>`<option value="${w}" ${w===wk?'selected':''}>WK${w}${w===cvrCurWk()?' · current':''}</option>`).join('')}
+      </select>
+    </span></div>`;
+  if(!snap){
+    el.innerHTML=head+`<div style="${CVR_CARD}padding:34px;text-align:center;color:#a1a1aa;font-size:.8rem;">
+      <div id="cvr-progress">${e(_cvrProg||'Loading WK'+wk+'…')}</div>
+      <div style="font-size:.68rem;margin-top:7px;">A full week is around 4,000 tickets; the first read takes a few seconds.</div></div>`;
+    return;
+  }
+  let inner='';
+  if(_cvrTab==='overview')inner=cvrOverviewHtml(snap,sc);
+  else if(_cvrTab==='deficit')inner=cvrDeficitHtml(snap,sc);
+  else inner=cvrWorkableHtml(snap,sc);
+  el.innerHTML=head+inner;
+}
+function cvrAgo(ts){
+  if(!ts)return '';
+  const m=Math.round((Date.now()-ts)/60000);
+  if(m<1)return 'just now';
+  if(m<60)return m+' min ago';
+  const h=Math.round(m/60);
+  return h<24?h+'h ago':Math.round(h/24)+'d ago';
+}
+function cvrKpis(items){
+  return `<div style="display:flex;flex-wrap:wrap;border-top:1px solid #f4f4f5;margin-top:12px;">
+    ${items.map((it,i)=>`${i?'<div style="width:1px;background:#f4f4f5;"></div>':''}
+      <div style="padding:15px 20px;flex:1 1 150px;min-width:0;">
+        <div style="${CVR_LBL}margin-bottom:7px;">${it[1]}</div>
+        <div style="font-size:1.5rem;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;color:${it[3]};">${it[0]}</div>
+        <div style="font-size:.65rem;color:#a1a1aa;margin-top:5px;">${it[2]}</div></div>`).join('')}</div>`;
+}
+function cvrRollup(rows){
+  const t={leads:0,w2:0,w23:0,life:0,sales:0,open:0,lost:0,rev:0};
+  rows.forEach(r=>{for(const k in t)t[k]+=(r[k]||0);});
+  return t;
+}
+
+/* ── Overview ───────────────────────────────────────────────────────────── */
+function cvrOverviewHtml(snap,sc){
+  const rows=cvrRowsFor(snap,sc), T=cvrRollup(rows);
+  const label=sc.kind==='om'?'Cluster Lette':cvrTeamShort(sc.team);
+  // Trend across whatever weeks are cached, scoped the same way.
+  const hist=[];
+  for(let i=5;i>=0;i--){const s=_cvrData[snap.wk-i];if(s){const r=cvrRollup(cvrRowsFor(s,sc));hist.push({wk:s.wk,mon:s.mon,leads:r.leads,w2:r.w2,life:r.life});}}
+  const done=hist.filter(h=>h.wk!==cvrCurWk());
+  const avg=cvrPct(done.reduce((s,h)=>s+h.w2,0),done.reduce((s,h)=>s+h.leads,0));
+  const w2p=cvrPct(T.w2,T.leads);
+  const H=150, mx=Math.max(CVR_TGT,...hist.map(h=>cvrPct(h.life,h.leads)),1)*1.08;
+  const fmt=d=>new Date(d+'T12:00:00Z').toLocaleDateString('en-US',{month:'short',day:'numeric',timeZone:'UTC'});
+  const teams={};
+  rows.forEach(r=>{const k=cvrTeamShort(r.team);const t=teams[k]=teams[k]||{leads:0,w2:0,w23:0,life:0,agents:[]};
+    t.leads+=r.leads;t.w2+=r.w2;t.w23+=r.w23;t.life+=r.life;t.agents.push(r);});
+  return `
+  <div style="${CVR_CARD}margin-bottom:12px;">
+    <div style="padding:15px 20px 0;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;">
+      <span style="font-size:.95rem;font-weight:700;color:#18181b;">2nd Week lead CVR</span>
+      <span style="font-size:.7rem;color:#71717a;">${e(label)} · leads grouped by the week received</span>
+      <span style="font-size:.65rem;color:#a1a1aa;margin-left:auto;">Target ${CVR_TGT}%</span>
+    </div>
+    ${cvrKpis([
+      [cvrP1(w2p),'WK'+snap.wk+' W2',cvrNum(T.w2)+' of '+cvrNum(T.leads)+' leads',cvrTone(w2p)],
+      [cvrP1(cvrPct(T.w23,T.leads)),'W2 &amp; 3',cvrNum(T.w23)+' sales within 14 days',cvrTone(cvrPct(T.w23,T.leads))],
+      [cvrP1(cvrPct(T.life,T.leads)),'Lifetime (W2–W6)',cvrNum(T.life)+' sales within 35 days',cvrTone(cvrPct(T.life,T.leads))],
+      [done.length?cvrP1(avg):'—',done.length+'-week average','Complete weeks only',done.length?cvrTone(avg):'#a1a1aa']])}
+  </div>
+  ${hist.length>1?`<div style="${CVR_CARD}margin-bottom:12px;">
+    <div style="padding:13px 18px 0;display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;">
+      <span style="font-size:.85rem;font-weight:700;color:#18181b;">CVR by week</span>
+      <span style="font-size:.67rem;color:#a1a1aa;">solid = W2 · outline = lifetime · dashed line = ${CVR_TGT}% target</span>
+    </div>
+    <div style="padding:16px 18px 6px;position:relative;height:${H+46}px;">
+      <div style="position:absolute;left:18px;right:18px;bottom:${40+CVR_TGT/mx*H}px;border-top:1px dashed #b91c1c;">
+        <span style="position:absolute;right:0;top:-14px;font-size:.6rem;font-weight:700;color:#b91c1c;">${CVR_TGT}% target</span></div>
+      ${[0,1,2].map(g=>`<div style="position:absolute;left:18px;right:18px;bottom:${40+(g+1)/mx*H}px;border-top:1px solid #f4f4f5;">
+        <span style="position:absolute;left:-2px;top:-13px;font-size:.55rem;color:#d4d4d8;">${g+1}%</span></div>`).join('')}
+      <div style="display:flex;gap:12px;align-items:flex-end;height:100%;position:relative;">
+        ${hist.map(h=>{const w=cvrPct(h.w2,h.leads), lf=cvrPct(h.life,h.leads), part=h.wk===cvrCurWk();
+          return `<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;height:100%;">
+            <span style="font-size:.66rem;font-weight:700;color:${part?'#b45309':cvrTone(w)};font-variant-numeric:tabular-nums;">${cvrP1(w)}</span>
+            <div title="WK${h.wk} — ${cvrNum(h.w2)} W2 sales of ${cvrNum(h.leads)} leads" style="width:100%;position:relative;height:${Math.max(2,lf/mx*H)}px;border:1px dashed ${part?'#f59e0b':'#d4d4d8'};border-bottom:none;border-radius:5px 5px 0 0;">
+              <div style="position:absolute;bottom:0;left:0;right:0;height:${lf?w/lf*100:0}%;background:${part?'repeating-linear-gradient(45deg,#fef3c7,#fef3c7 5px,#fde68a 5px,#fde68a 10px)':cvrTone(w)};border-radius:4px 4px 0 0;"></div></div>
+            <span style="font-size:.6rem;font-weight:600;color:#52525b;">WK${h.wk}</span>
+            <span style="font-size:.55rem;color:#a1a1aa;">${fmt(h.mon)}</span></div>`;}).join('')}
+      </div>
+    </div>
+    <div style="padding:0 18px 6px;font-size:.65rem;color:#a1a1aa;">The outline is where the week reaches once every sale lands; the fill is what closed inside 7 days. The current week is striped — it is still running.</div>
+    ${cvrDefsHtml(snap)}
+  </div>`:`<div style="${CVR_CARD}margin-bottom:12px;">${cvrDefsHtml(snap)}</div>`}
+  <div style="${CVR_CARD}overflow:hidden;">
+    <div style="padding:13px 18px;border-bottom:1px solid #e4e4e7;display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;">
+      <span style="font-size:.85rem;font-weight:700;color:#18181b;">Cluster → team → agent</span>
+      <span style="font-size:.67rem;color:#a1a1aa;">WK${snap.wk} · ${cvrNum(T.leads)} leads</span></div>
+    <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;min-width:640px;">
+      <thead><tr><th style="${CVR_TH}width:30%;">Name</th><th style="${CVR_TH}text-align:right;">Leads</th>
+        <th style="${CVR_TH}text-align:right;">W2</th><th style="${CVR_TH}text-align:right;">W2 CVR</th>
+        <th style="${CVR_TH}text-align:right;">W2&amp;3</th><th style="${CVR_TH}text-align:right;">Lifetime</th>
+        <th style="${CVR_TH}text-align:right;">Lifetime CVR</th></tr></thead>
+      <tbody>
+        ${sc.kind==='om'?`<tr style="background:#fafafa;"><td style="${CVR_TD}font-weight:700;color:#18181b;">Cluster Lette</td>
+          <td style="${CVR_NTD}font-weight:700;">${cvrNum(T.leads)}</td><td style="${CVR_NTD}">${T.w2}</td>
+          <td style="${CVR_NTD}font-weight:700;color:${cvrTone(w2p)};">${cvrP1(w2p)}</td>
+          <td style="${CVR_NTD}">${T.w23}</td><td style="${CVR_NTD}">${T.life}</td>
+          <td style="${CVR_NTD}font-weight:700;color:${cvrTone(cvrPct(T.life,T.leads))};">${cvrP1(cvrPct(T.life,T.leads))}</td></tr>`:''}
+        ${Object.entries(teams).sort((a,b)=>cvrPct(b[1].w2,b[1].leads)-cvrPct(a[1].w2,a[1].leads)).map(([tn,tv])=>`
+          <tr style="background:#fcfcfd;"><td style="${CVR_TD}font-weight:700;color:#18181b;padding-left:${sc.kind==='om'?'26px':'12px'};">${e(tn)}</td>
+            <td style="${CVR_NTD}font-weight:600;">${cvrNum(tv.leads)}</td><td style="${CVR_NTD}">${tv.w2}</td>
+            <td style="${CVR_NTD}font-weight:700;color:${cvrTone(cvrPct(tv.w2,tv.leads))};">${cvrP1(cvrPct(tv.w2,tv.leads))}</td>
+            <td style="${CVR_NTD}">${tv.w23}</td><td style="${CVR_NTD}">${tv.life}</td>
+            <td style="${CVR_NTD}font-weight:700;color:${cvrTone(cvrPct(tv.life,tv.leads))};">${cvrP1(cvrPct(tv.life,tv.leads))}</td></tr>
+          ${tv.agents.sort((a,b)=>cvrPct(b.w2,b.leads)-cvrPct(a.w2,a.leads)).map(a=>`
+            <tr><td style="${CVR_TD}padding-left:${sc.kind==='om'?'40px':'26px'};">${e(a.name)}</td>
+              <td style="${CVR_NTD}">${a.leads}</td><td style="${CVR_NTD}color:#71717a;">${a.w2}</td>
+              <td style="${CVR_NTD}font-weight:700;color:${cvrTone(cvrPct(a.w2,a.leads))};">${cvrP1(cvrPct(a.w2,a.leads))}</td>
+              <td style="${CVR_NTD}color:#71717a;">${a.w23}</td><td style="${CVR_NTD}color:#71717a;">${a.life}</td>
+              <td style="${CVR_NTD}color:${cvrTone(cvrPct(a.life,a.leads))};">${cvrP1(cvrPct(a.life,a.leads))}</td></tr>`).join('')}
+        `).join('')}
+      </tbody></table></div>
+  </div>`;
+}
+function cvrDefsHtml(snap){
+  const rev=snap.rev||0;
+  return `<div style="margin:4px 14px 14px;padding:11px 14px;background:#fafafa;border:1px solid #f4f4f5;border-radius:8px;">
+    <div style="${CVR_LBL}margin-bottom:7px;">How these figures are built</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:9px 18px;font-size:.68rem;color:#52525b;line-height:1.5;">
+      <div><b style="color:#18181b;">Where the lead comes from</b><br>A HubSpot ticket in the Segmented pipeline titled “Sales Call Required (2nd Week)”, owned by a Cluster Lette agent. Leads never assigned to Phoenix are not in the cohort at all.</div>
+      <div><b style="color:#18181b;">Which week it belongs to</b><br>The week the ticket was <b>created</b> — the lead entering its 2nd week. Monday to Sunday on CDT boundaries, numbered so WK${cvrCurWk()} is the week of ${new Date(cvrMonISO(cvrCurWk())+'T12:00:00Z').toLocaleDateString('en-US',{month:'long',day:'numeric',timeZone:'UTC'})}.</div>
+      <div><b style="color:#18181b;">How a sale is counted</b><br>Stage “Closed as a Sale”. <b>W2</b> counts it only if it closed within 7 days of the ticket opening, <b>W2&amp;3</b> within 14, <b>lifetime</b> within 35 — W2 through W6.</div>
+      <div><b style="color:#18181b;">Who is credited</b><br>The agent and team who <b>closed the sale</b>. Where a team lead has reassigned a ticket inside this app, both the lead and any sale on it follow the new agent; HubSpot ownership is untouched.</div>
+      <div><b style="color:#18181b;">Revisited leads</b><br>An old lead that came back to the site already carries a ticket from before Phoenix. Those are left out of the lead count — they are not fresh leads — but a sale on one still counts. ${snap.revDone?`<b>${cvrNum(rev)}</b> excluded this week.`:'<span style="color:#b45309;">Audit still running.</span>'}</div>
+      <div><b style="color:#18181b;">Rounding</b><br>Half up to one decimal: 1.65 shows as 1.7%, 1.80 stays 1.8%.</div>
+    </div></div>`;
+}
+
+/* ── Deficit ────────────────────────────────────────────────────────────── */
+function cvrDeficitHtml(snap,sc){
+  const base=cvrRowsFor(snap,sc);
+  const rows=base.map(a=>{const need=Math.ceil(a.leads*CVR_TGT/100), df=Math.max(0,need-a.sales);
+    return Object.assign({},a,{cvr:cvrPct(a.sales,a.leads),need:need,deficit:df});})
+    .sort((x,y)=>y.deficit-x.deficit);
+  const T=cvrRollup(rows);
+  const Tneed=Math.ceil(T.leads*CVR_TGT/100), Tdef=Math.max(0,Tneed-T.sales);
+  const teams={};
+  rows.forEach(r=>{const k=cvrTeamShort(r.team);const t=teams[k]=teams[k]||{leads:0,sales:0,open:0,deficit:0};
+    t.leads+=r.leads;t.sales+=r.sales;t.open+=r.open;t.deficit+=r.deficit;});
+  const who=sc.kind==='om'?'Cluster Lette':cvrTeamShort(sc.team);
+  return `
+  <div style="${CVR_CARD}margin-bottom:12px;">
+    <div style="padding:15px 20px 0;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;">
+      <span style="font-size:.95rem;font-weight:700;color:#18181b;">Deficit to ${CVR_TGT}% — WK${snap.wk}</span>
+      <span style="font-size:.7rem;color:#71717a;">${e(who)} · how many more sales are needed on the leads already held</span>
+    </div>
+    ${cvrKpis([
+      [cvrNum(Tneed),'Sales needed',CVR_TGT+'% of '+cvrNum(T.leads)+' leads','#18181b'],
+      [cvrNum(T.sales),'Closed so far',cvrP1(cvrPct(T.sales,T.leads))+' of leads',cvrTone(cvrPct(T.sales,T.leads))],
+      [cvrNum(Tdef),'Still short','Across '+rows.filter(r=>r.deficit>0).length+' agents',Tdef?'#b91c1c':'#15803d'],
+      [cvrP1(cvrPct(Tdef,T.open)),'Needed on what is left',cvrNum(Tdef)+' from '+cvrNum(T.open)+' open leads','#b45309']])}
+  </div>
+  <div style="${CVR_CARD}margin-bottom:12px;overflow:hidden;">
+    <div style="padding:13px 18px;border-bottom:1px solid #e4e4e7;font-size:.85rem;font-weight:700;color:#18181b;">By team</div>
+    <table style="width:100%;border-collapse:collapse;">
+      <thead><tr><th style="${CVR_TH}width:30%;">Team</th><th style="${CVR_TH}text-align:right;">Leads</th>
+        <th style="${CVR_TH}text-align:right;">Sales</th><th style="${CVR_TH}text-align:right;">CVR</th>
+        <th style="${CVR_TH}text-align:right;">Needed at ${CVR_TGT}%</th><th style="${CVR_TH}text-align:right;">Short by</th></tr></thead>
+      <tbody>${Object.entries(teams).sort((a,b)=>b[1].deficit-a[1].deficit).map(([t,v])=>{
+        const nd=Math.ceil(v.leads*CVR_TGT/100);
+        return `<tr><td style="${CVR_TD}font-weight:600;color:#18181b;">${e(t)}</td>
+        <td style="${CVR_NTD}">${cvrNum(v.leads)}</td><td style="${CVR_NTD}color:#71717a;">${v.sales}</td>
+        <td style="${CVR_NTD}font-weight:700;color:${cvrTone(cvrPct(v.sales,v.leads))};">${cvrP1(cvrPct(v.sales,v.leads))}</td>
+        <td style="${CVR_NTD}color:#71717a;">${nd}</td>
+        <td style="${CVR_NTD}font-weight:700;color:${nd-v.sales>0?'#b91c1c':'#15803d'};">${Math.max(0,nd-v.sales)||'met'}</td></tr>`;}).join('')}</tbody>
+    </table>
+  </div>
+  <div style="${CVR_CARD}overflow:hidden;">
+    <div style="padding:13px 18px;border-bottom:1px solid #e4e4e7;display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;">
+      <span style="font-size:.85rem;font-weight:700;color:#18181b;">By agent</span>
+      <span style="font-size:.67rem;color:#a1a1aa;">largest shortfall first</span></div>
+    <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;min-width:660px;">
+      <thead><tr><th style="${CVR_TH}width:26%;">Agent</th><th style="${CVR_TH}">Team</th>
+        <th style="${CVR_TH}text-align:right;">Leads</th><th style="${CVR_TH}text-align:right;">Sales</th>
+        <th style="${CVR_TH}text-align:right;">CVR</th><th style="${CVR_TH}text-align:right;">Needed</th>
+        <th style="${CVR_TH}text-align:right;">Short by</th><th style="${CVR_TH}text-align:right;">Open leads</th></tr></thead>
+      <tbody>${rows.map(r=>{const me=sc.kind==='agent'&&r.name===sc.name;
+        return `<tr${me?' style="background:#fffbeb;"':''}>
+        <td style="${CVR_TD}font-weight:600;color:#18181b;">${e(r.name)}${me?' <span style="font-size:.58rem;font-weight:700;color:#b45309;">YOU</span>':''}</td>
+        <td style="${CVR_TD}font-size:.7rem;color:#71717a;white-space:nowrap;">${e(cvrTeamShort(r.team))}</td>
+        <td style="${CVR_NTD}">${r.leads}</td><td style="${CVR_NTD}color:#71717a;">${r.sales}</td>
+        <td style="${CVR_NTD}font-weight:700;color:${cvrTone(r.cvr)};">${cvrP1(r.cvr)}</td>
+        <td style="${CVR_NTD}color:#71717a;">${r.need}</td>
+        <td style="${CVR_NTD}font-weight:700;color:${r.deficit?'#b91c1c':'#15803d'};">${r.deficit||'met'}</td>
+        <td style="${CVR_NTD}color:${r.open<r.deficit?'#b91c1c':'#71717a'};">${r.open}${r.open<r.deficit?' ⚠':''}</td></tr>`;}).join('')}</tbody>
+    </table></div>
+    <div style="padding:9px 12px;border-top:1px solid #f4f4f5;font-size:.65rem;color:#a1a1aa;">
+      ⚠ marks an agent whose open leads are fewer than their shortfall — they cannot reach ${CVR_TGT}% on this week's cohort even by closing everything left.
+    </div></div>`;
+}
+
+/* ── Workable ───────────────────────────────────────────────────────────── */
+function cvrWorkableHtml(snap,sc){
+  const base=cvrMyRows(snap,sc);
+  const canAssign=sc.kind==='tl'||sc.kind==='om';
+  const rows=base.map(a=>{const need=Math.ceil(a.leads*CVR_TGT/100), df=Math.max(0,need-a.sales);
+    return Object.assign({},a,{deficit:df,rate:a.open?cvrPct(df,a.open):null,possible:a.open>=df});})
+    .sort((x,y)=>(y.rate===null?-1:y.rate)-(x.rate===null?-1:x.rate));
+  const T=cvrRollup(rows);
+  const Tdef=Math.max(0,Math.ceil(T.leads*CVR_TGT/100)-T.sales);
+  const mine=Object.keys(_cvrAssign).filter(k=>{const a=_cvrAssign[k];return a&&a.wk===snap.wk&&(sc.kind!=='tl'||a.team===sc.team);}).length;
+  const bar=(open,lost,sales,tot)=>`<span style="display:inline-flex;width:110px;height:7px;border-radius:99px;overflow:hidden;vertical-align:middle;background:#f4f4f5;">
+      <span style="width:${tot?sales/tot*100:0}%;background:#15803d;"></span>
+      <span style="width:${tot?open/tot*100:0}%;background:#60a5fa;"></span>
+      <span style="width:${tot?lost/tot*100:0}%;background:#e4e4e7;"></span></span>`;
+  const who=sc.kind==='agent'?'Your leads':sc.kind==='om'?'Cluster Lette':cvrTeamShort(sc.team);
+  return `
+  <div style="${CVR_CARD}margin-bottom:12px;">
+    <div style="padding:15px 20px 0;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;">
+      <span style="font-size:.95rem;font-weight:700;color:#18181b;">Workable leads — WK${snap.wk}</span>
+      <span style="font-size:.7rem;color:#71717a;">${e(who)} · still open, and what closing them would be worth</span>
+      ${canAssign&&mine?`<button onclick="cvrReturnAll()" style="margin-left:auto;padding:4px 11px;border:1px solid #e4e4e7;border-radius:8px;background:#fff;font-size:.68rem;font-weight:600;color:#3f3f46;font-family:inherit;cursor:pointer;">↩ Return all ${mine} reassigned</button>`:''}
+    </div>
+    ${cvrKpis([
+      [cvrNum(T.open),'Still workable',cvrP1(cvrPct(T.open,T.leads))+' of the cohort','#2563eb'],
+      [cvrNum(T.lost),'Closed, not sold','Declined, no answer or DNC','#71717a'],
+      [cvrNum(Tdef),'Sales still needed','To reach '+CVR_TGT+'%',Tdef?'#b91c1c':'#15803d'],
+      [cvrP1(cvrPct(Tdef,T.open)),'Close rate required','On the open leads that remain',cvrPct(Tdef,T.open)<=10?'#b45309':'#b91c1c']])}
+  </div>
+  <div style="${CVR_CARD}overflow:hidden;">
+    <div style="padding:13px 18px;border-bottom:1px solid #e4e4e7;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;">
+      <span style="font-size:.85rem;font-weight:700;color:#18181b;">By agent</span>
+      <span style="font-size:.67rem;color:#a1a1aa;">hardest ask first · open a row for the leads behind it</span>
+      <span style="margin-left:auto;display:flex;gap:11px;font-size:.63rem;color:#71717a;">
+        <span><span style="display:inline-block;width:9px;height:7px;background:#15803d;border-radius:2px;"></span> sold</span>
+        <span><span style="display:inline-block;width:9px;height:7px;background:#60a5fa;border-radius:2px;"></span> open</span>
+        <span><span style="display:inline-block;width:9px;height:7px;background:#e4e4e7;border-radius:2px;"></span> closed, not sold</span></span>
+    </div>
+    <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;min-width:680px;">
+      <thead><tr><th style="${CVR_TH}width:26%;">Agent</th><th style="${CVR_TH}">Team</th>
+        <th style="${CVR_TH}">Cohort</th><th style="${CVR_TH}text-align:right;">Open</th>
+        <th style="${CVR_TH}text-align:right;">Still needed</th><th style="${CVR_TH}text-align:right;">Close rate required</th></tr></thead>
+      <tbody>${rows.map(r=>{const open=!!_cvrOpenDrawer[r.id];
+        return `<tr onclick="cvrToggleDrawer('${r.id}')" style="cursor:pointer;">
+        <td style="${CVR_TD}font-weight:600;color:#18181b;"><span style="display:inline-block;width:11px;color:#a1a1aa;font-size:.6rem;">${open?'▾':'▸'}</span>${e(r.name)}</td>
+        <td style="${CVR_TD}font-size:.7rem;color:#71717a;white-space:nowrap;">${e(cvrTeamShort(r.team))}</td>
+        <td style="${CVR_TD}">${bar(r.open,r.lost,r.sales,r.leads)}<span style="margin-left:8px;font-size:.68rem;color:#a1a1aa;">${r.leads}</span></td>
+        <td style="${CVR_NTD}font-weight:600;color:#2563eb;">${r.open}</td>
+        <td style="${CVR_NTD}color:${r.deficit?'#b91c1c':'#15803d'};font-weight:700;">${r.deficit||'met'}</td>
+        <td style="${CVR_NTD}">${r.deficit===0?'<span style="color:#15803d;font-weight:700;">target met</span>'
+          :!r.possible?'<span style="color:#b91c1c;font-weight:700;">not reachable</span>'
+          :`<span style="font-weight:700;color:${r.rate<=10?'#b45309':'#b91c1c'};">${cvrP1(r.rate)}</span>`}</td></tr>
+        ${open?cvrDrawerHtml(r,snap,sc,canAssign):''}`;}).join('')}</tbody>
+    </table></div>
+    <div style="padding:9px 12px;border-top:1px solid #f4f4f5;font-size:.65rem;color:#a1a1aa;">
+      Close rate required is the shortfall divided by the open leads left — what share of everything still in play would have to convert to land on ${CVR_TGT}%.
+    </div></div>`;
+}
+function cvrDrawerHtml(r,snap,sc,canAssign){
+  const L=r.list||[];
+  const mates=canAssign?rosterAgents.filter(a=>sc.kind==='om'||a.tl===sc.team):[];
+  const byName={};for(const id in HS_OWNERS)byName[HS_OWNERS[id]]=id;
+  return `<tr><td colspan="6" style="padding:0 12px 10px 12px;border-bottom:1px solid #f4f4f5;background:#fafafa;">
+    <div style="${CVR_LBL}padding:8px 0 6px;">Longest untouched · ${L.length} of ${r.open} shown</div>
+    ${L.length?`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));gap:6px;">
+      ${L.map(l=>`<div style="background:#fff;border:1px solid #e4e4e7;border-radius:7px;padding:6px 9px;">
+        <div style="display:flex;align-items:baseline;gap:6px;">
+          <span style="font-size:.72rem;font-weight:600;color:#18181b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${e(l.name||'(no name)')}</span>
+          <span style="margin-left:auto;font-size:.63rem;font-weight:700;color:${l.quiet>=96?'#b91c1c':l.quiet>=48?'#b45309':'#71717a'};white-space:nowrap;">${l.quiet==null?'—':Math.round(l.quiet/24)+'d quiet'}</span></div>
+        <div style="font-size:.62rem;color:#a1a1aa;margin-top:2px;">Day ${l.day} · ${e(l.stage)}</div>
+        ${l.ra?`<div style="margin-top:4px;font-size:.58rem;font-weight:700;color:#7c3aed;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:5px;padding:2px 6px;display:inline-block;">↔ reassigned from ${e(l.ra.fromName||'—')}</div>`:''}
+        ${canAssign?`<div style="margin-top:5px;display:flex;gap:4px;align-items:center;" onclick="event.stopPropagation()">
+          <select id="cvr-as-${l.id}" style="flex:1;min-width:0;border:1px solid #e4e4e7;border-radius:6px;padding:2px 5px;font-size:.62rem;font-family:inherit;color:#3f3f46;background:#fff;">
+            <option value="">Assign to…</option>
+            ${mates.filter(m=>m.name!==r.name).map(m=>`<option value="${e(byName[m.name]||'')}">${e(m.name)}</option>`).join('')}
+          </select>
+          <button onclick="cvrAssign('${l.id}','${r.id}',${snap.wk})" style="border:1px solid #e4e4e7;border-radius:6px;background:#fff;padding:2px 7px;font-size:.62rem;font-weight:700;color:#3f3f46;font-family:inherit;cursor:pointer;">Go</button>
+          ${l.ra?`<button onclick="cvrUnassign('${l.id}')" title="Return to the original owner" style="border:1px solid #e4e4e7;border-radius:6px;background:#fff;padding:2px 6px;font-size:.62rem;font-weight:700;color:#7c3aed;font-family:inherit;cursor:pointer;">↩</button>`:''}
+        </div>`:''}
+      </div>`).join('')}
+    </div>
+    <div style="font-size:.62rem;color:#a1a1aa;padding:7px 0 2px;">Ranked by time since the last activity. Open the lead in Lead Compliance to work it.${canAssign?' Assigning here moves the lead inside this app only — HubSpot ownership does not change.':''}</div>`
+    :`<div style="font-size:.66rem;color:#a1a1aa;padding:4px 0 10px;">Nothing open on this week's cohort.</div>`}
+  </td></tr>`;
+}
+
+/* ── in-app reassignment ────────────────────────────────────────────────── */
+// Moves who works a ticket and who is credited for it, inside this app only.
+// Nothing is written back to HubSpot.
+async function cvrAssign(ticketId,fromId,wk){
+  const sel=document.getElementById('cvr-as-'+ticketId);
+  const to=sel&&sel.value;
+  if(!to){alert('Pick an agent first.');return;}
+  if(!FSB){alert('Not connected — try again in a moment.');return;}
+  const prev=_cvrAssign[ticketId];
+  const from=(prev&&prev.from)||String(fromId);
+  const rec={to:String(to),toName:HS_OWNERS[to]||'',from:from,fromName:HS_OWNERS[from]||'',
+    team:(rosterAgents.find(a=>a.name===HS_OWNERS[to])||{}).tl||'',
+    wk:wk,at:Date.now(),by:(CU&&CU.email)||''};
+  try{
+    await FSB.collection('cvr_assign').doc(String(ticketId)).set(rec);
+    _cvrAssign[String(ticketId)]=rec;
+    const snap=_cvrData[wk];
+    if(snap)snap.builtAt=0;
+    cvrBuild(wk,true);
+  }catch(err){alert('Could not save the assignment: '+err.message);}
+}
+async function cvrUnassign(ticketId){
+  if(!FSB)return;
+  try{
+    await FSB.collection('cvr_assign').doc(String(ticketId)).delete();
+    const wk=(_cvrAssign[String(ticketId)]||{}).wk||_cvrSel;
+    delete _cvrAssign[String(ticketId)];
+    cvrBuild(wk,true);
+  }catch(err){alert('Could not undo the assignment: '+err.message);}
+}
+async function cvrReturnAll(){
+  const sc=cvrScope(), wk=_cvrSel;
+  const ids=Object.keys(_cvrAssign).filter(k=>{const a=_cvrAssign[k];
+    return a&&a.wk===wk&&(sc.kind!=='tl'||a.team===sc.team);});
+  if(!ids.length)return;
+  if(!confirm('Return '+ids.length+' reassigned lead'+(ids.length>1?'s':'')+' to the original owner?'))return;
+  for(const id of ids){
+    try{await FSB.collection('cvr_assign').doc(id).delete();delete _cvrAssign[id];}catch(err){}
+  }
+  cvrBuild(wk,true);
+}
 
 </script>
 
