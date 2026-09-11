@@ -14028,21 +14028,28 @@ async function cvrRevisitAudit(wk,rows){
   const ids=rows.map(t=>String(t.id));
   const before=cvrMonMs(wk)-8*86400000;   // a prior ticket from before the cohort week
   const set=(_cvrRevisit[wk]&&_cvrRevisit[wk].set)||new Set();
-  let checked=0,found=false;
-  for(let i=0;i<ids.length;i+=100){
-    const chunk=ids.slice(i,i+100);
+  const chunks=[];
+  for(let i=0;i<ids.length;i+=100)chunks.push(ids.slice(i,i+100));
+  let checked=0,found=false,failed=false;
+  const ask=async chunk=>{
     try{
       const r=await fetch('/api/hs-leads',{method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({cvrRevisit:chunk,beforeMs:before,pipeline:HS_PIPELINE_SEG})});
-      if(!r.ok)break;
+      if(!r.ok){failed=true;return;}
       const d=await r.json();
-      if(d.error)break;
+      if(d.error){failed=true;return;}
       (d.revisits||[]).forEach(id=>{set.add(String(id));found=true;});
       checked+=chunk.length;
-      _cvrRevisit[wk]={set:set,checked:checked,done:false};
-    }catch(err){break;}
+    }catch(err){failed=true;}
+  };
+  // Five at a time: forty chunks in a line takes the best part of a minute, and
+  // any more than this and HubSpot starts answering with 429s.
+  for(let i=0;i<chunks.length;i+=5){
+    await Promise.all(chunks.slice(i,i+5).map(ask));
+    _cvrRevisit[wk]={set:set,checked:checked,done:false};
+    if(failed)break;
   }
-  _cvrRevisit[wk]={set:set,checked:checked,done:checked>=ids.length};
+  _cvrRevisit[wk]={set:set,checked:checked,done:!failed&&checked>=ids.length};
   return found;
 }
 
