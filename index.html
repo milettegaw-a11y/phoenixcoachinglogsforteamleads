@@ -80,32 +80,35 @@ body{font-family:'Poppins',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sa
 #app.on{display:flex;}
 
 /* ── SIDEBAR ── */
-#sidebar{width:var(--sb-w);min-height:100vh;background:var(--sb-bg);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;flex-shrink:0;z-index:50;border-right:2px solid var(--sb-border);box-shadow:4px 0 20px rgba(0,0,0,.12);}
-.sb-brand{padding:20px 18px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(61,107,44,.15);}
-.sb-logo{width:38px;height:38px;background:rgba(131,178,113,.2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;}
-.sb-title{font-size:1.1rem;font-weight:700;color:#2E5220;letter-spacing:-.5px;}
-.sb-sub{font-size:.6rem;color:rgba(46,82,32,.55);text-transform:uppercase;letter-spacing:.8px;margin-top:1px;}
-.sb-section-lbl{padding:12px 18px 5px;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:rgba(46,82,32,.45);display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;transition:color .15s;border-radius:6px;margin:0 6px;}
+#sidebar{width:var(--sb-w);min-height:100vh;background:var(--sb-bg);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;flex-shrink:0;z-index:50;border-right:1px solid var(--sb-border);box-shadow:none;}
+#sidebar::-webkit-scrollbar{width:6px;}
+#sidebar::-webkit-scrollbar-thumb{background:rgba(0,0,0,.13);border-radius:3px;}
+#sidebar::-webkit-scrollbar-track{background:transparent;}
+.sb-brand{padding:17px 16px 15px;display:flex;align-items:center;gap:11px;border-bottom:1px solid rgba(0,0,0,.07);}
+.sb-logo{width:36px;height:36px;background:rgba(255,255,255,.7);border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:1.08rem;flex-shrink:0;box-shadow:0 1px 2px rgba(0,0,0,.07);}
+.sb-title{font-size:.97rem;font-weight:700;color:#2E5220;letter-spacing:-.2px;}
+.sb-sub{font-size:.55rem;color:rgba(46,82,32,.55);text-transform:uppercase;letter-spacing:1.1px;margin-top:2px;}
+.sb-section-lbl{padding:15px 12px 6px;font-size:.57rem;font-weight:700;text-transform:uppercase;letter-spacing:1.3px;color:rgba(46,82,32,.45);display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;transition:color .15s;border-radius:6px;margin:0 8px;}
 .sb-section-lbl:hover{color:rgba(46,82,32,.75);}
 .sb-section-lbl .sb-grp-arrow{font-size:.65rem;transition:transform .22s;opacity:.5;}
 .sb-section-lbl.grp-open .sb-grp-arrow{transform:rotate(90deg);}
 .sb-group{overflow:hidden;max-height:0;transition:max-height .25s ease;}
 .sb-group.grp-open{max-height:600px;}
-.sb-item{display:flex;align-items:center;gap:10px;padding:10px 18px;font-size:.84rem;font-weight:500;color:rgba(46,82,32,.85);cursor:pointer;border-radius:0;transition:all .15s;border-left:3px solid transparent;margin:1px 0;position:relative;}
-.sb-notif{display:none;position:absolute;right:14px;top:50%;transform:translateY(-50%);background:#5E8A50;color:#E7F0D2;font-size:.6rem;font-weight:800;padding:2px 6px;border-radius:999px;line-height:1.4;letter-spacing:.02em;animation:sb-pulse 2s infinite;}
+.sb-item{display:flex;align-items:center;gap:9px;padding:8px 11px;font-size:.79rem;font-weight:500;color:rgba(46,82,32,.85);cursor:pointer;border-radius:9px;transition:background .14s,color .14s;border-left:none;margin:1px 8px;position:relative;}
+.sb-notif{display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);background:#5E8A50;color:#E7F0D2;font-size:.6rem;font-weight:800;padding:2px 6px;border-radius:999px;line-height:1.4;letter-spacing:.02em;animation:sb-pulse 2s infinite;}
 @keyframes sb-pulse{0%,100%{box-shadow:0 0 0 0 rgba(94,138,80,.55);}50%{box-shadow:0 0 0 5px rgba(94,138,80,0);}}
 .sb-item:hover{background:rgba(171,203,137,.3);color:#2E5220;}
-.sb-item.active{background:var(--yellow);color:#ffffff;border-left-color:var(--yellow-dk);font-weight:700;box-shadow:none;}
-.sb-item .sb-icon{width:20px;text-align:center;font-size:.95rem;flex-shrink:0;}
+#sidebar .sb-item.active{background:var(--yellow-dk);color:#fff;font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.16);}
+.sb-item .sb-icon{width:18px;text-align:center;font-size:.88rem;flex-shrink:0;}
 .sb-arrow{margin-left:auto;font-size:.75rem;transition:transform .22s;color:rgba(46,82,32,.4);flex-shrink:0;}
 .sb-arrow.open{transform:rotate(90deg);}
-.sb-sub-item{display:none;align-items:center;gap:10px;padding:7px 18px 7px 48px;font-size:.79rem;font-weight:500;cursor:pointer;transition:all .15s;border-left:3px solid transparent;color:rgba(46,82,32,.72);background:rgba(0,0,0,.025);}
+.sb-sub-item{display:none;align-items:center;gap:9px;padding:6px 11px 6px 32px;font-size:.75rem;font-weight:500;cursor:pointer;transition:background .14s,color .14s;border-left:none;border-radius:8px;margin:1px 8px 1px 18px;color:rgba(46,82,32,.72);background:transparent;}
 .sb-sub-item:hover{background:rgba(171,203,137,.25);color:#2E5220;}
 .sb-sub-item.open{display:flex;}
 .sb-divider{height:1px;background:rgba(46,82,32,.12);margin:8px 0;}
-.sb-footer{margin-top:auto;padding:14px 18px;border-top:1px solid rgba(46,82,32,.12);}
-.sb-user{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
-.sb-user-icon{width:34px;height:34px;background:rgba(131,178,113,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;}
+.sb-footer{margin-top:auto;padding:13px 16px;border-top:1px solid rgba(0,0,0,.07);}
+.sb-user{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
+.sb-user-icon{width:32px;height:32px;background:rgba(255,255,255,.7);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0;box-shadow:0 1px 2px rgba(0,0,0,.07);}
 #hdr-user{font-size:.78rem;font-weight:600;color:var(--sb-dark);line-height:1.3;}
 .sb-logout{width:100%;padding:8px;background:transparent;color:rgba(46,82,32,.7);border:1.5px solid rgba(46,82,32,.25);border-radius:var(--rs);font-size:.78rem;font-weight:500;cursor:pointer;text-align:center;transition:all .15s;font-family:inherit;}
 .sb-logout:hover{background:var(--red);color:var(--white);border-color:var(--red);}
@@ -121,18 +124,35 @@ body{font-family:'Poppins',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sa
 .px-sz-row,.px-font-col,.px-swatch-row{display:flex;gap:4px;}
 .px-font-col{flex-direction:column;}
 .px-swatch-row{flex-wrap:wrap;gap:6px;margin-top:2px;}
-.px-sz-btn,.px-font-btn{border:1.5px solid rgba(0,0,0,.15);border-radius:6px;cursor:pointer;font-family:inherit;transition:all .12s;background:rgba(255,255,255,.65);}
-.px-sz-btn{flex:1;padding:5px 4px;font-size:.8rem;font-weight:800;color:#333;text-align:center;}
-.px-font-btn{width:100%;padding:5px 9px;font-size:.75rem;font-weight:500;color:#333;text-align:left;}
-.px-sz-btn.active,.px-sz-btn:hover,.px-font-btn.active,.px-font-btn:hover{background:var(--yellow-dk);color:#fff;border-color:var(--yellow-dk);}
+.px-sz-btn,.px-font-btn{border:1px solid #e4e4e7;border-radius:8px;cursor:pointer;font-family:inherit;transition:all .13s;background:#fff;color:var(--g700);}
+.px-sz-btn{flex:1;padding:7px 4px;font-size:.76rem;font-weight:600;text-align:center;border:none;border-radius:7px;background:transparent;}
+.px-font-btn{padding:6px 14px;font-size:.76rem;font-weight:500;text-align:center;border-radius:999px;}
+.px-font-btn:hover{border-color:var(--g400);background:var(--g50);}
+.px-sz-btn:hover{background:rgba(0,0,0,.045);}
+.px-sz-btn.active{background:#fff;color:var(--g800);font-weight:700;box-shadow:0 1px 2px rgba(16,24,40,.12);}
+.px-font-btn.active{background:var(--g800);color:#fff;border-color:var(--g800);}
+/* Settings page shell */
+.st-card{background:#fff;border:1px solid #ececf0;border-radius:16px;padding:22px 24px 24px;margin-bottom:16px;box-shadow:0 1px 2px rgba(16,24,40,.04),0 8px 24px rgba(16,24,40,.05);}
+.st-card-lbl{font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g400);margin-bottom:18px;}
+.st-field{margin-bottom:20px;}
+.st-field-lbl{font-size:.8rem;font-weight:600;color:var(--g700);margin-bottom:9px;}
+.st-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px 34px;}
+.st-inline{display:flex;align-items:center;gap:12px;}
+.st-select{flex:1;min-width:0;padding:8px 11px;border:1px solid #e4e4e7;border-radius:9px;font-size:.79rem;font-family:inherit;color:var(--g700);background:#fff;cursor:pointer;}
+.st-select:focus{outline:none;border-color:var(--g400);}
+.st-link{border:none;background:none;padding:0;font-family:inherit;font-size:.78rem;font-weight:600;color:var(--g600);cursor:pointer;white-space:nowrap;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--g300);}
+.st-link:hover{color:var(--g800);text-decoration-color:var(--g500);}
+.st-hint{font-size:.7rem;color:var(--g400);margin-top:7px;line-height:1.45;}
+.st-seg{display:inline-flex;gap:2px;padding:3px;background:var(--g100);border-radius:10px;width:100%;}
 .px-swatch{width:26px;height:26px;border-radius:7px;border:2.5px solid transparent;cursor:pointer;transition:all .13s;padding:0;outline:none;flex-shrink:0;}
 .px-swatch:hover{transform:scale(1.13);}
 .px-swatch.active{box-shadow:0 0 0 2.5px rgba(0,0,0,.5);}
-.st-theme-btn{border:none;border-radius:10px;padding:10px 8px 8px;cursor:pointer;font-family:inherit;font-size:.73rem;font-weight:700;color:#fff;text-align:center;line-height:1.2;position:relative;transition:transform .13s,box-shadow .13s;text-shadow:0 1px 3px rgba(0,0,0,.5);}
-.st-theme-btn:hover{transform:scale(1.04);box-shadow:0 4px 12px rgba(0,0,0,.22);}
-.st-theme-btn.active{box-shadow:0 0 0 3px #fff,0 0 0 5px rgba(0,0,0,.35);}
-.st-th-check{display:none;position:absolute;top:5px;right:7px;font-size:.75rem;font-weight:900;}
-.st-theme-btn.active .st-th-check{display:inline;}
+.st-theme-btn{display:inline-flex;align-items:center;gap:10px;padding:7px 16px 7px 10px;border:1.5px solid transparent;border-radius:999px;background:transparent;cursor:pointer;font-family:inherit;font-size:.79rem;font-weight:600;color:var(--g700);transition:border-color .14s,background .14s;}
+.st-theme-btn:hover{background:var(--g100);}
+.st-theme-btn.active{border-color:var(--g800);background:#fff;color:var(--g800);}
+.st-dots{display:inline-flex;flex-shrink:0;}
+.st-dots i{width:16px;height:16px;border-radius:50%;display:block;border:1.5px solid #fff;margin-left:-6px;}
+.st-dots i:first-child{margin-left:0;}
 .dm-person-row{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;cursor:pointer;transition:background .12s;}
 .dm-person-row:hover{background:#f5f5f5;}
 .dm-name{font-size:.82rem;font-weight:600;color:#404040;}
@@ -2565,126 +2585,110 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
 
 <!-- SETTINGS VIEW -->
 <div id="v-settings" class="view">
-  <div style="max-width:680px;margin:0 auto;padding:8px 0 40px;">
-    <div style="font-size:1.1rem;font-weight:700;color:var(--g800);margin-bottom:6px;">⚙️ Settings</div>
-    <div style="font-size:.78rem;color:var(--g500);margin-bottom:28px;">Customize your experience</div>
+  <div style="max-width:900px;margin:0 auto;padding:6px 0 48px;">
+    <div style="display:flex;align-items:center;gap:13px;margin-bottom:26px;">
+      <div style="width:44px;height:44px;border-radius:50%;background:var(--g800);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">⚙</div>
+      <div>
+        <div style="font-size:1.32rem;font-weight:700;color:var(--g800);letter-spacing:-.3px;line-height:1.15;">Settings</div>
+        <div style="font-size:.76rem;color:var(--g500);margin-top:2px;">Customize your experience</div>
+      </div>
+    </div>
 
     <!-- APPEARANCE -->
-    <div style="background:#fff;border:1.5px solid var(--sb-border);border-radius:14px;padding:22px 24px;margin-bottom:18px;box-shadow:0 2px 8px rgba(0,0,0,.06);">
-      <div style="font-size:.72rem;font-weight:700;letter-spacing:.08em;color:var(--g500);text-transform:uppercase;margin-bottom:18px;">Appearance</div>
+    <div class="st-card">
+      <div class="st-card-lbl">Appearance</div>
 
-      <!-- Color Theme -->
-      <div style="margin-bottom:20px;">
-        <div style="font-size:.82rem;font-weight:600;color:var(--g700);margin-bottom:10px;">Color Theme</div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:10px;">
-          <button class="st-theme-btn" id="stth-ibericblue" onclick="applyTheme('ibericblue')" style="background:linear-gradient(135deg,#0d2d6b,#3a7bd5);">
-            <span class="st-th-check" id="stck-ibericblue">✓</span>Iberic Blue
-          </button>
-          <button class="st-theme-btn" id="stth-ocean" onclick="applyTheme('ocean')" style="background:linear-gradient(135deg,#1d5c8a,#5ba3d4);">
-            <span class="st-th-check" id="stck-ocean">✓</span>Ocean
-          </button>
-          <button class="st-theme-btn" id="stth-forest" onclick="applyTheme('forest')" style="background:linear-gradient(135deg,#3d6b2c,#83B271);">
-            <span class="st-th-check" id="stck-forest">✓</span>Forest
-          </button>
-          <button class="st-theme-btn" id="stth-sunset" onclick="applyTheme('sunset')" style="background:linear-gradient(135deg,#8b3a0a,#e8a258);">
-            <span class="st-th-check" id="stck-sunset">✓</span>Sunset
-          </button>
-          <button class="st-theme-btn" id="stth-rose" onclick="applyTheme('rose')" style="background:linear-gradient(135deg,#8b2042,#e06898);">
-            <span class="st-th-check" id="stck-rose">✓</span>Rose
-          </button>
-          <button class="st-theme-btn" id="stth-violet" onclick="applyTheme('violet')" style="background:linear-gradient(135deg,#5b3d8f,#a98fd4);">
-            <span class="st-th-check" id="stck-violet">✓</span>Violet
-          </button>
-          <button class="st-theme-btn" id="stth-graphite" onclick="applyTheme('graphite')" style="background:linear-gradient(135deg,#374151,#6b7280);">
-            <span class="st-th-check" id="stck-graphite">✓</span>Graphite
-          </button>
+      <div class="st-field">
+        <div class="st-field-lbl">Color theme</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;">
+          <button class="st-theme-btn" id="stth-ibericblue" onclick="applyTheme('ibericblue')">
+            <span class="st-dots"><i style="background:#0d2d6b;"></i><i style="background:#1a4fa8;"></i><i style="background:#3a7bd5;"></i></span>Iberic Blue</button>
+          <button class="st-theme-btn" id="stth-ocean" onclick="applyTheme('ocean')">
+            <span class="st-dots"><i style="background:#1a4e78;"></i><i style="background:#2b7fbc;"></i><i style="background:#5ba3d4;"></i></span>Ocean</button>
+          <button class="st-theme-btn" id="stth-forest" onclick="applyTheme('forest')">
+            <span class="st-dots"><i style="background:#2E5220;"></i><i style="background:#5E8A50;"></i><i style="background:#83B271;"></i></span>Forest</button>
+          <button class="st-theme-btn" id="stth-sunset" onclick="applyTheme('sunset')">
+            <span class="st-dots"><i style="background:#7c2d12;"></i><i style="background:#c45d1a;"></i><i style="background:#e8a258;"></i></span>Sunset</button>
+          <button class="st-theme-btn" id="stth-rose" onclick="applyTheme('rose')">
+            <span class="st-dots"><i style="background:#7a1232;"></i><i style="background:#bf3060;"></i><i style="background:#e06898;"></i></span>Rose</button>
+          <button class="st-theme-btn" id="stth-violet" onclick="applyTheme('violet')">
+            <span class="st-dots"><i style="background:#4a2d7a;"></i><i style="background:#7c5fb0;"></i><i style="background:#a98fd4;"></i></span>Violet</button>
+          <button class="st-theme-btn" id="stth-graphite" onclick="applyTheme('graphite')">
+            <span class="st-dots"><i style="background:#1f2937;"></i><i style="background:#4b5563;"></i><i style="background:#6b7280;"></i></span>Graphite</button>
         </div>
       </div>
 
-      <!-- Text Size -->
-      <div style="margin-bottom:20px;">
-        <div style="font-size:.82rem;font-weight:600;color:var(--g700);margin-bottom:10px;">Text Size</div>
-        <div style="display:flex;gap:8px;">
-          <button class="px-sz-btn" id="stsz-s" onclick="applyFontSize('s')">S</button>
-          <button class="px-sz-btn active" id="stsz-m" onclick="applyFontSize('m')">M</button>
-          <button class="px-sz-btn" id="stsz-l" onclick="applyFontSize('l')">L</button>
+      <div class="st-row">
+        <div class="st-field" style="margin-bottom:0;">
+          <div class="st-field-lbl">Text size</div>
+          <div class="st-seg">
+            <button class="px-sz-btn" id="stsz-s" onclick="applyFontSize('s')">Small</button>
+            <button class="px-sz-btn active" id="stsz-m" onclick="applyFontSize('m')">Medium</button>
+            <button class="px-sz-btn" id="stsz-l" onclick="applyFontSize('l')">Large</button>
+          </div>
         </div>
-      </div>
-
-      <!-- Font -->
-      <div>
-        <div style="font-size:.82rem;font-weight:600;color:var(--g700);margin-bottom:10px;">Font</div>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;">
-          <button class="px-font-btn" id="stfnt-poppins" onclick="applyFont('Poppins')" style="font-family:'Poppins',sans-serif;">Poppins</button>
-          <button class="px-font-btn" id="stfnt-inter" onclick="applyFont('Inter')" style="font-family:'Inter',sans-serif;">Inter</button>
-          <button class="px-font-btn" id="stfnt-nunito" onclick="applyFont('Nunito')" style="font-family:'Nunito',sans-serif;">Nunito</button>
-          <button class="px-font-btn" id="stfnt-roboto" onclick="applyFont('Roboto')" style="font-family:'Roboto',sans-serif;">Roboto</button>
+        <div class="st-field" style="margin-bottom:0;">
+          <div class="st-field-lbl">Font</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            <button class="px-font-btn" id="stfnt-poppins" onclick="applyFont('Poppins')" style="font-family:'Poppins',sans-serif;">Poppins</button>
+            <button class="px-font-btn" id="stfnt-inter" onclick="applyFont('Inter')" style="font-family:'Inter',sans-serif;">Inter</button>
+            <button class="px-font-btn" id="stfnt-nunito" onclick="applyFont('Nunito')" style="font-family:'Nunito',sans-serif;">Nunito</button>
+            <button class="px-font-btn" id="stfnt-roboto" onclick="applyFont('Roboto')" style="font-family:'Roboto',sans-serif;">Roboto</button>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- NOTIFICATIONS -->
-    <div style="background:#fff;border:1.5px solid var(--sb-border);border-radius:14px;padding:22px 24px;box-shadow:0 2px 8px rgba(0,0,0,.06);">
-      <div style="font-size:.72rem;font-weight:700;letter-spacing:.08em;color:var(--g500);text-transform:uppercase;margin-bottom:18px;">Notifications</div>
-
-      <!-- Chat messages -->
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
-        <div style="flex:1;min-width:120px;">
-          <div style="font-size:.83rem;font-weight:600;color:var(--g700);">Chat messages</div>
-        </div>
-        <select id="st-snd-chat" onchange="saveNotifPref()" style="padding:6px 10px;border:1.5px solid var(--g300);border-radius:8px;font-size:.8rem;font-family:inherit;min-width:130px;">
-          <option value="none">No sound</option>
-          <option value="chime">Chime</option>
-          <option value="ping">Ping</option>
-          <option value="pop">Pop</option>
-          <option value="bell">Bell</option>
-        </select>
-        <button onclick="previewSound('chat')" style="padding:6px 14px;border:1.5px solid var(--sb-border);border-radius:8px;background:#fff;font-family:inherit;font-size:.78rem;font-weight:600;cursor:pointer;color:var(--g700);white-space:nowrap;">▶ Preview</button>
-      </div>
-
-      <!-- Mentions -->
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
-        <div style="flex:1;min-width:120px;">
-          <div style="font-size:.83rem;font-weight:600;color:var(--g700);">Mentions</div>
-        </div>
-        <select id="st-snd-mention" onchange="saveNotifPref()" style="padding:6px 10px;border:1.5px solid var(--g300);border-radius:8px;font-size:.8rem;font-family:inherit;min-width:130px;">
-          <option value="none">No sound</option>
-          <option value="chime">Chime</option>
-          <option value="ping">Ping</option>
-          <option value="pop">Pop</option>
-          <option value="bell">Bell</option>
-        </select>
-        <button onclick="previewSound('mention')" style="padding:6px 14px;border:1.5px solid var(--sb-border);border-radius:8px;background:#fff;font-family:inherit;font-size:.78rem;font-weight:600;cursor:pointer;color:var(--g700);white-space:nowrap;">▶ Preview</button>
-      </div>
-
-      <!-- New actions -->
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
-        <div style="flex:1;min-width:120px;">
-          <div style="font-size:.83rem;font-weight:600;color:var(--g700);">New actions</div>
-        </div>
-        <select id="st-snd-action" onchange="saveNotifPref()" style="padding:6px 10px;border:1.5px solid var(--g300);border-radius:8px;font-size:.8rem;font-family:inherit;min-width:130px;">
-          <option value="none">No sound</option>
-          <option value="chime">Chime</option>
-          <option value="ping">Ping</option>
-          <option value="pop">Pop</option>
-          <option value="bell">Bell</option>
-        </select>
-        <button onclick="previewSound('action')" style="padding:6px 14px;border:1.5px solid var(--sb-border);border-radius:8px;background:#fff;font-family:inherit;font-size:.78rem;font-weight:600;cursor:pointer;color:var(--g700);white-space:nowrap;">▶ Preview</button>
-      </div>
-
-      <!-- Desktop notifications -->
-      <div style="display:flex;align-items:center;gap:12px;padding-top:14px;border-top:1px solid var(--g200);">
-        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;flex:1;">
-          <div style="position:relative;width:42px;height:24px;flex-shrink:0;">
-            <input type="checkbox" id="st-desktop-notif" onchange="toggleDesktopNotif(this)" style="position:absolute;opacity:0;width:0;height:0;">
-            <div id="st-toggle-track" style="position:absolute;inset:0;border-radius:12px;background:var(--g300);transition:background .2s;cursor:pointer;" onclick="document.getElementById('st-desktop-notif').click()"></div>
-            <div id="st-toggle-thumb" style="position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .2s;pointer-events:none;"></div>
+    <div class="st-card">
+      <div class="st-card-lbl">Notifications</div>
+      <div class="st-row">
+        <div class="st-field">
+          <div class="st-field-lbl">Chat messages</div>
+          <div class="st-inline">
+            <select id="st-snd-chat" class="st-select" onchange="saveNotifPref()">
+              <option value="none">No sound</option><option value="chime">Chime</option>
+              <option value="ping">Ping</option><option value="pop">Pop</option><option value="bell">Bell</option>
+            </select>
+            <button class="st-link" onclick="previewSound('chat')">Preview</button>
           </div>
-          <div>
-            <div style="font-size:.83rem;font-weight:600;color:var(--g700);">Desktop notifications</div>
-            <div style="font-size:.72rem;color:var(--g500);margin-top:2px;" id="st-notif-status">Enable browser push notifications</div>
+          <div class="st-hint" id="st-desc-chat"></div>
+        </div>
+        <div class="st-field">
+          <div class="st-field-lbl">Mentions</div>
+          <div class="st-inline">
+            <select id="st-snd-mention" class="st-select" onchange="saveNotifPref()">
+              <option value="none">No sound</option><option value="chime">Chime</option>
+              <option value="ping">Ping</option><option value="pop">Pop</option><option value="bell">Bell</option>
+            </select>
+            <button class="st-link" onclick="previewSound('mention')">Preview</button>
           </div>
-        </label>
+          <div class="st-hint" id="st-desc-mention"></div>
+        </div>
+        <div class="st-field" style="margin-bottom:0;">
+          <div class="st-field-lbl">New actions</div>
+          <div class="st-inline">
+            <select id="st-snd-action" class="st-select" onchange="saveNotifPref()">
+              <option value="none">No sound</option><option value="chime">Chime</option>
+              <option value="ping">Ping</option><option value="pop">Pop</option><option value="bell">Bell</option>
+            </select>
+            <button class="st-link" onclick="previewSound('action')">Preview</button>
+          </div>
+          <div class="st-hint" id="st-desc-action"></div>
+        </div>
+        <div class="st-field" style="margin-bottom:0;">
+          <div class="st-field-lbl">Desktop notifications</div>
+          <label style="display:flex;align-items:center;gap:11px;cursor:pointer;">
+            <div style="position:relative;width:40px;height:23px;flex-shrink:0;">
+              <input type="checkbox" id="st-desktop-notif" onchange="toggleDesktopNotif(this)" style="position:absolute;opacity:0;width:0;height:0;">
+              <div id="st-toggle-track" style="position:absolute;inset:0;border-radius:12px;background:var(--g300);transition:background .2s;"></div>
+              <div id="st-toggle-thumb" style="position:absolute;top:3px;left:3px;width:17px;height:17px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .2s;pointer-events:none;"></div>
+            </div>
+            <span style="font-size:.8rem;font-weight:500;color:var(--g700);">Notify me on this computer</span>
+          </label>
+          <div class="st-hint">New actions and new chat messages. This tab has to stay open.</div>
+          <div class="st-hint" id="st-notif-status"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -4890,6 +4894,7 @@ function renderSettingsPage(){
     const sel=document.getElementById('st-snd-'+k);
     if(sel) sel.value=prefs[k]||'none';
   });
+  stSyncSoundHints();
   // sync desktop notif toggle
   const desktopOn=localStorage.getItem('px-desktop-notif')==='1';
   const cb=document.getElementById('st-desktop-notif');
@@ -4902,10 +4907,22 @@ function renderSettingsPage(){
   }
   const statusEl=document.getElementById('st-notif-status');
   if(statusEl){
-    if(Notification&&Notification.permission==='granted'&&desktopOn) statusEl.textContent='Desktop notifications are active';
-    else if(Notification&&Notification.permission==='denied') statusEl.textContent='Blocked by browser — update site permissions to enable';
-    else statusEl.textContent='Enable browser push notifications';
+    const perm=(typeof Notification!=='undefined')?Notification.permission:'default';
+    if(perm==='granted'&&desktopOn){statusEl.textContent='Active on this computer.';statusEl.style.color='';}
+    else if(perm==='denied'){statusEl.textContent='Blocked in your browser settings — allow notifications for this site first.';statusEl.style.color='#b45309';}
+    else{statusEl.textContent='Off. Turning this on asks your browser for permission.';statusEl.style.color='';}
   }
+}
+
+// One line under each sound picker saying what it sounds like, so nobody has to
+// press Preview three times to find out.
+const ST_SOUND_HINT={none:'Silent — nothing plays.',chime:'Soft and low, easy to ignore.',
+  ping:'Short and neutral.',pop:'Quick and quiet.',bell:'A brighter cue that stands out.'};
+function stSyncSoundHints(){
+  ['chat','mention','action'].forEach(k=>{
+    const sel=document.getElementById('st-snd-'+k), el=document.getElementById('st-desc-'+k);
+    if(sel&&el)el.textContent=ST_SOUND_HINT[sel.value]||'';
+  });
 }
 
 function saveNotifPref(){
@@ -4915,6 +4932,7 @@ function saveNotifPref(){
     if(sel) prefs[k]=sel.value;
   });
   localStorage.setItem('px-notif-prefs',JSON.stringify(prefs));
+  stSyncSoundHints();
 }
 
 function toggleDesktopNotif(cb){
