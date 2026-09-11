@@ -13840,6 +13840,7 @@ const CVR_WK_EPOCH=Date.UTC(2016,0,4);               // WK1 Monday — matches t
 const CVR_TTL=10*60*1000;                            // a cached week is fresh for 10 minutes
 const CVR_POLL=3*60*1000;                            // how often we ask HubSpot for a new sale count
 const CVR_DRAWER=8;                                  // leads shown per agent in the drawer
+const CVR_SCHEMA=2;                                  // bump to make cached weeks rebuild
 
 let _cvrData={};        // wk → snapshot
 let _cvrRevisit={};     // wk → {set:Set, checked:n, done:bool}
@@ -13987,7 +13988,7 @@ function cvrAggregate(wk,rows){
   const rev=(_cvrRevisit[wk]&&_cvrRevisit[wk].set)||null;
   const A={};
   const get=id=>A[id]||(A[id]={id:id,name:(own[id]||{}).name||HS_OWNERS[id]||('Owner '+id),
-    team:(own[id]||{}).team||'—',leads:0,w2:0,w23:0,life:0,sales:0,open:0,lost:0,rev:0,list:[]});
+    team:(own[id]||{}).team||'—',leads:0,w2:0,w23:0,life:0,sales:0,open:0,openW2:0,lost:0,rev:0,list:[]});
   let sales=0,total=0,revTot=0;
   rows.forEach(t=>{
     const p=t.properties||{};
@@ -14009,9 +14010,11 @@ function cvrAggregate(wk,rows){
     }else if(CVR_CLOSED.indexOf(stage)>=0){a.lost++;}
     else{
       a.open++;
+      const day=Math.max(1,Math.floor((now-Date.parse(p.createdate||now))/86400000)+1);
+      if(day<=CVR_WIN.w2)a.openW2++;     // still able to land inside its own W2 window
       if(!isRev)a.list.push({id:String(t.id),name:null,
         stage:HS_STAGE_LABELS[stage]||'—',
-        day:Math.max(1,Math.floor((now-Date.parse(p.createdate||now))/86400000)+1),
+        day:day,
         quiet:p.hs_lastactivitydate?Math.round((now-Date.parse(p.hs_lastactivitydate))/3600000):null,
         ra:ra?{from:ra.from,fromName:ra.fromName}:null});
     }
@@ -14022,7 +14025,7 @@ function cvrAggregate(wk,rows){
     a.list=a.list.slice(0,CVR_DRAWER);
   });
   agents.sort((a,b)=>b.leads-a.leads);
-  return {wk:wk,mon:cvrMonISO(wk),builtAt:Date.now(),agents:agents,
+  return {wk:wk,mon:cvrMonISO(wk),builtAt:Date.now(),v:CVR_SCHEMA,agents:agents,
     total:total,sales:sales,rev:revTot,revChecked:(_cvrRevisit[wk]||{}).checked||0,
     revDone:!!(_cvrRevisit[wk]||{}).done};
 }
@@ -14089,6 +14092,7 @@ async function cvrReadCache(wk){
     const d=await FSB.collection('cvr_weeks').doc('WK'+wk).get();
     if(!d.exists)return null;
     const s=d.data();
+    if((s||{}).v!==CVR_SCHEMA)return null;           // built before the current shape
     if(s&&s.revIds)_cvrRevisit[wk]={set:new Set(s.revIds),checked:s.revChecked||0,done:!!s.revDone};
     return s;
   }catch(err){return null;}
@@ -14250,7 +14254,7 @@ function cvrKpis(items){
         <div style="font-size:.65rem;color:#a1a1aa;margin-top:5px;">${it[2]}</div></div>`).join('')}</div>`;
 }
 function cvrRollup(rows){
-  const t={leads:0,w2:0,w23:0,life:0,sales:0,open:0,lost:0,rev:0};
+  const t={leads:0,w2:0,w23:0,life:0,sales:0,open:0,openW2:0,lost:0,rev:0};
   rows.forEach(r=>{for(const k in t)t[k]+=(r[k]||0);});
   return t;
 }
@@ -14355,40 +14359,44 @@ function cvrDefsHtml(snap){
 /* ── Deficit ────────────────────────────────────────────────────────────── */
 function cvrDeficitHtml(snap,sc){
   const base=cvrRowsFor(snap,sc);
-  const rows=base.map(a=>{const need=Math.ceil(a.leads*CVR_TGT/100), df=Math.max(0,need-a.sales);
-    return Object.assign({},a,{cvr:cvrPct(a.sales,a.leads),need:need,deficit:df});})
+  // The 3% target is a W2 number, so the shortfall is measured against W2 — sales
+  // closed within 7 days of the ticket opening — not against every sale the
+  // cohort ever produced. Counting all of them flattered the gap.
+  const rows=base.map(a=>{const need=Math.ceil(a.leads*CVR_TGT/100), df=Math.max(0,need-a.w2);
+    return Object.assign({},a,{cvr:cvrPct(a.w2,a.leads),need:need,deficit:df});})
     .sort((x,y)=>y.deficit-x.deficit);
   const T=cvrRollup(rows);
-  const Tneed=Math.ceil(T.leads*CVR_TGT/100), Tdef=Math.max(0,Tneed-T.sales);
+  const Tneed=Math.ceil(T.leads*CVR_TGT/100), Tdef=Math.max(0,Tneed-T.w2);
   const teams={};
-  rows.forEach(r=>{const k=cvrTeamShort(r.team);const t=teams[k]=teams[k]||{leads:0,sales:0,open:0,deficit:0};
-    t.leads+=r.leads;t.sales+=r.sales;t.open+=r.open;t.deficit+=r.deficit;});
+  rows.forEach(r=>{const k=cvrTeamShort(r.team);const t=teams[k]=teams[k]||{leads:0,w2:0,sales:0,open:0,openW2:0,deficit:0};
+    t.leads+=r.leads;t.w2+=r.w2;t.sales+=r.sales;t.open+=r.open;t.openW2+=(r.openW2||0);t.deficit+=r.deficit;});
   const who=sc.kind==='om'?'Cluster Lette':cvrTeamShort(sc.team);
   return `
   <div style="${CVR_CARD}margin-bottom:12px;">
     <div style="padding:15px 20px 0;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;">
       <span style="font-size:.95rem;font-weight:700;color:#18181b;">Deficit to ${CVR_TGT}% — WK${snap.wk}</span>
       <span style="font-size:.7rem;color:#71717a;">${e(who)} · how many more sales are needed on the leads already held</span>
+      <span style="margin-left:auto;font-size:.63rem;font-weight:700;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:2px 8px;">Measured on W2 · closed within 7 days</span>
     </div>
     ${cvrKpis([
       [cvrNum(Tneed),'Sales needed',CVR_TGT+'% of '+cvrNum(T.leads)+' leads','#18181b'],
-      [cvrNum(T.sales),'Closed so far',cvrP1(cvrPct(T.sales,T.leads))+' of leads',cvrTone(cvrPct(T.sales,T.leads))],
+      [cvrNum(T.w2),'Closed within 7 days',cvrP1(cvrPct(T.w2,T.leads))+' of leads · '+cvrNum(T.sales-T.w2)+' more landed later',cvrTone(cvrPct(T.w2,T.leads))],
       [cvrNum(Tdef),'Still short','Across '+rows.filter(r=>r.deficit>0).length+' agents',Tdef?'#b91c1c':'#15803d'],
-      [cvrP1(cvrPct(Tdef,T.open)),'Needed on what is left',cvrNum(Tdef)+' from '+cvrNum(T.open)+' open leads','#b45309']])}
+      [T.openW2?cvrP1(cvrPct(Tdef,T.openW2)):'—','Needed on what is left',cvrNum(Tdef)+' from '+cvrNum(T.openW2)+' leads still inside their 7 days','#b45309']])}
   </div>
   <div style="${CVR_CARD}margin-bottom:12px;overflow:hidden;">
     <div style="padding:13px 18px;border-bottom:1px solid #e4e4e7;font-size:.85rem;font-weight:700;color:#18181b;">By team</div>
     <table style="width:100%;border-collapse:collapse;">
       <thead><tr><th style="${CVR_TH}width:30%;">Team</th><th style="${CVR_TH}text-align:right;">Leads</th>
-        <th style="${CVR_TH}text-align:right;">Sales</th><th style="${CVR_TH}text-align:right;">CVR</th>
+        <th style="${CVR_TH}text-align:right;">W2 sales</th><th style="${CVR_TH}text-align:right;">CVR</th>
         <th style="${CVR_TH}text-align:right;">Needed at ${CVR_TGT}%</th><th style="${CVR_TH}text-align:right;">Short by</th></tr></thead>
       <tbody>${Object.entries(teams).sort((a,b)=>b[1].deficit-a[1].deficit).map(([t,v])=>{
         const nd=Math.ceil(v.leads*CVR_TGT/100);
         return `<tr><td style="${CVR_TD}font-weight:600;color:#18181b;">${e(t)}</td>
-        <td style="${CVR_NTD}">${cvrNum(v.leads)}</td><td style="${CVR_NTD}color:#71717a;">${v.sales}</td>
-        <td style="${CVR_NTD}font-weight:700;color:${cvrTone(cvrPct(v.sales,v.leads))};">${cvrP1(cvrPct(v.sales,v.leads))}</td>
+        <td style="${CVR_NTD}">${cvrNum(v.leads)}</td><td style="${CVR_NTD}color:#71717a;">${v.w2}${v.sales>v.w2?`<span style="font-size:.62rem;color:#a1a1aa;"> +${v.sales-v.w2}</span>`:''}</td>
+        <td style="${CVR_NTD}font-weight:700;color:${cvrTone(cvrPct(v.w2,v.leads))};">${cvrP1(cvrPct(v.w2,v.leads))}</td>
         <td style="${CVR_NTD}color:#71717a;">${nd}</td>
-        <td style="${CVR_NTD}font-weight:700;color:${nd-v.sales>0?'#b91c1c':'#15803d'};">${Math.max(0,nd-v.sales)||'met'}</td></tr>`;}).join('')}</tbody>
+        <td style="${CVR_NTD}font-weight:700;color:${nd-v.w2>0?'#b91c1c':'#15803d'};">${Math.max(0,nd-v.w2)||'met'}</td></tr>`;}).join('')}</tbody>
     </table>
   </div>
   <div style="${CVR_CARD}overflow:hidden;">
@@ -14397,21 +14405,23 @@ function cvrDeficitHtml(snap,sc){
       <span style="font-size:.67rem;color:#a1a1aa;">largest shortfall first</span></div>
     <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;min-width:660px;">
       <thead><tr><th style="${CVR_TH}width:26%;">Agent</th><th style="${CVR_TH}">Team</th>
-        <th style="${CVR_TH}text-align:right;">Leads</th><th style="${CVR_TH}text-align:right;">Sales</th>
+        <th style="${CVR_TH}text-align:right;">Leads</th><th style="${CVR_TH}text-align:right;">W2 sales</th>
         <th style="${CVR_TH}text-align:right;">CVR</th><th style="${CVR_TH}text-align:right;">Needed</th>
-        <th style="${CVR_TH}text-align:right;">Short by</th><th style="${CVR_TH}text-align:right;">Open leads</th></tr></thead>
+        <th style="${CVR_TH}text-align:right;">Short by</th><th style="${CVR_TH}text-align:right;">Open, in 7 days</th></tr></thead>
       <tbody>${rows.map(r=>{const me=sc.kind==='agent'&&r.name===sc.name;
         return `<tr${me?' style="background:#fffbeb;"':''}>
         <td style="${CVR_TD}font-weight:600;color:#18181b;">${e(r.name)}${me?' <span style="font-size:.58rem;font-weight:700;color:#b45309;">YOU</span>':''}</td>
         <td style="${CVR_TD}font-size:.7rem;color:#71717a;white-space:nowrap;">${e(cvrTeamShort(r.team))}</td>
-        <td style="${CVR_NTD}">${r.leads}</td><td style="${CVR_NTD}color:#71717a;">${r.sales}</td>
+        <td style="${CVR_NTD}">${r.leads}</td>
+        <td style="${CVR_NTD}color:#71717a;">${r.w2}${r.sales>r.w2?`<span style="font-size:.62rem;color:#a1a1aa;" title="${r.sales-r.w2} more sale(s) closed after the 7-day window"> +${r.sales-r.w2}</span>`:''}</td>
         <td style="${CVR_NTD}font-weight:700;color:${cvrTone(r.cvr)};">${cvrP1(r.cvr)}</td>
         <td style="${CVR_NTD}color:#71717a;">${r.need}</td>
         <td style="${CVR_NTD}font-weight:700;color:${r.deficit?'#b91c1c':'#15803d'};">${r.deficit||'met'}</td>
-        <td style="${CVR_NTD}color:${r.open<r.deficit?'#b91c1c':'#71717a'};">${r.open}${r.open<r.deficit?' ⚠':''}</td></tr>`;}).join('')}</tbody>
+        <td style="${CVR_NTD}color:${(r.openW2||0)<r.deficit?'#b91c1c':'#71717a'};">${r.openW2||0}${(r.openW2||0)<r.deficit?' ⚠':''}</td></tr>`;}).join('')}</tbody>
     </table></div>
     <div style="padding:9px 12px;border-top:1px solid #f4f4f5;font-size:.65rem;color:#a1a1aa;">
-      ⚠ marks an agent whose open leads are fewer than their shortfall — they cannot reach ${CVR_TGT}% on this week's cohort even by closing everything left.
+      W2 sales are those closed within 7 days of the ticket opening — the basis of the ${CVR_TGT}% target. A grey <b>+n</b> is sales that landed after that window: real revenue, but outside this measure.
+      ⚠ marks an agent whose leads still inside their 7 days are fewer than their shortfall — they cannot reach ${CVR_TGT}% on this cohort even by closing every one of them.
     </div></div>`;
 }
 
@@ -14419,11 +14429,14 @@ function cvrDeficitHtml(snap,sc){
 function cvrWorkableHtml(snap,sc){
   const base=cvrMyRows(snap,sc);
   const canAssign=sc.kind==='tl'||sc.kind==='om';
-  const rows=base.map(a=>{const need=Math.ceil(a.leads*CVR_TGT/100), df=Math.max(0,need-a.sales);
-    return Object.assign({},a,{deficit:df,rate:a.open?cvrPct(df,a.open):null,possible:a.open>=df});})
+  // Only a lead still inside its own 7 days can move W2, so that is what the
+  // close rate is asked of — not every open lead in the cohort.
+  const rows=base.map(a=>{const need=Math.ceil(a.leads*CVR_TGT/100), df=Math.max(0,need-a.w2), win=a.openW2||0;
+    return Object.assign({},a,{deficit:df,win:win,rate:win?cvrPct(df,win):null,possible:win>=df});})
     .sort((x,y)=>(y.rate===null?-1:y.rate)-(x.rate===null?-1:x.rate));
   const T=cvrRollup(rows);
-  const Tdef=Math.max(0,Math.ceil(T.leads*CVR_TGT/100)-T.sales);
+  const Twin=rows.reduce((n,r)=>n+r.win,0);
+  const Tdef=Math.max(0,Math.ceil(T.leads*CVR_TGT/100)-T.w2);
   const mine=Object.keys(_cvrAssign).filter(k=>{const a=_cvrAssign[k];return a&&a.wk===snap.wk&&(sc.kind!=='tl'||a.team===sc.team);}).length;
   const bar=(open,lost,sales,tot)=>`<span style="display:inline-flex;width:110px;height:7px;border-radius:99px;overflow:hidden;vertical-align:middle;background:#f4f4f5;">
       <span style="width:${tot?sales/tot*100:0}%;background:#15803d;"></span>
@@ -14439,14 +14452,15 @@ function cvrWorkableHtml(snap,sc){
     </div>
     ${cvrKpis([
       [cvrNum(T.open),'Still workable',cvrP1(cvrPct(T.open,T.leads))+' of the cohort','#2563eb'],
-      [cvrNum(T.lost),'Closed, not sold','Declined, no answer or DNC','#71717a'],
-      [cvrNum(Tdef),'Sales still needed','To reach '+CVR_TGT+'%',Tdef?'#b91c1c':'#15803d'],
-      [cvrP1(cvrPct(Tdef,T.open)),'Close rate required','On the open leads that remain',cvrPct(Tdef,T.open)<=10?'#b45309':'#b91c1c']])}
+      [cvrNum(Twin),'Still inside 7 days',cvrNum(T.open-Twin)+' are past their W2 window','#b45309'],
+      [cvrNum(Tdef),'Sales still needed','To reach '+CVR_TGT+'% on W2',Tdef?'#b91c1c':'#15803d'],
+      [Twin?cvrP1(cvrPct(Tdef,Twin)):'—','Close rate required','On the leads that can still count',Twin&&cvrPct(Tdef,Twin)<=10?'#b45309':'#b91c1c']])}
   </div>
   <div style="${CVR_CARD}overflow:hidden;">
     <div style="padding:13px 18px;border-bottom:1px solid #e4e4e7;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;">
       <span style="font-size:.85rem;font-weight:700;color:#18181b;">By agent</span>
       <span style="font-size:.67rem;color:#a1a1aa;">hardest ask first · open a row for the leads behind it</span>
+      <span style="font-size:.62rem;font-weight:700;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:2px 8px;">Shortfall measured on W2</span>
       <span style="margin-left:auto;display:flex;gap:11px;font-size:.63rem;color:#71717a;">
         <span><span style="display:inline-block;width:9px;height:7px;background:#15803d;border-radius:2px;"></span> sold</span>
         <span><span style="display:inline-block;width:9px;height:7px;background:#60a5fa;border-radius:2px;"></span> open</span>
@@ -14455,6 +14469,7 @@ function cvrWorkableHtml(snap,sc){
     <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;min-width:680px;">
       <thead><tr><th style="${CVR_TH}width:26%;">Agent</th><th style="${CVR_TH}">Team</th>
         <th style="${CVR_TH}">Cohort</th><th style="${CVR_TH}text-align:right;">Open</th>
+        <th style="${CVR_TH}text-align:right;">In 7 days</th>
         <th style="${CVR_TH}text-align:right;">Still needed</th><th style="${CVR_TH}text-align:right;">Close rate required</th></tr></thead>
       <tbody>${rows.map(r=>{const open=!!_cvrOpenDrawer[r.id];
         return `<tr onclick="cvrToggleDrawer('${r.id}')" style="cursor:pointer;">
@@ -14462,6 +14477,7 @@ function cvrWorkableHtml(snap,sc){
         <td style="${CVR_TD}font-size:.7rem;color:#71717a;white-space:nowrap;">${e(cvrTeamShort(r.team))}</td>
         <td style="${CVR_TD}white-space:nowrap;">${bar(r.open,r.lost,r.sales,r.leads)}<span style="margin-left:8px;font-size:.68rem;color:#a1a1aa;">${r.leads}</span></td>
         <td style="${CVR_NTD}font-weight:600;color:#2563eb;">${r.open}</td>
+        <td style="${CVR_NTD}color:${r.win?'#b45309':'#a1a1aa'};font-weight:600;">${r.win}</td>
         <td style="${CVR_NTD}color:${r.deficit?'#b91c1c':'#15803d'};font-weight:700;">${r.deficit||'met'}</td>
         <td style="${CVR_NTD}">${r.deficit===0?'<span style="color:#15803d;font-weight:700;">target met</span>'
           :!r.possible?'<span style="color:#b91c1c;font-weight:700;">not reachable</span>'
@@ -14469,21 +14485,22 @@ function cvrWorkableHtml(snap,sc){
         ${open?cvrDrawerHtml(r,snap,sc,canAssign):''}`;}).join('')}</tbody>
     </table></div>
     <div style="padding:9px 12px;border-top:1px solid #f4f4f5;font-size:.65rem;color:#a1a1aa;">
-      Close rate required is the shortfall divided by the open leads left — what share of everything still in play would have to convert to land on ${CVR_TGT}%.
+      Close rate required is the shortfall divided by the leads still inside their 7 days — only those can add to W2, which is what the ${CVR_TGT}% target measures. Leads past day ${CVR_WIN.w2} are still worth closing; the sale just lands outside this week's W2.
     </div></div>`;
 }
 function cvrDrawerHtml(r,snap,sc,canAssign){
   const L=r.list||[];
   const mates=canAssign?rosterAgents.filter(a=>sc.kind==='om'||a.tl===sc.team):[];
   const byName={};for(const id in HS_OWNERS)byName[HS_OWNERS[id]]=id;
-  return `<tr><td colspan="6" style="padding:0 12px 10px 12px;border-bottom:1px solid #f4f4f5;background:#fafafa;">
+  return `<tr><td colspan="7" style="padding:0 12px 10px 12px;border-bottom:1px solid #f4f4f5;background:#fafafa;">
     <div style="${CVR_LBL}padding:8px 0 6px;">Longest untouched · ${L.length} of ${r.open} shown</div>
     ${L.length?`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));gap:6px;">
       ${L.map(l=>`<div style="background:#fff;border:1px solid #e4e4e7;border-radius:7px;padding:6px 9px;">
         <div style="display:flex;align-items:baseline;gap:6px;">
           <span style="font-size:.72rem;font-weight:600;color:#18181b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${e(l.name||'(no name)')}</span>
           <span style="margin-left:auto;font-size:.63rem;font-weight:700;color:${l.quiet>=96?'#b91c1c':l.quiet>=48?'#b45309':'#71717a'};white-space:nowrap;">${l.quiet==null?'—':Math.round(l.quiet/24)+'d quiet'}</span></div>
-        <div style="font-size:.62rem;color:#a1a1aa;margin-top:2px;">Day ${l.day} · ${e(l.stage)}</div>
+        <div style="font-size:.62rem;color:#a1a1aa;margin-top:2px;">Day ${l.day} · ${e(l.stage)}
+          ${l.day>CVR_WIN.w2?'<span style="color:#b91c1c;font-weight:700;"> · past W2</span>':'<span style="color:#b45309;font-weight:700;"> · '+(CVR_WIN.w2-l.day+1)+'d left</span>'}</div>
         ${l.ra?`<div style="margin-top:4px;font-size:.58rem;font-weight:700;color:#7c3aed;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:5px;padding:2px 6px;display:inline-block;">↔ reassigned from ${e(l.ra.fromName||'—')}</div>`:''}
         ${canAssign?`<div style="margin-top:5px;display:flex;gap:4px;align-items:center;" onclick="event.stopPropagation()">
           <select id="cvr-as-${l.id}" style="flex:1;min-width:0;border:1px solid #e4e4e7;border-radius:6px;padding:2px 5px;font-size:.62rem;font-family:inherit;color:#3f3f46;background:#fff;">
