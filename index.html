@@ -14520,8 +14520,17 @@ function cvrDrawerHtml(r,snap,sc,canAssign){
   const L=r.list||[];
   const mates=canAssign?rosterAgents.filter(a=>sc.kind==='om'||a.tl===sc.team):[];
   const byName={};for(const id in HS_OWNERS)byName[HS_OWNERS[id]]=id;
+  const quiet=L.filter(l=>l.quiet==null||l.quiet>=24).length;
+  const nudged=_cvrNudged[r.id];
   return `<tr><td colspan="7" style="padding:0 12px 10px 12px;border-bottom:1px solid #f4f4f5;background:#fafafa;">
-    <div style="${CVR_LBL}padding:8px 0 6px;">Longest untouched · ${L.length} of ${r.open} shown</div>
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0 6px;flex-wrap:wrap;">
+      <span style="${CVR_LBL}">Longest untouched · ${L.length} of ${r.open} shown</span>
+      ${canAssign&&L.length?`<button onclick="event.stopPropagation();cvrOpenNudge('${r.id}')"
+        style="margin-left:auto;display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border:1px solid #e4e4e7;border-radius:8px;background:#fff;font-size:.68rem;font-weight:600;color:#4a154b;font-family:inherit;cursor:pointer;">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="M16 9a4 4 0 0 1 0 6"/><path d="M19 6.5a8 8 0 0 1 0 11"/></svg>
+        Nudge on Slack${quiet?' · '+quiet:''}</button>
+      ${nudged?`<span style="font-size:.63rem;color:#15803d;font-weight:600;">nudged ${cvrAgo(nudged)}</span>`:''}`:''}
+    </div>
     ${L.length?`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));gap:6px;">
       ${L.map(l=>`<div style="background:#fff;border:1px solid #e4e4e7;border-radius:7px;padding:6px 9px;">
         <div style="display:flex;align-items:baseline;gap:6px;">
@@ -14585,6 +14594,156 @@ async function cvrReturnAll(){
     try{await FSB.collection('cvr_assign').doc(id).delete();delete _cvrAssign[id];}catch(err){}
   }
   cvrBuild(wk,true);
+}
+
+
+/* ── Slack nudge ─────────────────────────────────────────────────────────────
+   A team lead picks the leads that have gone quiet and sends the agent a DM
+   listing them, each one a link straight to its HubSpot ticket. Nothing sends
+   without the sender reading the message first — the dialog renders it from the
+   same code the server does, through the route's dry mode.
+   Who to DM is kept in Firestore: agent name → Slack member ID or work email. */
+let _cvrSlack={};          // agent name → {slackId, email}
+let _cvrSlackLoaded=false;
+let _cvrNudged={};         // agent id → last nudge ts, this session
+let _cvrNudge=null;        // the dialog's working state
+
+async function cvrLoadSlack(){
+  if(_cvrSlackLoaded||!FSB)return;
+  try{
+    const s=await FSB.collection('slack_directory').get();
+    s.forEach(d=>{_cvrSlack[d.id]=d.data();});
+  }catch(err){/* the dialog still works, it just asks for the ID */}
+  _cvrSlackLoaded=true;
+}
+
+async function cvrOpenNudge(agentId){
+  const snap=_cvrData[_cvrSel];
+  if(!snap)return;
+  const ag=snap.agents.find(a=>a.id===agentId);
+  if(!ag)return;
+  await cvrLoadSlack();
+  // Default to the quiet ones that can still count: open, in window, a day or
+  // more since anyone touched them.
+  const picked={};
+  (ag.list||[]).forEach(l=>{picked[l.id]=(l.quiet==null||l.quiet>=24)&&l.day<=CVR_WIN.w2+1;});
+  _cvrNudge={agent:ag,picked:picked,sending:false,msg:'',err:'',sent:0};
+  cvrRenderNudge();
+  cvrNudgePreview();
+}
+function cvrCloseNudge(){_cvrNudge=null;const el=document.getElementById('cvr-nudge-modal');if(el)el.remove();}
+function cvrNudgeToggle(id){
+  if(!_cvrNudge)return;
+  _cvrNudge.picked[id]=!_cvrNudge.picked[id];
+  cvrRenderNudge();cvrNudgePreview();
+}
+function cvrNudgeLeads(){
+  if(!_cvrNudge)return [];
+  return (_cvrNudge.agent.list||[]).filter(l=>_cvrNudge.picked[l.id]).map(l=>({
+    id:l.id,name:l.name,quiet:l.quiet,day:l.day,stage:l.stage,
+    left:l.day<=CVR_WIN.w2+1?(CVR_WIN.w2+2-l.day)+'d left in W2':'past W2'}));
+}
+// The preview comes from the server so what is shown is what would be sent.
+async function cvrNudgePreview(){
+  if(!_cvrNudge)return;
+  const leads=cvrNudgeLeads();
+  if(!leads.length){_cvrNudge.msg='';cvrRenderNudge();return;}
+  try{
+    const r=await fetch('/api/slack-nudge',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({dry:true,agent:_cvrNudge.agent.name,from:cvrNudgeFrom(),wk:_cvrSel,leads:leads})});
+    const d=await r.json();
+    if(!_cvrNudge)return;
+    _cvrNudge.msg=d.text||'';
+    cvrRenderNudge();
+  }catch(err){/* the picker is still usable without a preview */}
+}
+function cvrNudgeFrom(){
+  if(typeof CU==='undefined'||!CU)return '';
+  if(CU.isOM)return 'Operations';
+  return cvrTeamShort(CU.role||'')||CU.email||'';
+}
+async function cvrSendNudge(){
+  if(!_cvrNudge||_cvrNudge.sending)return;
+  const leads=cvrNudgeLeads();
+  if(!leads.length)return;
+  const who=_cvrNudge.agent.name;
+  const dir=_cvrSlack[who]||{};
+  const idEl=document.getElementById('cvr-nudge-id');
+  const handle=(idEl&&idEl.value.trim())||dir.slackId||dir.email||'';
+  if(!handle){_cvrNudge.err='Add '+who+"'s Slack member ID or work email first.";cvrRenderNudge();return;}
+  if(!confirm('Send this Slack message to '+who+'?\n\n'+leads.length+' lead'+(leads.length>1?'s':'')+' will be listed.'))return;
+  _cvrNudge.sending=true;_cvrNudge.err='';cvrRenderNudge();
+  const isEmail=handle.indexOf('@')>0;
+  try{
+    const r=await fetch('/api/slack-nudge',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({agent:who,from:cvrNudgeFrom(),wk:_cvrSel,leads:leads,
+        slackId:isEmail?'':handle,email:isEmail?handle:''})});
+    const d=await r.json();
+    if(!r.ok||d.error){_cvrNudge.sending=false;_cvrNudge.err=d.error||('Slack returned '+r.status);cvrRenderNudge();return;}
+    // Remember who to DM so nobody types it twice.
+    if(FSB){try{await FSB.collection('slack_directory').doc(who)
+      .set(isEmail?{email:handle}:{slackId:handle},{merge:true});}catch(err){}}
+    _cvrSlack[who]=Object.assign({},_cvrSlack[who],isEmail?{email:handle}:{slackId:handle});
+    _cvrNudged[_cvrNudge.agent.id]=Date.now();
+    _cvrNudge.sent=leads.length;_cvrNudge.sending=false;
+    cvrRenderNudge();
+    setTimeout(()=>{cvrCloseNudge();cvrRender();},1800);
+  }catch(err){_cvrNudge.sending=false;_cvrNudge.err=err.message;cvrRenderNudge();}
+}
+
+function cvrRenderNudge(){
+  let el=document.getElementById('cvr-nudge-modal');
+  if(!_cvrNudge){if(el)el.remove();return;}
+  if(!el){
+    el=document.createElement('div');
+    el.id='cvr-nudge-modal';
+    el.style.cssText='position:fixed;inset:0;background:rgba(9,9,11,.45);z-index:9400;display:flex;align-items:center;justify-content:center;padding:20px;';
+    el.onclick=ev=>{if(ev.target===el)cvrCloseNudge();};
+    document.body.appendChild(el);
+  }
+  const n=_cvrNudge, ag=n.agent, list=ag.list||[];
+  const dir=_cvrSlack[ag.name]||{};
+  const picked=list.filter(l=>n.picked[l.id]).length;
+  const quietTxt=h=>h==null?'no activity':h<48?Math.round(h)+'h quiet':Math.round(h/24)+'d quiet';
+  el.innerHTML=`<div style="background:#fff;border-radius:16px;width:620px;max-width:96vw;max-height:90vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.3);">
+    <div style="padding:18px 22px 14px;border-bottom:1px solid #f4f4f5;display:flex;align-items:flex-start;gap:12px;">
+      <div style="width:36px;height:36px;border-radius:10px;background:#4a154b;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.95rem;font-weight:700;">#</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:.95rem;font-weight:700;color:#18181b;">Nudge ${e(ag.name)} on Slack</div>
+        <div style="font-size:.7rem;color:#71717a;margin-top:2px;">A direct message listing the leads below, each linked to its HubSpot ticket.</div>
+      </div>
+      <button onclick="cvrCloseNudge()" style="border:none;background:none;font-size:1.15rem;color:#a1a1aa;cursor:pointer;line-height:1;padding:2px 4px;">×</button>
+    </div>
+    ${n.sent?`<div style="padding:34px 22px;text-align:center;">
+      <div style="font-size:1.6rem;">✓</div>
+      <div style="font-size:.88rem;font-weight:700;color:#15803d;margin-top:8px;">Sent to ${e(ag.name)}</div>
+      <div style="font-size:.72rem;color:#71717a;margin-top:4px;">${n.sent} lead${n.sent>1?'s':''} listed.</div></div>`
+    :`<div style="padding:16px 22px;">
+      <div style="${CVR_LBL}margin-bottom:9px;">Leads to include · ${picked} of ${list.length}</div>
+      ${list.length?`<div style="display:flex;flex-direction:column;gap:5px;margin-bottom:16px;">
+        ${list.map(l=>{const past=l.day>CVR_WIN.w2+1;return `<label style="display:flex;align-items:center;gap:10px;padding:7px 10px;border:1px solid ${n.picked[l.id]?'#d4d4d8':'#f4f4f5'};border-radius:9px;cursor:pointer;background:${n.picked[l.id]?'#fff':'#fafafa'};">
+          <input type="checkbox" ${n.picked[l.id]?'checked':''} onchange="cvrNudgeToggle('${l.id}')" style="width:15px;height:15px;flex-shrink:0;cursor:pointer;">
+          <span style="flex:1;min-width:0;font-size:.78rem;font-weight:600;color:#18181b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${e(l.name||'(no name)')}</span>
+          <span style="font-size:.66rem;color:#a1a1aa;white-space:nowrap;">Day ${l.day} · ${e(l.stage)}</span>
+          <span style="font-size:.66rem;font-weight:700;white-space:nowrap;color:${past?'#b91c1c':l.quiet>=96?'#b91c1c':l.quiet>=48?'#b45309':'#71717a'};">${past?'past W2':quietTxt(l.quiet)}</span>
+        </label>`;}).join('')}
+      </div>`:'<div style="font-size:.75rem;color:#a1a1aa;padding:8px 0 16px;">Nothing open on this week&rsquo;s cohort.</div>'}
+
+      <div style="${CVR_LBL}margin-bottom:7px;">Send to</div>
+      <input id="cvr-nudge-id" value="${e(dir.slackId||dir.email||'')}" placeholder="Slack member ID (U01ABC…) or work email"
+        style="width:100%;box-sizing:border-box;padding:8px 11px;border:1px solid #e4e4e7;border-radius:9px;font-size:.78rem;font-family:inherit;color:#3f3f46;">
+      <div style="font-size:.66rem;color:#a1a1aa;margin-top:5px;">Saved after the first successful send, so you only type it once. A member ID comes from Slack → profile → ⋮ → Copy member ID.</div>
+
+      ${n.msg?`<div style="${CVR_LBL}margin:16px 0 7px;">What ${e(ag.name)} will see</div>
+        <div style="background:#fafafa;border:1px solid #f4f4f5;border-radius:10px;padding:12px 14px;font-size:.73rem;color:#3f3f46;line-height:1.6;white-space:pre-wrap;word-break:break-word;">${e(n.msg).replace(/&lt;(https?:[^|]+)\|([^&]*?)&gt;/g,'<span style="color:#1264a3;text-decoration:underline;">$2</span>').replace(/\*(.+?)\*/g,'<b>$1</b>').replace(/_(.+?)_/g,'<i>$1</i>')}</div>`:''}
+
+      ${n.err?`<div style="margin-top:14px;padding:10px 13px;background:#fef2f2;border:1px solid #fecaca;border-radius:9px;font-size:.72rem;color:#b91c1c;line-height:1.5;">${e(n.err)}</div>`:''}
+    </div>
+    <div style="padding:13px 22px 18px;display:flex;gap:9px;justify-content:flex-end;border-top:1px solid #f4f4f5;">
+      <button onclick="cvrCloseNudge()" style="padding:8px 16px;border:1px solid #e4e4e7;border-radius:9px;background:#fff;font-size:.78rem;font-weight:600;color:#3f3f46;font-family:inherit;cursor:pointer;">Cancel</button>
+      <button onclick="cvrSendNudge()" ${(!picked||n.sending)?'disabled':''} style="padding:8px 18px;border:none;border-radius:9px;background:${(!picked||n.sending)?'#d4d4d8':'#4a154b'};color:#fff;font-size:.78rem;font-weight:700;font-family:inherit;cursor:${(!picked||n.sending)?'default':'pointer'};">${n.sending?'Sending…':'Send on Slack'}</button>
+    </div>`}
+  </div>`;
 }
 
 </script>
