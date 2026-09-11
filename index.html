@@ -3969,6 +3969,7 @@ const AGENTS_VIEW=new Set([
   'joenellas@homeaglowsales.com',
 ]);
 const EMAIL_TO_AGENT={
+  'jerseydeguzman@homeaglowsalesone.com':'Jersey Deguzman',
   'jardenepetines@homeaglowsalestwo.com':'Jardene Petines',
   'cjgarces@homeaglowsales.com':'CJ Garces',
   'jessafrayna@homeaglowsalestwo.com':'Jessa Frayna',
@@ -14737,10 +14738,10 @@ function cvrRenderNudge(){
       </div>`:'<div style="font-size:.75rem;color:#a1a1aa;padding:8px 0 16px;">Nothing open on this week&rsquo;s cohort.</div>'}
 
       <div style="${CVR_LBL}margin-bottom:7px;">Send to</div>
-      <input id="cvr-nudge-id" value="${e(dir.slackId||dir.email||'')}" placeholder="Slack member ID (U01ABC…) or work email"
+      <input id="cvr-nudge-id" value="${e(dir.slackId||dir.email||cvrAgentEmail(ag.name))}" placeholder="Slack member ID (U01ABC…) or work email"
         style="width:100%;box-sizing:border-box;padding:8px 11px;border:1px solid #e4e4e7;border-radius:9px;font-size:.78rem;font-family:inherit;color:#3f3f46;">
       <div style="display:flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap;">
-        <span style="font-size:.66rem;color:#a1a1aa;flex:1;min-width:160px;">${dir.slackId||dir.email?'Found in the Slack workspace and saved.':'Not found in the Slack workspace — paste a member ID or work email. Slack → profile → ⋮ → Copy member ID.'}</span>
+        <span style="font-size:.66rem;color:#a1a1aa;flex:1;min-width:160px;">${dir.slackId?'Matched to a Slack account and saved.':cvrAgentEmail(ag.name)?'Their work email from the roster. It only reaches them if they have a Slack account on it.':'No work email on file — paste a member ID or email.'}</span>
         <button onclick="cvrSyncSlack(false).then(()=>cvrRenderNudge())" style="padding:3px 10px;border:1px solid #e4e4e7;border-radius:7px;background:#fff;font-size:.65rem;font-weight:600;color:#3f3f46;font-family:inherit;cursor:pointer;white-space:nowrap;">Re-match from Slack</button>
       </div>
 
@@ -14765,6 +14766,16 @@ function cvrRenderNudge(){
 let _cvrDirectory=null;
 let _cvrSyncing=false;
 const cvrNameKey=s=>String(s||'').toLowerCase().replace(/[^a-z]/g,'');
+// The app already holds a work email for almost every agent, in the same map
+// that grants them their login. That is a far better key than guessing at
+// names, so Slack is addressed by email first and matched by name only as a
+// fallback for anyone the map has missed.
+function cvrAgentEmail(name){
+  const saved=_cvrSlack[name]||{};
+  if(saved.email)return saved.email;
+  for(const em in EMAIL_TO_AGENT) if(EMAIL_TO_AGENT[em]===name) return em;
+  return '';
+}
 
 async function cvrFetchDirectory(){
   if(_cvrDirectory)return _cvrDirectory;
@@ -14777,17 +14788,23 @@ async function cvrFetchDirectory(){
 }
 // Returns {matched:{name:{slackId,email,via}}, unmatched:[names]}
 function cvrMatchRoster(people,names){
-  const byKey={};
-  const bump=(k,p)=>{if(!k)return;(byKey[k]=byKey[k]||[]).push(p);};
+  // Keyed by id so the same person arriving through their name and again
+  // through their email local part still counts as one candidate.
+  const byKey={}, byEmail={};
+  const bump=(k,p)=>{if(!k)return;(byKey[k]=byKey[k]||{})[p.id]=p;};
   people.forEach(p=>{
     bump(cvrNameKey(p.real),p);
-    if(cvrNameKey(p.display)!==cvrNameKey(p.real))bump(cvrNameKey(p.display),p);
-    if(p.email)bump(cvrNameKey(p.email.split('@')[0]),p);
+    bump(cvrNameKey(p.display),p);
+    if(p.email){bump(cvrNameKey(p.email.split('@')[0]),p);byEmail[p.email.toLowerCase()]=p;}
   });
   const matched={},unmatched=[];
   names.forEach(n=>{
+    const em=cvrAgentEmail(n);
+    const exact=em&&byEmail[em.toLowerCase()];
+    if(exact){matched[n]={slackId:exact.id,email:exact.email||em,via:'email'};return;}
     const hits=byKey[cvrNameKey(n)];
-    if(hits&&hits.length===1){matched[n]={slackId:hits[0].id,email:hits[0].email||'',via:'name'};}
+    const uniq=hits?Object.values(hits):[];
+    if(uniq.length===1){matched[n]={slackId:uniq[0].id,email:uniq[0].email||'',via:'name'};}
     else unmatched.push(n);
   });
   return {matched:matched,unmatched:unmatched};
