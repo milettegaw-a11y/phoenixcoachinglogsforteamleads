@@ -5294,7 +5294,7 @@ function hsAgentTag(c){
   const ours=hsIsOurAgent(c);
   const short=n.split(' ').slice(0,2).join(' ');
   const title=ours?n:n+' — not on your teams (earlier team\'s contact)';
-  return `<span title="${title}" style="font-size:.57rem;font-weight:800;font-style:italic;padding:1px 6px;border-radius:99px;white-space:nowrap;`
+  return `<span title="${title}" style="font-size:.58rem;font-weight:500;font-style:italic;padding:1px 6px;border-radius:99px;white-space:nowrap;`
     +(ours?'background:#f3f4f6;color:#4b5563;':'background:#f3e8ff;color:#7e22ce;')
     +`">${ours?'':'↗ '}${short}</span>`;
 }
