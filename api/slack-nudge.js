@@ -67,11 +67,22 @@ export default async function handler(req, res) {
     needsSetup: true
   });
 
-  const slack = async (method, payload) => {
+  const slackJson = async (method, payload) => {
     const r = await fetch('https://slack.com/api/' + method, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json; charset=utf-8', Authorization: 'Bearer ' + TOKEN },
       body: JSON.stringify(payload)
+    });
+    return r.json();
+  };
+  // users.lookupByEmail is one of the older Web API methods and rejects a JSON
+  // body with invalid_arguments — it only reads form-encoded parameters.
+  const slackForm = async (method, params) => {
+    const r = await fetch('https://slack.com/api/' + method, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8',
+                 Authorization: 'Bearer ' + TOKEN },
+      body: new URLSearchParams(params).toString()
     });
     return r.json();
   };
@@ -84,14 +95,14 @@ export default async function handler(req, res) {
         error: 'No Slack member ID or email for ' + agent + '. Add one in the nudge dialog.',
         needsSetup: true
       });
-      const look = await slack('users.lookupByEmail', { email });
+      const look = await slackForm('users.lookupByEmail', { email });
       if (!look.ok || !look.user) return res.status(404).json({
         error: 'Slack could not find anyone at ' + email + (look.error ? ' (' + look.error + ')' : ''),
         needsSetup: true
       });
       channel = look.user.id;
     }
-    const post = await slack('chat.postMessage', {
+    const post = await slackJson('chat.postMessage', {
       channel, text: fallback, unfurl_links: false, unfurl_media: false,
       blocks: [{ type: 'section', text: { type: 'mrkdwn', text: body } }]
     });
