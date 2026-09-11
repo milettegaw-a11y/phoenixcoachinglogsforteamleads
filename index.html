@@ -5770,93 +5770,124 @@ async function loadTeamAttention(force){
   }catch(e){ _tlAttn=_tlAttn||[]; }
   finally{ _tlAttnLoading=false; renderTeamAttention(); }
 }
-function tlAttnRow(t,kind){
+// One row of a detail table. Carries the operational detail a Team Lead needs —
+// who owns it, what the customer said, the ticket's stage, and how long it has waited.
+function tlAttnRow(t){
   const p=t.properties||{};
   attNormalizeLead(t);
   const agent=HS_OWNERS[String(p.hubspot_owner_id||'')]||'—';
   const last=attLast(t);
+  const ageH=last?Math.max(0,Math.round((Date.now()-hsTs(last.timestamp))/3600000)):0;
   const msg=last&&attIsSms(last)?String(last.body==null?'':last.body).trim():'';
   const stage=String(p.hs_pipeline_stage||'');
-  const dnc=hsIsDnc(stage);
   const other=attRepliedToOtherTeam(t);
   const w2=attIs2ndWeek(t);
-  return `<tr onclick="attOpenPanel('${t.id}')" style="cursor:pointer;background:#fff;" onmouseenter="this.style.background='#fafafa'" onmouseleave="this.style.background='#fff'">
-    <td style="padding:8px 10px;border-bottom:1px solid #f3f4f6;font-size:.74rem;font-weight:700;color:#111;white-space:nowrap;">${agent.split(' ')[0]}</td>
-    <td style="padding:8px 10px;border-bottom:1px solid #f3f4f6;font-size:.74rem;color:#111;">
-      ${(t.contactName||p.subject||'Lead').replace(/</g,'&lt;')}
-      ${w2?'':'<span style="font-size:.54rem;font-weight:700;background:#eef2ff;color:#4338ca;padding:1px 6px;border-radius:99px;margin-left:5px;">inbound</span>'}
-      ${other?`<span title="Customer was answering ${hsAgentName({ownerId:other})||'another team'}; ticket is now with ${agent}" style="font-size:.54rem;font-weight:700;background:#f3e8ff;color:#7e22ce;padding:1px 6px;border-radius:99px;margin-left:5px;">↗ other line</span>`:''}
-      ${dnc?'<span style="font-size:.54rem;font-weight:700;background:#fee2e2;color:#b91c1c;padding:1px 6px;border-radius:99px;margin-left:5px;">⛔ DNC</span>':''}
-      ${msg?`<div style="font-size:.68rem;color:#6b7280;margin-top:2px;">“${msg.length>72?msg.slice(0,72)+'…':msg}”</div>`:''}
+  // Waiting time is the number a TL acts on, so it carries the only strong colour.
+  const urg=ageH>=8?'#b91c1c':ageH>=4?'#b45309':'#57534e';
+  const TD='padding:9px 12px;border-bottom:1px solid #f1f1f0;vertical-align:top;';
+  const tag=(txt,bg,fg,title)=>`<span${title?` title="${title}"`:''} style="display:inline-block;font-size:.58rem;font-weight:600;letter-spacing:.02em;background:${bg};color:${fg};padding:1px 7px;border-radius:4px;margin-left:6px;white-space:nowrap;">${txt}</span>`;
+  return `<tr onclick="attOpenPanel('${t.id}')" style="cursor:pointer;" onmouseenter="this.style.background='#fafaf9'" onmouseleave="this.style.background='transparent'">
+    <td style="${TD}white-space:nowrap;font-size:.76rem;color:#44403c;">${agent}</td>
+    <td style="${TD}">
+      <span style="font-size:.78rem;font-weight:600;color:#1c1917;">${(t.contactName||p.subject||'Lead').replace(/</g,'&lt;')}</span>
+      ${w2?'':tag('Inbound ticket','#eef2ff','#4338ca','Not a 2nd Week ticket — came in as an inbound enquiry')}
+      ${other?tag('Other line','#f5f3ff','#6d28d9','Customer was answering '+(hsAgentName({ownerId:other})||'another team')+'; the ticket now sits with '+agent):''}
+      ${hsIsDnc(stage)?tag('DNC','#fef2f2','#b91c1c','Ticket is set to Do not call again'):''}
+      ${msg?`<div style="font-size:.7rem;color:#78716c;margin-top:3px;line-height:1.45;">${msg.length>96?msg.slice(0,96)+'…':msg}</div>`:''}
     </td>
-    <td style="padding:8px 10px;border-bottom:1px solid #f3f4f6;font-size:.68rem;color:#6b7280;white-space:nowrap;">${last?hsRelTime(last.timestamp):''}</td>
+    <td style="${TD}white-space:nowrap;font-size:.72rem;color:#78716c;">${hsStageLabel(stage)}</td>
+    <td style="${TD}white-space:nowrap;text-align:right;font-size:.74rem;font-weight:600;font-variant-numeric:tabular-nums;color:${urg};"${last?` title="Last contact ${hsRelTime(last.timestamp)}"`:''}>${ageH<1?'<1h':ageH+'h'}</td>
   </tr>`;
 }
+
 function renderTeamAttention(){
   const el=document.getElementById('tl-attention-body');
   if(!el)return;
   if(_tlAttnLoading&&!_tlAttn){
-    el.innerHTML='<div style="color:#9ca3af;font-size:.8rem;padding:24px;text-align:center;">Checking which leads are waiting…</div>';return;
+    el.innerHTML='<div style="color:#a8a29e;font-size:.8rem;padding:28px;text-align:center;">Checking which leads are waiting…</div>';return;
   }
   const rows=_tlAttn||[];
   const waiting=rows.filter(t=>attAwaitingReply(t,24));
-  const missed =rows.filter(t=>attMissedCallNoReturn(t,48)&&!waiting.includes(t));
+  const missed =rows.filter(t=>attMissedCallNoReturn(t,48)&&waiting.indexOf(t)<0);
+  const otherLine=waiting.filter(attRepliedToOtherTeam);
   const byAgent={};
   const bump=(t,k)=>{const n=HS_OWNERS[String((t.properties||{}).hubspot_owner_id||'')]||'—';
-    (byAgent[n]=byAgent[n]||{w:0,m:0,o:0})[k]++;
-    if(k==='w'&&attRepliedToOtherTeam(t))byAgent[n].o++;};
+    const v=byAgent[n]=byAgent[n]||{w:0,m:0,o:0};
+    v[k]++; if(k==='w'&&attRepliedToOtherTeam(t))v.o++;};
   waiting.forEach(t=>bump(t,'w')); missed.forEach(t=>bump(t,'m'));
   const agents=Object.entries(byAgent).sort((a,b)=>(b[1].w+b[1].m)-(a[1].w+a[1].m));
   const {team}=tlAttnScope();
-  const CARD='background:#fff;border:1px solid #f0f0f0;border-radius:12px;padding:16px 18px;box-shadow:0 1px 4px rgba(0,0,0,.05);';
-  const table=(title,hint,list)=>`
-    <div style="${CARD}margin-bottom:14px;">
-      <div style="display:flex;align-items:baseline;gap:9px;margin-bottom:2px;">
-        <span style="font-size:.82rem;font-weight:700;color:#374151;">${title}</span>
-        <span style="font-size:.62rem;font-weight:700;color:#fff;background:${list.length?'#ef4444':'#d1d5db'};border-radius:99px;padding:1px 8px;">${list.length}</span>
-      </div>
-      <div style="font-size:.68rem;color:#9ca3af;margin-bottom:10px;">${hint}</div>
-      ${list.length?`<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;">
-        <thead><tr>
-          <th style="text-align:left;padding:6px 10px;font-size:.6rem;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;border-bottom:1px solid #e5e7eb;">Agent</th>
-          <th style="text-align:left;padding:6px 10px;font-size:.6rem;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;border-bottom:1px solid #e5e7eb;">Lead</th>
-          <th style="text-align:left;padding:6px 10px;font-size:.6rem;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;border-bottom:1px solid #e5e7eb;">When</th>
-        </tr></thead>
-        <tbody>${list.slice(0,60).map(t=>tlAttnRow(t)).join('')}</tbody></table>
-        ${list.length>60?`<div style="font-size:.66rem;color:#9ca3af;padding:8px 10px;">Showing the 60 most recent of ${list.length}.</div>`:''}</div>`
-      :'<div style="font-size:.74rem;color:#9ca3af;padding:8px 0;">Nothing waiting.</div>'}
+  const scope=team?team.replace('Team ','')+' — your agents':'All Phoenix teams';
+  const asOf=new Date(Date.now()-5*3600000).toISOString().slice(11,16);
+  const CARD='background:#fff;border:1px solid #e7e5e4;border-radius:10px;';
+  const LBL='font-size:.62rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#a8a29e;';
+  const TH='text-align:left;padding:8px 12px;font-size:.6rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#a8a29e;border-bottom:1px solid #e7e5e4;white-space:nowrap;';
+  const NTD='padding:8px 12px;border-bottom:1px solid #f1f1f0;text-align:right;font-size:.76rem;font-variant-numeric:tabular-nums;';
+
+  const kpi=(n,label,note,color)=>`
+    <div style="padding:16px 20px;flex:1 1 150px;min-width:0;">
+      <div style="${LBL}margin-bottom:7px;">${label}</div>
+      <div style="font-size:1.6rem;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;color:${color};">${n}</div>
+      <div style="font-size:.66rem;color:#a8a29e;margin-top:5px;">${note}</div>
     </div>`;
+
+  const table=(title,sub,list)=>`
+    <div style="${CARD}margin-bottom:14px;overflow:hidden;">
+      <div style="padding:14px 18px;border-bottom:1px solid #e7e5e4;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;">
+        <span style="font-size:.86rem;font-weight:700;color:#1c1917;">${title}</span>
+        <span style="font-size:.68rem;font-weight:600;color:#57534e;background:#f5f5f4;border-radius:4px;padding:1px 8px;font-variant-numeric:tabular-nums;">${list.length}</span>
+        <span style="font-size:.68rem;color:#a8a29e;margin-left:auto;">${sub}</span>
+      </div>
+      ${list.length?`<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;min-width:560px;">
+        <thead><tr>
+          <th style="${TH}">Agent</th><th style="${TH}">Lead &amp; last message</th>
+          <th style="${TH}">Ticket status</th><th style="${TH}text-align:right;">Waiting</th>
+        </tr></thead>
+        <tbody>${list.slice(0,60).map(t=>tlAttnRow(t)).join('')}</tbody>
+      </table>${list.length>60?`<div style="font-size:.66rem;color:#a8a29e;padding:9px 12px;border-top:1px solid #f1f1f0;">Showing 60 of ${list.length}.</div>`:''}</div>`
+      :'<div style="font-size:.76rem;color:#a8a29e;padding:20px;">Nothing outstanding.</div>'}
+    </div>`;
+
   el.innerHTML=`
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px;">
-      <div style="${CARD}"><div style="font-size:1.7rem;font-weight:800;color:#ef4444;line-height:1;">${waiting.length}</div>
-        <div style="font-size:.7rem;color:#9ca3af;margin-top:5px;font-weight:600;">Awaiting a reply</div></div>
-      <div style="${CARD}"><div style="font-size:1.7rem;font-weight:800;color:#f97316;line-height:1;">${missed.length}</div>
-        <div style="font-size:.7rem;color:#9ca3af;margin-top:5px;font-weight:600;">Missed call, no callback</div></div>
-      <div style="${CARD}"><div style="font-size:1.7rem;font-weight:800;color:#7e22ce;line-height:1;">${waiting.filter(attRepliedToOtherTeam).length}</div>
-        <div style="font-size:.7rem;color:#9ca3af;margin-top:5px;font-weight:600;">Replied to another line</div></div>
-      <div style="${CARD}"><div style="font-size:1.7rem;font-weight:800;color:#374151;line-height:1;">${agents.length}</div>
-        <div style="font-size:.7rem;color:#9ca3af;margin-top:5px;font-weight:600;">${team?'Agents on '+team.replace('Team ',''):'Agents across all teams'}</div></div>
+    <div style="${CARD}margin-bottom:14px;">
+      <div style="padding:16px 20px 0;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;">
+        <span style="font-size:.95rem;font-weight:700;color:#1c1917;">Leads awaiting a response</span>
+        <span style="font-size:.7rem;color:#78716c;">${scope}</span>
+        <span style="font-size:.66rem;color:#a8a29e;margin-left:auto;">As of ${asOf} CDT
+          <button type="button" onclick="loadTeamAttention(true)" style="margin-left:8px;padding:2px 10px;font-size:.64rem;font-weight:600;color:#57534e;background:#fff;border:1px solid #e7e5e4;border-radius:5px;cursor:pointer;font-family:inherit;">Refresh</button></span>
+      </div>
+      <div style="padding:0 20px 4px;font-size:.7rem;color:#a8a29e;">Reported separately from cadence — nothing here affects compliance.</div>
+      <div style="display:flex;flex-wrap:wrap;border-top:1px solid #f1f1f0;margin-top:12px;">
+        ${kpi(waiting.length,'Awaiting reply','Customer messaged, no answer yet · 24h','#b91c1c')}
+        <div style="width:1px;background:#f1f1f0;"></div>
+        ${kpi(missed.length,'No callback','Missed inbound call · 48h','#b45309')}
+        <div style="width:1px;background:#f1f1f0;"></div>
+        ${kpi(otherLine.length,'Replied to another line','Assigned to your agent','#6d28d9')}
+        <div style="width:1px;background:#f1f1f0;"></div>
+        ${kpi(agents.length,'Agents affected',team?'On '+team.replace('Team ',''):'Across all teams','#1c1917')}
+      </div>
     </div>
-    ${agents.length?`<div style="${CARD}margin-bottom:14px;">
-      <div style="font-size:.82rem;font-weight:700;color:#374151;margin-bottom:10px;">By agent — most waiting first</div>
-      ${agents.map(([n,v])=>`<div style="display:flex;align-items:center;gap:9px;padding:5px 0;border-bottom:1px solid #f9fafb;">
-        <span style="width:150px;font-size:.74rem;font-weight:600;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${n}</span>
-        <span style="font-size:.64rem;font-weight:700;color:#b91c1c;background:#fee2e2;border-radius:99px;padding:1px 8px;">${v.w} awaiting</span>
-        ${v.m?`<span style="font-size:.64rem;font-weight:700;color:#c2410c;background:#ffedd5;border-radius:99px;padding:1px 8px;">${v.m} no callback</span>`:''}
-        ${v.o?`<span style="font-size:.64rem;font-weight:700;color:#7e22ce;background:#f3e8ff;border-radius:99px;padding:1px 8px;">${v.o} other line</span>`:''}
-      </div>`).join('')}
+    ${agents.length?`<div style="${CARD}margin-bottom:14px;overflow:hidden;">
+      <div style="padding:14px 18px;border-bottom:1px solid #e7e5e4;font-size:.86rem;font-weight:700;color:#1c1917;">Workload by agent</div>
+      <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;min-width:460px;">
+        <thead><tr><th style="${TH}">Agent</th>
+          <th style="${TH}text-align:right;">Awaiting reply</th>
+          <th style="${TH}text-align:right;">No callback</th>
+          <th style="${TH}text-align:right;">Other line</th>
+          <th style="${TH}text-align:right;">Total</th></tr></thead>
+        <tbody>${agents.map(([n,v])=>`<tr>
+          <td style="padding:8px 12px;border-bottom:1px solid #f1f1f0;font-size:.76rem;font-weight:600;color:#1c1917;">${n}</td>
+          <td style="${NTD}color:${v.w?'#b91c1c':'#d6d3d1'};">${v.w||'—'}</td>
+          <td style="${NTD}color:${v.m?'#b45309':'#d6d3d1'};">${v.m||'—'}</td>
+          <td style="${NTD}color:${v.o?'#6d28d9':'#d6d3d1'};">${v.o||'—'}</td>
+          <td style="${NTD}font-weight:700;color:#1c1917;">${v.w+v.m}</td>
+        </tr>`).join('')}</tbody></table></div>
     </div>`:''}
-    ${table('Awaiting a reply','Customer spoke last in the past 24h and no one has answered. Click a row for the full history.',waiting)}
-    ${table('Missed call — no callback','They rang, nobody rang back (last 48h).',missed)}`;
+    ${table('Awaiting a reply','Customer spoke last · past 24 hours',waiting)}
+    ${table('Missed call, no callback','Inbound call unanswered · past 48 hours',missed)}
+    <div style="font-size:.66rem;color:#a8a29e;padding:2px 2px 10px;">Select any row to open the full call and SMS history.</div>`;
 }
 
-/* ── Needs-Action engine (shared by agent, TL and OM boards) ────────────────
-   Two things put the ball in our court, and neither is a cadence dial:
-     - the customer spoke last and nobody has answered since;
-     - the customer called, we did not pick up, and no one has called back.
-   Tickets here are fetched across ALL subjects (the cadence board is filtered to
-   2nd Week, which hides the Inbound SMS/Call tickets agents also carry) and are
-   kept out of _hsLeads so nothing here can move a compliance number.          */
 function attIsSms(c){return c&&c.type!=='call';}
 function attLast(t){return ((t&&t.calls)||[]).slice().sort((a,b)=>hsTs(b.timestamp)-hsTs(a.timestamp))[0]||null;}
 function attInbound(c){return !!c&&(c.direction||'').toUpperCase()==='INBOUND';}
