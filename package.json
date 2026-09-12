@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "name": "phoenix-coaching-log",
+  "description": "Static app plus Vercel serverless functions. No build step — index.html is served as-is and api/*.js become functions.",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.125.0"
+  }
+}
