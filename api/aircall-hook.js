@@ -60,18 +60,29 @@ export default async function handler(req, res) {
     };
 
     // ── phone → contact ──────────────────────────────────────────────────────
-    const cs = await hs('https://api.hubapi.com/crm/v3/objects/contacts/search', {
-      method: 'POST', headers: h,
-      body: JSON.stringify({
-        filterGroups: [
-          { filters: [{ propertyName: 'phone', operator: 'CONTAINS_TOKEN', value: last10 }] },
-          { filters: [{ propertyName: 'mobilephone', operator: 'CONTAINS_TOKEN', value: last10 }] }
-        ],
-        properties: ['firstname', 'lastname', 'phone'], limit: 5
-      })
-    });
-    const cd = await cs.json();
-    const contact = (cd.results || [])[0];
+    // HubSpot stores numbers as +1XXXXXXXXXX, and CONTAINS_TOKEN on bare digits
+    // does not match that, so try the shapes in order of how exact they are and
+    // stop at the first hit. The wildcard form is what actually catches the
+    // formatting HubSpot uses; the rest are cheap insurance.
+    const e164 = last10.length === 10 ? '+1' + last10 : '+' + phone;
+    const tries = [
+      { propertyName: 'phone',        operator: 'EQ',             value: e164 },
+      { propertyName: 'mobilephone',  operator: 'EQ',             value: e164 },
+      { propertyName: 'phone',        operator: 'CONTAINS_TOKEN', value: '*' + last10 },
+      { propertyName: 'mobilephone',  operator: 'CONTAINS_TOKEN', value: '*' + last10 },
+      { propertyName: 'hs_searchable_calculated_phone_number', operator: 'CONTAINS_TOKEN', value: '*' + last10 }
+    ];
+    let contact = null, matchedBy = null;
+    for (const f of tries) {
+      const r = await hs('https://api.hubapi.com/crm/v3/objects/contacts/search', {
+        method: 'POST', headers: h,
+        body: JSON.stringify({ filterGroups: [{ filters: [f] }],
+          properties: ['firstname', 'lastname', 'phone'], limit: 3 })
+      });
+      const jd = await r.json().catch(() => ({}));
+      contact = (jd.results || [])[0];
+      if (contact) { matchedBy = f.propertyName + ' ' + f.operator; break; }
+    }
     if (!contact) return ok('no HubSpot contact on ' + last10);
 
     // ── contact → their open 2nd-week ticket ─────────────────────────────────
@@ -131,7 +142,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({ fields: F })
     });
     if (!w.ok) return ok('firestore write failed: ' + w.status);
-    return ok('card written', { type, ticketId: ticket.id, ownerId, docId });
+    return ok('card written', { type, ticketId: ticket.id, ownerId, docId, matchedBy });
   } catch (e) {
     return ok('error: ' + e.message);
   }
