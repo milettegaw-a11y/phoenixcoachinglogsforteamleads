@@ -15061,8 +15061,11 @@ async function maPoll(){
       if(!lead)continue;
       const mine=String(ev.actorId)===owner;
 
-      // The owner touching their own lead settles everything open on it.
-      if(mine){
+      // The owner touching their own lead settles everything open on it — but
+      // only when they SENT something. HubSpot stamps an inbound message with the
+      // thread owner's id, so a reply from the lead looks like the agent's own
+      // touch; treating that as a follow-up swallowed the card that matters most.
+      if(mine&&ev.direction==='OUTBOUND'){
         open.filter(a=>a.ticketId===ev.ticketId).forEach(a=>writes.push([a.id,{state:'done',closedReason:'you followed up'}]));
         continue;
       }
