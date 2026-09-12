@@ -78,13 +78,17 @@ export default async function handler(req, res) {
     const tickets = [];
     let after = null, page = 0;
     do {
+      // Only the live book. Without this it pages through every ticket the agent
+      // has ever owned - well over a thousand - and never reaches today's.
       const q = {
         filterGroups: [{ filters: [
           { propertyName: 'hs_pipeline', operator: 'EQ', value: PIPELINE },
           { propertyName: 'subject', operator: 'EQ', value: SUBJECT },
-          { propertyName: 'hubspot_owner_id', operator: 'EQ', value: ownerId }
+          { propertyName: 'hubspot_owner_id', operator: 'EQ', value: ownerId },
+          { propertyName: 'createdate', operator: 'GTE', value: String(Date.now() - 21 * 86400000) }
         ]}],
         properties: ['createdate', 'hs_pipeline_stage', 'hubspot_owner_id', 'closed_date'],
+        sorts: [{ propertyName: 'createdate', direction: 'DESCENDING' }],
         limit: 100
       };
       if (after) q.after = after;
