@@ -14973,9 +14973,11 @@ function maMyOwnerId(){
   for(const id in HS_OWNERS) if(HS_OWNERS[id]===me) return String(id);
   return '';
 }
+// Keyed on the HubSpot owner id, not the login email: the Aircall webhook knows
+// who owns a ticket but has no way to know what that person signs in as.
 function maCol(){
-  const em=(CU&&CU.email||'').toLowerCase();
-  return (FSB&&em)?FSB.collection('my_alerts').doc(em).collection('items'):null;
+  const oid=maMyOwnerId();
+  return (FSB&&oid)?FSB.collection('my_alerts').doc(oid).collection('items'):null;
 }
 
 /* ── tones ─────────────────────────────────────────────────────────────────
