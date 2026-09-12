@@ -15151,8 +15151,11 @@ function maCard(a){
         ${a.day?'Day '+a.day+' · ':''}${e(HS_STAGE_LABELS[a.stage]||'—')}
         ${a.outsideCluster?'<span style="color:#b45309;font-weight:700;"> · not our cluster</span>':''}
       </div>
+      <div style="font-size:.72rem;font-weight:600;color:${c.dot};margin-top:7px;">${e(MA_DO[a.type]||'')}</div>
+      ${maBriefHtml(a)}
       <div style="display:flex;gap:7px;margin-top:9px;">
         <button onclick="maOpen('${a.ticketId}')" style="padding:5px 12px;border:1px solid #e4e4e7;border-radius:8px;background:#fff;font-size:.7rem;font-weight:600;color:#3f3f46;font-family:inherit;cursor:pointer;">Open lead</button>
+        <button onclick="maToggleBrief('${a.id}')" style="padding:5px 12px;border:1px solid #e4e4e7;border-radius:8px;background:#fff;font-size:.7rem;font-weight:600;color:#3f3f46;font-family:inherit;cursor:pointer;">${_maOpenBrief[a.id]?'Hide brief':'What to say'}</button>
         <button onclick="maDismiss('${a.id}')" style="padding:5px 12px;border:none;background:none;font-size:.7rem;font-weight:600;color:#a1a1aa;font-family:inherit;cursor:pointer;">Dismiss</button>
       </div>
     </div></div>`;
@@ -15207,6 +15210,67 @@ function maStart(){
   maSubscribe();
   maPoll();
   if(!_maTimer)_maTimer=setInterval(maPoll,MA_POLL);
+}
+
+
+/* ── The brief on a card ─────────────────────────────────────────────────────
+   Each card already says what happened. This says what to do about it — read
+   off the whole conversation including the part the agent never saw — so a team
+   lead does not have to write that out for them. Briefs are cached per ticket,
+   because the history behind one rarely changes between two people reading it. */
+let _maBriefs={};
+let _maOpenBrief={};
+const MA_DO={
+  replied:'Reply now — they are waiting, and the first answer usually takes the booking.',
+  missed:'Call back now — they rang you, so this is the warmest this lead gets.',
+  worked:'Check the thread before you call — someone outside your team just contacted them.'
+};
+async function maToggleBrief(id){
+  _maOpenBrief[id]=!_maOpenBrief[id];
+  renderMyAlerts();
+  if(!_maOpenBrief[id])return;
+  const a=_maAlerts.find(x=>x.id===id);
+  if(!a||_maBriefs[a.ticketId])return;
+  _maBriefs[a.ticketId]={loading:true};
+  renderMyAlerts();
+  // A brief already written for this lead is worth reusing — nothing in the
+  // history it reads changes between two people opening the same card.
+  try{
+    if(FSB){
+      const doc=await FSB.collection('lead_briefs').doc(String(a.ticketId)).get();
+      if(doc.exists){
+        const d=doc.data();
+        if(d&&(Date.now()-(d.at||0))<12*3600000){_maBriefs[a.ticketId]=d;renderMyAlerts();return;}
+      }
+    }
+  }catch(err){}
+  try{
+    const r=await fetch('/api/lead-brief',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contactId:a.contactId,name:a.name,
+        stage:HS_STAGE_LABELS[a.stage]||'',day:a.day})});
+    const d=await r.json();
+    if(!r.ok||d.error){_maBriefs[a.ticketId]={error:d.error||('Brief unavailable ('+r.status+')')};}
+    else{
+      _maBriefs[a.ticketId]=Object.assign({at:Date.now()},d);
+      if(FSB)try{await FSB.collection('lead_briefs').doc(String(a.ticketId))
+        .set(_maBriefs[a.ticketId],{merge:true});}catch(err){}
+    }
+  }catch(err){_maBriefs[a.ticketId]={error:err.message};}
+  renderMyAlerts();
+}
+function maBriefHtml(a){
+  if(!_maOpenBrief[a.id])return '';
+  const b=_maBriefs[a.ticketId];
+  const box=inner=>`<div style="margin-top:10px;padding:11px 13px;background:#fff;border:1px solid #e4e4e7;border-radius:9px;font-size:.73rem;color:#3f3f46;line-height:1.55;">${inner}</div>`;
+  if(!b)return '';
+  if(b.loading)return box('<span style="color:#a1a1aa;">Reading the whole conversation…</span>');
+  if(b.error)return box('<span style="color:#b45309;">'+e(b.error)+'</span>');
+  if(b.empty)return box('<span style="color:#a1a1aa;">'+e(b.summary||'No history on this lead yet.')+'</span>');
+  return box(
+    `<div style="${CVR_LBL}margin-bottom:4px;">What happened</div>${e(b.summary||'—')}
+     <div style="${CVR_LBL}margin:10px 0 4px;">Best approach</div>${e(b.approach||'—')}
+     ${b.avoid?`<div style="${CVR_LBL}margin:10px 0 4px;color:#b45309;">Avoid</div><span style="color:#b45309;">${e(b.avoid)}</span>`:''}
+     ${b.touches?`<div style="font-size:.64rem;color:#a1a1aa;margin-top:9px;">Read from ${b.touches} calls and messages, including other teams'.</div>`:''}`);
 }
 
 </script>
