@@ -146,7 +146,8 @@ export default async function handler(req, res) {
     const events = [];
     const live = leads.filter(l => l.contactId && !l.closed).map(l => l.contactId);
     const since = { propertyName: 'hs_timestamp', operator: 'GTE', value: String(sinceMs) };
-    for (const c of chunk(live, 300)) {
+    // HubSpot caps an IN list at 100 values, whatever older notes say about 300.
+    for (const c of chunk(live, 100)) {
       const inContacts = { propertyName: 'associations.contact', operator: 'IN', values: c };
       const [calls, sms] = await Promise.all([
         search('calls', { filterGroups: [{ filters: [since, inContacts] }], limit: 100,
