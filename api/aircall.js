@@ -27,6 +27,22 @@ export default async function handler(req, res) {
   const { action, contactPhone, from, to } = req.query;
 
   try {
+    // ── ACTION: webhooks (read-only) ────────────────────────────────────────
+    // Tells us whether these credentials can see - and therefore create - webhook
+    // subscriptions. A read-only Aircall key answers 403 here.
+    if (action === 'webhooks') {
+      const r = await fetch(`${BASE}/webhooks`, { headers });
+      const d = await r.json().catch(() => ({}));
+      return res.status(200).json({
+        status: r.status, ok: r.ok,
+        canManage: r.ok,
+        webhooks: (d.webhooks || []).map(w => ({
+          id: w.webhook_id || w.id, url: w.url, active: w.active, events: w.events
+        })),
+        error: r.ok ? null : (d.error || d.message || ('HTTP ' + r.status))
+      });
+    }
+
     // ── ACTION: users list (for Aircall→HubSpot owner mapping) ──────────────
     if (action === 'users') {
       let page = 1, allUsers = [];
