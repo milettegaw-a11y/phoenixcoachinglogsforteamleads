@@ -1848,10 +1848,14 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
       <div id="av-myactions" class="av-section" style="display:none">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
           <div>
-            <div style="font-size:1rem;font-weight:700;color:var(--g800);">🗓️ My Actions</div>
-            <div style="font-size:.74rem;color:var(--g500);margin-top:2px;">Your scheduled follow-ups — due today, upcoming, and completed</div>
+            <div style="font-size:1rem;font-weight:700;color:var(--g800);">My Actions</div>
+            <div style="font-size:.74rem;color:var(--g500);margin-top:2px;">Live activity on your leads, then your scheduled follow-ups</div>
           </div>
           <button onclick="openMyActionModal()" style="padding:7px 16px;background:#ff7a59;color:#fff;border:none;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer;">+ Add Follow-Up</button>
+        </div>
+        <div id="av-myalerts" style="margin-bottom:26px;"></div>
+        <div style="display:flex;align-items:center;gap:9px;margin-bottom:10px;">
+          <span style="font-size:.62rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#a1a1aa;">Scheduled follow-ups</span>
         </div>
         <div id="av-myactions-body"><div style="color:var(--g400);font-size:.8rem;padding:16px 0;text-align:center;">Loading your actions…</div></div>
       </div><!-- /av-myactions -->
@@ -12410,11 +12414,12 @@ function switchAgentTab(tab){
   if(secId==='__kb__'){showView('v-kb');renderAll();}else if(secId==='__settings__'){showView('v-settings');renderSettingsPage();}else if(secId==='__cvr__'){showView('v-cvr');}else if(secId==='__chat__'){showView('v-chat');initChatV2();clearChatBadge();}else{showView('v-agent');if(secId){const sec=document.getElementById(secId);if(sec)sec.style.display='';}}
   if(tab==='leads'){if(!_leadUnsub)subscribeLeads();else renderLeads();}
   if(tab==='leadmgmt')fetchHSLeads();
-  if(tab==='myactions'){loadMyActions();updateMyActionsBadge();}
+  if(tab==='myactions'){loadMyActions();updateMyActionsBadge();maStart();}
   const titles={coaching:'My Coaching',nte:'My NTE',ft:'My Follow Through',perf:'My Performance',mycad:'My Cadence',cvr:'2nd Week Lead CVR',clhist:'My Call History',calc:'Phoenix Calculator',attendance:'My Attendance',leads:'Lead Follow-Up',leadmgmt:'Lead Compliance',myactions:'My Actions',library:'Call Library 🎵',kb:'Knowledge Base',settings:'Settings',chat:'Team Chat'};
   const el=document.getElementById('tb-title'); if(el) el.textContent=titles[tab]||'';
   if(tab==='perf') renderAgentPerf();
   if(tab==='mycad') renderAgentCadence();
+  maStart();                     // the queue keeps watching from any tab
   if(tab==='cvr') renderCVRDash(); else cvrStopPoll();
   if(tab==='calc') avCalcInit();
   if(tab==='attendance') renderAttendance();
@@ -14931,6 +14936,272 @@ function cvrRenderTeamNudge(){
       <button onclick="cvrSendTeamNudges()" ${(!picked||n.sending)?'disabled':''} style="padding:8px 18px;border:none;border-radius:9px;background:${(!picked||n.sending)?'#d4d4d8':'#4a154b'};color:#fff;font-size:.78rem;font-weight:700;font-family:inherit;cursor:${(!picked||n.sending)?'default':'pointer'};">${n.sending?'Sending…':'Send to '+picked+' team lead'+(picked===1?'':'s')}</button>
     </div>
   </div>`;
+}
+
+
+/* ── MY ACTIONS — live alerts ────────────────────────────────────────────────
+   Cards for anything on the agent's own 2nd-week leads that needs them, no
+   matter whose line it came in on. A lead replying to Apex never carries this
+   agent's owner id, so activity is watched by CONTACT, not by owner — that is
+   the whole point of this queue.
+
+   Alerts live in Firestore so they survive a refresh and a team lead can see
+   them; the browser listens rather than polls the database, so a card written
+   by the Aircall webhook appears the moment it lands.                        */
+const MA_URGENT=['replied','missed'];
+const MA_POLL=30000;                       // how often we ask HubSpot for new activity
+const MA_LOOKBACK=3*86400000;              // how far back a cold start looks
+let _maAlerts=[];
+let _maUnsub=null;
+let _maTimer=null;
+let _maSeen={};                            // alert id → already announced
+let _maSince=0;
+let _maBooted=false;
+let _maBusy=false;
+
+// Team leads blast SMS at whole lists; that is not a signal the owner needs.
+// Calls and anything inbound still are, whoever made them.
+function maTlOwnerIds(){
+  const names=new Set(Object.values(CL_EMAIL_NAME||{}).map(n=>String(n).toLowerCase()));
+  const out=new Set();
+  for(const id in HS_OWNERS) if(names.has(String(HS_OWNERS[id]).toLowerCase())) out.add(String(id));
+  return out;
+}
+function maIsPhoenix(ownerId){return HS_TEAM_OWNER_IDS.has(String(ownerId||''));}
+function maMyOwnerId(){
+  const me=(CU&&CU.agentName)||'';
+  for(const id in HS_OWNERS) if(HS_OWNERS[id]===me) return String(id);
+  return '';
+}
+function maCol(){
+  const em=(CU&&CU.email||'').toLowerCase();
+  return (FSB&&em)?FSB.collection('my_alerts').doc(em).collection('items'):null;
+}
+
+/* ── tones ─────────────────────────────────────────────────────────────────
+   Urgent gets its own rising pattern so a customer talking never sounds like a
+   cadence reminder. Both respect the sound the agent chose in Settings.        */
+function maPlay(urgent){
+  const prefs=JSON.parse(localStorage.getItem('px-notif-prefs')||'{}');
+  if((prefs.action||'none')==='none')return;
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    const osc=ctx.createOscillator(), gain=ctx.createGain();
+    osc.connect(gain);gain.connect(ctx.destination);
+    const notes=urgent?[784,1047,1319,1568]:[523,659];
+    let t=ctx.currentTime;
+    notes.forEach(f=>{
+      osc.frequency.setValueAtTime(f,t);
+      gain.gain.setValueAtTime(urgent?0.3:0.18,t);
+      gain.gain.exponentialRampToValueAtTime(0.001,t+(urgent?0.28:0.3));
+      t+=urgent?0.16:0.2;
+    });
+    osc.type='triangle';
+    osc.start(ctx.currentTime);osc.stop(t+0.15);
+  }catch(err){}
+}
+function maDesktop(a){
+  if(localStorage.getItem('px-desktop-notif')!=='1')return;
+  if(typeof Notification==='undefined'||Notification.permission!=='granted')return;
+  if(!document.hidden)return;
+  try{new Notification(MA_TITLE[a.type]||'Lead activity',
+    {body:(a.name||'Lead')+(a.body?' — '+a.body.slice(0,90):''),tag:a.id});}catch(err){}
+}
+
+/* ── live listener ─────────────────────────────────────────────────────────── */
+function maSubscribe(){
+  const col=maCol();
+  if(!col||_maUnsub)return;
+  _maUnsub=col.orderBy('ts','desc').limit(80).onSnapshot(snap=>{
+    const first=!_maBooted;
+    _maBooted=true;
+    _maAlerts=snap.docs.map(d=>Object.assign({id:d.id},d.data()));
+    // Announce only what is genuinely new — never the backlog on reconnect.
+    if(!first){
+      const fresh=_maAlerts.filter(a=>a.state==='open'&&!_maSeen[a.id]);
+      if(fresh.length){
+        maPlay(fresh.some(a=>MA_URGENT.indexOf(a.type)>=0));
+        fresh.forEach(maDesktop);
+      }
+    }
+    _maAlerts.forEach(a=>{_maSeen[a.id]=1;});
+    renderMyAlerts();
+    maBadge();
+  },err=>{});
+}
+function maUnsubscribe(){if(_maUnsub){_maUnsub();_maUnsub=null;}if(_maTimer){clearInterval(_maTimer);_maTimer=null;}}
+function maBadge(){
+  const n=_maAlerts.filter(a=>a.state==='open').length;
+  const el=document.getElementById('nav-badge-myactions');
+  if(el){el.style.display=n?'':'none';el.textContent=n||'';}
+}
+
+/* ── detection ─────────────────────────────────────────────────────────────── */
+async function maPoll(){
+  if(_maBusy||!FSB)return;
+  const owner=maMyOwnerId();
+  const col=maCol();
+  if(!owner||!col)return;
+  _maBusy=true;
+  try{
+    const since=_maSince||(Date.now()-MA_LOOKBACK);
+    const r=await fetch('/api/my-actions',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ownerId:owner,sinceMs:since})});
+    if(!r.ok){_maBusy=false;return;}
+    const d=await r.json();
+    if(d.error){_maBusy=false;return;}
+    _maSince=d.now-60000;                  // small overlap so nothing slips the gap
+    const leadById={};(d.leads||[]).forEach(l=>{leadById[l.id]=l;});
+    const tls=maTlOwnerIds();
+    const open=_maAlerts.filter(a=>a.state==='open');
+    const writes=[];
+
+    for(const ev of (d.events||[])){
+      const lead=leadById[ev.ticketId];
+      if(!lead)continue;
+      const mine=String(ev.actorId)===owner;
+
+      // The owner touching their own lead settles everything open on it.
+      if(mine){
+        open.filter(a=>a.ticketId===ev.ticketId).forEach(a=>writes.push([a.id,{state:'done',closedReason:'you followed up'}]));
+        continue;
+      }
+      // Any Phoenix agent handling it also settles it — the lead has been answered.
+      if(maIsPhoenix(ev.actorId)&&ev.direction==='OUTBOUND'){
+        open.filter(a=>a.ticketId===ev.ticketId&&a.type==='replied')
+            .forEach(a=>writes.push([a.id,{state:'done',closedReason:'handled by '+(HS_OWNERS[ev.actorId]||'a teammate')}]));
+      }
+      let type=null;
+      if(ev.direction==='INBOUND'&&ev.kind==='sms')type='replied';
+      else if(ev.direction==='INBOUND'&&ev.kind==='call'&&!ev.connected)type='missed';
+      else if(!mine&&ev.direction==='OUTBOUND'){
+        if(ev.kind==='sms'&&tls.has(String(ev.actorId)))type=null;   // TL blast — not a signal
+        else type='worked';
+      }else if(!mine&&ev.direction==='INBOUND'&&ev.kind==='call'&&ev.connected)type='worked';
+      if(!type)continue;
+
+      const day=lead.createdate?Math.max(1,Math.floor((Date.now()-Date.parse(lead.createdate))/86400000)+1):null;
+      writes.push([ev.ticketId+'_'+type+'_'+ev.id,{
+        type:type,state:'open',ticketId:ev.ticketId,contactId:ev.contactId,
+        name:lead.name||'(no name)',phone:lead.phone||'',stage:lead.stage||'',day:day,
+        ts:ev.ts?Date.parse(ev.ts):Date.now(),
+        actorId:ev.actorId||'',actorName:HS_OWNERS[ev.actorId]||'',
+        outsideCluster:!maIsPhoenix(ev.actorId),
+        kind:ev.kind,body:ev.body||'',createdAt:Date.now()
+      }]);
+    }
+
+    // ── closure: a card stands until the lead is actually resolved ──────────
+    for(const a of open){
+      const lead=leadById[a.ticketId];
+      if(!lead)continue;
+      const gone=lead.sold||lead.dnc||lead.lifecycle==='customer'||lead.lifecycle==='other';
+      if(!gone)continue;
+      const why=lead.sold?'closed as a sale':lead.dnc?'marked DNC':'lifecycle → '+lead.lifecycle;
+      // Sold or converted by someone outside the cluster is not a closure, it is
+      // a question — who worked this, and whose number does it belong in.
+      if(lead.sold||lead.lifecycle==='customer'){
+        writes.push([a.id,{state:'investigate',closedReason:why,investigateAt:Date.now()}]);
+      }else{
+        writes.push([a.id,{state:'done',closedReason:why}]);
+      }
+    }
+
+    if(writes.length){
+      const batch=FSB.batch();
+      writes.slice(0,400).forEach(([id,data])=>batch.set(col.doc(id),data,{merge:true}));
+      await batch.commit();
+    }
+  }catch(err){}
+  _maBusy=false;
+}
+
+/* ── rendering ─────────────────────────────────────────────────────────────── */
+const MA_TITLE={replied:'Lead replied',missed:'Missed call',worked:'Someone else worked your ticket'};
+const MA_TONE={replied:{dot:'#dc2626',bg:'#fef2f2',bd:'#fecaca'},
+               missed:{dot:'#ea580c',bg:'#fff7ed',bd:'#fed7aa'},
+               worked:{dot:'#7c3aed',bg:'#faf5ff',bd:'#e9d5ff'}};
+function maAgo(ts){
+  const m=Math.round((Date.now()-(ts||0))/60000);
+  if(m<1)return 'just now';
+  if(m<60)return m+' min ago';
+  const h=Math.round(m/60);
+  return h<24?h+' hr ago':Math.round(h/24)+'d ago';
+}
+function maCard(a){
+  const c=MA_TONE[a.type]||MA_TONE.worked;
+  const sub=a.type==='replied'?(a.body?'“'+e(a.body)+'”':'Replied by SMS')
+      :a.type==='missed'?'Called in, nobody answered, no callback since'
+      :(e(a.actorName||'Someone')+' '+(a.kind==='sms'?'sent an SMS':'called')+' on your lead');
+  return `<div style="border:1px solid ${c.bd};background:${c.bg};border-radius:12px;padding:12px 14px;display:flex;gap:11px;">
+    <span style="width:8px;height:8px;border-radius:50%;background:${c.dot};margin-top:6px;flex-shrink:0;"></span>
+    <div style="flex:1;min-width:0;">
+      <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;">
+        <span style="font-size:.84rem;font-weight:700;color:#18181b;">${e(a.name||'Lead')}</span>
+        <span style="font-size:.64rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:${c.dot};">${e(MA_TITLE[a.type]||'')}</span>
+        <span style="margin-left:auto;font-size:.66rem;color:#a1a1aa;white-space:nowrap;">${maAgo(a.ts)}</span>
+      </div>
+      <div style="font-size:.76rem;color:#3f3f46;margin-top:4px;line-height:1.45;">${sub}</div>
+      <div style="font-size:.66rem;color:#a1a1aa;margin-top:4px;">
+        ${a.day?'Day '+a.day+' · ':''}${e(HS_STAGE_LABELS[a.stage]||'—')}
+        ${a.outsideCluster?'<span style="color:#b45309;font-weight:700;"> · not our cluster</span>':''}
+      </div>
+      <div style="display:flex;gap:7px;margin-top:9px;">
+        <button onclick="maOpen('${a.ticketId}')" style="padding:5px 12px;border:1px solid #e4e4e7;border-radius:8px;background:#fff;font-size:.7rem;font-weight:600;color:#3f3f46;font-family:inherit;cursor:pointer;">Open lead</button>
+        <button onclick="maDismiss('${a.id}')" style="padding:5px 12px;border:none;background:none;font-size:.7rem;font-weight:600;color:#a1a1aa;font-family:inherit;cursor:pointer;">Dismiss</button>
+      </div>
+    </div></div>`;
+}
+function renderMyAlerts(){
+  const el=document.getElementById('av-myalerts');
+  if(!el)return;
+  const open=_maAlerts.filter(a=>a.state==='open').sort((a,b)=>(b.ts||0)-(a.ts||0));
+  const inv=_maAlerts.filter(a=>a.state==='investigate');
+  if(!open.length&&!inv.length){
+    el.innerHTML=`<div style="border:1px solid #e4e4e7;border-radius:12px;padding:26px;text-align:center;color:#a1a1aa;font-size:.78rem;background:#fff;">
+      Nothing waiting on you. New replies and missed calls land here the moment they happen.</div>`;
+    return;
+  }
+  el.innerHTML=`
+    ${open.length?`<div style="display:flex;align-items:center;gap:9px;margin-bottom:10px;">
+      <span style="font-size:.62rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#a1a1aa;">Needs you now</span>
+      <span style="font-size:.62rem;font-weight:700;color:#dc2626;background:#fef2f2;border-radius:99px;padding:1px 8px;">${open.length}</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:22px;">${open.map(maCard).join('')}</div>`:''}
+    ${inv.length?`<div style="display:flex;align-items:center;gap:9px;margin-bottom:10px;">
+      <span style="font-size:.62rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#a1a1aa;">Under investigation</span>
+      <span style="font-size:.62rem;font-weight:700;color:#b45309;background:#fffbeb;border-radius:99px;padding:1px 8px;">${inv.length}</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:22px;">
+      ${inv.map(a=>`<div style="border:1px solid #fde68a;background:#fffbeb;border-radius:12px;padding:12px 14px;">
+        <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;">
+          <span style="font-size:.84rem;font-weight:700;color:#18181b;">${e(a.name||'Lead')}</span>
+          <span style="font-size:.64rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#b45309;">${e(a.closedReason||'closed elsewhere')}</span>
+          <span style="margin-left:auto;font-size:.66rem;color:#a1a1aa;">${maAgo(a.investigateAt||a.ts)}</span></div>
+        <div style="font-size:.72rem;color:#3f3f46;margin-top:5px;line-height:1.45;">
+          Your ticket left the book without you closing it. Your team lead has been shown this.</div>
+        <div style="display:flex;gap:7px;margin-top:9px;">
+          <button onclick="maOpen('${a.ticketId}')" style="padding:5px 12px;border:1px solid #e4e4e7;border-radius:8px;background:#fff;font-size:.7rem;font-weight:600;color:#3f3f46;font-family:inherit;cursor:pointer;">Open in HubSpot</button>
+          <button onclick="maDismiss('${a.id}')" style="padding:5px 12px;border:none;background:none;font-size:.7rem;font-weight:600;color:#a1a1aa;font-family:inherit;cursor:pointer;">Dismiss</button>
+        </div></div>`).join('')}
+    </div>`:''}`;
+}
+function maOpen(ticketId){
+  const l=(typeof _hsLeads!=='undefined'?_hsLeads:[]).find(x=>String(x.id)===String(ticketId));
+  if(l&&typeof attOpenPanel==='function'){attOpenPanel(l);return;}
+  window.open('https://app.hubspot.com/contacts/'+HS_PORTAL_ID+'/ticket/'+ticketId,'_blank','noopener');
+}
+async function maDismiss(id){
+  const col=maCol();
+  if(!col)return;
+  try{await col.doc(id).set({state:'done',closedReason:'dismissed'},{merge:true});}catch(err){}
+}
+// Called when the agent opens My Actions.
+function maStart(){
+  if(!(CU&&CU.isAgentView))return;
+  maSubscribe();
+  maPoll();
+  if(!_maTimer)_maTimer=setInterval(maPoll,MA_POLL);
 }
 
 </script>
