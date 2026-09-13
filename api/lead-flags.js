@@ -66,15 +66,28 @@ export default async function handler(req, res) {
         { propertyName: 'phone', operator: 'CONTAINS_TOKEN', value: '*' + last10 },
         { propertyName: 'mobilephone', operator: 'CONTAINS_TOKEN', value: '*' + last10 }
       ];
+      // HubSpot enforces a per-second limit and this endpoint is meant to be
+      // consulted before every outbound message, so 429s are normal rather than
+      // exceptional. Back off and try again instead of reporting a miss.
+      const searchContacts = async filter => {
+        for (let attempt = 0; attempt < 4; attempt++) {
+          const r = await fetch('https://api.hubapi.com/crm/v3/objects/contacts/search', {
+            method: 'POST',
+            headers: { Authorization: 'Bearer ' + HS, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filterGroups: [{ filters: [filter] }], properties: ['firstname'], limit: 3 })
+          });
+          const d = await r.json().catch(() => ({}));
+          if (r.ok) return { ok: true, results: d.results || [] };
+          if (r.status !== 429) return { ok: false, error: d.message || ('HubSpot ' + r.status) };
+          await new Promise(z => setTimeout(z, 350 * (attempt + 1)));
+        }
+        return { ok: false, error: 'HubSpot rate limit' };
+      };
       for (const f of tries) {
-        const r = await fetch('https://api.hubapi.com/crm/v3/objects/contacts/search', {
-          method: 'POST',
-          headers: { Authorization: 'Bearer ' + HS, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ filterGroups: [{ filters: [f] }], properties: ['firstname'], limit: 3 })
-        });
-        const d = await r.json().catch(() => ({}));
-        if (!r.ok) { lookupError = d.message || ('HubSpot ' + r.status); continue; }
-        ids = (d.results || []).map(c => String(c.id));
+        const out2 = await searchContacts(f);
+        if (!out2.ok) { lookupError = out2.error; continue; }
+        lookupError = null;
+        ids = out2.results.map(c => String(c.id));
         if (ids.length) break;
       }
       if (!ids.length) return res.status(lookupError ? 503 : 200).json(lookupError
