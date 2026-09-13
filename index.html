@@ -5394,7 +5394,10 @@ async function fetchHSLeads(){
     // the buckets are disjoint on createdate, so they can run concurrently with no
     // duplicates and no gaps. One sequential cursor walk was ~53 round trips / ~120s;
     // 5 buckets in flight measures ~44s. 9 at once trips HubSpot's rate limit.
-    const HS_DAY_MS=86400000, HS_WINDOW_DAYS=9, HS_CONCURRENCY=5, HS_PAGE=100;
+    // Concurrency was tuned when this app was HubSpot's only caller. Thirty
+    // browsers each running five buckets is what pushes the whole portal into
+    // 429s, so each one now asks for less at a time.
+    const HS_DAY_MS=86400000, HS_WINDOW_DAYS=9, HS_CONCURRENCY=3, HS_PAGE=100;
     const _hsNow=Date.now();
     const _hsFetchPage=async(lo,hi,after)=>{
       const filters=[
@@ -5413,15 +5416,19 @@ async function fetchHSLeads(){
         sorts:[{propertyName:'createdate',direction:'DESCENDING'}]
       };
       if(after)body.after=after;
-      // Retry on 429 — running buckets in parallel can briefly trip the rate limit.
-      for(let attempt=0;attempt<4;attempt++){
+      // Retry on 429. Backoff is exponential with jitter so thirty browsers that
+      // all got limited at the same moment do not all come back at the same moment.
+      for(let attempt=0;attempt<6;attempt++){
         const _hsAbort=new AbortController();
         const _hsTimeout=setTimeout(()=>_hsAbort.abort(),30000);
         let resp;
         try{resp=await fetch('/api/hs-leads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:_hsAbort.signal});}
         finally{clearTimeout(_hsTimeout);}
         if(!resp)throw new Error('Request aborted (timeout).');
-        if(resp.status===429){await new Promise(r=>setTimeout(r,1000*(attempt+1)));continue;}
+        if(resp.status===429){
+          const wait=Math.min(12000,800*Math.pow(2,attempt))+Math.floor(Math.random()*700);
+          await new Promise(r=>setTimeout(r,wait));continue;
+        }
         if(!resp.ok)throw new Error('HubSpot API error '+resp.status);
         return resp.json();
       }
@@ -5494,7 +5501,26 @@ async function fetchHSLeads(){
     }
     renderHSLeads();
   }catch(e){
-    const msg=`<div style="color:#ef4444;font-size:.8rem;padding:8px 0;">⚠️ Error: ${e.message}</div>`;
+    // A rate limit is congestion, not a failure of the agent's data. Fall back to
+    // the last good copy so the list and the compliance figures still render,
+    // and say plainly that it is not live.
+    const cached=(typeof _loadCadCache==='function')?_loadCadCache():null;
+    if(cached&&cached.leads&&cached.leads.length){
+      _hsLeads=cached.leads;_hsLeadsLoaded=true;
+      try{renderHSLeads();}catch(err2){}
+      const age=cached.ts?Math.round((Date.now()-cached.ts)/60000):null;
+      const note=`<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:9px;padding:9px 12px;margin-bottom:10px;font-size:.73rem;color:#b45309;">
+        HubSpot is busy right now, so this is your last loaded copy${age!==null?' from '+age+' min ago':''}.
+        <a href="#" onclick="fetchHSLeads();return false;" style="color:#b45309;font-weight:700;">Try again</a></div>`;
+      [avEl,tlEl].forEach(el=>{if(el&&!el.querySelector('[data-stale]'))el.insertAdjacentHTML('afterbegin',note.replace('<div ','<div data-stale="1" '));});
+      return;
+    }
+    const busy=/rate limit|429/i.test(e.message||'');
+    const msg=busy
+      ? `<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:9px;padding:12px 14px;font-size:.78rem;color:#b45309;">
+           HubSpot is busy and turned the request away. Nothing is wrong with your leads.
+           <a href="#" onclick="fetchHSLeads();return false;" style="color:#b45309;font-weight:700;">Try again</a></div>`
+      : `<div style="color:#ef4444;font-size:.8rem;padding:8px 0;">⚠️ Error: ${e.message}</div>`;
     if(avEl)avEl.innerHTML=msg;
     if(tlEl)tlEl.innerHTML=msg;
   }
