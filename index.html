@@ -1800,29 +1800,7 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
       </div><!-- /av-attendance -->
 
       <!-- ── LEAD FOLLOW-UP ── -->
-      <div id="av-leads" class="av-section" style="display:none">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
-          <div>
-            <div style="font-size:1rem;font-weight:700;color:var(--g800);">📞 Lead Follow-Up</div>
-            <div style="font-size:.74rem;color:var(--g500);margin-top:2px;">Track leads you need to follow up with</div>
-          </div>
-          <button onclick="openLeadModal()" style="background:var(--yellow-dk);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:.83rem;font-weight:700;cursor:pointer;">+ Add Lead</button>
-        </div>
-        <!-- Filter bar -->
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center;">
-          <select id="lead-filter-status" onchange="renderLeads()" style="padding:6px 10px;border:1.5px solid var(--g300);border-radius:7px;font-size:.78rem;font-family:inherit;">
-            <option value="all">All Leads</option>
-            <option value="pending">⏳ Pending</option>
-            <option value="contacted">📞 Contacted</option>
-            <option value="sold">✅ Sold</option>
-            <option value="not_interested">❌ Not Interested</option>
-          </select>
-          <input id="lead-search" type="text" placeholder="🔍 Search leads…" oninput="renderLeads()" style="padding:6px 10px;border:1.5px solid var(--g300);border-radius:7px;font-size:.78rem;font-family:inherit;min-width:180px;">
-          <span id="lead-count" style="font-size:.72rem;color:var(--g500);margin-left:4px;"></span>
-        </div>
-        <!-- Lead cards -->
-        <div id="lead-list" style="display:flex;flex-direction:column;gap:10px;"></div>
-      </div><!-- /av-leads -->
+      <div id="av-leads" class="av-section" style="display:none"><!-- moved into My Actions --></div>
 
       <!-- ── LEAD MANAGEMENT (HubSpot 2nd Week) ── -->
       <div id="av-leadmgmt" class="av-section" style="display:none">
@@ -1858,7 +1836,19 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
         <div id="av-macustomers" style="display:none;"></div>
         <div id="av-mainbound" style="display:none;"></div>
         <div id="av-myactions-sched" style="display:none;">
-        <div id="av-myactions-body"><div style="color:var(--g400);font-size:.8rem;padding:16px 0;text-align:center;">Loading your actions…</div></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center;">
+            <select id="lead-filter-status" onchange="renderLeads()" style="padding:6px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:.75rem;font-family:inherit;background:#fff;">
+              <option value="all">All leads</option>
+              <option value="pending">Pending</option>
+              <option value="contacted">Contacted</option>
+              <option value="sold">Sold</option>
+              <option value="not_interested">Not interested</option>
+            </select>
+            <input id="lead-search" type="text" placeholder="Search leads…" oninput="renderLeads()" style="padding:6px 11px;border:1px solid #e4e4e7;border-radius:8px;font-size:.75rem;font-family:inherit;min-width:180px;">
+            <span id="lead-count" style="font-size:.72rem;color:#a1a1aa;"></span>
+            <button onclick="openLeadModal()" style="margin-left:auto;background:var(--yellow-dk);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:.78rem;font-weight:700;cursor:pointer;font-family:inherit;">+ Add lead</button>
+          </div>
+          <div id="lead-list" style="display:flex;flex-direction:column;gap:10px;"></div>
         </div><!-- /av-myactions-sched -->
       </div><!-- /av-myactions -->
 
@@ -15364,10 +15354,16 @@ async function maClearCustomer(id){
       closedReason:'cleared by agent',ts:Date.now()},{merge:true});
   }catch(err){}
 }
+// An inbound ticket is handled the moment the agent answers it — the last thing
+// on the thread is theirs. Anything still waiting on us stays.
 function maInbound(){
-  return ((typeof _avReplies!=='undefined'&&_avReplies)||[]).filter(t=>
-    /inbound/i.test(((t.properties||{}).subject)||'')
-  ).sort((a,b)=>new Date((b.properties||{}).createdate||0)-new Date((a.properties||{}).createdate||0));
+  return ((typeof _avReplies!=='undefined'&&_avReplies)||[]).filter(t=>{
+    if(!/inbound/i.test(((t.properties||{}).subject)||''))return false;
+    if(maTicketCleared(t.id))return false;
+    const last=(typeof avLastActivity==='function')?avLastActivity(t):null;
+    if(last&&(last.direction||'').toUpperCase()==='OUTBOUND')return false;   // answered
+    return true;
+  }).sort((a,b)=>new Date((b.properties||{}).createdate||0)-new Date((a.properties||{}).createdate||0));
 }
 
 function renderMyActionsShell(){
@@ -15459,6 +15455,7 @@ function renderMaInbound(){
         <div style="font-size:.66rem;color:#a1a1aa;margin-top:4px;">${e(HS_STAGE_LABELS[p.hs_pipeline_stage]||'—')}</div>
         <div style="display:flex;gap:7px;margin-top:9px;">
           <button onclick="maOpen('${t.id}')" style="padding:5px 12px;border:1px solid #e4e4e7;border-radius:8px;background:#fff;font-size:.7rem;font-weight:600;color:#3f3f46;font-family:inherit;cursor:pointer;">Open ticket</button>
+          <button onclick="maClearTicket('${t.id}')" style="padding:5px 12px;border:none;background:none;font-size:.7rem;font-weight:600;color:#a1a1aa;font-family:inherit;cursor:pointer;">Clear</button>
         </div></div>`;}).join('')}</div>`;
 }
 
@@ -15634,34 +15631,12 @@ function maFollowUpsDue(){
   const today=new Date().toISOString().slice(0,10);
   return maMyFollowUps().filter(l=>l.followup&&l.followup<=today);
 }
+// The Needs follow-up tab IS the Lead Follow-Up view — same markup, same
+// renderer, same records. Rebuilding a simpler version of it was how the two
+// drifted apart in the first place.
 function renderMaScheduled(){
-  const el=document.getElementById('av-myactions-body');
-  if(!el)return;
-  const rows=maMyFollowUps();
-  if(!rows.length){
-    el.innerHTML=`<div style="border:1px solid #e4e4e7;border-radius:12px;padding:26px;text-align:center;color:#a1a1aa;font-size:.78rem;background:#fff;">
-      Nothing scheduled. Open a lead and choose <b>Schedule follow-up</b> to put one here.</div>`;
-    return;
-  }
-  const today=new Date().toISOString().slice(0,10);
-  const card=l=>{
-    const overdue=l.followup&&l.followup<today, due=l.followup===today;
-    const tone=overdue?'#b91c1c':due?'#b45309':'#71717a';
-    const when=!l.followup?'No date':overdue?'Overdue · '+l.followup:due?'Due today'+(l.followupTime?' · '+l.followupTime:''):l.followup;
-    return `<div style="border:1px solid ${overdue?'#fecaca':due?'#fde68a':'#e4e4e7'};background:${overdue?'#fef2f2':due?'#fffbeb':'#fff'};border-radius:12px;padding:12px 14px;">
-      <div style="display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;">
-        <span style="font-size:.84rem;font-weight:700;color:#18181b;">${e(l.name||'(no name)')}</span>
-        <span style="font-size:.64rem;font-weight:700;color:${tone};">${e(when)}</span>
-        <span style="margin-left:auto;font-size:.66rem;color:#a1a1aa;">${e(l.status||'pending')}</span>
-      </div>
-      ${l.notes?`<div style="font-size:.72rem;color:#52525b;margin-top:5px;line-height:1.45;">${e(l.notes)}</div>`:''}
-      <div style="display:flex;gap:7px;margin-top:9px;">
-        ${l.ticketId?`<button onclick="maOpen('${e(l.ticketId)}')" style="padding:5px 12px;border:1px solid #e4e4e7;border-radius:8px;background:#fff;font-size:.7rem;font-weight:600;color:#3f3f46;font-family:inherit;cursor:pointer;">Open lead</button>`:''}
-        <button onclick="openLeadModal('${l.id}')" style="padding:5px 12px;border:1px solid #e4e4e7;border-radius:8px;background:#fff;font-size:.7rem;font-weight:600;color:#3f3f46;font-family:inherit;cursor:pointer;">Edit</button>
-      </div></div>`;};
-  el.innerHTML=`<div style="display:flex;flex-direction:column;gap:8px;">${rows.map(card).join('')}</div>`;
+  if(typeof renderLeads==='function')renderLeads();
 }
-
 /* A follow-up is only useful if it arrives before the time it was set for. */
 function maFollowUpWatch(){
   if(_fuTimer)return;
@@ -15716,6 +15691,7 @@ function maOtherTickets(){
     const acts=(t.calls||[]).slice().sort((x,y)=>hsTs(y.timestamp)-hsTs(x.timestamp));
     const last=acts[0];
     if(!last)return false;
+    if(maTicketCleared(t.id))return false;
     const inbound=(last.direction||'').toUpperCase()==='INBOUND';
     if(!inbound)return false;                                       // we spoke last
     return (Date.now()-hsTs(last.timestamp))<=MA_WINDOW;
@@ -15746,8 +15722,20 @@ function maOtherCard(t){
     <div style="font-size:.72rem;font-weight:600;color:#2563eb;margin-top:7px;">They spoke last — answer this one.</div>
     <div style="display:flex;gap:7px;margin-top:9px;">
       <button onclick="maOpen('${t.id}')" style="padding:5px 12px;border:1px solid #e4e4e7;border-radius:8px;background:#fff;font-size:.7rem;font-weight:600;color:#3f3f46;font-family:inherit;cursor:pointer;">Open lead</button>
+      <button onclick="maClearTicket('${t.id}')" style="padding:5px 12px;border:none;background:none;font-size:.7rem;font-weight:600;color:#a1a1aa;font-family:inherit;cursor:pointer;">Clear</button>
     </div></div>`;
 }
+
+/* Handled tickets. An agent can clear one by hand, but the common case is that
+   they simply answer it — and then it clears itself, because "they spoke last"
+   stops being true the moment the agent replies. */
+let _maClearedTix={};
+function maClearTicket(id){
+  _maClearedTix[String(id)]=1;
+  try{const col=maCol();if(col)col.doc('inb_'+id).set({state:'done',closedReason:'cleared by agent'},{merge:true});}catch(err){}
+  renderMyAlerts();renderMaInbound();renderMyActionsShell();
+}
+function maTicketCleared(id){return !!_maClearedTix[String(id)];}
 
 
 /* Inbound tickets live only in the agent's own session, so the session writes a
