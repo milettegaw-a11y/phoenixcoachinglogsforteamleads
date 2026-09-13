@@ -2468,6 +2468,7 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
         <button id="cad-subtab-today" onclick="setCadDashTab('today')" style="padding:5px 14px;border:none;background:#ff7a59;color:#fff;font-size:.75rem;font-weight:700;cursor:pointer;">Today</button>
         <button id="cad-subtab-agent" onclick="setCadDashTab('agent')" style="padding:5px 14px;border:none;background:#f3f4f6;color:#6b7280;font-size:.75rem;font-weight:700;cursor:pointer;">Agent Level</button>
         <button id="cad-subtab-trend" onclick="setCadDashTab('trend')" style="padding:5px 14px;border:none;background:#f3f4f6;color:#6b7280;font-size:.75rem;font-weight:700;cursor:pointer;">14-Day Trend</button>
+        <button id="cad-subtab-outside" onclick="setCadDashTab('outside')" style="padding:5px 14px;border:none;background:#f3f4f6;color:#6b7280;font-size:.75rem;font-weight:700;cursor:pointer;">Outside Touches</button>
       </div>
       <button id="cad-refresh-btn" onclick="refreshCadDash()" style="padding:6px 14px;border:1.5px solid #ff7a59;border-radius:8px;background:#fff;color:#ff7a59;font-size:.78rem;font-weight:700;cursor:pointer;">↻ Refresh</button>
       <span id="cad-last-fetch" style="font-size:.65rem;color:#9ca3af;white-space:nowrap;"></span>
@@ -2487,6 +2488,7 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
     <div id="cad-agent-panel-body"><div style="color:#9ca3af;font-size:.8rem;padding:24px;text-align:center;">Loading…</div></div>
   </div>
   <!-- 14-Day Trend panel -->
+  <div id="cad-panel-outside" style="display:none;"><div id="cad-outside-body"></div></div>
   <div id="cad-panel-trend" style="display:none;">
     <div style="background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;padding:20px;margin-bottom:16px;">
       <div style="font-size:.85rem;font-weight:700;color:#374151;margin-bottom:4px;">📊 14-Day Cadence Compliance Trend</div>
@@ -8952,15 +8954,17 @@ async function loadCadenceHistory(days) {
 let _cadDashTab = 'today';
 function setCadDashTab(tab) {
   _cadDashTab = tab;
-  ['today','agent','trend'].forEach(t => {
+  ['today','agent','trend','outside'].forEach(t => {
     const btn = document.getElementById('cad-subtab-' + t);
     if (btn) { btn.style.background = t === tab ? '#ff7a59' : '#f3f4f6'; btn.style.color = t === tab ? '#fff' : '#6b7280'; }
   });
   document.getElementById('cad-panel-today') && (document.getElementById('cad-panel-today').style.display = tab === 'today' ? '' : 'none');
   document.getElementById('cad-panel-agent') && (document.getElementById('cad-panel-agent').style.display = tab === 'agent' ? '' : 'none');
   document.getElementById('cad-panel-trend') && (document.getElementById('cad-panel-trend').style.display = tab === 'trend' ? '' : 'none');
+  document.getElementById('cad-panel-outside') && (document.getElementById('cad-panel-outside').style.display = tab === 'outside' ? '' : 'none');
   if (tab === 'agent') renderCadAgentPanel();
   if (tab === 'trend') renderCadTrendChart();
+  if (tab === 'outside') renderCadOutside();
 }
 
 let _cadAgentSnaps14=null; // cache 14-day snapshots for agent panel
@@ -15850,6 +15854,154 @@ function tlSimpleList(rows,empty,line){
   if(!rows.length)return `<div style="background:#fff;border:1px solid #e4e4e7;border-radius:12px;padding:26px;text-align:center;color:#a1a1aa;font-size:.78rem;">${empty}</div>`;
   return `<div style="background:#fff;border:1px solid #e4e4e7;border-radius:12px;overflow:hidden;">
     ${rows.map(line).join('')}</div>`;
+}
+
+
+/* ── Outside touches ─────────────────────────────────────────────────────────
+   How much of the book we were given is still being worked by people who are
+   not ours. A lead endorsed to Phoenix and then called by Apex is the case this
+   measures — touches that post-date the 2nd-week ticket, by a named owner
+   outside the cluster.
+
+   Each week is sampled rather than counted: measuring all ~3,700 leads costs
+   around 250 HubSpot requests a week, which the portal will not take while
+   thirty agents are working. The sample is drawn evenly across every six-hour
+   window of every day, because outside activity tracks the hour a lead arrives
+   and taking the top of each day put a zigzag in the trend that was pure
+   method. The 95% interval is shown so nobody reads noise as movement.        */
+let _otWeeks={};
+let _otBusy=false;
+let _otMsg='';
+const OT_TTL=6*3600000;
+
+async function otReadCache(wk){
+  if(!FSB)return null;
+  try{const d=await FSB.collection('outside_weeks').doc('WK'+wk).get();return d.exists?d.data():null;}
+  catch(err){return null;}
+}
+async function otBuild(wk,force){
+  if(_otBusy)return;
+  const cached=_otWeeks[wk]||await otReadCache(wk);
+  if(cached&&!force&&(Date.now()-(cached.builtAt||0))<OT_TTL){_otWeeks[wk]=cached;return;}
+  _otBusy=true;_otMsg='Sampling WK'+wk+'…';renderOutside();
+  try{
+    const r=await fetch('/api/outside-touch',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({wk:wk,ownerIds:Object.keys(cvrOwners()),sample:280})});
+    const d=await r.json();
+    if(r.ok&&!d.error){
+      _otWeeks[wk]=d;
+      if(FSB)try{await FSB.collection('outside_weeks').doc('WK'+wk).set(d);}catch(err){}
+    }else if(cached){_otWeeks[wk]=cached;}
+  }catch(err){if(cached)_otWeeks[wk]=cached;}
+  _otBusy=false;_otMsg='';renderOutside();
+}
+async function renderCadOutside(){
+  const cur=cvrCurWk();
+  for(let i=5;i>=0;i--){
+    const w=cur-i;
+    if(!_otWeeks[w]){const c=await otReadCache(w);if(c)_otWeeks[w]=c;}
+  }
+  renderOutside();
+  // Only the live week is rebuilt on a visit; finished weeks never change.
+  await otBuild(cur,false);
+  for(let i=1;i<=5;i++){
+    const w=cur-i;
+    if(!_otWeeks[w]){await otBuild(w,false);renderOutside();}
+  }
+}
+function otRefresh(){otBuild(cvrCurWk(),true);}
+
+function renderOutside(){
+  const el=document.getElementById('cad-outside-body');
+  if(!el)return;
+  const cur=cvrCurWk();
+  const weeks=[];
+  for(let i=5;i>=0;i--){const w=_otWeeks[cur-i];if(w&&w.sampled)weeks.push(w);}
+  if(!weeks.length){
+    el.innerHTML=`<div style="background:#fff;border:1px solid #e4e4e7;border-radius:12px;padding:30px;text-align:center;color:#a1a1aa;font-size:.8rem;">
+      ${e(_otMsg||'Sampling the last six weeks…')}
+      <div style="font-size:.68rem;margin-top:7px;">Each week is a few hundred leads checked against every touch since they were handed over.</div></div>`;
+    return;
+  }
+  const now=weeks[weeks.length-1];
+  const prev=weeks.length>1?weeks[weeks.length-2]:null;
+  const delta=prev?now.pct-prev.pct:null;
+  const H=150, mx=Math.max(20,...weeks.map(w=>w.pct+w.moe))*1.1;
+  const x=i=>weeks.length>1?(i/(weeks.length-1))*100:50;
+  const y=v=>H-(v/mx*H);
+  const pts=weeks.map((w,i)=>`${x(i)},${y(w.pct)}`).join(' ');
+  const fmt=d=>d?new Date(d+'T12:00:00Z').toLocaleDateString('en-US',{month:'short',day:'numeric',timeZone:'UTC'}):'';
+  const by={};
+  weeks.forEach(w=>{for(const k in (w.by||{}))by[k]=(by[k]||0)+w.by[k];});
+  const people=Object.entries(by).sort((a,b)=>b[1]-a[1]).slice(0,12);
+  const samples=(now.samples||[]).slice(0,20);
+
+  el.innerHTML=`
+  <div style="background:#fff;border:1px solid #e4e4e7;border-radius:12px;margin-bottom:14px;">
+    <div style="padding:15px 20px 0;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;">
+      <span style="font-size:.95rem;font-weight:700;color:#18181b;">Still being worked by other teams</span>
+      <span style="font-size:.7rem;color:#71717a;">Phoenix 2nd Week leads touched by someone outside the cluster after we were given them</span>
+      <button onclick="otRefresh()" style="margin-left:auto;padding:4px 11px;border:1px solid #e4e4e7;border-radius:8px;background:#fff;font-size:.7rem;font-weight:600;color:#3f3f46;font-family:inherit;cursor:pointer;">↻ Refresh</button>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;border-top:1px solid #f4f4f5;margin-top:12px;">
+      ${[[cvrP1(now.pct)+' ± '+now.moe.toFixed(1),'WK'+now.wk,'of the leads we were given','#b45309'],
+         [delta===null?'—':(delta>0?'+':'')+delta.toFixed(1)+'pts','Week on week',delta===null?'No prior week':(delta>0?'more outside contact':'less outside contact'),delta===null?'#a1a1aa':delta>0?'#b91c1c':'#15803d'],
+         [cvrNum(now.leads),'Leads that week','Cohort size','#18181b'],
+         [now.sampled+' checked','Sample','±'+now.moe.toFixed(1)+' at 95%','#71717a']]
+        .map((it,i)=>`${i?'<div style="width:1px;background:#f4f4f5;"></div>':''}
+        <div style="padding:15px 20px;flex:1 1 150px;min-width:0;">
+          <div style="${CVR_LBL}margin-bottom:7px;">${it[1]}</div>
+          <div style="font-size:1.5rem;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;color:${it[3]};">${it[0]}</div>
+          <div style="font-size:.65rem;color:#a1a1aa;margin-top:5px;">${it[2]}</div></div>`).join('')}
+    </div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #e4e4e7;border-radius:12px;margin-bottom:14px;padding:16px 20px;">
+    <div style="display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin-bottom:10px;">
+      <span style="font-size:.85rem;font-weight:700;color:#18181b;">Week on week</span>
+      <span style="font-size:.66rem;color:#a1a1aa;">shaded band is the 95% interval on each sample</span>
+    </div>
+    <svg viewBox="0 0 100 ${H+22}" preserveAspectRatio="none" style="width:100%;height:190px;overflow:visible;">
+      ${[0.25,0.5,0.75,1].map(f=>`<line x1="0" y1="${y(mx*f)}" x2="100" y2="${y(mx*f)}" stroke="#f4f4f5" stroke-width="0.4" vector-effect="non-scaling-stroke"/>`).join('')}
+      <polygon points="${weeks.map((w,i)=>`${x(i)},${y(Math.min(mx,w.pct+w.moe))}`).join(' ')} ${weeks.slice().reverse().map((w,i)=>`${x(weeks.length-1-i)},${y(Math.max(0,w.pct-w.moe))}`).join(' ')}"
+        fill="#fde68a" opacity="0.5"/>
+      <polyline points="${pts}" fill="none" stroke="#b45309" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>
+      ${weeks.map((w,i)=>`<circle cx="${x(i)}" cy="${y(w.pct)}" r="3" fill="#b45309" vector-effect="non-scaling-stroke"><title>WK${w.wk} — ${w.pct.toFixed(1)}% ± ${w.moe.toFixed(1)} (${w.touched} of ${w.sampled} sampled)</title></circle>`).join('')}
+    </svg>
+    <div style="display:flex;justify-content:space-between;margin-top:4px;">
+      ${weeks.map(w=>`<div style="text-align:center;flex:1;">
+        <div style="font-size:.68rem;font-weight:700;color:#b45309;">${w.pct.toFixed(1)}%</div>
+        <div style="font-size:.6rem;font-weight:600;color:#52525b;">WK${w.wk}</div>
+        <div style="font-size:.55rem;color:#a1a1aa;">${fmt(w.mon)}</div></div>`).join('')}
+    </div>
+    ${[0.25,0.5,0.75,1].map(f=>'').join('')}
+  </div>
+
+  <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start;">
+    <div style="flex:1 1 320px;min-width:0;background:#fff;border:1px solid #e4e4e7;border-radius:12px;overflow:hidden;">
+      <div style="padding:13px 18px;border-bottom:1px solid #e4e4e7;font-size:.85rem;font-weight:700;color:#18181b;">Who is working them</div>
+      ${people.length?people.map(([name,n])=>`<div style="padding:9px 18px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #fafafa;">
+          <span style="font-size:.77rem;font-weight:600;color:#18181b;">${e(name)}</span>
+          <span style="margin-left:auto;font-size:.72rem;font-variant-numeric:tabular-nums;color:#b45309;font-weight:700;">${n}</span>
+        </div>`).join('')
+        :'<div style="padding:20px;text-align:center;color:#a1a1aa;font-size:.75rem;">Nobody outside the cluster in these samples.</div>'}
+      <div style="padding:9px 18px;font-size:.63rem;color:#a1a1aa;">Touches across the six sampled weeks. An unnamed owner id is an account with no name set in HubSpot.</div>
+    </div>
+    <div style="flex:1 1 320px;min-width:0;background:#fff;border:1px solid #e4e4e7;border-radius:12px;overflow:hidden;">
+      <div style="padding:13px 18px;border-bottom:1px solid #e4e4e7;font-size:.85rem;font-weight:700;color:#18181b;">Tickets from WK${now.wk}</div>
+      ${samples.length?samples.map(sx=>`<div style="padding:9px 18px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #fafafa;flex-wrap:wrap;">
+          <a href="https://app.hubspot.com/contacts/${HS_PORTAL_ID}/ticket/${e(sx.ticketId)}" target="_blank" rel="noopener" style="font-size:.74rem;font-weight:600;color:#3f3f46;text-decoration:underline;text-underline-offset:3px;">${e(sx.ticketId)}</a>
+          <span style="font-size:.68rem;color:#71717a;">${e(sx.owner||'')}</span>
+          <span style="margin-left:auto;font-size:.64rem;color:#a1a1aa;">${sx.kind==='call'?'call':'SMS'}${sx.ts?' · '+String(sx.ts).slice(0,10):''}</span>
+        </div>`).join('')
+        :'<div style="padding:20px;text-align:center;color:#a1a1aa;font-size:.75rem;">No outside touches in this week&rsquo;s sample.</div>'}
+      <div style="padding:9px 18px;font-size:.63rem;color:#a1a1aa;">Examples from the sample, not the full list — open one to see the thread.</div>
+    </div>
+  </div>
+
+  <div style="margin-top:14px;padding:11px 14px;background:#fafafa;border:1px solid #f4f4f5;border-radius:9px;font-size:.68rem;color:#52525b;line-height:1.5;">
+    <b style="color:#18181b;">How this is measured.</b> For each week we take the 2nd Week tickets Phoenix was given, sample a few hundred spread evenly across every six-hour window of the week, and look for calls or SMS on those contacts by a named owner outside the cluster <b>after the ticket was created</b>. Work Apex did before the handover is not counted — that is the normal endorsement. Activity with no owner is automation rather than another team, and is excluded.
+  </div>`;
 }
 
 </script>
