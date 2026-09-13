@@ -43,6 +43,26 @@ export default async function handler(req, res) {
       });
     }
 
+    // ── ACTION: create / delete a webhook subscription ──────────────────────
+    // One-off administration. Creating needs an explicit url, so nothing is
+    // registered by accident.
+    if (action === 'webhook-create' && req.query.url) {
+      const events = String(req.query.events || 'message.received,message.sent,call.ended')
+        .split(',').map(x => x.trim()).filter(Boolean);
+      const r = await fetch(`${BASE}/webhooks`, {
+        method: 'POST',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: String(req.query.url), events, active: true })
+      });
+      const d = await r.json().catch(() => ({}));
+      return res.status(r.ok ? 200 : r.status).json(d);
+    }
+    if (action === 'webhook-delete' && req.query.id) {
+      const r = await fetch(`${BASE}/webhooks/${encodeURIComponent(String(req.query.id))}`,
+        { method: 'DELETE', headers });
+      return res.status(200).json({ deleted: r.ok, status: r.status, id: req.query.id });
+    }
+
     // ── ACTION: users list (for Aircall→HubSpot owner mapping) ──────────────
     if (action === 'users') {
       let page = 1, allUsers = [];
