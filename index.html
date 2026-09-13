@@ -14949,7 +14949,11 @@ function cvrRenderTeamNudge(){
    them; the browser listens rather than polls the database, so a card written
    by the Aircall webhook appears the moment it lands.                        */
 const MA_URGENT=['replied','missed','decline'];
-const MA_POLL=30000;                       // how often we ask HubSpot for new activity
+// The Aircall webhook now delivers cards the instant they happen, so this poll
+// is only a safety net for events the hook missed. At 30s across thirty agents
+// it was making ~10 HubSpot calls a second on its own and starving Lead
+// Compliance and the Cadence Dashboard of their own rate limit.
+const MA_POLL=5*60000;                     // safety net, not the delivery path
 const MA_LOOKBACK=3*86400000;              // how far back a cold start looks
 let _maAlerts=[];
 let _maUnsub=null;
@@ -15039,8 +15043,13 @@ function maBadge(){
 }
 
 /* ── detection ─────────────────────────────────────────────────────────────── */
+let _maBackoff=0;
 async function maPoll(){
   if(_maBusy||!FSB)return;
+  // Nothing to catch up on while the tab is in the background — the webhook is
+  // writing straight to Firestore and the listener is still attached.
+  if(document.hidden)return;
+  if(_maBackoff&&Date.now()<_maBackoff)return;
   const owner=maMyOwnerId();
   const col=maCol();
   if(!owner||!col)return;
@@ -15049,7 +15058,11 @@ async function maPoll(){
     const since=_maSince||(Date.now()-MA_LOOKBACK);
     const r=await fetch('/api/my-actions',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({ownerId:owner,sinceMs:since})});
+    // Back off hard on a rate limit rather than hammering the same limit the
+    // rest of the app needs.
+    if(r.status===429||r.status>=500){_maBackoff=Date.now()+10*60000;_maBusy=false;return;}
     if(!r.ok){_maBusy=false;return;}
+    _maBackoff=0;
     const d=await r.json();
     if(d.error){_maBusy=false;return;}
     _maSince=d.now-60000;                  // small overlap so nothing slips the gap
@@ -15212,9 +15225,11 @@ async function maDismiss(id){
 // Called when the agent opens My Actions.
 function maStart(){
   if(!(CU&&CU.isAgentView))return;
-  maSubscribe();
-  maPoll();
-  if(!_maTimer)_maTimer=setInterval(maPoll,MA_POLL);
+  maSubscribe();                         // the live listener is the delivery path
+  if(_maTimer)return;
+  // Stagger the first sweep so thirty browsers do not all call at once.
+  setTimeout(maPoll,Math.floor(Math.random()*45000));
+  _maTimer=setInterval(maPoll,MA_POLL+Math.floor(Math.random()*60000));
 }
 
 
