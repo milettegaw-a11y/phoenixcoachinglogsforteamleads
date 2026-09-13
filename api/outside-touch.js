@@ -61,30 +61,34 @@ export default async function handler(req, res) {
     const monMs = EPOCH + (wk - 1) * 7 * 86400000 + 5 * 3600000;   // Monday 00:00 CDT
     const endMs = Math.min(monMs + 7 * 86400000, Date.now());
 
-    // ── the cohort ───────────────────────────────────────────────────────────
+    // ── the cohort, sampled ──────────────────────────────────────────────────
+    // Measuring every one of ~3,700 leads costs about 250 requests a week, which
+    // is what tipped the portal over. A random sample answers the same question
+    // to within a few points and costs a fraction, so the week is sampled and the
+    // margin is reported rather than hidden.
+    const want = Math.min(Math.max(Number(b.sample) || 300, 50), 700);
+    const perDay = Math.ceil(want / 7);
     const tickets = [];
+    const totals = [];
     for (let day = 0; day < 7; day++) {
       const s = monMs + day * 86400000, e2 = s + 86400000 - 1;
       if (s > Date.now()) break;
-      let after = null, page = 0;
-      do {
-        const q = {
-          filterGroups: [{ filters: [
-            { propertyName: 'hs_pipeline', operator: 'EQ', value: PIPELINE },
-            { propertyName: 'subject', operator: 'EQ', value: SUBJECT },
-            { propertyName: 'hubspot_owner_id', operator: 'IN', values: ours },
-            { propertyName: 'createdate', operator: 'BETWEEN', value: String(s), highValue: String(e2) }
-          ]}],
-          properties: ['createdate', 'hubspot_owner_id'], limit: 100,
-          sorts: [{ propertyName: 'createdate', direction: 'ASCENDING' }]
-        };
-        if (after) q.after = after;
-        const d = await search('tickets', q);
-        tickets.push(...(d.results || []));
-        after = (d.paging && d.paging.next && d.paging.next.after) || null;
-      } while (after && ++page < 45);
+      const d = await search('tickets', {
+        filterGroups: [{ filters: [
+          { propertyName: 'hs_pipeline', operator: 'EQ', value: PIPELINE },
+          { propertyName: 'subject', operator: 'EQ', value: SUBJECT },
+          { propertyName: 'hubspot_owner_id', operator: 'IN', values: ours },
+          { propertyName: 'createdate', operator: 'BETWEEN', value: String(s), highValue: String(e2) }
+        ]}],
+        properties: ['createdate', 'hubspot_owner_id'],
+        limit: Math.min(perDay, 100),
+        sorts: [{ propertyName: 'createdate', direction: 'ASCENDING' }]
+      });
+      tickets.push(...(d.results || []));
+      totals.push(Number(d.total || 0));
     }
-    if (!tickets.length) return res.status(200).json({ wk, leads: 0, touched: 0, pct: 0, by: {}, samples: [] });
+    const cohortTotal = totals.reduce((a, c) => a + c, 0);
+    if (!tickets.length) return res.status(200).json({ wk, leads: cohortTotal, sampled: 0, touched: 0, pct: 0, by: {}, samples: [] });
 
     // ── ticket → contact ─────────────────────────────────────────────────────
     const ids = tickets.map(t => t.id);
@@ -140,10 +144,10 @@ export default async function handler(req, res) {
             }
           }
           after = (d.paging && d.paging.next && d.paging.next.after) || null;
-        } while (after && ++page < 6);
+        } while (after && ++page < 3);
       }
     });
-    await pool(jobs, 3);
+    await pool(jobs, 2);
 
     // name the outsiders
     let owners = {};
@@ -155,11 +159,14 @@ export default async function handler(req, res) {
 
     const by = {};
     for (const oid in byOwner) by[owners[oid] || (oid ? 'Owner ' + oid : 'No owner recorded')] = byOwner[oid];
-    const leads = tickets.length, touched = touchedTickets.size;
+    const sampled = tickets.length, touched = touchedTickets.size;
+    const p = sampled ? touched / sampled : 0;
+    // 95% interval on the sample, so nobody reads a 3-point wobble as a trend.
+    const moe = sampled ? 1.96 * Math.sqrt(Math.max(p * (1 - p), 0.0001) / sampled) * 100 : 0;
     return res.status(200).json({
       wk, mon: new Date(monMs - 5 * 3600000).toISOString().slice(0, 10),
-      leads, touched, pct: leads ? touched / leads * 100 : 0,
-      by, samples: samples.map(s => Object.assign({}, s, { owner: owners[s.ownerId] || 'No owner recorded' })),
+      leads: cohortTotal, sampled, touched, pct: p * 100, moe,
+      by, samples: samples.map(x => Object.assign({}, x, { owner: owners[x.ownerId] || 'No owner recorded' })),
       builtAt: Date.now()
     });
   } catch (e) {
