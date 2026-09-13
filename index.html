@@ -852,7 +852,6 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
         <div class="sb-sub-item agent-hide" id="om-sub-cl" onclick="openCLModal()"><span class="sb-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.4"/><path d="M12 8.4v7.2M8.4 12h7.2"/></svg></span><span>New Call Listening</span></div>
         <div class="sb-sub-item agent-hide" id="om-sub-cl-dash" onclick="switchOM('cl');omShowCLTab('dashboard')"><span class="sb-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.2 20.4h17.6"/><path d="M6.8 20.4v-6.2M12 20.4V5.6M17.2 20.4v-9.4"/></svg></span><span>Dashboard</span></div>
         <div class="sb-item agent-hide" data-tab="leadmgmt" onclick="switchOM('leadmgmt')"><span class="sb-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7.2 3v5.4c0 4.4-3 8.3-7.2 9.6-4.2-1.3-7.2-5.2-7.2-9.6V6L12 3Z"/><path d="M9.2 12.1l2 2 3.6-3.8"/></svg></span><span>Lead Compliance</span></div>
-        <div class="sb-item agent-hide" data-tab="leads" onclick="switchOM('leads')"><span class="sb-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.7 3.6 9.1 4l1 3.6-2 1.6a12.2 12.2 0 0 0 5.4 5.4l1.6-2 3.6 1 .4 2.4a2 2 0 0 1-2 2.2C9.7 21.4 2.6 14.3 3.4 5.6a2 2 0 0 1 2.1-2Z"/></svg></span><span>Lead Follow-Ups</span><span id="nav-badge-om-leads" class="sb-notif" style="display:none"></span></div>
       </div>
       <div class="sb-section-lbl" onclick="toggleSbGroup('om-grp-res',this)">RESOURCES<span class="sb-grp-arrow">›</span></div>
       <div class="sb-group" id="om-grp-res">
@@ -896,7 +895,6 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
         <div class="sb-sub-item" id="tl-sub-cl" onclick="openCLModal()"><span class="sb-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.4"/><path d="M12 8.4v7.2M8.4 12h7.2"/></svg></span><span>New Call Listening</span></div>
         <div class="sb-sub-item" id="tl-sub-cl-dash" onclick="tlShowView('cl');tlShowCLTab('dashboard')"><span class="sb-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.2 20.4h17.6"/><path d="M6.8 20.4v-6.2M12 20.4V5.6M17.2 20.4v-9.4"/></svg></span><span>Dashboard</span></div>
         <div class="sb-item" id="tl-nav-leadmgmt" onclick="tlShowView('leadmgmt')"><span class="sb-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7.2 3v5.4c0 4.4-3 8.3-7.2 9.6-4.2-1.3-7.2-5.2-7.2-9.6V6L12 3Z"/><path d="M9.2 12.1l2 2 3.6-3.8"/></svg></span><span>Lead Compliance</span></div>
-        <div class="sb-item" id="tl-nav-leads" onclick="tlShowView('leads')"><span class="sb-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.7 3.6 9.1 4l1 3.6-2 1.6a12.2 12.2 0 0 0 5.4 5.4l1.6-2 3.6 1 .4 2.4a2 2 0 0 1-2 2.2C9.7 21.4 2.6 14.3 3.4 5.6a2 2 0 0 1 2.1-2Z"/></svg></span><span>Lead Follow-Ups</span><span id="nav-badge-tl-leads" class="sb-notif" style="display:none"></span></div>
       </div>
       <div class="sb-section-lbl" onclick="toggleSbGroup('tl-grp-res',this)">RESOURCES<span class="sb-grp-arrow">›</span></div>
       <div class="sb-group" id="tl-grp-res">
@@ -928,7 +926,6 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
       <div class="sb-group" id="ag-grp-fu">
         <div class="sb-item" data-tab="attendance" onclick="switchAgentTab('attendance')"><span class="sb-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.2" y="5" width="17.6" height="15.8" rx="2"/><path d="M3.2 10h17.6M8 3v4M16 3v4"/><path d="M9.4 15.2l2 2 3.4-3.6"/></svg></span><span>My Attendance</span><span id="nav-badge-att" class="sb-notif" style="display:none"></span></div>
         <div class="sb-item" data-tab="myactions" onclick="switchAgentTab('myactions')"><span class="sb-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8.4a6 6 0 1 0-12 0c0 6.3-2.4 7.6-2.4 7.6h16.8S18 14.7 18 8.4Z"/><path d="M13.7 20.2a2 2 0 0 1-3.4 0"/></svg></span><span>My Actions</span><span id="nav-badge-myactions" class="sb-notif" style="display:none"></span></div>
-        <div class="sb-item" data-tab="leads" onclick="switchAgentTab('leads')"><span class="sb-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.7 3.6 9.1 4l1 3.6-2 1.6a12.2 12.2 0 0 0 5.4 5.4l1.6-2 3.6 1 .4 2.4a2 2 0 0 1-2 2.2C9.7 21.4 2.6 14.3 3.4 5.6a2 2 0 0 1 2.1-2Z"/></svg></span><span>Lead Follow-Up</span><span id="nav-badge-leads" class="sb-notif" style="display:none"></span></div>
         <div class="sb-item" data-tab="leadmgmt" onclick="switchAgentTab('leadmgmt')"><span class="sb-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7.2 3v5.4c0 4.4-3 8.3-7.2 9.6-4.2-1.3-7.2-5.2-7.2-9.6V6L12 3Z"/><path d="M9.2 12.1l2 2 3.6-3.8"/></svg></span><span>Lead Compliance</span></div>
       </div>
       <div class="sb-section-lbl" onclick="toggleSbGroup('ag-grp-res',this)">RESOURCES<span class="sb-grp-arrow">›</span></div>
@@ -2803,7 +2800,10 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
       </div>
       <div>
         <label style="font-size:.75rem;font-weight:700;color:var(--g600);display:block;margin-bottom:4px;">Follow-Up Date</label>
-        <input id="lead-followup" type="date" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid var(--g300);border-radius:8px;font-size:.88rem;font-family:inherit;">
+        <div style="display:flex;gap:8px;">
+        <input id="lead-followup" type="date" style="flex:1;min-width:0;box-sizing:border-box;padding:9px 12px;border:1.5px solid var(--g300);border-radius:8px;font-size:.88rem;font-family:inherit;">
+        <input id="lead-followup-time" type="time" title="Optional — you are warned 30 minutes before" style="width:120px;box-sizing:border-box;padding:9px 12px;border:1.5px solid var(--g300);border-radius:8px;font-size:.88rem;font-family:inherit;">
+      </div>
       </div>
     </div>
     <div style="margin-bottom:18px;">
@@ -4677,6 +4677,8 @@ function subscribeLeads(){
       .sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
     renderLeads();
     updateLeadBadge();
+    if(typeof renderMyActionsShell==='function')renderMyActionsShell();
+    if(typeof maBadge==='function')maBadge();
   });
 }
 
@@ -4720,6 +4722,7 @@ function openLeadModal(id){
     document.getElementById('lead-url').value=lead.url||'';
     document.getElementById('lead-status').value=lead.status||'pending';
     document.getElementById('lead-followup').value=lead.followup||'';
+    const _ft=document.getElementById('lead-followup-time'); if(_ft)_ft.value=lead.followupTime||'';
     document.getElementById('lead-notes').value=lead.notes||'';
   } else {
     editId.value='';
@@ -4742,16 +4745,17 @@ async function saveLead(){
   const url=(document.getElementById('lead-url').value||'').trim();
   const status=document.getElementById('lead-status').value||'pending';
   const followup=document.getElementById('lead-followup').value||'';
+  const followupTime=(document.getElementById('lead-followup-time')||{}).value||'';
   const notes=(document.getElementById('lead-notes').value||'').trim();
   const editId=document.getElementById('lead-edit-id').value;
   const now=new Date().toISOString();
   const agentTeam=(CU&&CU.isAgentView)?(AGENTS.find(a=>a.name===CU.agentName)?.tl||''):'';
   const agentName=(CU&&CU.isAgentView)?CU.agentName:(CU?CU.email:'');
   if(editId){
-    await FSB.collection('px_leads').doc(editId).update({name,url,status,followup,notes,updatedAt:now});
+    await FSB.collection('px_leads').doc(editId).update({name,url,status,followup,followupTime,notes,updatedAt:now});
   } else {
     await FSB.collection('px_leads').add({
-      name,url,status,followup,notes,
+      name,url,status,followup,followupTime,notes,
       ticketId:_leadFuTicket||'',
       agentEmail:CU?CU.email:'',
       agentName,
@@ -6459,20 +6463,12 @@ async function renderAgentCadence(){
         <div style="font-size:.65rem;color:#9ca3af;font-weight:600;margin-top:4px;text-transform:uppercase;">Not Contacted</div>
       </div>
     </div>
-    <div style="background:#fff;border:1.5px solid #bbf7d0;border-radius:10px;padding:16px;margin-bottom:20px;">
-      <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:2px;">
-        <div style="font-size:.82rem;font-weight:700;color:#374151;">💬 Waiting On You</div>
-        <button type="button" onclick="loadAgentReplies(true)" style="margin-left:auto;padding:3px 10px;font-size:.65rem;font-weight:700;color:#16a34a;background:#fff;border:1px solid #bbf7d0;border-radius:99px;cursor:pointer;font-family:inherit;">↻ Refresh</button>
-      </div>
-      <div style="font-size:.7rem;color:#9ca3af;margin-bottom:12px;">Customers who replied in the last 24 hours and are waiting on you. Not part of your cadence.</div>
-      <div id="av-replies-body"><div style="color:#9ca3af;font-size:.78rem;padding:18px 0;text-align:center;">Checking who replied…</div></div>
-    </div>
     <div style="background:#fff;border:1.5px solid ${gaps>0?'#fca5a5':'#86efac'};border-radius:10px;padding:16px;margin-bottom:20px;">
       <div style="font-size:.82rem;font-weight:700;color:#374151;margin-bottom:10px;">⚠️ Not Contacted Leads</div>
       ${gapHtml}
     </div>
 `;
-  loadAgentReplies();   // own fetch, own state — never merged into _hsLeads
+  // Waiting On You moved to My Actions; the Inbound tab loads _avReplies itself.
   // Load trend
   const msgEl=document.getElementById('agent-cad-trend-msg');
   const tctx=document.getElementById('agent-cad-trend-chart');
@@ -15053,7 +15049,8 @@ function maSubscribe(){
 }
 function maUnsubscribe(){if(_maUnsub){_maUnsub();_maUnsub=null;}if(_maTimer){clearInterval(_maTimer);_maTimer=null;}}
 function maBadge(){
-  const n=_maAlerts.filter(a=>a.state==='open').length;
+  const due=(typeof maFollowUpsDue==='function')?maFollowUpsDue().length:0;
+  const n=_maAlerts.filter(a=>a.state==='open').length+due;
   const el=document.getElementById('nav-badge-myactions');
   if(el){el.style.display=n?'':'none';el.textContent=n||'';}
 }
@@ -15091,6 +15088,11 @@ async function maPoll(){
     for(const ev of (d.events||[])){
       const lead=leadById[ev.ticketId];
       if(!lead)continue;
+      // A lead that is done is not an action. DNC, a sale, or a contact that has
+      // become a Customer or Other all leave the book - they belong in the
+      // Customers tab or nowhere, never in a queue telling someone to call.
+      const lc=String(lead.lifecycle||'').toLowerCase();
+      if(lead.dnc||lead.sold||lc==='customer'||lc==='other')continue;
       const mine=String(ev.actorId)===owner;
 
       // The owner touching their own lead settles everything open on it — but
@@ -15106,19 +15108,24 @@ async function maPoll(){
         open.filter(a=>a.ticketId===ev.ticketId&&a.type==='replied')
             .forEach(a=>writes.push([a.id,{state:'done',closedReason:'handled by '+(HS_OWNERS[ev.actorId]||'a teammate')}]));
       }
+      // Only a response puts a lead in this queue. Somebody else dialling out is
+      // not news the owner has to act on, and it was filling the board with
+      // three-day-old leads nobody had heard from. Whether the response landed on
+      // the owner's own line or another team's is the distinction that matters.
       let type=null;
-      if(ev.direction==='INBOUND'&&ev.kind==='sms')type='replied';
-      else if(ev.direction==='INBOUND'&&ev.kind==='call'&&!ev.connected)type='missed';
-      else if(!mine&&ev.direction==='OUTBOUND'){
-        if(ev.kind==='sms'&&tls.has(String(ev.actorId)))type=null;   // TL blast — not a signal
-        else type='worked';
-      }else if(!mine&&ev.direction==='INBOUND'&&ev.kind==='call'&&ev.connected)type='worked';
+      if(ev.direction==='INBOUND'){
+        const elsewhere=ev.actorId&&!mine;
+        if(ev.kind==='sms')type=elsewhere?'worked':'replied';
+        else if(!ev.connected)type='missed';
+        else type=elsewhere?'worked':'replied';
+      }
       if(!type)continue;
 
       const day=lead.createdate?Math.max(1,Math.floor((Date.now()-Date.parse(lead.createdate))/86400000)+1):null;
       writes.push([ev.ticketId+'_'+type+'_'+ev.id,{
         type:type,state:'open',ticketId:ev.ticketId,contactId:ev.contactId,
         name:lead.name||'(no name)',phone:lead.phone||'',stage:lead.stage||'',day:day,
+        contactId:ev.contactId||lead.contactId||'',
         ts:ev.ts?Date.parse(ev.ts):Date.now(),
         actorId:ev.actorId||'',actorName:HS_OWNERS[ev.actorId]||'',
         outsideCluster:!maIsPhoenix(ev.actorId),
@@ -15152,7 +15159,8 @@ async function maPoll(){
 }
 
 /* ── rendering ─────────────────────────────────────────────────────────────── */
-const MA_TITLE={replied:'Lead replied',missed:'Missed call',worked:'Someone else worked your ticket',
+const MA_TITLE={replied:'Lead replied',missed:'Missed call',
+                worked:'Replied — on another team\'s line',
                 decline:'Asked us to stop'};
 const MA_TONE={replied:{dot:'#dc2626',bg:'#fef2f2',bd:'#fecaca'},
                missed:{dot:'#ea580c',bg:'#fff7ed',bd:'#fed7aa'},
@@ -15170,7 +15178,7 @@ function maCard(a){
   const sub=a.type==='decline'?(a.body?'“'+e(a.body)+'”':'Asked not to be contacted')
       :a.type==='replied'?(a.body?'“'+e(a.body)+'”':'Replied by SMS')
       :a.type==='missed'?'Called in, nobody answered, no callback since'
-      :(e(a.actorName||'Someone')+' '+(a.kind==='sms'?'sent an SMS':'called')+' on your lead');
+      :(a.body?'“'+e(a.body)+'” — came in on '+e(a.actorName||'another line'):'They replied on '+e(a.actorName||'another line'));
   return `<div style="border:1px solid ${c.bd};background:${c.bg};border-radius:12px;padding:12px 14px;display:flex;gap:11px;">
     <span style="width:8px;height:8px;border-radius:50%;background:${c.dot};margin-top:6px;flex-shrink:0;"></span>
     <div style="flex:1;min-width:0;">
@@ -15243,6 +15251,8 @@ async function maDismiss(id){
 function maStart(){
   if(!(CU&&CU.isAgentView))return;
   maSubscribe();                         // the live listener is the delivery path
+  if(typeof subscribeLeads==='function'&&!_leadUnsub)subscribeLeads();
+  maFollowUpWatch();                     // warn 30 minutes before each follow-up
   if(_maTimer)return;
   // Stagger the first sweep so thirty browsers do not all call at once.
   setTimeout(maPoll,Math.floor(Math.random()*45000));
@@ -15260,7 +15270,7 @@ let _maOpenBrief={};
 const MA_DO={
   replied:'Reply now — they are waiting, and the first answer usually takes the booking.',
   missed:'Call back now — they rang you, so this is the warmest this lead gets.',
-  worked:'Check the thread before you call — someone outside your team just contacted them.',
+  worked:'Your lead answered, but on another team\'s line — read that thread before you call.',
   decline:'Stop outreach on this lead. Automated messages are already blocked; tell your TL if you think this is wrong.'
 };
 async function maToggleBrief(id){
@@ -15346,13 +15356,14 @@ function renderMyActionsShell(){
     ${tab('alerts','Needs you now',open,'#dc2626')}
     ${tab('customers','Customers',untagged,'#15803d')}
     ${tab('inbound','Inbound tickets',inb.length,'#2563eb')}
-    ${tab('scheduled','Scheduled follow-ups',0,'')}
+    ${tab('scheduled','Needs follow-up',maFollowUpsDue().length,'#b45309')}
   </div>`;
   const panels={alerts:'av-myalerts',customers:'av-macustomers',inbound:'av-mainbound',scheduled:'av-myactions-sched'};
   for(const k in panels){
     const el=document.getElementById(panels[k]);
     if(el)el.style.display=(_maTab===k)?'':'none';
   }
+  if(_maTab==='scheduled')renderMaScheduled();
   if(_maTab==='customers')renderMaCustomers();
   if(_maTab==='inbound'){
     if(typeof _avReplies==='undefined'||_avReplies===null){
@@ -15566,6 +15577,80 @@ async function tlNudgeAgent(name,ownerId){
     if(!r.ok||d.error)alert('Could not send: '+(d.error||r.status));
     else toast('✅ Nudged '+name);
   }catch(err){alert('Could not send: '+err.message);}
+}
+
+
+/* ── Scheduled follow-ups, now the only place they live ──────────────────────
+   Lead Follow-Up used to be its own sidebar tab reading px_leads while My
+   Actions read my_actions, which is how an agent could log a follow-up and
+   never see it again. Everything now renders from px_leads here.             */
+let _fuAlerted={};              // followup id → already warned, this session
+let _fuTimer=null;
+
+function maMyFollowUps(){
+  const me=(CU&&CU.agentName)||'';
+  return ((typeof _leadItems!=='undefined'&&_leadItems)||[])
+    .filter(l=>l.status!=='sold'&&l.status!=='not_interested')
+    .filter(l=>!me||l.agentName===me||l.agentEmail===(CU&&CU.email))
+    .sort((a,b)=>String(a.followup||'9999').localeCompare(String(b.followup||'9999')));
+}
+function maFollowUpsDue(){
+  const today=new Date().toISOString().slice(0,10);
+  return maMyFollowUps().filter(l=>l.followup&&l.followup<=today);
+}
+function renderMaScheduled(){
+  const el=document.getElementById('av-myactions-body');
+  if(!el)return;
+  const rows=maMyFollowUps();
+  if(!rows.length){
+    el.innerHTML=`<div style="border:1px solid #e4e4e7;border-radius:12px;padding:26px;text-align:center;color:#a1a1aa;font-size:.78rem;background:#fff;">
+      Nothing scheduled. Open a lead and choose <b>Schedule follow-up</b> to put one here.</div>`;
+    return;
+  }
+  const today=new Date().toISOString().slice(0,10);
+  const card=l=>{
+    const overdue=l.followup&&l.followup<today, due=l.followup===today;
+    const tone=overdue?'#b91c1c':due?'#b45309':'#71717a';
+    const when=!l.followup?'No date':overdue?'Overdue · '+l.followup:due?'Due today'+(l.followupTime?' · '+l.followupTime:''):l.followup;
+    return `<div style="border:1px solid ${overdue?'#fecaca':due?'#fde68a':'#e4e4e7'};background:${overdue?'#fef2f2':due?'#fffbeb':'#fff'};border-radius:12px;padding:12px 14px;">
+      <div style="display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;">
+        <span style="font-size:.84rem;font-weight:700;color:#18181b;">${e(l.name||'(no name)')}</span>
+        <span style="font-size:.64rem;font-weight:700;color:${tone};">${e(when)}</span>
+        <span style="margin-left:auto;font-size:.66rem;color:#a1a1aa;">${e(l.status||'pending')}</span>
+      </div>
+      ${l.notes?`<div style="font-size:.72rem;color:#52525b;margin-top:5px;line-height:1.45;">${e(l.notes)}</div>`:''}
+      <div style="display:flex;gap:7px;margin-top:9px;">
+        ${l.ticketId?`<button onclick="maOpen('${e(l.ticketId)}')" style="padding:5px 12px;border:1px solid #e4e4e7;border-radius:8px;background:#fff;font-size:.7rem;font-weight:600;color:#3f3f46;font-family:inherit;cursor:pointer;">Open lead</button>`:''}
+        <button onclick="openLeadModal('${l.id}')" style="padding:5px 12px;border:1px solid #e4e4e7;border-radius:8px;background:#fff;font-size:.7rem;font-weight:600;color:#3f3f46;font-family:inherit;cursor:pointer;">Edit</button>
+      </div></div>`;};
+  el.innerHTML=`<div style="display:flex;flex-direction:column;gap:8px;">${rows.map(card).join('')}</div>`;
+}
+
+/* A follow-up is only useful if it arrives before the time it was set for. */
+function maFollowUpWatch(){
+  if(_fuTimer)return;
+  _fuTimer=setInterval(maCheckFollowUps,60000);
+  maCheckFollowUps();
+}
+function maCheckFollowUps(){
+  if(!(CU&&CU.isAgentView))return;
+  const now=Date.now();
+  maMyFollowUps().forEach(l=>{
+    if(!l.followup||_fuAlerted[l.id])return;
+    // A date alone means the start of the working day; a time makes it exact.
+    const at=Date.parse(l.followup+'T'+(l.followupTime||'09:00')+':00');
+    if(isNaN(at))return;
+    const mins=(at-now)/60000;
+    if(mins<=30&&mins>-5){
+      _fuAlerted[l.id]=1;
+      maPlay(true);
+      if(typeof toast==='function')toast('⏰ Follow-up with '+(l.name||'a lead')+' in '+Math.max(0,Math.round(mins))+' min');
+      if(localStorage.getItem('px-desktop-notif')==='1'&&typeof Notification!=='undefined'&&Notification.permission==='granted'){
+        try{new Notification('Follow-up in '+Math.max(0,Math.round(mins))+' min',
+          {body:(l.name||'Lead')+(l.notes?' — '+String(l.notes).slice(0,80):''),tag:'fu_'+l.id});}catch(err){}
+      }
+    }
+  });
 }
 
 </script>
