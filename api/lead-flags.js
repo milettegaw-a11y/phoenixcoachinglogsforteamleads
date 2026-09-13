@@ -56,17 +56,25 @@ export default async function handler(req, res) {
       if (!HS) return res.status(500).json({ error: 'HS_TOKEN not configured' });
       const last10 = String(req.query.phone).replace(/\D/g, '').slice(-10);
       const e164 = last10.length === 10 ? '+1' + last10 : String(req.query.phone);
-      const r = await fetch('https://api.hubapi.com/crm/v3/objects/contacts/search', {
-        method: 'POST',
-        headers: { Authorization: 'Bearer ' + HS, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filterGroups: [
-          { filters: [{ propertyName: 'phone', operator: 'EQ', value: e164 }] },
-          { filters: [{ propertyName: 'mobilephone', operator: 'EQ', value: e164 }] },
-          { filters: [{ propertyName: 'phone', operator: 'CONTAINS_TOKEN', value: '*' + last10 }] }
-        ], properties: ['firstname'], limit: 3 })
-      });
-      const d = await r.json().catch(() => ({}));
-      ids = (d.results || []).map(c => String(c.id));
+      // One filter at a time, exact first. Combining them into OR groups made a
+      // single bad group fail the whole search and silently answer "no contact",
+      // which on this endpoint means "safe to send" — the wrong way to be wrong.
+      const tries = [
+        { propertyName: 'phone', operator: 'EQ', value: e164 },
+        { propertyName: 'mobilephone', operator: 'EQ', value: e164 },
+        { propertyName: 'phone', operator: 'CONTAINS_TOKEN', value: '*' + last10 },
+        { propertyName: 'mobilephone', operator: 'CONTAINS_TOKEN', value: '*' + last10 }
+      ];
+      for (const f of tries) {
+        const r = await fetch('https://api.hubapi.com/crm/v3/objects/contacts/search', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer ' + HS, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filterGroups: [{ filters: [f] }], properties: ['firstname'], limit: 3 })
+        });
+        const d = await r.json().catch(() => ({}));
+        ids = (d.results || []).map(c => String(c.id));
+        if (ids.length) break;
+      }
       if (!ids.length) return res.status(200).json({ flags: {}, safeToSend: true, note: 'no contact on that number' });
     }
     if (!ids.length) return res.status(400).json({ error: 'Pass contactId or phone.' });
