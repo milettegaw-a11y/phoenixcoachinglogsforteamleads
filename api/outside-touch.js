@@ -96,7 +96,8 @@ export default async function handler(req, res) {
       hs('https://api.hubapi.com/crm/v4/associations/tickets/contacts/batch/read',
         { method: 'POST', headers: h, body: JSON.stringify({ inputs: c.map(id => ({ id })) }) })
         .then(r => r.json()).catch(() => ({ results: [] }))), 3);
-    const c2t = {}, t2c = {};
+    const c2t = {}, t2c = {}, bornAt = {};
+    for (const t of tickets) bornAt[t.id] = Date.parse((t.properties || {}).createdate || 0) || 0;
     for (const p of parts) for (const a of (p.results || [])) {
       const to = (a.to || [])[0];
       if (!to) continue;
@@ -136,7 +137,14 @@ export default async function handler(req, res) {
             for (const r of rows) {
               const cid = map[r.id], tid = cid && c2t[cid];
               if (!tid) continue;
+              // Apex worked this lead before it was ours — that is the normal
+              // handover, not someone else still working our lead. Only touches
+              // after the 2nd-week ticket was created count.
+              const ts = Date.parse((r.properties || {}).hs_timestamp || 0) || 0;
+              if (!ts || ts < (bornAt[tid] || 0)) continue;
               const oid = String((r.properties || {}).hubspot_owner_id || '');
+              // An activity with no owner is automation, not another team.
+              if (!oid) continue;
               touchedTickets.add(tid);
               byOwner[oid] = (byOwner[oid] || 0) + 1;
               if (samples.length < 60) samples.push({ ticketId: tid, ownerId: oid,
