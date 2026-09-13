@@ -6165,7 +6165,8 @@ function attNormalizeLead(t){
 // deliberately NEVER pushed into _hsLeads: that array is the cadence population, and
 // an inbound ticket carrying cadencePct=null would drag every average toward zero.
 function attFindLead(lid){
-  return _hsLeads.find(x=>String(x.id)===String(lid))||_attAux[String(lid)]||null;
+  return _hsLeads.find(x=>String(x.id)===String(lid))||_attAux[String(lid)]
+    ||((typeof _avReplies!=='undefined'&&_avReplies)||[]).find(x=>String(x.id)===String(lid))||null;
 }
 function attOpenPanel(id){ openLeadPanel(String(id)); }
 
@@ -6348,6 +6349,8 @@ function avReplyCard(t){
   </div>`;
 }
 function renderAgentReplies(){
+  if(typeof renderMyAlerts==='function')try{renderMyAlerts();}catch(err){}
+  if(typeof renderMyActionsShell==='function')try{renderMyActionsShell();}catch(err){}
   const el=document.getElementById('av-replies-body');
   if(!el)return;
   if(_avRepliesLoading&&!_avReplies){
@@ -15050,7 +15053,7 @@ function maSubscribe(){
 function maUnsubscribe(){if(_maUnsub){_maUnsub();_maUnsub=null;}if(_maTimer){clearInterval(_maTimer);_maTimer=null;}}
 function maBadge(){
   const due=(typeof maFollowUpsDue==='function')?maFollowUpsDue().length:0;
-  const n=_maAlerts.filter(a=>a.state==='open').length+due;
+  const n=maSecondWeek().length+maOtherTickets().length+due;
   const el=document.getElementById('nav-badge-myactions');
   if(el){el.style.display=n?'':'none';el.textContent=n||'';}
 }
@@ -15183,7 +15186,7 @@ function maCard(a){
     <span style="width:8px;height:8px;border-radius:50%;background:${c.dot};margin-top:6px;flex-shrink:0;"></span>
     <div style="flex:1;min-width:0;">
       <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;">
-        <span style="font-size:.84rem;font-weight:700;color:#18181b;">${e(a.name||'Lead')}</span>
+        <span onclick="maOpen('${a.ticketId}')" title="Open the full call and SMS history" style="font-size:.84rem;font-weight:700;color:#18181b;cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-decoration-color:#d4d4d8;">${e(a.name||'Lead')}</span>
         <span style="font-size:.64rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:${c.dot};">${e(MA_TITLE[a.type]||'')}</span>
         <span style="margin-left:auto;font-size:.66rem;color:#a1a1aa;white-space:nowrap;">${maAgo(a.ts)}</span>
       </div>
@@ -15206,19 +15209,22 @@ function maCard(a){
 function renderMyAlerts(){
   const el=document.getElementById('av-myalerts');
   if(!el)return;
-  const open=_maAlerts.filter(a=>a.state==='open').sort((a,b)=>(b.ts||0)-(a.ts||0));
+  const sw=maSecondWeek(), other=maOtherTickets();
   const inv=_maAlerts.filter(a=>a.state==='investigate');
-  if(!open.length&&!inv.length){
+  if(!sw.length&&!other.length&&!inv.length){
     el.innerHTML=`<div style="border:1px solid #e4e4e7;border-radius:12px;padding:26px;text-align:center;color:#a1a1aa;font-size:.78rem;background:#fff;">
-      Nothing waiting on you. New replies and missed calls land here the moment they happen.</div>`;
+      Nothing waiting on you. A lead who answers in the last 24 hours lands here the moment they do.</div>`;
     return;
   }
   el.innerHTML=`
-    ${open.length?`<div style="display:flex;align-items:center;gap:9px;margin-bottom:10px;">
-      <span style="font-size:.62rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#a1a1aa;">Needs you now</span>
-      <span style="font-size:.62rem;font-weight:700;color:#dc2626;background:#fef2f2;border-radius:99px;padding:1px 8px;">${open.length}</span>
+    <div style="display:flex;gap:18px;flex-wrap:wrap;margin-bottom:22px;align-items:flex-start;">
+      ${maColumn('2nd Week leads',sw.length,'answered in the last 24h',
+        sw.length?sw.slice().sort((a,b)=>(b.ts||0)-(a.ts||0)).map(maCard).join('')
+        :'<div style="border:1px dashed #e4e4e7;border-radius:12px;padding:18px;text-align:center;color:#a1a1aa;font-size:.73rem;">Nobody has answered a 2nd Week lead today.</div>')}
+      ${maColumn('Other tickets',other.length,'inbound and everything else you carry',
+        other.length?other.map(maOtherCard).join('')
+        :'<div style="border:1px dashed #e4e4e7;border-radius:12px;padding:18px;text-align:center;color:#a1a1aa;font-size:.73rem;">Nothing waiting on your other tickets.</div>')}
     </div>
-    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:22px;">${open.map(maCard).join('')}</div>`:''}
     ${inv.length?`<div style="display:flex;align-items:center;gap:9px;margin-bottom:10px;">
       <span style="font-size:.62rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#a1a1aa;">Under investigation</span>
       <span style="font-size:.62rem;font-weight:700;color:#b45309;background:#fffbeb;border-radius:99px;padding:1px 8px;">${inv.length}</span>
@@ -15237,10 +15243,13 @@ function renderMyAlerts(){
         </div></div>`).join('')}
     </div>`:''}`;
 }
+// attOpenPanel takes an id, not a lead — passing the object silently did nothing,
+// which is why clicking a card never opened the panel.
 function maOpen(ticketId){
-  const l=(typeof _hsLeads!=='undefined'?_hsLeads:[]).find(x=>String(x.id)===String(ticketId));
-  if(l&&typeof attOpenPanel==='function'){attOpenPanel(l);return;}
-  window.open('https://app.hubspot.com/contacts/'+HS_PORTAL_ID+'/ticket/'+ticketId,'_blank','noopener');
+  const id=String(ticketId);
+  const known=(typeof attFindLead==='function')&&attFindLead(id);
+  if(known&&typeof attOpenPanel==='function'){attOpenPanel(id);return;}
+  window.open('https://app.hubspot.com/contacts/'+HS_PORTAL_ID+'/ticket/'+id,'_blank','noopener');
 }
 async function maDismiss(id){
   const col=maCol();
@@ -15332,11 +15341,22 @@ let _maTab='alerts';
 let _maLeads=[];                // last seen book, from the poll
 function maSetTab(t){_maTab=t;renderMyActionsShell();}
 
+// Only the ones that slipped: a customer whose ticket was never closed as a sale.
+// A correctly tagged one is just history and belongs nowhere.
+let _maClearedCust={};
 function maCustomers(){
   return (_maLeads||[]).filter(l=>
-    String(l.lifecycle||'').toLowerCase()==='customer'
-  ).map(l=>Object.assign({},l,{untagged:!l.sold}))
-   .sort((a,b)=>(a.untagged===b.untagged)?0:(a.untagged?-1:1));
+    String(l.lifecycle||'').toLowerCase()==='customer' && !l.sold && !_maClearedCust[l.id]
+  ).map(l=>Object.assign({},l,{untagged:true}));
+}
+async function maClearCustomer(id){
+  _maClearedCust[id]=1;
+  renderMaCustomers();renderMyActionsShell();
+  try{
+    const col=maCol();
+    if(col)await col.doc('cust_'+id).set({type:'customer',state:'done',ticketId:String(id),
+      closedReason:'cleared by agent',ts:Date.now()},{merge:true});
+  }catch(err){}
 }
 function maInbound(){
   return ((typeof _avReplies!=='undefined'&&_avReplies)||[]).filter(t=>
@@ -15347,9 +15367,9 @@ function maInbound(){
 function renderMyActionsShell(){
   const wrap=document.getElementById('av-myactions-tabs');
   if(!wrap)return;
-  const open=_maAlerts.filter(a=>a.state==='open').length;
+  const open=maSecondWeek().length+maOtherTickets().length;
   const cust=maCustomers(), inb=maInbound();
-  const untagged=cust.filter(c=>c.untagged).length;
+  const untagged=cust.length;
   const tab=(k,label,n,tone)=>`<button onclick="maSetTab('${k}')" style="padding:7px 14px;border:none;border-bottom:2px solid ${_maTab===k?'#ffc94a':'transparent'};background:none;font-size:.75rem;font-weight:600;color:${_maTab===k?'#18181b':'#71717a'};font-family:inherit;cursor:pointer;margin-bottom:-1px;white-space:nowrap;">
       ${label}${n?` <span style="font-size:.62rem;font-weight:700;color:#fff;background:${tone};border-radius:99px;padding:1px 6px;margin-left:3px;">${n}</span>`:''}</button>`;
   wrap.innerHTML=`<div style="display:flex;gap:2px;border-bottom:1px solid #e4e4e7;margin-bottom:14px;flex-wrap:wrap;">
@@ -15363,6 +15383,8 @@ function renderMyActionsShell(){
     const el=document.getElementById(panels[k]);
     if(el)el.style.display=(_maTab===k)?'':'none';
   }
+  if(_maTab==='alerts'&&(typeof _avReplies==='undefined'||_avReplies===null)
+     &&typeof loadAgentReplies==='function')loadAgentReplies();
   if(_maTab==='scheduled')renderMaScheduled();
   if(_maTab==='customers')renderMaCustomers();
   if(_maTab==='inbound'){
@@ -15400,6 +15422,7 @@ function renderMaCustomers(){
                     :'Recorded correctly — nothing to do.'}</div>
       <div style="display:flex;gap:7px;margin-top:9px;">
         <button onclick="maOpen('${l.id}')" style="padding:5px 12px;border:1px solid #e4e4e7;border-radius:8px;background:#fff;font-size:.7rem;font-weight:600;color:#3f3f46;font-family:inherit;cursor:pointer;">Open ticket</button>
+        <button onclick="maClearCustomer('${l.id}')" style="padding:5px 12px;border:none;background:none;font-size:.7rem;font-weight:600;color:#a1a1aa;font-family:inherit;cursor:pointer;">Clear</button>
       </div></div>`).join('')}</div>`;
 }
 
@@ -15651,6 +15674,65 @@ function maCheckFollowUps(){
       }
     }
   });
+}
+
+
+/* ── Needs you now, in two columns ───────────────────────────────────────────
+   2nd Week tickets on the left, everything else the agent carries on the right.
+   Both columns hold the same thing: a lead who said something in the last 24
+   hours that the agent has not answered. The moment they call or text back it
+   leaves — that is the whole definition, so nothing lingers here unanswered
+   from three days ago.                                                       */
+const MA_WINDOW=24*3600000;
+
+// Did the agent answer after the customer spoke? The poll clears cards on the
+// owner's own outbound touch, but a card can outlive that between sweeps, so
+// the window is enforced here too rather than trusted.
+function maFresh(a){
+  return a.state==='open' && (Date.now()-(a.ts||0))<=MA_WINDOW;
+}
+function maSecondWeek(){ return _maAlerts.filter(maFresh); }
+
+// The other half of an agent's book: Inbound SMS and Call tickets, and anything
+// else that is not a 2nd Week ticket. Same rule — they spoke last, inside 24h.
+function maOtherTickets(){
+  const rows=((typeof _avReplies!=='undefined'&&_avReplies)||[]).filter(t=>{
+    const subj=((t.properties||{}).subject||'').trim().toLowerCase();
+    if(subj===HS_SUBJECT_2ND_WEEK.toLowerCase())return false;      // left column owns those
+    const acts=(t.calls||[]).slice().sort((x,y)=>hsTs(y.timestamp)-hsTs(x.timestamp));
+    const last=acts[0];
+    if(!last)return false;
+    const inbound=(last.direction||'').toUpperCase()==='INBOUND';
+    if(!inbound)return false;                                       // we spoke last
+    return (Date.now()-hsTs(last.timestamp))<=MA_WINDOW;
+  });
+  return rows.sort((a,b)=>hsTs((avLastActivity(b)||{}).timestamp)-hsTs((avLastActivity(a)||{}).timestamp));
+}
+
+function maColumn(title, count, hint, inner){
+  return `<div style="flex:1 1 340px;min-width:0;">
+    <div style="display:flex;align-items:baseline;gap:9px;margin-bottom:9px;">
+      <span style="font-size:.62rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#a1a1aa;">${title}</span>
+      ${count?`<span style="font-size:.62rem;font-weight:700;color:#fff;background:#dc2626;border-radius:99px;padding:1px 7px;">${count}</span>`:''}
+      <span style="font-size:.63rem;color:#a1a1aa;">${hint}</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;">${inner}</div></div>`;
+}
+function maOtherCard(t){
+  const p=t.properties||{}, last=avLastActivity(t)||{};
+  const subj=(p.subject||'Ticket').replace(/sales call required/i,'').replace(/[()]/g,'').trim()||'Ticket';
+  const body=String(last.body==null?'':last.body).trim();
+  return `<div style="border:1px solid #bfdbfe;background:#eff6ff;border-radius:12px;padding:12px 14px;">
+    <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;">
+      <span onclick="maOpen('${t.id}')" style="font-size:.84rem;font-weight:700;color:#18181b;cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-decoration-color:#d4d4d8;">${e(t.contactName||'(no name)')}</span>
+      <span style="font-size:.62rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#2563eb;">${e(subj)}</span>
+      <span style="margin-left:auto;font-size:.66rem;color:#a1a1aa;">${maAgo(hsTs(last.timestamp))}</span>
+    </div>
+    ${body?`<div style="font-size:.76rem;color:#3f3f46;margin-top:5px;line-height:1.45;">“${e(body.slice(0,160))}”</div>`:''}
+    <div style="font-size:.72rem;font-weight:600;color:#2563eb;margin-top:7px;">They spoke last — answer this one.</div>
+    <div style="display:flex;gap:7px;margin-top:9px;">
+      <button onclick="maOpen('${t.id}')" style="padding:5px 12px;border:1px solid #e4e4e7;border-radius:8px;background:#fff;font-size:.7rem;font-weight:600;color:#3f3f46;font-family:inherit;cursor:pointer;">Open lead</button>
+    </div></div>`;
 }
 
 </script>
