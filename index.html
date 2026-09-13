@@ -3900,6 +3900,16 @@ function fillCLTLs(ids){
 
 const WEEKS=Array.from({length:451},(_,i)=>550+i);
 const OM='milettegaw@homeaglowsales.com';
+// Assistant team leads run the floor alongside the OM and need the same view of
+// every team, not one team's slice. Listed here rather than in ATL_EMAILS so the
+// distinction stays visible: they are still ATLs, they just see everything.
+const OM_EMAILS=new Set([
+  'milettegaw@homeaglowsales.com',
+  'genevievepalec@homeaglowsalesone.com',
+  'renilouyutuc@homeaglowsalestwo.com',
+  'maureenulao@homeaglowsalesone.com',
+]);
+const isOMEmail=e=>OM_EMAILS.has(String(e||'').toLowerCase());
 const ADMIN='milettegaw@homeaglowsales.com';
 const NO_DELETE=new Set([
   'amerismael@homeaglowsalesone.com',
@@ -4040,6 +4050,8 @@ const TL_TEAM_MAP={
 };
 // Returns the logged-in TL's team, or '' if OM/admin (sees all)
 function myTeam(){ return (CU&&!CU.isOM&&!ATL_EMAILS.has(CU.email)&&TL_TEAM_MAP[CU.email])||''; }
+// Everything that asks "is this person a leader" already covers OM; the ATLs are
+// now inside that, so no separate branch is needed anywhere else.
 
 /* ─── FIREBASE CONFIG ───────────────────────────────────────────────────────
    Replace each REPLACE_ME_... value with your actual Firebase project keys.
@@ -4478,7 +4490,7 @@ async function doEmailContinue(){
     }
   }catch(e){ console.warn('Access fetch failed, using cached maps:',e); }
 
-  const isOM=email===OM, isTL=!!TL_TEAM_MAP[email], isAgent=AGENTS_VIEW.has(email);
+  const isOM=isOMEmail(email), isTL=!!TL_TEAM_MAP[email], isAgent=AGENTS_VIEW.has(email);
   if(!isOM&&!isTL&&!isAgent){
     err.textContent='⚠️ Email not recognised. Contact your Team Lead.';
     err.style.display='block';
@@ -4587,13 +4599,14 @@ function finishLogin(email){
   const err=document.getElementById('lerr');
   err.style.display='none';
 
-  // ── OM ──
-  if(email===OM){
+  // ── OM (and the assistant TLs, who get the same reach) ──
+  if(isOMEmail(email)){
     try{
-      CU={email,role:'Operations Manager',isOM:true}; ahSync();
+      const label=(email===OM)?'Operations Manager':(TL_TEAM_MAP[email]||'Operations Manager');
+      CU={email,role:'Operations Manager',isOM:true,displayRole:label}; ahSync();
       document.getElementById('login-page').style.display='none';
       document.getElementById('app').classList.add('on');
-      document.getElementById('hdr-user').textContent='Operations Manager';
+      document.getElementById('hdr-user').textContent=CU.displayRole||'Operations Manager';
       document.getElementById('tb-title').textContent='Coaching Logs';
       if(FB_READY){ setupListeners(); subscribeActionItems(); subscribeLeads(); } else { console.warn('OM: Firebase unavailable.'); }
       document.getElementById('admin-roster-btn').style.display='';
@@ -5296,6 +5309,7 @@ let _hsOwnerFilter=''; // '' = all owners
 let _hsTeamFilter=''; // '' = all teams
 let _hsTzFilter='';   // '' = every time zone; otherwise a TZ_ZONES key, or 'unknown'
 let _hsLeadSearch=''; // '' = no search filter
+let _hsStageFilter=''; // '' = every ticket status
 let _hsGapsOnly=false; // true = show only leads lacking cadence
 // Only show leads assigned to these four teams
 const HS_ALLOWED_TEAMS=new Set(['Team Jhay Oglimen','Team Jumz Delacruz','Team Florence Llait']);
@@ -5549,6 +5563,10 @@ function setHSOwnerFilter(val){
 function setHSTeamFilter(val){
   _hsTeamFilter=val;
   _hsOwnerFilter=''; // reset owner when team changes
+  renderHSLeads();
+}
+function setHSStageFilter(val){
+  _hsStageFilter=val||'';
   renderHSLeads();
 }
 function setHSTzFilter(val){
@@ -7246,6 +7264,7 @@ function renderHSLeads(){
   if(_hsLeadSearch){const q=_hsLeadSearch.toLowerCase();activeDays=activeDays.filter(l=>(l.contactName||'').toLowerCase().includes(q)||(l.subject||'').toLowerCase().includes(q)||(l.contactPhone||'').includes(q));}
   if(_hsTzFilter)activeDays=activeDays.filter(l=>{const z=leadZone(l.contactPhone);return _hsTzFilter==='unknown'?!z.zone:z.zone===_hsTzFilter;});
   if(_hsGapsOnly) activeDays=activeDays.filter(l=>(l.cadencePct||0)<100);
+  if(_hsStageFilter) activeDays=activeDays.filter(l=>String(l.stageId)===_hsStageFilter);
 
   // Populate TL/OM owner + team dropdowns
   const tlOwnerSel=document.getElementById('hs-owner-filter');
@@ -7296,9 +7315,23 @@ function renderHSLeads(){
       +['ET','CT','MT','AZ','PT','AKT','HT','AST'].map(function(k){return '<option value="'+k+'"'+(_hsTzFilter===k?' selected':'')+'>'+TZ_ZONES[k].label+' ('+tzAbbr(TZ_ZONES[k].iana)+')</option>';}).join('')
       +'<option value="unknown"'+(_hsTzFilter==='unknown'?' selected':'')+'>Unknown / no number</option>'
       +'</select>'
+    // Ticket status, built from what is actually in the book rather than the full
+    // stage list, so nobody picks a filter that returns nothing.
+    +(function(){
+      const counts={};
+      _hsLeads.forEach(function(l){const k=String(l.stageId||'');if(k)counts[k]=(counts[k]||0)+1;});
+      const opts=Object.keys(counts).sort(function(a,b){
+        return (HS_STAGE_LABELS[a]||a).localeCompare(HS_STAGE_LABELS[b]||b);});
+      return '<select onchange="setHSStageFilter(this.value)" title="Ticket status" style="'+_TB
+        +'font-weight:'+(_hsStageFilter?'700':'400')+';color:'+(_hsStageFilter?'#6d28d9':'#3f3f46')+';">'
+        +'<option value="">All ticket statuses</option>'
+        +opts.map(function(k){return '<option value="'+k+'"'+(_hsStageFilter===k?' selected':'')+'>'
+          +(HS_STAGE_LABELS[k]||('Stage '+k))+' ('+counts[k]+')</option>';}).join('')
+        +'</select>';
+    })()
     +'<!--GAPS_SLOT-->'
-    +((_hsAgeBucket||_hsDayFilter>0||_hsTzFilter)?'<span style="font-size:.7rem;font-weight:600;color:#b45309;">'+activeDays.length+' lead'+(activeDays.length!==1?'s':'')+' shown</span>'
-        +'<button onclick="setHSAgeBucket(\'\');setHSTzFilter(\'\');" style="font-size:.67rem;border:1px solid #e4e4e7;background:#fff;color:#52525b;border-radius:7px;padding:4px 9px;cursor:pointer;font-weight:600;font-family:inherit;">Clear</button>':'')
+    +((_hsAgeBucket||_hsDayFilter>0||_hsTzFilter||_hsStageFilter)?'<span style="font-size:.7rem;font-weight:600;color:#b45309;">'+activeDays.length+' lead'+(activeDays.length!==1?'s':'')+' shown</span>'
+        +'<button onclick="setHSAgeBucket(\'\');setHSTzFilter(\'\');setHSStageFilter(\'\');" style="font-size:.67rem;border:1px solid #e4e4e7;background:#fff;color:#52525b;border-radius:7px;padding:4px 9px;cursor:pointer;font-weight:600;font-family:inherit;">Clear</button>':'')
     +'<span style="margin-left:auto;display:flex;align-items:center;gap:7px;font-size:.67rem;color:#71717a;flex-wrap:wrap;">'
       +'<span style="font-size:.6rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#a1a1aa;">Right now</span>'
       +'<span id="tz-now-strip" style="display:flex;gap:6px;flex-wrap:wrap;">'+tzNowStripHtml()+'</span></span>'
