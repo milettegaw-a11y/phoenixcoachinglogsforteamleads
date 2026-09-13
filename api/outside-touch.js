@@ -67,25 +67,32 @@ export default async function handler(req, res) {
     // to within a few points and costs a fraction, so the week is sampled and the
     // margin is reported rather than hidden.
     const want = Math.min(Math.max(Number(b.sample) || 300, 50), 700);
-    const perDay = Math.ceil(want / 7);
+    // Taking the first N tickets of each day is not a sample, it is the earliest
+    // leads of each morning - and outside activity turned out to track the hour a
+    // lead arrives, which put a zigzag in the weekly trend that was pure method.
+    // Each day is split into four six-hour windows and drawn from evenly.
+    const WINDOWS = 4, perWin = Math.max(1, Math.ceil(want / (7 * WINDOWS)));
     const tickets = [];
     const totals = [];
     for (let day = 0; day < 7; day++) {
-      const s = monMs + day * 86400000, e2 = s + 86400000 - 1;
-      if (s > Date.now()) break;
-      const d = await search('tickets', {
-        filterGroups: [{ filters: [
-          { propertyName: 'hs_pipeline', operator: 'EQ', value: PIPELINE },
-          { propertyName: 'subject', operator: 'EQ', value: SUBJECT },
-          { propertyName: 'hubspot_owner_id', operator: 'IN', values: ours },
-          { propertyName: 'createdate', operator: 'BETWEEN', value: String(s), highValue: String(e2) }
-        ]}],
-        properties: ['createdate', 'hubspot_owner_id'],
-        limit: Math.min(perDay, 100),
-        sorts: [{ propertyName: 'createdate', direction: 'ASCENDING' }]
-      });
-      tickets.push(...(d.results || []));
-      totals.push(Number(d.total || 0));
+      for (let w = 0; w < WINDOWS; w++) {
+        const s = monMs + day * 86400000 + w * 6 * 3600000;
+        const e2 = s + 6 * 3600000 - 1;
+        if (s > Date.now()) break;
+        const d = await search('tickets', {
+          filterGroups: [{ filters: [
+            { propertyName: 'hs_pipeline', operator: 'EQ', value: PIPELINE },
+            { propertyName: 'subject', operator: 'EQ', value: SUBJECT },
+            { propertyName: 'hubspot_owner_id', operator: 'IN', values: ours },
+            { propertyName: 'createdate', operator: 'BETWEEN', value: String(s), highValue: String(e2) }
+          ]}],
+          properties: ['createdate', 'hubspot_owner_id'],
+          limit: Math.min(perWin, 100),
+          sorts: [{ propertyName: 'createdate', direction: (day + w) % 2 ? 'DESCENDING' : 'ASCENDING' }]
+        });
+        tickets.push(...(d.results || []));
+        totals.push(Number(d.total || 0));
+      }
     }
     const cohortTotal = totals.reduce((a, c) => a + c, 0);
     if (!tickets.length) return res.status(200).json({ wk, leads: cohortTotal, sampled: 0, touched: 0, pct: 0, by: {}, samples: [] });
