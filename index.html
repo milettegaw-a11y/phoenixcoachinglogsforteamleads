@@ -15582,11 +15582,27 @@ function renderMyActionsTL(){
         maAgo(a.ts),`${e(a.agent)} · ${e(a.subject||'Inbound')}`));
   }else{
     const today=new Date().toISOString().slice(0,10);
-    body=tlSimpleList(fus,'Nothing scheduled on this team.',
-      l=>{const overdue=l.followup&&l.followup<today, dueToday=l.followup===today;
-        return row(e(l.name||'(no name)'),
-          `<span style="color:${overdue?'#b91c1c':dueToday?'#b45309':'#a1a1aa'};font-weight:${overdue||dueToday?'700':'400'};">${l.followup?(overdue?'Overdue · ':dueToday?'Due today · ':'')+l.followup+(l.followupTime?' '+l.followupTime:''):'No date'}</span>`,
-          `${e(l.agentName||'')} · ${e(l.status||'pending')}`);});
+    const showTeam=!!(CU&&CU.isOM);
+    const SC={pending:'#b45309',contacted:'#2563eb',sold:'#15803d',not_interested:'#71717a'};
+    body=fus.length?`<div style="display:flex;flex-direction:column;gap:8px;">${fus.map(l=>{
+      const overdue=l.followup&&l.followup<today, dueToday=l.followup===today;
+      const when=l.followup?(overdue?'Overdue · ':dueToday?'Due today · ':'')+l.followup+(l.followupTime?' at '+l.followupTime:''):'No date set';
+      const sc=SC[l.status]||'#71717a';
+      return `<div style="background:#fff;border:1px solid ${overdue?'#fecaca':dueToday?'#fde68a':'#e4e4e7'};border-radius:12px;padding:13px 15px;">
+        <div style="display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;">
+          <span style="font-size:.84rem;font-weight:700;color:#18181b;">${e(l.name||'(no name)')}</span>
+          <span style="font-size:.6rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:${sc};">${e(String(l.status||'pending').replace('_',' '))}</span>
+          <span style="margin-left:auto;font-size:.68rem;font-weight:${overdue||dueToday?'700':'400'};color:${overdue?'#b91c1c':dueToday?'#b45309':'#a1a1aa'};white-space:nowrap;">${e(when)}</span>
+        </div>
+        <div style="font-size:.68rem;color:#a1a1aa;margin-top:4px;">
+          ${e(l.agentName||'—')}${showTeam&&tlTeamOf(l)?' · <span style="font-weight:700;color:#52525b;">'+e(cvrTeamShort(tlTeamOf(l)))+'</span>':''}
+          ${l.updatedAt?' · logged '+e(String(l.updatedAt).slice(0,10)):''}
+        </div>
+        ${l.notes?`<div style="margin-top:8px;padding:9px 11px;background:#fafafa;border:1px solid #f4f4f5;border-radius:8px;font-size:.73rem;color:#3f3f46;line-height:1.5;white-space:pre-wrap;">${e(l.notes)}</div>`
+                 :`<div style="margin-top:7px;font-size:.68rem;color:#d4d4d8;font-style:italic;">No notes left on this one.</div>`}
+        ${l.url?`<div style="margin-top:9px;"><a href="${e(l.url)}" target="_blank" rel="noopener" style="font-size:.68rem;font-weight:600;color:#3f3f46;text-decoration:none;border:1px solid #e4e4e7;border-radius:7px;padding:4px 10px;display:inline-block;">Open in HubSpot</a></div>`:''}
+      </div>`;}).join('')}</div>`
+      :`<div style="background:#fff;border:1px solid #e4e4e7;border-radius:12px;padding:26px;text-align:center;color:#a1a1aa;font-size:.78rem;">Nothing scheduled on this team.</div>`;
   }
   el.innerHTML=tlFilterBar()+board+tlTabStrip({alerts:alerts.length,customers:custs.length,inbound:inbs.length,due:due})+body;
 }
@@ -15792,6 +15808,13 @@ function tlFollowUps(){
     .filter(l=>l.status!=='sold'&&l.status!=='not_interested')
     .filter(l=>names.has(l.agentName)&&(!pick||l.agentName===pick))
     .sort((a,b)=>String(a.followup||'9999').localeCompare(String(b.followup||'9999')));
+}
+// px_leads only carries agentTeam when the agent saved it themselves, so fall
+// back to the roster — an OM has to be able to see which team a lead came from.
+function tlTeamOf(l){
+  if(l.agentTeam)return l.agentTeam;
+  const a=rosterAgents.find(x=>x.name===l.agentName);
+  return a?a.tl:'';
 }
 function tlDueCount(){const t=new Date().toISOString().slice(0,10);
   return tlFollowUps().filter(l=>l.followup&&l.followup<=t).length;}
