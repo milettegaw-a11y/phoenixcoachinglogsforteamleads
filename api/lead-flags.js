@@ -55,6 +55,7 @@ export default async function handler(req, res) {
       const HS = process.env.HS_TOKEN;
       if (!HS) return res.status(500).json({ error: 'HS_TOKEN not configured' });
       const last10 = String(req.query.phone).replace(/\D/g, '').slice(-10);
+      var lookupError = null;
       const e164 = last10.length === 10 ? '+1' + last10 : String(req.query.phone);
       // One filter at a time, exact first. Combining them into OR groups made a
       // single bad group fail the whole search and silently answer "no contact",
@@ -72,10 +73,13 @@ export default async function handler(req, res) {
           body: JSON.stringify({ filterGroups: [{ filters: [f] }], properties: ['firstname'], limit: 3 })
         });
         const d = await r.json().catch(() => ({}));
+        if (!r.ok) { lookupError = d.message || ('HubSpot ' + r.status); continue; }
         ids = (d.results || []).map(c => String(c.id));
         if (ids.length) break;
       }
-      if (!ids.length) return res.status(200).json({ flags: {}, safeToSend: true, note: 'no contact on that number' });
+      if (!ids.length) return res.status(lookupError ? 503 : 200).json(lookupError
+        ? { error: 'Could not check: ' + lookupError, safeToSend: null, note: 'lookup failed — do not treat as safe' }
+        : { flags: {}, safeToSend: true, note: 'no contact on that number' });
     }
     if (!ids.length) return res.status(400).json({ error: 'Pass contactId or phone.' });
 
