@@ -14948,7 +14948,7 @@ function cvrRenderTeamNudge(){
    Alerts live in Firestore so they survive a refresh and a team lead can see
    them; the browser listens rather than polls the database, so a card written
    by the Aircall webhook appears the moment it lands.                        */
-const MA_URGENT=['replied','missed'];
+const MA_URGENT=['replied','missed','decline'];
 const MA_POLL=30000;                       // how often we ask HubSpot for new activity
 const MA_LOOKBACK=3*86400000;              // how far back a cold start looks
 let _maAlerts=[];
@@ -15122,10 +15122,12 @@ async function maPoll(){
 }
 
 /* ── rendering ─────────────────────────────────────────────────────────────── */
-const MA_TITLE={replied:'Lead replied',missed:'Missed call',worked:'Someone else worked your ticket'};
+const MA_TITLE={replied:'Lead replied',missed:'Missed call',worked:'Someone else worked your ticket',
+                decline:'Asked us to stop'};
 const MA_TONE={replied:{dot:'#dc2626',bg:'#fef2f2',bd:'#fecaca'},
                missed:{dot:'#ea580c',bg:'#fff7ed',bd:'#fed7aa'},
-               worked:{dot:'#7c3aed',bg:'#faf5ff',bd:'#e9d5ff'}};
+               worked:{dot:'#7c3aed',bg:'#faf5ff',bd:'#e9d5ff'},
+               decline:{dot:'#b91c1c',bg:'#fef2f2',bd:'#fca5a5'}};
 function maAgo(ts){
   const m=Math.round((Date.now()-(ts||0))/60000);
   if(m<1)return 'just now';
@@ -15135,7 +15137,8 @@ function maAgo(ts){
 }
 function maCard(a){
   const c=MA_TONE[a.type]||MA_TONE.worked;
-  const sub=a.type==='replied'?(a.body?'“'+e(a.body)+'”':'Replied by SMS')
+  const sub=a.type==='decline'?(a.body?'“'+e(a.body)+'”':'Asked not to be contacted')
+      :a.type==='replied'?(a.body?'“'+e(a.body)+'”':'Replied by SMS')
       :a.type==='missed'?'Called in, nobody answered, no callback since'
       :(e(a.actorName||'Someone')+' '+(a.kind==='sms'?'sent an SMS':'called')+' on your lead');
   return `<div style="border:1px solid ${c.bd};background:${c.bg};border-radius:12px;padding:12px 14px;display:flex;gap:11px;">
@@ -15151,6 +15154,8 @@ function maCard(a){
         ${a.day?'Day '+a.day+' · ':''}${e(HS_STAGE_LABELS[a.stage]||'—')}
         ${a.outsideCluster?'<span style="color:#b45309;font-weight:700;"> · not our cluster</span>':''}
       </div>
+      ${a.declineLevel?`<div style="margin-top:6px;display:inline-block;font-size:.6rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#fff;background:#b91c1c;border-radius:5px;padding:2px 7px;">${a.declineLevel==='HARD'?'Explicit opt-out':'Declined'} · outreach blocked</div>
+        ${a.declineReason?`<div style="font-size:.68rem;color:#b91c1c;margin-top:4px;">${e(a.declineReason)}</div>`:''}`:''}
       <div style="font-size:.72rem;font-weight:600;color:${c.dot};margin-top:7px;">${e(MA_DO[a.type]||'')}</div>
       ${maBriefHtml(a)}
       <div style="display:flex;gap:7px;margin-top:9px;">
@@ -15223,7 +15228,8 @@ let _maOpenBrief={};
 const MA_DO={
   replied:'Reply now — they are waiting, and the first answer usually takes the booking.',
   missed:'Call back now — they rang you, so this is the warmest this lead gets.',
-  worked:'Check the thread before you call — someone outside your team just contacted them.'
+  worked:'Check the thread before you call — someone outside your team just contacted them.',
+  decline:'Stop outreach on this lead. Automated messages are already blocked; tell your TL if you think this is wrong.'
 };
 async function maToggleBrief(id){
   _maOpenBrief[id]=!_maOpenBrief[id];
