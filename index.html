@@ -1853,11 +1853,13 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
           </div>
           <button onclick="openMyActionModal()" style="padding:7px 16px;background:#ff7a59;color:#fff;border:none;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer;">+ Add Follow-Up</button>
         </div>
+        <div id="av-myactions-tabs"></div>
         <div id="av-myalerts" style="margin-bottom:26px;"></div>
-        <div style="display:flex;align-items:center;gap:9px;margin-bottom:10px;">
-          <span style="font-size:.62rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#a1a1aa;">Scheduled follow-ups</span>
-        </div>
+        <div id="av-macustomers" style="display:none;"></div>
+        <div id="av-mainbound" style="display:none;"></div>
+        <div id="av-myactions-sched" style="display:none;">
         <div id="av-myactions-body"><div style="color:var(--g400);font-size:.8rem;padding:16px 0;text-align:center;">Loading your actions…</div></div>
+        </div><!-- /av-myactions-sched -->
       </div><!-- /av-myactions -->
 
       <!-- CALL LIBRARY -->
@@ -4674,6 +4676,32 @@ function subscribeLeads(){
   });
 }
 
+// Opens the same Lead Follow-Up form the tab uses, prefilled from a HubSpot
+// lead. Keyed on the ticket, so scheduling the same lead twice edits the entry
+// rather than leaving two.
+let _leadFuTicket='';
+function openLeadFollowUp(ticketId){
+  const l=(_hsLeads||[]).find(x=>String(x.id)===String(ticketId))
+        ||(_avReplies||[]).find(x=>String(x.id)===String(ticketId));
+  _leadFuTicket=String(ticketId||'');
+  const existing=(_leadItems||[]).find(x=>String(x.ticketId||'')===_leadFuTicket);
+  openLeadModal(existing?existing.id:null);
+  if(!existing&&l){
+    const nm=l.contactName||(l.properties&&l.properties.subject)||l.subject||'';
+    document.getElementById('lead-name').value=nm;
+    document.getElementById('lead-url').value='https://app.hubspot.com/contacts/'+HS_PORTAL_ID+'/ticket/'+_leadFuTicket;
+    const notes=document.getElementById('lead-notes');
+    if(notes&&!notes.value){
+      const bits=[];
+      if(l.stageName||HS_STAGE_LABELS[l.stageId])bits.push('Stage: '+(l.stageName||HS_STAGE_LABELS[l.stageId]));
+      if(l.ageDays)bits.push('Day '+l.ageDays+' of cadence');
+      if(l.contactPhone)bits.push(l.contactPhone);
+      notes.value=bits.join(' · ');
+    }
+  }
+  const t=document.getElementById('lead-modal-title');
+  if(t&&!existing)t.textContent='Schedule follow-up';
+}
 function openLeadModal(id){
   const modal=document.getElementById('lead-modal');
   if(!modal)return;
@@ -4720,13 +4748,16 @@ async function saveLead(){
   } else {
     await FSB.collection('px_leads').add({
       name,url,status,followup,notes,
+      ticketId:_leadFuTicket||'',
       agentEmail:CU?CU.email:'',
       agentName,
       agentTeam,
       createdAt:now,updatedAt:now
     });
   }
+  _leadFuTicket='';
   closeLeadModal();
+  toast('✅ Saved to Lead Follow-Up');
 }
 
 async function deleteLead(id){
@@ -7446,7 +7477,7 @@ function renderHSLeads(){
     </div>`;
     const actionsHtml=`<div style="padding:10px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #f0f0f0;flex-wrap:wrap;">
       <a href="https://app.hubspot.com/contacts/${HS_PORTAL_ID}/ticket/${l.id}" target="_blank" rel="noopener" style="font-size:.69rem;font-weight:600;color:#3f3f46;text-decoration:none;border:1px solid #e4e4e7;padding:5px 11px;border-radius:7px;">Open in HubSpot</a>
-      <button onclick="openMyActionModal('${l.id}','${(l.contactName||l.subject||'').replace(/'/g,'')}');closeLeadPanel();" style="font-size:.69rem;font-weight:600;color:#3f3f46;border:1px solid #e4e4e7;padding:5px 11px;border-radius:7px;background:#fff;cursor:pointer;font-family:inherit;">Schedule follow-up</button>
+      <button onclick="openLeadFollowUp('${l.id}');closeLeadPanel();" style="font-size:.69rem;font-weight:600;color:#3f3f46;border:1px solid #e4e4e7;padding:5px 11px;border-radius:7px;background:#fff;cursor:pointer;font-family:inherit;">Schedule follow-up</button>
       <span style="margin-left:auto;font-size:.62rem;color:#a1a1aa;">Read-only · call and reply in Aircall</span>
     </div>`;
     document.getElementById('lead-panel-name').textContent=displayName;
@@ -12473,7 +12504,7 @@ function switchAgentTab(tab){
   if(secId==='__kb__'){showView('v-kb');renderAll();}else if(secId==='__settings__'){showView('v-settings');renderSettingsPage();}else if(secId==='__cvr__'){showView('v-cvr');}else if(secId==='__chat__'){showView('v-chat');initChatV2();clearChatBadge();}else{showView('v-agent');if(secId){const sec=document.getElementById(secId);if(sec)sec.style.display='';}}
   if(tab==='leads'){if(!_leadUnsub)subscribeLeads();else renderLeads();}
   if(tab==='leadmgmt')fetchHSLeads();
-  if(tab==='myactions'){loadMyActions();updateMyActionsBadge();maStart();}
+  if(tab==='myactions'){loadMyActions();updateMyActionsBadge();maStart();renderMyActionsShell();}
   const titles={coaching:'My Coaching',nte:'My NTE',ft:'My Follow Through',perf:'My Performance',mycad:'My Cadence',cvr:'2nd Week Lead CVR',clhist:'My Call History',calc:'Phoenix Calculator',attendance:'My Attendance',leads:'Lead Follow-Up',leadmgmt:'Lead Compliance',myactions:'My Actions',library:'Call Library 🎵',kb:'Knowledge Base',settings:'Settings',chat:'Team Chat'};
   const el=document.getElementById('tb-title'); if(el) el.textContent=titles[tab]||'';
   if(tab==='perf') renderAgentPerf();
@@ -15091,6 +15122,7 @@ function maSubscribe(){
     }
     _maAlerts.forEach(a=>{_maSeen[a.id]=1;});
     renderMyAlerts();
+    renderMyActionsShell();
     maBadge();
   },err=>{});
 }
@@ -15125,7 +15157,8 @@ async function maPoll(){
     const d=await r.json();
     if(d.error){_maBusy=false;return;}
     _maSince=d.now-60000;                  // small overlap so nothing slips the gap
-    const leadById={};(d.leads||[]).forEach(l=>{leadById[l.id]=l;});
+    _maLeads=d.leads||[];
+    const leadById={};_maLeads.forEach(l=>{leadById[l.id]=l;});
     const tls=maTlOwnerIds();
     const open=_maAlerts.filter(a=>a.state==='open');
     const writes=[];
@@ -15351,6 +15384,117 @@ function maBriefHtml(a){
      <div style="${CVR_LBL}margin:10px 0 4px;">Best approach</div>${e(b.approach||'—')}
      ${b.avoid?`<div style="${CVR_LBL}margin:10px 0 4px;color:#b45309;">Avoid</div><span style="color:#b45309;">${e(b.avoid)}</span>`:''}
      ${b.touches?`<div style="font-size:.64rem;color:#a1a1aa;margin-top:9px;">Read from ${b.touches} calls and messages, including other teams'.</div>`:''}`);
+}
+
+
+/* ── My Actions: Customers and Inbound ───────────────────────────────────────
+   Two queues that were invisible. A lead whose lifecycle turns Customer drops
+   straight out of Lead Compliance (it filters those out), so the agent who
+   worked it is never told they bought — least of all when the ticket was never
+   tagged as a sale. Inbound tickets are equally hidden: the compliance board
+   only shows 2nd Week, and an agent carries Inbound SMS and Call tickets too. */
+let _maTab='alerts';
+let _maLeads=[];                // last seen book, from the poll
+function maSetTab(t){_maTab=t;renderMyActionsShell();}
+
+function maCustomers(){
+  return (_maLeads||[]).filter(l=>
+    String(l.lifecycle||'').toLowerCase()==='customer'
+  ).map(l=>Object.assign({},l,{untagged:!l.sold}))
+   .sort((a,b)=>(a.untagged===b.untagged)?0:(a.untagged?-1:1));
+}
+function maInbound(){
+  return ((typeof _avReplies!=='undefined'&&_avReplies)||[]).filter(t=>
+    /inbound/i.test(((t.properties||{}).subject)||'')
+  ).sort((a,b)=>new Date((b.properties||{}).createdate||0)-new Date((a.properties||{}).createdate||0));
+}
+
+function renderMyActionsShell(){
+  const wrap=document.getElementById('av-myactions-tabs');
+  if(!wrap)return;
+  const open=_maAlerts.filter(a=>a.state==='open').length;
+  const cust=maCustomers(), inb=maInbound();
+  const untagged=cust.filter(c=>c.untagged).length;
+  const tab=(k,label,n,tone)=>`<button onclick="maSetTab('${k}')" style="padding:7px 14px;border:none;border-bottom:2px solid ${_maTab===k?'#ffc94a':'transparent'};background:none;font-size:.75rem;font-weight:600;color:${_maTab===k?'#18181b':'#71717a'};font-family:inherit;cursor:pointer;margin-bottom:-1px;white-space:nowrap;">
+      ${label}${n?` <span style="font-size:.62rem;font-weight:700;color:#fff;background:${tone};border-radius:99px;padding:1px 6px;margin-left:3px;">${n}</span>`:''}</button>`;
+  wrap.innerHTML=`<div style="display:flex;gap:2px;border-bottom:1px solid #e4e4e7;margin-bottom:14px;flex-wrap:wrap;">
+    ${tab('alerts','Needs you now',open,'#dc2626')}
+    ${tab('customers','Customers',untagged,'#15803d')}
+    ${tab('inbound','Inbound tickets',inb.length,'#2563eb')}
+    ${tab('scheduled','Scheduled follow-ups',0,'')}
+  </div>`;
+  const panels={alerts:'av-myalerts',customers:'av-macustomers',inbound:'av-mainbound',scheduled:'av-myactions-sched'};
+  for(const k in panels){
+    const el=document.getElementById(panels[k]);
+    if(el)el.style.display=(_maTab===k)?'':'none';
+  }
+  if(_maTab==='customers')renderMaCustomers();
+  if(_maTab==='inbound'){
+    if(typeof _avReplies==='undefined'||_avReplies===null){
+      if(typeof loadAgentReplies==='function')loadAgentReplies();
+    }
+    renderMaInbound();
+  }
+}
+
+function renderMaCustomers(){
+  const el=document.getElementById('av-macustomers');
+  if(!el)return;
+  const rows=maCustomers();
+  if(!rows.length){
+    el.innerHTML=`<div style="border:1px solid #e4e4e7;border-radius:12px;padding:26px;text-align:center;color:#a1a1aa;font-size:.78rem;background:#fff;">
+      None of your leads have turned into customers in the last three weeks.</div>`;
+    return;
+  }
+  el.innerHTML=`<div style="font-size:.72rem;color:#71717a;margin-bottom:11px;line-height:1.5;">
+      Leads you were holding whose contact is now a <b>Customer</b>. They leave Lead Compliance the moment that happens,
+      so this is the only place you would see them. A <b style="color:#b45309;">not tagged</b> one bought without the ticket
+      being closed as a sale — worth telling your team lead, because the credit may be sitting nowhere.</div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+    ${rows.map(l=>`<div style="border:1px solid ${l.untagged?'#fde68a':'#e4e4e7'};background:${l.untagged?'#fffbeb':'#fff'};border-radius:12px;padding:12px 14px;">
+      <div style="display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;">
+        <span style="font-size:.84rem;font-weight:700;color:#18181b;">${e(l.name||'(no name)')}</span>
+        ${l.untagged
+          ? '<span style="font-size:.6rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#fff;background:#b45309;border-radius:5px;padding:2px 7px;">Not tagged as a sale</span>'
+          : '<span style="font-size:.6rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#15803d;">Closed as a sale</span>'}
+        <span style="margin-left:auto;font-size:.66rem;color:#a1a1aa;">${e(HS_STAGE_LABELS[l.stage]||'—')}</span>
+      </div>
+      <div style="font-size:.71rem;color:#52525b;margin-top:5px;">
+        ${l.untagged?'They became a customer, but the ticket you held was never closed as a sale.'
+                    :'Recorded correctly — nothing to do.'}</div>
+      <div style="display:flex;gap:7px;margin-top:9px;">
+        <button onclick="maOpen('${l.id}')" style="padding:5px 12px;border:1px solid #e4e4e7;border-radius:8px;background:#fff;font-size:.7rem;font-weight:600;color:#3f3f46;font-family:inherit;cursor:pointer;">Open ticket</button>
+      </div></div>`).join('')}</div>`;
+}
+
+function renderMaInbound(){
+  const el=document.getElementById('av-mainbound');
+  if(!el)return;
+  if(typeof _avRepliesLoading!=='undefined'&&_avRepliesLoading){
+    el.innerHTML='<div style="border:1px solid #e4e4e7;border-radius:12px;padding:26px;text-align:center;color:#a1a1aa;font-size:.78rem;background:#fff;">Loading your inbound tickets…</div>';
+    return;
+  }
+  const rows=maInbound();
+  if(!rows.length){
+    el.innerHTML=`<div style="border:1px solid #e4e4e7;border-radius:12px;padding:26px;text-align:center;color:#a1a1aa;font-size:.78rem;background:#fff;">
+      No inbound tickets assigned to you in the last two weeks.</div>`;
+    return;
+  }
+  el.innerHTML=`<div style="font-size:.72rem;color:#71717a;margin-bottom:11px;line-height:1.5;">
+      Tickets raised because the customer reached out to you. Lead Compliance only shows 2nd Week tickets, so these never appear there.</div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+    ${rows.map(t=>{const p=t.properties||{};
+      const age=p.createdate?Math.max(0,Math.floor((Date.now()-Date.parse(p.createdate))/3600000)):null;
+      return `<div style="border:1px solid #e4e4e7;background:#fff;border-radius:12px;padding:12px 14px;">
+        <div style="display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;">
+          <span style="font-size:.84rem;font-weight:700;color:#18181b;">${e(t.contactName||'(no name)')}</span>
+          <span style="font-size:.6rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#2563eb;background:#eff6ff;border-radius:5px;padding:2px 7px;">${e((p.subject||'Inbound').replace(/sales call required/i,'').trim()||'Inbound')}</span>
+          <span style="margin-left:auto;font-size:.66rem;color:#a1a1aa;">${age===null?'':age<48?age+'h old':Math.round(age/24)+'d old'}</span>
+        </div>
+        <div style="font-size:.66rem;color:#a1a1aa;margin-top:4px;">${e(HS_STAGE_LABELS[p.hs_pipeline_stage]||'—')}</div>
+        <div style="display:flex;gap:7px;margin-top:9px;">
+          <button onclick="maOpen('${t.id}')" style="padding:5px 12px;border:1px solid #e4e4e7;border-radius:8px;background:#fff;font-size:.7rem;font-weight:600;color:#3f3f46;font-family:inherit;cursor:pointer;">Open ticket</button>
+        </div></div>`;}).join('')}</div>`;
 }
 
 </script>
