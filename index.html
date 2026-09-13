@@ -2521,10 +2521,6 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
       <div style="font-size:.74rem;color:var(--g500);margin-top:2px;">What your agents are being asked to work, live</div>
     </div>
     <div style="display:flex;gap:8px;">
-      <select id="tl-actions-agent-filter" onchange="renderMyActionsTL()" style="font-size:.72rem;border:1.5px solid #e5e7eb;border-radius:8px;padding:5px 10px;background:#fff;color:#374151;cursor:pointer;">
-        <option value="">All Agents</option>
-      </select>
-      <button onclick="loadMyActionsTL()" style="padding:7px 14px;border:1px solid #e4e4e7;border-radius:8px;background:#fff;color:#3f3f46;font-size:.78rem;font-weight:600;cursor:pointer;font-family:inherit;">↻ Refresh</button>
       <button onclick="openMyActionModal()" style="padding:7px 16px;background:#ff7a59;color:#fff;border:none;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer;">+ Add Follow-Up</button>
     </div>
   </div>
@@ -6349,6 +6345,7 @@ function avReplyCard(t){
   </div>`;
 }
 function renderAgentReplies(){
+  if(typeof maRecordInbound==='function')try{maRecordInbound();}catch(err){}
   if(typeof renderMyAlerts==='function')try{renderMyAlerts();}catch(err){}
   if(typeof renderMyActionsShell==='function')try{renderMyActionsShell();}catch(err){}
   const el=document.getElementById('av-replies-body');
@@ -8041,7 +8038,7 @@ function switchOM(tab){
   if(tab==='leadmgmt')fetchHSLeads();
   if(tab==='caddash'){renderCadDash();saveDailyCadenceSnapshot();}
   if(tab==='cvr')renderCVRDash(); else cvrStopPoll();
-  if(tab==='myactions'){loadMyActionsTL();updateMyActionsBadge();}
+  if(tab==='myactions'){if(!_leadUnsub)subscribeLeads();loadMyActionsTL();updateMyActionsBadge();}
   if(tab==='onboard'){subscribeOnboard();renderOnboardDash();}
   if(tab==='settings') renderSettingsPage();
   if(tab==='chat'){initChatV2();clearChatBadge();}
@@ -9391,7 +9388,7 @@ function tlShowView(tab){
   if(tab==='leadmgmt')fetchHSLeads();
   if(tab==='caddash'){renderCadDash();saveDailyCadenceSnapshot();}
   if(tab==='cvr')renderCVRDash(); else cvrStopPoll();
-  if(tab==='myactions'){loadMyActionsTL();updateMyActionsBadge();}
+  if(tab==='myactions'){if(!_leadUnsub)subscribeLeads();loadMyActionsTL();updateMyActionsBadge();}
   if(tab==='onboard'){subscribeOnboard();renderOnboardDash();}
   if(tab==='cl') renderCLLogs();
   if(tab==='settings') renderSettingsPage();
@@ -15152,6 +15149,15 @@ async function maPoll(){
       }
     }
 
+    // A customer nobody tagged, and the inbound tickets this agent carries, are
+    // only visible from inside their own session. Recording them here is what
+    // lets a team lead or an OM see the same queues without another HubSpot call.
+    (_maLeads||[]).forEach(l=>{
+      const lc=String(l.lifecycle||'').toLowerCase();
+      if(lc==='customer'&&!l.sold)writes.push(['cust_'+l.id,{
+        type:'customer',state:'open',ticketId:String(l.id),name:l.name||'(no name)',
+        stage:l.stage||'',lifecycle:lc,ts:Date.now(),createdAt:Date.now()}]);
+    });
     if(writes.length){
       const batch=FSB.batch();
       writes.slice(0,400).forEach(([id,data])=>batch.set(col.doc(id),data,{merge:true}));
@@ -15512,74 +15518,81 @@ function tlDueFollowUps(){
 function renderMyActionsTL(){
   const el=document.getElementById('tl-myactions-body');
   if(!el)return;
-  const filterSel=document.getElementById('tl-actions-agent-filter');
-  const agents=tlScopeAgents();
-  if(filterSel&&filterSel.options.length<=1){
-    filterSel.innerHTML='<option value="">All agents</option>'+
-      agents.map(a=>`<option value="${e(a.name)}">${e(a.name)}</option>`).join('');
+  if(_tlAlertsLoading&&!_tlAlerts.length){
+    el.innerHTML='<div style="color:#a1a1aa;font-size:.8rem;padding:24px;text-align:center;">Loading the team\'s queue…</div>';
+    return;
   }
-  const pick=filterSel?filterSel.value:'';
-  const scope=_tlAlerts.filter(a=>!pick||a.agent===pick);
-  const open=scope.filter(a=>a.state==='open');
-  const due=tlDueFollowUps().filter(l=>!pick||l.agentName===pick);
-  const replies=open.filter(a=>a.type==='replied').length;
-  const declines=open.filter(a=>a.type==='decline').length;
-  const investigate=scope.filter(a=>a.state==='investigate').length;
-  const who=(CU&&CU.isOM)?'Cluster Lette':cvrTeamShort(myTeam()||'');
+  const alerts=tlAlertsOfType(MA_RESPONSE);
+  const custs=tlAlertsOfType(['customer']);
+  const inbs=tlAlertsOfType(['inbound']);
+  const fus=tlFollowUps(), due=tlDueCount();
+  const inv=_tlAlerts.filter(a=>a.state==='investigate');
+  const who=(CU&&CU.isOM)?(_tlTeamF?cvrTeamShort(_tlTeamF):'Cluster Lette'):cvrTeamShort(myTeam()||'');
 
   const kpi=(n,label,sub,color)=>`<div style="padding:15px 20px;flex:1 1 150px;min-width:0;">
       <div style="font-size:.61rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#a1a1aa;margin-bottom:7px;">${label}</div>
       <div style="font-size:1.5rem;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;color:${color};">${n}</div>
       <div style="font-size:.65rem;color:#a1a1aa;margin-top:5px;">${sub}</div></div>`;
 
-  if(_tlAlertsLoading&&!_tlAlerts.length){
-    el.innerHTML='<div style="color:#a1a1aa;font-size:.8rem;padding:24px;text-align:center;">Loading the team\'s queue…</div>';
-    return;
-  }
-  // Group by agent, busiest first — that is the order a lead actually works it.
-  const byAgent={};
-  open.forEach(a=>{(byAgent[a.agent]=byAgent[a.agent]||[]).push(a);});
-  const rows=Object.entries(byAgent).sort((a,b)=>b[1].length-a[1].length);
-
-  el.innerHTML=`
-  <div style="background:#fff;border:1px solid #e4e4e7;border-radius:12px;margin-bottom:14px;">
-    <div style="padding:14px 20px 0;font-size:.7rem;color:#71717a;">${e(who)}${pick?' · '+e(pick):''}</div>
+  const board=`<div style="background:#fff;border:1px solid #e4e4e7;border-radius:12px;margin-bottom:14px;">
+    <div style="padding:14px 20px 0;font-size:.7rem;color:#71717a;">${e(who)}</div>
     <div style="display:flex;flex-wrap:wrap;border-top:1px solid #f4f4f5;margin-top:10px;">
-      ${kpi(open.length,'Needs working','Live on their leads right now',open.length?'#b91c1c':'#15803d')}
+      ${kpi(alerts.length,'Needs working','Answered in the last 24h',alerts.length?'#b91c1c':'#15803d')}
       <div style="width:1px;background:#f4f4f5;"></div>
-      ${kpi(due.length,'Needs follow-up','Scheduled, due today or overdue',due.length?'#b45309':'#15803d')}
+      ${kpi(due,'Needs follow-up','Due today or overdue',due?'#b45309':'#15803d')}
       <div style="width:1px;background:#f4f4f5;"></div>
-      ${kpi(replies,'Replies waiting','Customer spoke last','#dc2626')}
+      ${kpi(custs.length,'Untagged customers','Bought, never closed as a sale',custs.length?'#b45309':'#15803d')}
       <div style="width:1px;background:#f4f4f5;"></div>
-      ${kpi(declines,'Asked us to stop','Outreach blocked',declines?'#b91c1c':'#a1a1aa')}
-      ${investigate?'<div style="width:1px;background:#f4f4f5;"></div>'+kpi(investigate,'Under investigation','Closed from outside the cluster','#b45309'):''}
-    </div>
-  </div>
-  ${rows.length?rows.map(([name,list])=>{
-    const oid=list[0].ownerId;
-    const rep=list.filter(a=>a.type==='replied').length;
-    return `<div style="background:#fff;border:1px solid #e4e4e7;border-radius:12px;margin-bottom:9px;overflow:hidden;">
-      <div style="padding:11px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid #f4f4f5;">
-        <span style="font-size:.84rem;font-weight:700;color:#18181b;">${e(name)}</span>
-        <span style="font-size:.66rem;color:#a1a1aa;">${list.length} waiting${rep?' · '+rep+' replied':''}</span>
-        <button onclick="tlNudgeAgent('${e(name)}','${oid}')" style="margin-left:auto;display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border:1px solid #e4e4e7;border-radius:8px;background:#fff;font-size:.68rem;font-weight:600;color:#4a154b;font-family:inherit;cursor:pointer;">
-          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="M16 9a4 4 0 0 1 0 6"/><path d="M19 6.5a8 8 0 0 1 0 11"/></svg>
-          Nudge</button>
-      </div>
-      <div style="padding:4px 0;">
+      ${kpi(inbs.length,'Inbound tickets','Carried outside the 2nd Week book','#2563eb')}
+      ${inv.length?'<div style="width:1px;background:#f4f4f5;"></div>'+kpi(inv.length,'Under investigation','Closed from outside the cluster','#b45309'):''}
+    </div></div>`;
+
+  const row=(name,right,sub)=>`<div style="padding:10px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #fafafa;flex-wrap:wrap;">
+      <span style="font-size:.78rem;font-weight:600;color:#18181b;min-width:0;">${name}</span>
+      ${sub?`<span style="font-size:.66rem;color:#a1a1aa;">${sub}</span>`:''}
+      <span style="margin-left:auto;font-size:.66rem;color:#a1a1aa;white-space:nowrap;">${right}</span></div>`;
+
+  let body='';
+  if(_tlTab==='alerts'){
+    const byAgent={};
+    alerts.forEach(a=>{(byAgent[a.agent]=byAgent[a.agent]||[]).push(a);});
+    const rows=Object.entries(byAgent).sort((a,b)=>b[1].length-a[1].length);
+    body=rows.length?rows.map(([name,list])=>{
+      const rep=list.filter(a=>a.type==='replied').length;
+      return `<div style="background:#fff;border:1px solid #e4e4e7;border-radius:12px;margin-bottom:9px;overflow:hidden;">
+        <div style="padding:11px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid #f4f4f5;">
+          <span style="font-size:.84rem;font-weight:700;color:#18181b;">${e(name)}</span>
+          <span style="font-size:.66rem;color:#a1a1aa;">${list.length} waiting${rep?' · '+rep+' replied':''}</span>
+          <button onclick="tlNudgeAgent('${e(name)}','${list[0].ownerId}')" style="margin-left:auto;display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border:1px solid #e4e4e7;border-radius:8px;background:#fff;font-size:.68rem;font-weight:600;color:#4a154b;font-family:inherit;cursor:pointer;">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="M16 9a4 4 0 0 1 0 6"/><path d="M19 6.5a8 8 0 0 1 0 11"/></svg>
+            Nudge</button></div>
         ${list.slice(0,8).map(a=>{const c=MA_TONE[a.type]||MA_TONE.worked;
           return `<div style="padding:7px 16px;display:flex;align-items:center;gap:9px;border-bottom:1px solid #fafafa;">
             <span style="width:7px;height:7px;border-radius:50%;background:${c.dot};flex-shrink:0;"></span>
-            <span style="font-size:.75rem;font-weight:600;color:#18181b;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${e(a.name||'Lead')}</span>
-            <span style="font-size:.64rem;font-weight:700;color:${c.dot};white-space:nowrap;">${e(MA_TITLE[a.type]||'')}</span>
-            <span style="margin-left:auto;font-size:.64rem;color:#a1a1aa;white-space:nowrap;">${maAgo(a.ts)}</span>
-          </div>`;}).join('')}
+            <span onclick="maOpen('${a.ticketId}')" style="font-size:.75rem;font-weight:600;color:#18181b;cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-decoration-color:#d4d4d8;">${e(a.name||'Lead')}</span>
+            <span style="font-size:.64rem;font-weight:700;color:${c.dot};">${e(MA_TITLE[a.type]||'')}</span>
+            <span style="margin-left:auto;font-size:.64rem;color:#a1a1aa;">${maAgo(a.ts)}</span></div>`;}).join('')}
         ${list.length>8?`<div style="padding:6px 16px;font-size:.65rem;color:#a1a1aa;">and ${list.length-8} more</div>`:''}
-      </div></div>`;}).join('')
-  :`<div style="background:#fff;border:1px solid #e4e4e7;border-radius:12px;padding:26px;text-align:center;color:#a1a1aa;font-size:.78rem;">
-      Nothing waiting on ${e(who)} right now.</div>`}`;
+      </div>`;}).join('')
+      :`<div style="background:#fff;border:1px solid #e4e4e7;border-radius:12px;padding:26px;text-align:center;color:#a1a1aa;font-size:.78rem;">Nobody has answered in the last 24 hours.</div>`;
+  }else if(_tlTab==='customers'){
+    body=tlSimpleList(custs,'No untagged customers — every purchase has its ticket closed as a sale.',
+      a=>row(`<span onclick="maOpen('${a.ticketId}')" style="cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-decoration-color:#d4d4d8;">${e(a.name||'(no name)')}</span>`,
+        maAgo(a.ts),`${e(a.agent)} · <span style="color:#b45309;font-weight:700;">not closed as a sale</span>`));
+  }else if(_tlTab==='inbound'){
+    body=tlSimpleList(inbs,'No inbound tickets on this team right now.',
+      a=>row(`<span onclick="maOpen('${a.ticketId}')" style="cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-decoration-color:#d4d4d8;">${e(a.name||'(no name)')}</span>`,
+        maAgo(a.ts),`${e(a.agent)} · ${e(a.subject||'Inbound')}`));
+  }else{
+    const today=new Date().toISOString().slice(0,10);
+    body=tlSimpleList(fus,'Nothing scheduled on this team.',
+      l=>{const overdue=l.followup&&l.followup<today, dueToday=l.followup===today;
+        return row(e(l.name||'(no name)'),
+          `<span style="color:${overdue?'#b91c1c':dueToday?'#b45309':'#a1a1aa'};font-weight:${overdue||dueToday?'700':'400'};">${l.followup?(overdue?'Overdue · ':dueToday?'Due today · ':'')+l.followup+(l.followupTime?' '+l.followupTime:''):'No date'}</span>`,
+          `${e(l.agentName||'')} · ${e(l.status||'pending')}`);});
+  }
+  el.innerHTML=tlFilterBar()+board+tlTabStrip({alerts:alerts.length,customers:custs.length,inbound:inbs.length,due:due})+body;
 }
-
 // Sends the agent the same list the lead is looking at.
 async function tlNudgeAgent(name,ownerId){
   const list=_tlAlerts.filter(a=>a.agent===name&&a.state==='open');
@@ -15688,8 +15701,9 @@ const MA_WINDOW=24*3600000;
 // Did the agent answer after the customer spoke? The poll clears cards on the
 // owner's own outbound touch, but a card can outlive that between sweeps, so
 // the window is enforced here too rather than trusted.
+const MA_RESPONSE=['replied','missed','worked','decline'];
 function maFresh(a){
-  return a.state==='open' && (Date.now()-(a.ts||0))<=MA_WINDOW;
+  return a.state==='open' && MA_RESPONSE.indexOf(a.type)>=0 && (Date.now()-(a.ts||0))<=MA_WINDOW;
 }
 function maSecondWeek(){ return _maAlerts.filter(maFresh); }
 
@@ -15733,6 +15747,98 @@ function maOtherCard(t){
     <div style="display:flex;gap:7px;margin-top:9px;">
       <button onclick="maOpen('${t.id}')" style="padding:5px 12px;border:1px solid #e4e4e7;border-radius:8px;background:#fff;font-size:.7rem;font-weight:600;color:#3f3f46;font-family:inherit;cursor:pointer;">Open lead</button>
     </div></div>`;
+}
+
+
+/* Inbound tickets live only in the agent's own session, so the session writes a
+   thin record of them where a team lead can see it too. */
+async function maRecordInbound(){
+  const col=(typeof maCol==='function')&&maCol();
+  if(!col||!(CU&&CU.isAgentView))return;
+  const rows=(typeof maInbound==='function')?maInbound():[];
+  if(!rows.length)return;
+  try{
+    const batch=FSB.batch();
+    rows.slice(0,25).forEach(t=>{
+      const p=t.properties||{};
+      batch.set(col.doc('inb_'+t.id),{
+        type:'inbound',state:'open',ticketId:String(t.id),
+        name:t.contactName||'(no name)',
+        subject:(p.subject||'Inbound'),stage:p.hs_pipeline_stage||'',
+        ts:p.createdate?Date.parse(p.createdate):Date.now(),createdAt:Date.now()
+      },{merge:true});
+    });
+    await batch.commit();
+  }catch(err){}
+}
+
+/* ── My Actions for a team lead or an OM: the same four queues ──────────────
+   A team lead already only sees their own team, so they filter by agent. An OM
+   sees the cluster and filters by team first, then by agent within it.       */
+let _tlTab='alerts';
+let _tlTeamF='';
+function tlSetTab(t){_tlTab=t;renderMyActionsTL();}
+function tlSetTeamF(v){_tlTeamF=v||'';
+  const sel=document.getElementById('tl-actions-agent-filter');
+  if(sel)sel.value='';
+  renderMyActionsTL();}
+
+function tlScoped(){
+  let list=tlScopeAgents();
+  if(CU&&CU.isOM&&_tlTeamF)list=list.filter(a=>a.tl===_tlTeamF);
+  return list;
+}
+function tlAlertsOfType(types){
+  const names=new Set(tlScoped().map(a=>a.name));
+  const sel=document.getElementById('tl-actions-agent-filter');
+  const pick=sel?sel.value:'';
+  return _tlAlerts.filter(a=>names.has(a.agent)&&(!pick||a.agent===pick)
+    &&types.indexOf(a.type)>=0&&a.state==='open');
+}
+function tlFollowUps(){
+  const names=new Set(tlScoped().map(a=>a.name));
+  const sel=document.getElementById('tl-actions-agent-filter');
+  const pick=sel?sel.value:'';
+  const today=new Date().toISOString().slice(0,10);
+  return ((typeof _leadItems!=='undefined'&&_leadItems)||[])
+    .filter(l=>l.status!=='sold'&&l.status!=='not_interested')
+    .filter(l=>names.has(l.agentName)&&(!pick||l.agentName===pick))
+    .sort((a,b)=>String(a.followup||'9999').localeCompare(String(b.followup||'9999')));
+}
+function tlDueCount(){const t=new Date().toISOString().slice(0,10);
+  return tlFollowUps().filter(l=>l.followup&&l.followup<=t).length;}
+
+function tlFilterBar(){
+  const agents=tlScoped();
+  const sel=document.getElementById('tl-actions-agent-filter');
+  const cur=sel?sel.value:'';
+  const teamOpts=[...HS_ALLOWED_TEAMS].sort();
+  return `<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
+    ${(CU&&CU.isOM)?`<select onchange="tlSetTeamF(this.value)" style="font-size:.72rem;border:1px solid #e4e4e7;border-radius:8px;padding:5px 10px;background:#fff;color:${_tlTeamF?'#18181b':'#3f3f46'};font-weight:${_tlTeamF?'700':'400'};cursor:pointer;font-family:inherit;">
+      <option value="">All teams</option>
+      ${teamOpts.map(t=>`<option value="${e(t)}"${_tlTeamF===t?' selected':''}>${e(cvrTeamShort(t))}</option>`).join('')}
+    </select>`:''}
+    <select id="tl-actions-agent-filter" onchange="renderMyActionsTL()" style="font-size:.72rem;border:1px solid #e4e4e7;border-radius:8px;padding:5px 10px;background:#fff;color:${cur?'#18181b':'#3f3f46'};font-weight:${cur?'700':'400'};cursor:pointer;font-family:inherit;">
+      <option value="">All agents${(CU&&CU.isOM&&_tlTeamF)?' in '+e(cvrTeamShort(_tlTeamF)):''}</option>
+      ${agents.map(a=>`<option value="${e(a.name)}"${cur===a.name?' selected':''}>${e(a.name)}</option>`).join('')}
+    </select>
+    <button onclick="loadMyActionsTL()" style="padding:5px 12px;border:1px solid #e4e4e7;border-radius:8px;background:#fff;color:#3f3f46;font-size:.72rem;font-weight:600;cursor:pointer;font-family:inherit;">↻ Refresh</button>
+  </div>`;
+}
+function tlTabStrip(counts){
+  const t=(k,label,n,tone)=>`<button onclick="tlSetTab('${k}')" style="padding:7px 14px;border:none;border-bottom:2px solid ${_tlTab===k?'#ffc94a':'transparent'};background:none;font-size:.75rem;font-weight:600;color:${_tlTab===k?'#18181b':'#71717a'};font-family:inherit;cursor:pointer;margin-bottom:-1px;white-space:nowrap;">
+    ${label}${n?` <span style="font-size:.62rem;font-weight:700;color:#fff;background:${tone};border-radius:99px;padding:1px 6px;margin-left:3px;">${n}</span>`:''}</button>`;
+  return `<div style="display:flex;gap:2px;border-bottom:1px solid #e4e4e7;margin-bottom:14px;flex-wrap:wrap;">
+    ${t('alerts','Needs you now',counts.alerts,'#dc2626')}
+    ${t('customers','Customers',counts.customers,'#15803d')}
+    ${t('inbound','Inbound tickets',counts.inbound,'#2563eb')}
+    ${t('scheduled','Needs follow-up',counts.due,'#b45309')}
+  </div>`;
+}
+function tlSimpleList(rows,empty,line){
+  if(!rows.length)return `<div style="background:#fff;border:1px solid #e4e4e7;border-radius:12px;padding:26px;text-align:center;color:#a1a1aa;font-size:.78rem;">${empty}</div>`;
+  return `<div style="background:#fff;border:1px solid #e4e4e7;border-radius:12px;overflow:hidden;">
+    ${rows.map(line).join('')}</div>`;
 }
 
 </script>
