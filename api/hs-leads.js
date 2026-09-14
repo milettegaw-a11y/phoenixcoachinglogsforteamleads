@@ -115,23 +115,33 @@ export default async function handler(req, res) {
   // the stale figures with a warning rather than fresh zeros.
   let searchFailed = false;
 
-  // Paginated CRM search helper
+  // Paginated CRM search helper.
+  //
+  // A failed search returns an error body with no `results`, which reads exactly
+  // like "nothing matched" — indistinguishable, downstream, from a lead nobody
+  // worked. Measured against production, roughly one search in five was coming
+  // back this way under load. hsFetch only retries an explicit 429, so anything
+  // else (a 5xx, a search-service wobble) got one shot and its page of leads
+  // silently dropped to 0%. Retry every failure, and only then admit defeat.
   const searchAll = async (url, body, maxResults = 1000) => {
     const results = [];
     let after;
     do {
       const pageBody = after ? { ...body, after } : body;
-      const resp = await hsFetch(url, {
-        method: 'POST', headers: h, body: JSON.stringify(pageBody)
-      });
-      const data = await resp.json().catch(() => ({ results: [] }));
-      // A search that fails returns an error body with no `results`, which reads
-      // exactly like "nothing matched". That is how a 100-value cap turned into
-      // silent 0% cadence for weeks — so say so in the logs.
-      if (!resp.ok || (!data.results && data.message)) {
-        searchFailed = true;
-        console.error('HubSpot search failed', resp.status, url, data.message || '');
+      let data = null;
+      for (let attempt = 0; attempt < 4; attempt++) {
+        const resp = await hsFetch(url, {
+          method: 'POST', headers: h, body: JSON.stringify(pageBody)
+        });
+        const parsed = await resp.json().catch(() => null);
+        if (resp.ok && parsed && parsed.results) { data = parsed; break; }
+        console.error('HubSpot search failed (attempt ' + (attempt + 1) + ')',
+          resp.status, url, (parsed && parsed.message) || '');
+        // Exponential with jitter: thirty browsers limited at the same instant
+        // must not all come back at the same instant.
+        if (attempt < 3) await new Promise(r => setTimeout(r, 500 * Math.pow(2, attempt) + Math.floor(Math.random() * 400)));
       }
+      if (!data) { searchFailed = true; break; }
       results.push(...(data.results || []));
       after = data.paging?.next?.after;
     } while (after && results.length < maxResults);
@@ -504,9 +514,15 @@ export default async function handler(req, res) {
       for (let i = 0; i < allContactIds.length; i += CONTACT_IN_MAX)
         contactChunks.push(allContactIds.slice(i, i + CONTACT_IN_MAX));
 
-      const chunkParts = await Promise.all(contactChunks.map(chunk => {
+      // Sequential, not parallel. Each chunk is already two searches, three day
+      // shards run at once in the browser, and thirty agents refresh together —
+      // firing every chunk simultaneously is what put us over HubSpot's per-second
+      // limit. A refresh that takes a few seconds longer and comes back whole is
+      // worth more than a fast one that quietly under-reports the team.
+      const chunkParts = [];
+      for (const chunk of contactChunks) {
         const contactIn = { propertyName: 'associations.contact', operator: 'IN', values: chunk };
-        return Promise.all([
+        chunkParts.push(await Promise.all([
           searchAll('https://api.hubapi.com/crm/v3/objects/calls/search', {
             filterGroups: [{ filters: [timeGTE, timeLT, contactIn] }],
             properties: ['hs_timestamp','hs_call_status','hs_call_disposition','hs_call_direction','hs_call_duration','hubspot_owner_id','hs_call_body','hs_call_recording_url'],
@@ -519,8 +535,8 @@ export default async function handler(req, res) {
             properties: ['hs_timestamp','hs_communication_channel_type','hubspot_owner_id','hs_communication_logged_from','hs_communication_body'],
             limit: 200
           }, 10000)
-        ]);
-      }));
+        ]));
+      }
       const recentCallList = chunkParts.flatMap(part => part[0]);
       const recentSmsList  = chunkParts.flatMap(part => part[1]);
 
