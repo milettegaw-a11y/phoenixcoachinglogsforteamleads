@@ -120,6 +120,11 @@ export default async function handler(req, res) {
         method: 'POST', headers: h, body: JSON.stringify(pageBody)
       });
       const data = await resp.json().catch(() => ({ results: [] }));
+      // A search that fails returns an error body with no `results`, which reads
+      // exactly like "nothing matched". That is how a 100-value cap turned into
+      // silent 0% cadence for weeks — so say so in the logs.
+      if (!resp.ok || (!data.results && data.message))
+        console.error('HubSpot search failed', resp.status, url, data.message || '');
       results.push(...(data.results || []));
       after = data.paging?.next?.after;
     } while (after && results.length < maxResults);
@@ -481,25 +486,36 @@ export default async function handler(req, res) {
     if (allContactIds.length > 0) {
       const timeGTE    = { propertyName: 'hs_timestamp', operator: 'GTE', value: String(todayStartUTC) };
       const timeLT     = { propertyName: 'hs_timestamp', operator: 'LT',  value: String(todayEndUTC)   };
-      // HubSpot IN operator supports up to 300 values
-      const contactSlice = allContactIds.slice(0, 300);
-      const contactIn  = { propertyName: 'associations.contact', operator: 'IN', values: contactSlice };
+      // `associations.contact IN` is capped at 100 values — not 300, as this once
+      // claimed. A longer list comes back 500, searchAll reads no `results` off an
+      // error body, and the page ends up with NO activity at all: every lead on it
+      // renders 0% cadence while HubSpot plainly shows the calls and texts. A page
+      // of 100 tickets passes 100 contacts only when each carries exactly one, so
+      // the failure was silent, intermittent, and page-shaped. Chunk at the cap.
+      const CONTACT_IN_MAX = 100;
+      const contactChunks = [];
+      for (let i = 0; i < allContactIds.length; i += CONTACT_IN_MAX)
+        contactChunks.push(allContactIds.slice(i, i + CONTACT_IN_MAX));
 
-      // Search recent calls and SMS in parallel
-      const [recentCallList, recentSmsList] = await Promise.all([
-        searchAll('https://api.hubapi.com/crm/v3/objects/calls/search', {
-          filterGroups: [{ filters: [timeGTE, timeLT, contactIn] }],
-          properties: ['hs_timestamp','hs_call_status','hs_call_disposition','hs_call_direction','hs_call_duration','hubspot_owner_id','hs_call_body','hs_call_recording_url'],
-          limit: 200
-        }),
-        searchAll('https://api.hubapi.com/crm/v3/objects/communications/search', {
-          filterGroups: [{ filters: [timeGTE, timeLT, contactIn,
-            { propertyName: 'hs_communication_channel_type', operator: 'EQ', value: 'SMS' }
-          ]}],
-          properties: ['hs_timestamp','hs_communication_channel_type','hubspot_owner_id','hs_communication_logged_from','hs_communication_body'],
-          limit: 200
-        })
-      ]);
+      const chunkParts = await Promise.all(contactChunks.map(chunk => {
+        const contactIn = { propertyName: 'associations.contact', operator: 'IN', values: chunk };
+        return Promise.all([
+          searchAll('https://api.hubapi.com/crm/v3/objects/calls/search', {
+            filterGroups: [{ filters: [timeGTE, timeLT, contactIn] }],
+            properties: ['hs_timestamp','hs_call_status','hs_call_disposition','hs_call_direction','hs_call_duration','hubspot_owner_id','hs_call_body','hs_call_recording_url'],
+            limit: 200
+          }),
+          searchAll('https://api.hubapi.com/crm/v3/objects/communications/search', {
+            filterGroups: [{ filters: [timeGTE, timeLT, contactIn,
+              { propertyName: 'hs_communication_channel_type', operator: 'EQ', value: 'SMS' }
+            ]}],
+            properties: ['hs_timestamp','hs_communication_channel_type','hubspot_owner_id','hs_communication_logged_from','hs_communication_body'],
+            limit: 200
+          })
+        ]);
+      }));
+      const recentCallList = chunkParts.flatMap(part => part[0]);
+      const recentSmsList  = chunkParts.flatMap(part => part[1]);
 
       // Build today's detail maps directly from search results (no extra batch-read needed)
       for (const c of recentCallList) {
@@ -540,19 +556,12 @@ export default async function handler(req, res) {
       const recentCallIds2 = recentCallList.map(c => String(c.id));
       const recentSmsIds2  = recentSmsList.map(s => String(s.id));
 
+      // Same 100-input cap as every other batch/read — and a busy day easily clears
+      // it. Sending the lot got back nothing, so activity we HAD found never got
+      // attached to a contact and the lead still read 0%. Use the chunking helper.
       const [callContactAssoc, smsContactAssoc] = await Promise.all([
-        recentCallIds2.length > 0
-          ? hsFetch('https://api.hubapi.com/crm/v4/associations/calls/contacts/batch/read', {
-              method: 'POST', headers: h,
-              body: JSON.stringify({ inputs: recentCallIds2.map(id => ({ id })) })
-            }).then(r => r.json()).catch(() => ({ results: [] }))
-          : Promise.resolve({ results: [] }),
-        recentSmsIds2.length > 0
-          ? hsFetch('https://api.hubapi.com/crm/v4/associations/communications/contacts/batch/read', {
-              method: 'POST', headers: h,
-              body: JSON.stringify({ inputs: recentSmsIds2.map(id => ({ id })) })
-            }).then(r => r.json()).catch(() => ({ results: [] }))
-          : Promise.resolve({ results: [] })
+        assocRead('https://api.hubapi.com/crm/v4/associations/calls/contacts/batch/read', recentCallIds2),
+        assocRead('https://api.hubapi.com/crm/v4/associations/communications/contacts/batch/read', recentSmsIds2)
       ]);
 
       // Build contactId → [recent callIds]
