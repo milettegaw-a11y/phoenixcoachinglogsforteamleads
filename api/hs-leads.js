@@ -110,6 +110,11 @@ export default async function handler(req, res) {
     return results.flat();
   };
 
+  // Set when any search comes back an error. A page that lost its activity must
+  // not be able to masquerade as a page where nobody worked — the browser shows
+  // the stale figures with a warning rather than fresh zeros.
+  let searchFailed = false;
+
   // Paginated CRM search helper
   const searchAll = async (url, body, maxResults = 1000) => {
     const results = [];
@@ -123,8 +128,10 @@ export default async function handler(req, res) {
       // A search that fails returns an error body with no `results`, which reads
       // exactly like "nothing matched". That is how a 100-value cap turned into
       // silent 0% cadence for weeks — so say so in the logs.
-      if (!resp.ok || (!data.results && data.message))
+      if (!resp.ok || (!data.results && data.message)) {
+        searchFailed = true;
         console.error('HubSpot search failed', resp.status, url, data.message || '');
+      }
       results.push(...(data.results || []));
       after = data.paging?.next?.after;
     } while (after && results.length < maxResults);
@@ -504,14 +511,14 @@ export default async function handler(req, res) {
             filterGroups: [{ filters: [timeGTE, timeLT, contactIn] }],
             properties: ['hs_timestamp','hs_call_status','hs_call_disposition','hs_call_direction','hs_call_duration','hubspot_owner_id','hs_call_body','hs_call_recording_url'],
             limit: 200
-          }),
+          }, 10000),
           searchAll('https://api.hubapi.com/crm/v3/objects/communications/search', {
             filterGroups: [{ filters: [timeGTE, timeLT, contactIn,
               { propertyName: 'hs_communication_channel_type', operator: 'EQ', value: 'SMS' }
             ]}],
             properties: ['hs_timestamp','hs_communication_channel_type','hubspot_owner_id','hs_communication_logged_from','hs_communication_body'],
             limit: 200
-          })
+          }, 10000)
         ]);
       }));
       const recentCallList = chunkParts.flatMap(part => part[0]);
@@ -585,11 +592,30 @@ export default async function handler(req, res) {
     }
 
     // ── PHASE 2: Batch-read contacts, notes, and ticket-direct calls/SMS ─────
-    // Ticket-direct call/SMS IDs are few (logged directly on the ticket, not contact),
-    // so 500 is safe here. Today's contact-level calls already came from Phase 1.5 search.
+    // Ticket-direct activity (logged on the ticket rather than the contact) was
+    // capped at 500 ids taken in ticket order, so on a busy page the last forty
+    // tickets got none of theirs at all — a lead worked today could read 0% purely
+    // for sitting late in the page. Take the cap round-robin instead: every ticket
+    // gives up its newest before any ticket gives up a second, so a cut costs each
+    // lead its oldest rows rather than costing some leads everything.
+    const fairPick = (byTicket, cap) => {
+      const lists = Object.values(byTicket).map(v => [...new Set(v)]);
+      const out = [];
+      for (let i = 0; out.length < cap; i++) {
+        let placed = false;
+        for (const list of lists) {
+          if (i >= list.length) continue;
+          placed = true;
+          out.push(list[i]);
+          if (out.length >= cap) break;
+        }
+        if (!placed) break;
+      }
+      return [...new Set(out)];
+    };
     const noteIdList         = [...new Set(allNoteIds)].slice(0, 50);
-    const ticketCallIdList   = [...allTicketCallIds].slice(0, 500);
-    const ticketSmsIdList    = [...allTicketSmsIds].slice(0, 500);
+    const ticketCallIdList   = fairPick(ticketCallMap, 1500);
+    const ticketSmsIdList    = fairPick(ticketSmsMap, 1500);
 
     const [contactResults, noteResults, ticketCallResults, ticketSmsResults] = await Promise.all([
       allContactIds.length > 0
@@ -736,7 +762,7 @@ export default async function handler(req, res) {
       for (const id of ownerIds) if (all[id]) owners[id] = all[id];
     } catch (e) { owners = {}; }   // names are a nicety; never fail the whole fetch
 
-    return res.status(200).json({ results: enriched, paging: ticketData.paging, owners, total: ticketData.total });
+    return res.status(200).json({ results: enriched, paging: ticketData.paging, owners, total: ticketData.total, activityIncomplete: searchFailed });
 
   } catch (e) {
     return res.status(500).json({ error: e.message });
