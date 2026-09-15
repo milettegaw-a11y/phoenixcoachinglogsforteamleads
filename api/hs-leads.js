@@ -73,6 +73,26 @@ let _ownersCache = null;
 let _ownersCacheAt = 0;
 const OWNERS_TTL_MS = 30 * 60 * 1000;
 
+// Thirty agents ask for the same nine day-shards, every five minutes, all day.
+// Nothing shared those answers, so each browser bought its own copy from HubSpot
+// and the portal paid thirty times over for one set of facts. Cache the finished
+// response per request body and serve every later asker from memory. Warm Vercel
+// instances make this a large multiple even before a scheduled refresher exists.
+const BULK_TTL_MS = 5 * 60 * 1000;
+const _bulkCache = new Map();
+const bulkKey = (body) => JSON.stringify(body);
+const bulkGet = (k) => {
+  const hit = _bulkCache.get(k);
+  if (!hit) return null;
+  if (Date.now() - hit.at > BULK_TTL_MS) { _bulkCache.delete(k); return null; }
+  return hit.payload;
+};
+const bulkPut = (k, payload) => {
+  // Bounded: a day's worth of distinct shards is tens of keys, not thousands.
+  if (_bulkCache.size > 200) _bulkCache.clear();
+  _bulkCache.set(k, { at: Date.now(), payload });
+};
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -88,9 +108,11 @@ export default async function handler(req, res) {
   // caller so the true per-refresh cost is measurable instead of estimated.
   let hsCalls = 0;
 
-  // Retry helper — waits on 429 up to 2 times
+  // Retry helper — waits on 429 once. Deliberately shallow: searchAll retries on
+  // top of this, and the two multiply. When the portal is already out of quota,
+  // deep retries are not resilience, they are the thing finishing it off.
   const hsFetch = async (url, opts) => {
-    for (let attempt = 0; attempt < 3; attempt++) {
+    for (let attempt = 0; attempt < 2; attempt++) {
       hsCalls++;
       const r = await fetch(url, opts);
       if (r.status !== 429) return r;
@@ -134,7 +156,7 @@ export default async function handler(req, res) {
     do {
       const pageBody = after ? { ...body, after } : body;
       let data = null;
-      for (let attempt = 0; attempt < 4; attempt++) {
+      for (let attempt = 0; attempt < 2; attempt++) {
         const resp = await hsFetch(url, {
           method: 'POST', headers: h, body: JSON.stringify(pageBody)
         });
@@ -144,7 +166,7 @@ export default async function handler(req, res) {
           resp.status, url, (parsed && parsed.message) || '');
         // Exponential with jitter: thirty browsers limited at the same instant
         // must not all come back at the same instant.
-        if (attempt < 3) await new Promise(r => setTimeout(r, 500 * Math.pow(2, attempt) + Math.floor(Math.random() * 400)));
+        if (attempt < 1) await new Promise(r => setTimeout(r, 700 + Math.floor(Math.random() * 500)));
       }
       if (!data) { searchFailed = true; break; }
       results.push(...(data.results || []));
@@ -405,6 +427,12 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Serve an identical, recent request from memory before spending a single
+    // HubSpot call on it.
+    const _ck = bulkKey(req.body);
+    const _hit = bulkGet(_ck);
+    if (_hit) return res.status(200).json({ ..._hit, cached: true });
+
     // ── Step 1: Search tickets ────────────────────────────────────────────────
     const ticketResp = await hsFetch('https://api.hubapi.com/crm/v3/objects/tickets/search', {
       method: 'POST', headers: h, body: JSON.stringify(req.body)
@@ -434,12 +462,16 @@ export default async function handler(req, res) {
       return { results: parts.flatMap(p => p.results || []) };
     };
 
-    const [contactAssoc, noteAssoc, callAssoc, smsAssoc] = await Promise.all([
+    const [contactAssoc, noteAssoc] = await Promise.all([
       assocRead('https://api.hubapi.com/crm/v4/associations/tickets/contacts/batch/read', ticketIds),
-      assocRead('https://api.hubapi.com/crm/v4/associations/tickets/notes/batch/read', ticketIds),
-      assocRead('https://api.hubapi.com/crm/v4/associations/tickets/calls/batch/read', ticketIds),
-      assocRead('https://api.hubapi.com/crm/v4/associations/tickets/communications/batch/read', ticketIds)
+      assocRead('https://api.hubapi.com/crm/v4/associations/tickets/notes/batch/read', ticketIds)
     ]);
+    // Ticket-direct calls/SMS used to be read here too: two association reads plus
+    // up to thirty batch-reads per shard, 30 of this endpoint's 46 HubSpot calls,
+    // on every refresh by every agent. Cadence needs TODAY's activity, and Phase
+    // 1.5 already has it from the contact side, which is where Aircall logs. The
+    // panel fetches full history per-contact when it is actually opened. Paying
+    // for a page of history nobody is looking at is what exhausted the quota.
 
     // Build association maps
     const ticketContactMap = {};
@@ -455,26 +487,6 @@ export default async function handler(req, res) {
         const ids = (r.to || []).map(x => x.toObjectId);
         ticketNoteMap[r.from.id] = ids;
         allNoteIds.push(...ids);
-      }
-    }
-
-    const ticketCallMap = {};
-    const allTicketCallIds = new Set();
-    if (callAssoc.results) {
-      for (const r of callAssoc.results) {
-        const ids = (r.to || []).map(x => String(x.toObjectId));
-        ticketCallMap[r.from.id] = ids;
-        ids.forEach(id => allTicketCallIds.add(id));
-      }
-    }
-
-    const ticketSmsMap = {};
-    const allTicketSmsIds = new Set();
-    if (smsAssoc.results) {
-      for (const r of smsAssoc.results) {
-        const ids = (r.to || []).map(x => String(x.toObjectId));
-        ticketSmsMap[r.from.id] = ids;
-        ids.forEach(id => allTicketSmsIds.add(id));
       }
     }
 
@@ -612,33 +624,10 @@ export default async function handler(req, res) {
       }
     }
 
-    // ── PHASE 2: Batch-read contacts, notes, and ticket-direct calls/SMS ─────
-    // Ticket-direct activity (logged on the ticket rather than the contact) was
-    // capped at 500 ids taken in ticket order, so on a busy page the last forty
-    // tickets got none of theirs at all — a lead worked today could read 0% purely
-    // for sitting late in the page. Take the cap round-robin instead: every ticket
-    // gives up its newest before any ticket gives up a second, so a cut costs each
-    // lead its oldest rows rather than costing some leads everything.
-    const fairPick = (byTicket, cap) => {
-      const lists = Object.values(byTicket).map(v => [...new Set(v)]);
-      const out = [];
-      for (let i = 0; out.length < cap; i++) {
-        let placed = false;
-        for (const list of lists) {
-          if (i >= list.length) continue;
-          placed = true;
-          out.push(list[i]);
-          if (out.length >= cap) break;
-        }
-        if (!placed) break;
-      }
-      return [...new Set(out)];
-    };
-    const noteIdList         = [...new Set(allNoteIds)].slice(0, 50);
-    const ticketCallIdList   = fairPick(ticketCallMap, 1500);
-    const ticketSmsIdList    = fairPick(ticketSmsMap, 1500);
+    // ── PHASE 2: Batch-read contacts and notes ───────────────────────────────
+    const noteIdList = [...new Set(allNoteIds)].slice(0, 50);
 
-    const [contactResults, noteResults, ticketCallResults, ticketSmsResults] = await Promise.all([
+    const [contactResults, noteResults] = await Promise.all([
       allContactIds.length > 0
         ? batchRead(
             'https://api.hubapi.com/crm/v3/objects/contacts/batch/read',
@@ -651,20 +640,6 @@ export default async function handler(req, res) {
             'https://api.hubapi.com/crm/v3/objects/notes/batch/read',
             noteIdList,
             ['hs_note_body','hs_timestamp','createdate']
-          )
-        : Promise.resolve([]),
-      ticketCallIdList.length > 0
-        ? batchRead(
-            'https://api.hubapi.com/crm/v3/objects/calls/batch/read',
-            ticketCallIdList,
-            ['hs_timestamp','hs_call_status','hs_call_disposition','hs_call_direction','hs_call_duration','hubspot_owner_id','hs_call_body','hs_call_recording_url']
-          )
-        : Promise.resolve([]),
-      ticketSmsIdList.length > 0
-        ? batchRead(
-            'https://api.hubapi.com/crm/v3/objects/communications/batch/read',
-            ticketSmsIdList,
-            ['hs_timestamp','hs_communication_channel_type','hubspot_owner_id','hs_communication_logged_from','hs_communication_body']
           )
         : Promise.resolve([])
     ]);
@@ -694,44 +669,9 @@ export default async function handler(req, res) {
       };
     }
 
-    // Merge today's search details with ticket-direct details
+    // Today's search is the only source of activity detail now.
     const callDetailMap = { ...recentCallDetailMap };
-    for (const c of ticketCallResults) {
-      if (callDetailMap[String(c.id)]) continue; // already populated from today's search
-      const p = c.properties;
-      callDetailMap[String(c.id)] = {
-        type: 'call',
-        timestamp: p.hs_timestamp || '',
-        status: p.hs_call_status || '',
-        disposition: callConnectInfo(p.hs_call_disposition).disposition,
-        connected: callConnectInfo(p.hs_call_disposition).connected,
-        summary: aircallSection(p.hs_call_body, 'aircall-call-summary', 'Call Summary'),
-        topics: aircallSection(p.hs_call_body, 'aircall-call-key-topics', 'Key Topics'),
-        hasRecording: !!String(p.hs_call_recording_url || '').trim(),
-        callId: String(c.id),
-        direction: p.hs_call_direction || '',
-        durationMs: parseInt(p.hs_call_duration || '0') || 0,
-        ownerId: String(p.hubspot_owner_id || '')
-      };
-    }
-
-    const smsDetailMap = { ...recentSmsDetailMap };
-    for (const s of ticketSmsResults) {
-      if (smsDetailMap[String(s.id)]) continue;
-      const p = s.properties;
-      const channel = (p.hs_communication_channel_type || '').toUpperCase();
-      smsDetailMap[String(s.id)] = {
-        type: channel === 'SMS' ? 'sms' : (channel || 'message'),
-        timestamp: p.hs_timestamp || '',
-        status: 'SENT',
-        disposition: '',
-        connected: false,
-        direction: smsIsOutbound(p.hs_communication_body) ? 'OUTBOUND' : 'INBOUND',
-        body: smsMessageText(p.hs_communication_body),
-        durationMs: 0,
-        ownerId: String(p.hubspot_owner_id || '')
-      };
-    }
+    const smsDetailMap  = { ...recentSmsDetailMap };
 
     // ── Step 3: Enrich & return ───────────────────────────────────────────────
     const enriched = tickets.map(ticket => {
@@ -742,15 +682,9 @@ export default async function handler(req, res) {
       const notes = nIds.map(id => noteMap[id]).filter(Boolean);
       notes.sort((a, b) => tsMs(b.timestamp) - tsMs(a.timestamp));
 
-      // Merge ticket-direct + recent contact-level calls/SMS (from Phase 1.5 search)
-      const callIds = [...new Set([
-        ...(ticketCallMap[ticket.id] || []),
-        ...cIds.flatMap(cid => contactRecentCallMap[cid] || [])
-      ])];
-      const smsIds = [...new Set([
-        ...(ticketSmsMap[ticket.id] || []),
-        ...cIds.flatMap(cid => contactRecentSmsMap[cid] || [])
-      ])];
+      // Today's contact-level calls/SMS, from the Phase 1.5 search.
+      const callIds = [...new Set(cIds.flatMap(cid => contactRecentCallMap[cid] || []))];
+      const smsIds  = [...new Set(cIds.flatMap(cid => contactRecentSmsMap[cid] || []))];
 
       const calls   = callIds.map(id => callDetailMap[String(id)]).filter(Boolean);
       const smsMsgs = smsIds.map(id => smsDetailMap[String(id)]).filter(Boolean);
@@ -783,7 +717,11 @@ export default async function handler(req, res) {
       for (const id of ownerIds) if (all[id]) owners[id] = all[id];
     } catch (e) { owners = {}; }   // names are a nicety; never fail the whole fetch
 
-    return res.status(200).json({ results: enriched, paging: ticketData.paging, owners, total: ticketData.total, activityIncomplete: searchFailed, hsCalls });
+    const payload = { results: enriched, paging: ticketData.paging, owners, total: ticketData.total, activityIncomplete: searchFailed, hsCalls };
+    // Only cache a complete answer. Caching a refused search would pin an
+    // understated set of numbers in place for the next five minutes.
+    if (!searchFailed) bulkPut(_ck, payload);
+    return res.status(200).json(payload);
 
   } catch (e) {
     return res.status(500).json({ error: e.message });
