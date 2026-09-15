@@ -5540,9 +5540,16 @@ async function fetchHSLeads(){
     if(CU&&!CU.isOM&&!CU.isAgentView&&TL_TEAM_MAP[CU.email]&&HS_ALLOWED_TEAMS.has(TL_TEAM_MAP[CU.email])){
       _hsTeamFilter=TL_TEAM_MAP[CU.email];
     }
-    // Auto-refresh every 5 minutes for agents so touches from Aircall appear without manual refresh
+    // Auto-refresh was every 5 minutes, per agent. Thirty agents on a five-minute
+    // timer is 360 full refreshes an hour of the same nine day-shards — the single
+    // biggest reason this tool was making millions of HubSpot calls a day and
+    // starving lead sync and unsubscribe propagation of quota. Half-hourly, only
+    // while the tab is actually in front of someone, and the Refresh button is
+    // still there for anyone who wants it sooner.
     if(CU&&CU.isAgentView&&!_hsAutoRefreshTimer){
-      _hsAutoRefreshTimer=setInterval(()=>{if(_hsLeadsLoaded)fetchHSLeads();},5*60*1000);
+      _hsAutoRefreshTimer=setInterval(()=>{
+        if(_hsLeadsLoaded&&!document.hidden)fetchHSLeads();
+      },30*60*1000);
     }
     renderHSLeads();
   }catch(e){
@@ -13880,7 +13887,7 @@ function cvrDaysBetween(aMs,bMs){return cvrDayIdx(bMs)-cvrDayIdx(aMs);}
 const CVR_CLOSED=['1072805490','1072805491','1072805492','1072805493','1072805494','1072805495'];
 const CVR_WK_EPOCH=Date.UTC(2016,0,4);               // WK1 Monday — matches the source sheets
 const CVR_TTL=10*60*1000;                            // a cached week is fresh for 10 minutes
-const CVR_POLL=3*60*1000;                            // how often we ask HubSpot for a new sale count
+const CVR_POLL=20*60*1000;                           // how often we ask HubSpot for a new sale count (was 3m — far too hot for a shared portal)
 const CVR_DRAWER=8;                                  // leads shown per agent in the drawer
 const CVR_SCHEMA=3;                                  // bump to make cached weeks rebuild
 
@@ -14226,7 +14233,7 @@ async function cvrSalePoll(){
     if(typeof d.total==='number'&&d.total!==snap.sales)cvrBuild(wk,false);
   }catch(err){/* the poll is best-effort */}
 }
-function cvrStartPoll(){cvrStopPoll();_cvrPollTimer=setInterval(cvrSalePoll,CVR_POLL);}
+function cvrStartPoll(){cvrStopPoll();_cvrPollTimer=setInterval(()=>{if(!document.hidden)cvrSalePoll();},CVR_POLL);}
 function cvrStopPoll(){if(_cvrPollTimer){clearInterval(_cvrPollTimer);_cvrPollTimer=null;}}
 
 /* ── entry point ────────────────────────────────────────────────────────── */
@@ -14962,7 +14969,7 @@ const MA_URGENT=['replied','missed','decline'];
 // is only a safety net for events the hook missed. At 30s across thirty agents
 // it was making ~10 HubSpot calls a second on its own and starving Lead
 // Compliance and the Cadence Dashboard of their own rate limit.
-const MA_POLL=5*60000;                     // safety net, not the delivery path
+const MA_POLL=15*60000;                    // safety net, not the delivery path — the Aircall webhook is
 const MA_LOOKBACK=3*86400000;              // how far back a cold start looks
 let _maAlerts=[];
 let _maUnsub=null;
