@@ -84,9 +84,14 @@ export default async function handler(req, res) {
   const HS_TOKEN = process.env.HS_TOKEN;
   if (!HS_TOKEN) return res.status(500).json({ error: 'HS_TOKEN not configured' });
 
+  // Every HubSpot HTTP call this invocation makes, counted. Returned to the
+  // caller so the true per-refresh cost is measurable instead of estimated.
+  let hsCalls = 0;
+
   // Retry helper — waits on 429 up to 2 times
   const hsFetch = async (url, opts) => {
     for (let attempt = 0; attempt < 3; attempt++) {
+      hsCalls++;
       const r = await fetch(url, opts);
       if (r.status !== 429) return r;
       const wait = parseInt(r.headers.get('Retry-After') || '1', 10) * 1000;
@@ -778,7 +783,7 @@ export default async function handler(req, res) {
       for (const id of ownerIds) if (all[id]) owners[id] = all[id];
     } catch (e) { owners = {}; }   // names are a nicety; never fail the whole fetch
 
-    return res.status(200).json({ results: enriched, paging: ticketData.paging, owners, total: ticketData.total, activityIncomplete: searchFailed });
+    return res.status(200).json({ results: enriched, paging: ticketData.paging, owners, total: ticketData.total, activityIncomplete: searchFailed, hsCalls });
 
   } catch (e) {
     return res.status(500).json({ error: e.message });
