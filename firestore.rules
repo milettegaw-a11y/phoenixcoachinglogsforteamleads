@@ -1,0 +1,85 @@
+rules_version = '2';
+
+// Phoenix Coaching Log — Firestore access rules.
+//
+// The public API key sits in the page source, so anyone can reach this database
+// and anyone can call signInAnonymously(). `request.auth != null` therefore
+// proves nothing at all. What proves something is the `px` custom claim, which
+// only /api/session sets, and only after it has verified a password with admin
+// credentials the browser never holds.
+//
+// Everything the scheduled sync produces is server-written. Clients read it and
+// nothing more — a browser has no reason to be able to rewrite the team's
+// compliance history, and until now it could.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn()  { return request.auth != null && request.auth.token.px == true; }
+    function me()        { return signedIn() ? request.auth.token.email : ''; }
+    function isMine(e)   { return signedIn() && me() == e; }
+
+    // ── Credentials ────────────────────────────────────────────────────────
+    // No client path in or out. Password hashes were world-readable here, and
+    // world-writable, which meant anyone could overwrite the Operations
+    // Manager's hash and sign in as them. /api/session uses admin credentials
+    // and is unaffected by these rules.
+    match /px_users/{email} {
+      allow read, write: if false;
+    }
+
+    // ── Server-written records ─────────────────────────────────────────────
+    // Produced by the scheduled sync. Readable by anyone signed in, writable
+    // by no one but the service account.
+    match /cadence_snapshots/{doc} { allow read: if signedIn(); allow write: if false; }
+    match /cvr_weeks/{doc}         { allow read: if signedIn(); allow write: if false; }
+    match /lead_briefs/{doc}       { allow read: if signedIn(); allow write: if false; }
+    match /slack_directory/{doc}   { allow read: if signedIn(); allow write: if false; }
+    match /px_roster/{doc}         { allow read: if signedIn(); allow write: if false; }
+
+    // ── Agent-owned records ────────────────────────────────────────────────
+    // A follow-up belongs to the agent who logged it. Anyone signed in can read
+    // the team's leads — coaching depends on that — but only the owner may
+    // change one, and ownership cannot be reassigned by editing the record.
+    match /px_leads/{id} {
+      allow read:   if signedIn();
+      allow create: if signedIn() && request.resource.data.agentEmail == me();
+      allow update: if signedIn() && resource.data.agentEmail == me()
+                    && request.resource.data.agentEmail == resource.data.agentEmail;
+      allow delete: if signedIn() && resource.data.agentEmail == me();
+    }
+
+    // ── Per-owner alert queues ─────────────────────────────────────────────
+    // Written by the Aircall webhook. An agent reads their own queue and may
+    // mark an item handled; they cannot manufacture alerts for someone else.
+    match /my_alerts/{ownerId}/items/{item} {
+      allow read:   if signedIn();
+      allow update: if signedIn();
+      allow create, delete: if false;
+    }
+    match /my_actions/{ownerId}/{document=**} {
+      allow read, write: if signedIn();
+    }
+
+    // ── Everything else ────────────────────────────────────────────────────
+    // Shared working collections: notes, suggestions, assignments, onboarding
+    // logs. Signed-in members of the team may read and write; the anonymous
+    // public may not.
+    match /px_action_items/{doc}  { allow read, write: if signedIn(); }
+    match /px_suggestions/{doc}   { allow read, write: if signedIn(); }
+    match /cvr_assign/{doc}       { allow read, write: if signedIn(); }
+    match /internal_notes/{doc}   { allow read, write: if signedIn(); }
+    match /px_onboard_logs/{doc}  { allow read, write: if signedIn(); }
+    match /px_logs/{doc}          { allow read, write: if signedIn(); }
+    match /px_nte/{doc}           { allow read, write: if signedIn(); }
+    match /px_ft/{doc}            { allow read, write: if signedIn(); }
+    match /px_cm/{doc}            { allow read, write: if signedIn(); }
+    match /notes/{doc}            { allow read, write: if signedIn(); }
+
+    // Anything not named above is closed. A new collection has to be granted
+    // access deliberately rather than inheriting it.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
