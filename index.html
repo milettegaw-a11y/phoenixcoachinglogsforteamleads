@@ -4443,6 +4443,46 @@ let CU=null;
 let _loginEmail='';
 let _loginIsNew=false;
 
+/* Server-side sign-in.
+
+   The browser used to fetch a password hash from Firestore and compare it
+   itself, which only works if the database is readable by anyone — and a
+   database readable by anyone is also writable by anyone, so a stranger could
+   overwrite the OM's hash and sign in as them. Verification now happens in
+   /api/session, which holds admin credentials the browser never sees and
+   returns a Firebase custom token carrying a `px` claim that the security
+   rules require.
+
+   While FIREBASE_SERVICE_ACCOUNT is unset the endpoint answers 503
+   'not_configured' and every call here reports unavailable, so the old path
+   still runs and nobody is locked out mid-deploy. */
+let _sessionServer = null;   // null = unknown, true/false once we have asked
+
+async function pxSession(mode, email, password){
+  try{
+    const r = await fetch('/api/session', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({mode, email, password})
+    });
+    if(r.status === 503){ _sessionServer = false; return {unavailable:true}; }
+    _sessionServer = true;
+    const d = await r.json().catch(()=>({}));
+    return r.ok ? d : {error: d.error || ('http_'+r.status), ...d};
+  }catch(err){
+    // Network failure is not proof the endpoint is gone; treat it as such only
+    // for this attempt rather than permanently falling back to the weak path.
+    return {unavailable:true, transient:true};
+  }
+}
+
+/* Exchange the custom token for a Firebase session. Without this the rules see
+   an anonymous user and refuse everything. */
+async function pxSignIn(token){
+  if(!FSAUTH || !token) return false;
+  try{ await FSAUTH.signInWithCustomToken(token); return true; }
+  catch(err){ console.error('[auth] custom token rejected:', err.message); return false; }
+}
+
 /* Hash a password with SHA-256 (no plaintext stored anywhere) */
 async function hashPassword(pw){
   const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(pw));
@@ -4491,10 +4531,17 @@ async function doEmailContinue(){
 
   _loginEmail=email;
 
-  // Check Firestore for an existing password hash
+  // Ask the server whether this address already has a password. Falls back to
+  // reading Firestore directly only while /api/session is unconfigured.
   try{
-    const doc=await FSB.collection('px_users').doc(email).get();
-    const hasPassword=doc.exists&&doc.data()?.hash;
+    let hasPassword;
+    const probe = await pxSession('check', email);
+    if(probe && probe.unavailable){
+      const doc=await FSB.collection('px_users').doc(email).get();
+      hasPassword=doc.exists&&doc.data()?.hash;
+    } else {
+      hasPassword = !!(probe && probe.exists);
+    }
     _loginIsNew=!hasPassword;
 
     document.getElementById('l-pw').value='';
@@ -4557,9 +4604,21 @@ async function doPasswordSubmit(){
       return;
     }
     try{
-      const hash=await hashPassword(pw);
-      await FSB.collection('px_users').doc(_loginEmail).set({hash,createdAt:new Date().toISOString()});
-      finishLogin(_loginEmail);
+      const r = await pxSession('create', _loginEmail, pw);
+      if(r && r.unavailable){
+        const hash=await hashPassword(pw);
+        await FSB.collection('px_users').doc(_loginEmail).set({hash,createdAt:new Date().toISOString()});
+        finishLogin(_loginEmail);
+      } else if(r && r.token){
+        await pxSignIn(r.token);
+        finishLogin(_loginEmail);
+      } else if(r && r.error === 'already_set'){
+        err.textContent='⚠️ This account already has a password. Please sign in instead.';
+        err.style.display='block';
+      } else {
+        err.textContent='⚠️ Could not save password. Please try again.';
+        err.style.display='block';
+      }
     }catch(ex){
       console.error('Password save:',ex);
       err.textContent='⚠️ Could not save password. Please try again.';
@@ -4568,12 +4627,25 @@ async function doPasswordSubmit(){
   } else {
     // Existing user: verify password
     try{
-      const hash=await hashPassword(pw);
-      const doc=await FSB.collection('px_users').doc(_loginEmail).get();
-      if(doc.exists&&doc.data()?.hash===hash){
-        finishLogin(_loginEmail);
-      } else {
+      const r = await pxSession('login', _loginEmail, pw);
+      if(r && r.unavailable){
+        const hash=await hashPassword(pw);
+        const doc=await FSB.collection('px_users').doc(_loginEmail).get();
+        if(doc.exists&&doc.data()?.hash===hash){ finishLogin(_loginEmail); return; }
         err.textContent='⚠️ Incorrect password. Please try again.';
+        err.style.display='block';
+        document.getElementById('l-pw').value='';
+        document.getElementById('l-pw').focus();
+      } else if(r && r.token){
+        await pxSignIn(r.token);
+        finishLogin(_loginEmail);
+      } else if(r && r.error === 'locked'){
+        const mins = Math.max(1, Math.ceil((r.retryInMs||0)/60000));
+        err.textContent='⚠️ Too many attempts. Try again in '+mins+' minute'+(mins===1?'':'s')+'.';
+        err.style.display='block';
+      } else {
+        const left = (r && typeof r.attemptsLeft === 'number') ? r.attemptsLeft : null;
+        err.textContent='⚠️ Incorrect password.'+(left !== null && left <= 3 ? ' '+left+' attempt'+(left===1?'':'s')+' left before lockout.' : ' Please try again.');
         err.style.display='block';
         document.getElementById('l-pw').value='';
         document.getElementById('l-pw').focus();
