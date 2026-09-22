@@ -81,15 +81,30 @@ async function readSheet(id, tok) {
   });
 }
 
-const titleCase = (s) => s.replace(/\S+/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+// Names arrive hand-typed: stray quotes, nicknames, double spaces, odd casing.
+// Matching is done on a stripped key — letters and single spaces only — so
+// 'Roxanne "Anna" Hila' and 'Roxanne Hila' resolve to the same person however
+// either happens to be punctuated.
+const simplify = (s) => String(s || '').toLowerCase().replace(/[^a-z ]+/g, ' ').replace(/\s+/g, ' ').trim();
+const MERGE_KEYED = {};
+for (const [from, to] of Object.entries(MERGE)) MERGE_KEYED[simplify(from)] = to;
+
+const titleCase = (s) => String(s).replace(/[a-z]+/gi, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
 function agentName(raw) {
-  const n = titleCase(String(raw || '').replace(/\s+/g, ' ').trim());
-  return MERGE[n] || n;
+  const key = simplify(raw);
+  if (!key) return '';
+  if (MERGE_KEYED[key]) return MERGE_KEYED[key];
+  return titleCase(key);
 }
-// Phoenix under any spelling the form has seen: PHX, Phnx, Pheonix, pHOENIX.
+// Phoenix under any spelling the form has seen. The vowel-less abbreviations
+// have to be listed: "phnx" contains neither "pho" nor "nix", and leaving it
+// out quietly dropped 20 rows before an end-to-end test caught it.
+const PHOENIX_ABBR = new Set(['phx','phnx','pnx','phoenx','phonix','phoeni','pheonix','phoenix']);
 function isPhoenix(lob) {
   const x = String(lob || '').toLowerCase().replace(/[^a-z]/g, '');
-  return x === 'phx' || (x.includes('pho') && (x.includes('nix') || x.includes('nxi')));
+  if (!x) return false;
+  if (PHOENIX_ABBR.has(x)) return true;
+  return x.includes('pho') && (x.includes('nix') || x.includes('nxi'));
 }
 function isoDate(v) {
   const s = String(v || '').trim();
