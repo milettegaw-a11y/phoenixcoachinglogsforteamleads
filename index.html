@@ -833,6 +833,7 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
         <div class="sb-item agent-hide" data-tab="caddash" onclick="switchOM('caddash')"><span class="sb-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 17 8 11 12 15 17 7 21 12"/></svg></span><span>Cadence Dashboard</span></div>
         <div class="sb-item" data-tab="myactions" onclick="switchOM('myactions')"><span class="sb-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8.4a6 6 0 1 0-12 0c0 6.3-2.4 7.6-2.4 7.6h16.8S18 14.7 18 8.4Z"/><path d="M13.7 20.2a2 2 0 0 1-3.4 0"/></svg></span><span>My Actions</span></div>
         <div class="sb-item" data-tab="cvr" onclick="switchOM('cvr')"><span class="sb-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.8"/><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"/></svg></span><span>2nd Week CVR</span></div>
+        <div class="sb-item" data-tab="callsim" onclick="switchOM('callsim')"><span class="sb-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14.5V12a8 8 0 0 1 16 0v2.5"/><rect x="3" y="13.5" width="4" height="6" rx="1.6"/><rect x="17" y="13.5" width="4" height="6" rx="1.6"/><path d="M19 19.5v.8a2.2 2.2 0 0 1-2.2 2.2H13"/></svg></span><span>Call Sim</span></div>
         <div class="sb-item" data-tab="ranking" onclick="switchOM('ranking')"><span class="sb-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4h8v4.6a4 4 0 0 1-8 0V4Z"/><path d="M8 5H5.6a2.4 2.4 0 0 0 0 4.8H8"/><path d="M16 5h2.4a2.4 2.4 0 0 1 0 4.8H16"/><path d="M12 12.8V17"/><path d="M9.2 20h5.6"/><path d="M10 17h4"/></svg></span><span>Agent Ranking</span></div>
       </div>
       <div class="sb-section-lbl" onclick="toggleSbGroup('om-grp-forms',this)">FORMS<span class="sb-grp-arrow">›</span></div>
@@ -876,6 +877,7 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
         <div class="sb-item" id="tl-nav-caddash" onclick="tlShowView('caddash')"><span class="sb-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 17 8 11 12 15 17 7 21 12"/></svg></span><span>Cadence Dashboard</span></div>
         <div class="sb-item" id="tl-nav-myactions" onclick="tlShowView('myactions')"><span class="sb-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8.4a6 6 0 1 0-12 0c0 6.3-2.4 7.6-2.4 7.6h16.8S18 14.7 18 8.4Z"/><path d="M13.7 20.2a2 2 0 0 1-3.4 0"/></svg></span><span>My Actions</span><span id="tl-nav-badge-myactions" class="sb-notif" style="display:none"></span></div>
         <div class="sb-item" id="tl-nav-cvr" onclick="tlShowView('cvr')"><span class="sb-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.8"/><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"/></svg></span><span>2nd Week CVR</span></div>
+        <div class="sb-item" id="tl-nav-callsim" onclick="tlShowView('callsim')"><span class="sb-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14.5V12a8 8 0 0 1 16 0v2.5"/><rect x="3" y="13.5" width="4" height="6" rx="1.6"/><rect x="17" y="13.5" width="4" height="6" rx="1.6"/><path d="M19 19.5v.8a2.2 2.2 0 0 1-2.2 2.2H13"/></svg></span><span>Call Sim</span></div>
         <div class="sb-item" id="tl-nav-ranking" onclick="tlShowView('ranking')"><span class="sb-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4h8v4.6a4 4 0 0 1-8 0V4Z"/><path d="M8 5H5.6a2.4 2.4 0 0 0 0 4.8H8"/><path d="M16 5h2.4a2.4 2.4 0 0 1 0 4.8H16"/><path d="M12 12.8V17"/><path d="M9.2 20h5.6"/><path d="M10 17h4"/></svg></span><span>Agent Ranking</span></div>
       </div>
       <div class="sb-section-lbl" onclick="toggleSbGroup('tl-grp-forms',this)">FORMS<span class="sb-grp-arrow">›</span></div>
@@ -2692,6 +2694,74 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
 </div>
 
 <!-- AGENT RANKING VIEW -->
+<div id="v-callsim" class="view">
+<style>
+#v-callsim .cs-wrap{display:flex;flex-direction:column;gap:18px;}
+#v-callsim .cs-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--g200);border:1px solid var(--g200);border-radius:10px;overflow:hidden;}
+#v-callsim .cs-tile{background:#fff;padding:12px 14px;display:flex;flex-direction:column;gap:2px;}
+#v-callsim .cs-tile .k{font-size:.62rem;letter-spacing:.09em;text-transform:uppercase;color:var(--g400);font-weight:600;}
+#v-callsim .cs-tile .v{font-size:1.5rem;font-weight:700;line-height:1.15;font-variant-numeric:tabular-nums;color:var(--g800);}
+#v-callsim .cs-tile .s{font-size:.72rem;color:var(--g500);}
+#v-callsim .cs-note{font-size:.76rem;color:var(--g500);line-height:1.5;}
+#v-callsim .cs-bars{display:flex;flex-direction:column;gap:1px;background:var(--g200);border:1px solid var(--g200);border-radius:10px;overflow:hidden;}
+#v-callsim .cs-brow{background:#fff;display:grid;grid-template-columns:150px 1fr 48px;gap:10px;align-items:center;padding:7px 12px;}
+#v-callsim .cs-brow .nm{font-size:.78rem;font-weight:600;color:var(--g700);}
+#v-callsim .cs-track{background:var(--g100);height:16px;border-radius:3px;overflow:hidden;}
+#v-callsim .cs-fill{height:100%;border-radius:3px 0 0 3px;}
+#v-callsim .cs-pc{font-size:.78rem;font-weight:700;text-align:right;font-variant-numeric:tabular-nums;}
+#v-callsim table{width:100%;border-collapse:collapse;font-size:.79rem;}
+#v-callsim thead th{font-size:.61rem;letter-spacing:.08em;text-transform:uppercase;color:var(--g400);font-weight:700;text-align:left;padding:8px 10px;border-bottom:1.5px solid var(--g200);cursor:pointer;white-space:nowrap;}
+#v-callsim thead th.on{color:var(--yellow-dk);}
+#v-callsim tbody td{padding:7px 10px;border-bottom:1px solid var(--g100);white-space:nowrap;}
+#v-callsim tbody tr:hover{background:var(--yellow-lt);}
+#v-callsim td.n{text-align:right;font-variant-numeric:tabular-nums;}
+#v-callsim .cs-name{font-weight:600;color:var(--g800);cursor:help;border-bottom:1px dotted var(--g400);}
+#v-callsim .cs-lvl{font-size:.62rem;letter-spacing:.03em;text-transform:uppercase;padding:2px 6px;border-radius:4px;background:var(--g100);color:var(--g600);font-weight:700;}
+#v-callsim .cs-spark{display:inline-flex;gap:2px;align-items:flex-end;height:18px;}
+#v-callsim .cs-spark i{width:4px;border-radius:1px;display:block;}
+#cs-tip{position:fixed;z-index:9999;display:none;width:280px;background:#fff;border:1px solid var(--g300);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.16);padding:12px 14px;font-size:.75rem;}
+#cs-tip h4{margin:0 0 2px;font-size:.85rem;color:var(--g800);}
+#cs-tip .sub{color:var(--g500);font-size:.7rem;margin-bottom:9px;}
+#cs-tip .r{display:grid;grid-template-columns:96px 1fr 30px;gap:7px;align-items:center;margin-bottom:4px;}
+#cs-tip .r span:first-child{color:var(--g600);font-size:.68rem;}
+#cs-tip .tk{background:var(--g100);height:9px;border-radius:2px;overflow:hidden;}
+#cs-tip .tf{height:100%;border-radius:2px;}
+#cs-tip .pv{text-align:right;font-weight:700;font-size:.7rem;font-variant-numeric:tabular-nums;}
+#cs-tip .foot{margin-top:8px;padding-top:7px;border-top:1px solid var(--g100);color:var(--g500);font-size:.68rem;line-height:1.45;}
+</style>
+<div class="cs-wrap">
+  <div>
+    <div style="font-size:.95rem;font-weight:700;color:var(--g800);">Call simulator performance</div>
+    <div class="cs-note" id="cs-scope">&nbsp;</div>
+  </div>
+  <div class="cs-tiles" id="cs-tiles"></div>
+
+  <div>
+    <div style="font-size:.85rem;font-weight:700;color:var(--g800);margin-bottom:3px;">Where the opportunity is</div>
+    <div class="cs-note" style="margin-bottom:8px;">Each skill as a percentage of the points available for it, averaged over every simulation in scope. Weakest first &mdash; the top row is where coaching buys the most.</div>
+    <div class="cs-bars" id="cs-cats"></div>
+  </div>
+
+  <div>
+    <div style="font-size:.85rem;font-weight:700;color:var(--g800);margin-bottom:3px;">By agent</div>
+    <div class="cs-note" style="margin-bottom:8px;">One row per agent. <strong>Hover an agent's name</strong> to see their full skill breakdown. &Delta; compares their earliest and latest attempts <em>at their current level</em> and needs at least four there &mdash; a dash means not enough yet. Recent form shows their last 10 attempts in order; green is a pass (80+).</div>
+    <div style="overflow-x:auto;border:1px solid var(--g200);border-radius:10px;background:#fff;">
+      <table>
+        <thead><tr>
+          <th data-k="n">Agent</th><th data-k="t">Team</th><th data-k="lv">Level</th>
+          <th data-k="c" class="n">Sims</th><th data-k="m" class="n">Avg</th><th data-k="b" class="n">Best</th>
+          <th data-k="p" class="n">Pass</th><th data-k="d" class="n">&Delta;</th>
+          <th data-k="w">Weakest skill</th><th>Recent form</th>
+        </tr></thead>
+        <tbody id="cs-rows"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="cs-note" id="cs-foot"></div>
+</div>
+<div id="cs-tip" role="tooltip" aria-hidden="true"></div>
+</div>
+
 <div id="v-ranking" class="view">
   <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px;">
     <div>
@@ -8094,9 +8164,9 @@ function toggleSbSub(id){
 
 function switchOM(tab){
   document.querySelectorAll('#om-nav .sb-item').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
-  const titles={dash:'Coaching Dashboard',coaching:'Coaching Logs',nte:'NTE Logs',ft:'Follow Through',cl:'Call Listening',attendance:'Attendance Points',ranking:'Agent Ranking',cvr:'2nd Week Lead CVR',pwreset:'Reset Passwords',kb:'Knowledge Base',suggestions:'Suggestions & Reports',calendar:'Team Calendar',actions:'Action Items',leads:'Lead Follow-Ups',leadmgmt:'Lead Compliance',caddash:'Cadence Dashboard',myactions:'My Actions',onboard:'Onboarding / Offboarding',settings:'Settings',chat:'Team Chat'};
+  const titles={dash:'Coaching Dashboard',coaching:'Coaching Logs',nte:'NTE Logs',ft:'Follow Through',cl:'Call Listening',attendance:'Attendance Points',ranking:'Agent Ranking',cvr:'2nd Week Lead CVR',callsim:'Call Simulator',pwreset:'Reset Passwords',kb:'Knowledge Base',suggestions:'Suggestions & Reports',calendar:'Team Calendar',actions:'Action Items',leads:'Lead Follow-Ups',leadmgmt:'Lead Compliance',caddash:'Cadence Dashboard',myactions:'My Actions',onboard:'Onboarding / Offboarding',settings:'Settings',chat:'Team Chat'};
   const el=document.getElementById('tb-title'); if(el) el.textContent=titles[tab]||'';
-  const map={dash:'v-om-dash',coaching:'v-om-c',nte:'v-om-n',ft:'v-om-f',cl:'v-om-cl',attendance:'v-om-attendance',ranking:'v-ranking',cvr:'v-cvr',pwreset:'v-om-pwreset',kb:'v-kb',suggestions:'v-om-suggestions',calendar:'v-cal',actions:'v-actions',leads:'v-leads-tl',leadmgmt:'v-leadmgmt-tl',caddash:'v-cad-dash',myactions:'v-myactions-tl',onboard:'v-onboard',settings:'v-settings',chat:'v-chat'};
+  const map={dash:'v-om-dash',coaching:'v-om-c',nte:'v-om-n',ft:'v-om-f',cl:'v-om-cl',attendance:'v-om-attendance',ranking:'v-ranking',cvr:'v-cvr',callsim:'v-callsim',pwreset:'v-om-pwreset',kb:'v-kb',suggestions:'v-om-suggestions',calendar:'v-cal',actions:'v-actions',leads:'v-leads-tl',leadmgmt:'v-leadmgmt-tl',caddash:'v-cad-dash',myactions:'v-myactions-tl',onboard:'v-onboard',settings:'v-settings',chat:'v-chat'};
   showView(map[tab]||'v-om-dash');
   populateAllFilters();
   if(tab==='dash')renderOMDash();
@@ -8114,6 +8184,7 @@ function switchOM(tab){
   if(tab==='leads'){subscribeLeads();renderLeads();}
   if(tab==='leadmgmt')fetchHSLeads();
   if(tab==='caddash'){renderCadDash();saveDailyCadenceSnapshot();}
+  if(tab==='callsim')renderCallSim();
   if(tab==='cvr')renderCVRDash(); else cvrStopPoll();
   if(tab==='myactions'){if(!_leadUnsub)subscribeLeads();loadMyActionsTL();updateMyActionsBadge();}
   if(tab==='onboard'){subscribeOnboard();renderOnboardDash();}
@@ -9448,9 +9519,9 @@ async function renderCadTrendChart() {
 
 // Switch TL nav views (Dashboard / Coaching Logs / Attendance Points)
 function tlShowView(tab){
-  const viewMap={dashboard:'v-tl',logs:'v-tl-logs',nte:'v-om-n',attendance:'v-tl-attendance',ranking:'v-ranking',kb:'v-kb',calendar:'v-cal',actions:'v-actions',leads:'v-leads-tl',leadmgmt:'v-leadmgmt-tl',caddash:'v-cad-dash',cvr:'v-cvr',myactions:'v-myactions-tl',onboard:'v-onboard',cl:'v-tl-cl',settings:'v-settings',chat:'v-chat'};
+  const viewMap={dashboard:'v-tl',logs:'v-tl-logs',nte:'v-om-n',attendance:'v-tl-attendance',ranking:'v-ranking',kb:'v-kb',calendar:'v-cal',actions:'v-actions',leads:'v-leads-tl',leadmgmt:'v-leadmgmt-tl',caddash:'v-cad-dash',cvr:'v-cvr',callsim:'v-callsim',myactions:'v-myactions-tl',onboard:'v-onboard',cl:'v-tl-cl',settings:'v-settings',chat:'v-chat'};
   showView(viewMap[tab]||'v-tl');
-  ['dash','logs','nte','attendance','ranking','kb','calendar','actions','leads','leadmgmt','caddash','cvr','myactions','onboard','cl','settings','chat'].forEach(t=>{
+  ['dash','logs','nte','attendance','ranking','kb','calendar','actions','leads','leadmgmt','caddash','cvr','callsim','myactions','onboard','cl','settings','chat'].forEach(t=>{
     const el=document.getElementById('tl-nav-'+t);
     if(el) el.classList.toggle('active',t===tab||(t==='dash'&&tab==='dashboard'));
   });
@@ -9464,6 +9535,7 @@ function tlShowView(tab){
   if(tab==='leads'){subscribeLeads();renderLeads();}
   if(tab==='leadmgmt')fetchHSLeads();
   if(tab==='caddash'){renderCadDash();saveDailyCadenceSnapshot();}
+  if(tab==='callsim')renderCallSim();
   if(tab==='cvr')renderCVRDash(); else cvrStopPoll();
   if(tab==='myactions'){if(!_leadUnsub)subscribeLeads();loadMyActionsTL();updateMyActionsBadge();}
   if(tab==='onboard'){subscribeOnboard();renderOnboardDash();}
@@ -12503,7 +12575,7 @@ function switchAgentTab(tab){
   if(tab==='leads'){if(!_leadUnsub)subscribeLeads();else renderLeads();}
   if(tab==='leadmgmt')fetchHSLeads();
   if(tab==='myactions'){loadMyActions();updateMyActionsBadge();maStart();renderMyActionsShell();}
-  const titles={coaching:'My Coaching',nte:'My NTE',ft:'My Follow Through',perf:'My Performance',mycad:'My Cadence',cvr:'2nd Week Lead CVR',clhist:'My Call History',calc:'Phoenix Calculator',attendance:'My Attendance',leads:'Lead Follow-Up',leadmgmt:'Lead Compliance',myactions:'My Actions',library:'Call Library 🎵',kb:'Knowledge Base',settings:'Settings',chat:'Team Chat'};
+  const titles={coaching:'My Coaching',nte:'My NTE',ft:'My Follow Through',perf:'My Performance',mycad:'My Cadence',cvr:'2nd Week Lead CVR',callsim:'Call Simulator',clhist:'My Call History',calc:'Phoenix Calculator',attendance:'My Attendance',leads:'Lead Follow-Up',leadmgmt:'Lead Compliance',myactions:'My Actions',library:'Call Library 🎵',kb:'Knowledge Base',settings:'Settings',chat:'Team Chat'};
   const el=document.getElementById('tb-title'); if(el) el.textContent=titles[tab]||'';
   if(tab==='perf') renderAgentPerf();
   if(tab==='mycad') renderAgentCadence();
@@ -13950,6 +14022,134 @@ document.addEventListener('keydown', function(e) {
    so nothing here can move a compliance number.
    ═════════════════════════════════════════════════════════════════════════ */
 const CVR_TGT=3.0;
+/* ─── CALL SIMULATOR ────────────────────────────────────────────────────────
+   Results exported from the AI call simulator, restricted to agents on this
+   app's roster so the names and teams match everything else here. Team comes
+   from the roster, not the simulator sheet — the sheet has 18 agents filed
+   under more than one TL, and the roster is the record that settles it.
+   Static: the sheet is uploaded periodically, not read live.                */
+const SIM={"cats":["Rapport","Early Objections","Discovery","Pain Points","FCF & Membership","Features as Benefits","Objection Handling","Closing"],"agents":[{"n":"Bradd Peralta","t":"Florence Llait","c":33,"lv":"Advanced","m":70,"b":92.0,"p":15,"d":11.8,"k":[76,75,75,77,61,74,73,53],"w":7,"ld":"2026-09-17","sp":[53.0,62.0,61.0,77.0,77.0,65.0,77.0,83.0,75.0,72.0]},{"n":"Cheryl Sayon","t":"Florence Llait","c":39,"lv":"Advanced","m":71,"b":87.0,"p":21,"d":4.4,"k":[78,75,74,76,66,73,70,58],"w":7,"ld":"2026-09-13","sp":[69.0,77.0,68.0,53.0,64.0,72.0,73.0,70.0,69.0,65.0]},{"n":"Chester Banluta","t":"Florence Llait","c":37,"lv":"Advanced","m":75,"b":89.0,"p":35,"d":2.3,"k":[81,78,74,76,78,75,79,62],"w":7,"ld":"2026-09-14","sp":[70.0,75.0,84.0,67.0,71.0,54.0,73.0,74.0,83.0,76.0]},{"n":"Cindy Balazuela","t":"Florence Llait","c":19,"lv":"Advanced","m":79,"b":87.0,"p":68,"d":7.0,"k":[82,78,77,81,79,79,82,78],"w":2,"ld":"2026-08-23","sp":[87.0,82.0,84.0,84.0,84.0,82.0,82.0,82.0,82.0,78.0]},{"n":"Darlyn Acuriza","t":"Florence Llait","c":44,"lv":"Advanced","m":72,"b":88.0,"p":27,"d":0.3,"k":[82,81,72,74,61,69,74,63],"w":4,"ld":"2026-09-21","sp":[77.0,73.0,80.0,71.0,74.0,71.0,56.0,87.0,69.0,53.0]},{"n":"Dioreza Tomilloso","t":"Florence Llait","c":51,"lv":"Advanced","m":77,"b":92.0,"p":53,"d":3.2,"k":[83,83,81,82,68,78,75,60],"w":7,"ld":"2026-09-20","sp":[78.0,72.0,77.0,83.0,84.0,80.0,80.0,82.0,82.0,76.0]},{"n":"Emmanuel Maturana","t":"Florence Llait","c":51,"lv":"Advanced","m":70,"b":91.0,"p":35,"d":18.0,"k":[79,78,77,78,66,72,68,56],"w":7,"ld":"2026-09-21","sp":[82.0,75.0,82.0,75.0,90.0,83.0,57.0,35.0,76.0,80.0]},{"n":"Jennylyn Balagtas","t":"Florence Llait","c":41,"lv":"Advanced","m":73,"b":91.0,"p":44,"d":-12.6,"k":[80,78,74,75,74,78,76,60],"w":7,"ld":"2026-09-22","sp":[71.0,23.0,82.0,82.0,40.0,66.0,58.0,58.0,64.0,78.0]},{"n":"Melcah Paras","t":"Florence Llait","c":32,"lv":"Advanced","m":67,"b":91.0,"p":31,"d":-2.6,"k":[75,75,75,71,59,67,67,55],"w":7,"ld":"2026-09-09","sp":[86.0,45.0,66.0,87.0,44.0,49.0,57.0,65.0,72.0,51.0]},{"n":"Amer Ismael","t":"Jhay Oglimen","c":42,"lv":"Advanced","m":83,"b":92.0,"p":79,"d":-3.8,"k":[88,87,86,89,83,79,79,75],"w":7,"ld":"2026-09-21","sp":[86.0,86.0,74.0,77.0,83.0,89.0,83.0,80.0,82.0,68.0]},{"n":"Bienyl Salvador","t":"Jhay Oglimen","c":58,"lv":"Advanced","m":73,"b":91.0,"p":38,"d":15.7,"k":[79,78,71,73,76,78,76,60],"w":7,"ld":"2026-09-16","sp":[88.0,67.0,86.0,65.0,82.0,85.0,85.0,44.0,85.0,84.0]},{"n":"Ericka Condecion","t":"Jhay Oglimen","c":53,"lv":"Advanced","m":71,"b":92.0,"p":30,"d":-6.4,"k":[82,81,76,74,63,68,72,54],"w":7,"ld":"2026-09-09","sp":[69.0,63.0,84.0,61.0,58.0,62.0,43.0,82.0,41.0,28.0]},{"n":"Jersey Deguzman","t":"Jhay Oglimen","c":3,"lv":"Advanced","m":69,"b":79.0,"p":0,"d":null,"k":[73,70,73,80,74,63,83,43],"w":7,"ld":"2026-09-02","sp":[64.0,64.0,79.0]},{"n":"Joan Libongcogon","t":"Jhay Oglimen","c":53,"lv":"Intermediate","m":76,"b":94.0,"p":40,"d":-2.9,"k":[83,84,83,82,72,78,72,61],"w":7,"ld":"2026-09-21","sp":[79.0,91.0,89.0,88.0,88.0,82.0,63.0,71.0,74.0,68.0]},{"n":"Joenel Las","t":"Jhay Oglimen","c":48,"lv":"Intermediate","m":72,"b":88.0,"p":35,"d":12.2,"k":[75,73,77,74,69,76,74,64],"w":7,"ld":"2026-09-16","sp":[83.0,79.0,79.0,83.0,71.0,80.0,68.0,74.0,87.0,87.0]},{"n":"King Martinez","t":"Jhay Oglimen","c":62,"lv":"Advanced","m":73,"b":90.0,"p":39,"d":-6.3,"k":[82,79,77,78,72,74,75,57],"w":7,"ld":"2026-09-16","sp":[38.0,87.0,82.0,81.0,81.0,86.0,86.0,86.0,83.0,59.0]},{"n":"Kris Mayes","t":"Jhay Oglimen","c":47,"lv":"Intermediate","m":67,"b":90.0,"p":23,"d":-1.6,"k":[76,70,65,70,62,64,66,67],"w":4,"ld":"2026-09-18","sp":[74.0,61.0,61.0,87.0,72.0,63.0,45.0,61.0,64.0,66.0]},{"n":"Mariefe Villanueva","t":"Jhay Oglimen","c":62,"lv":"Intermediate","m":76,"b":94.0,"p":44,"d":-2.6,"k":[84,82,81,77,76,73,79,56],"w":7,"ld":"2026-09-16","sp":[68.0,83.0,83.0,82.0,73.0,81.0,67.0,77.0,69.0,69.0]},{"n":"Mario Mapa","t":"Jhay Oglimen","c":53,"lv":"Advanced","m":67,"b":87.0,"p":17,"d":-1.1,"k":[78,75,73,69,65,68,67,47],"w":7,"ld":"2026-09-16","sp":[45.0,83.0,59.0,62.0,75.0,53.0,51.0,67.0,72.0,64.0]},{"n":"Shimonni Pigaredo","t":"Jhay Oglimen","c":54,"lv":"Advanced","m":76,"b":90.0,"p":56,"d":3.6,"k":[84,85,76,78,81,78,80,66],"w":7,"ld":"2026-09-16","sp":[84.0,77.0,87.0,82.0,83.0,78.0,86.0,81.0,81.0,87.0]},{"n":"Alim Sinha","t":"Jumz Delacruz","c":29,"lv":"Intermediate","m":62,"b":88.0,"p":3,"d":-11.0,"k":[77,64,63,57,53,58,59,60],"w":4,"ld":"2026-09-13","sp":[70.0,65.0,64.0,56.0,50.0,34.0,40.0,41.0,62.0,58.0]},{"n":"Angelika Gonzales","t":"Jumz Delacruz","c":42,"lv":"Advanced","m":76,"b":86.0,"p":38,"d":2.5,"k":[79,79,80,83,67,77,75,66],"w":7,"ld":"2026-09-21","sp":[75.0,77.0,80.0,74.0,80.0,82.0,71.0,64.0,76.0,78.0]},{"n":"Angelo Miranda","t":"Jumz Delacruz","c":43,"lv":"Advanced","m":75,"b":93.0,"p":28,"d":-0.6,"k":[81,74,80,79,70,76,71,69],"w":7,"ld":"2026-09-18","sp":[77.0,76.0,69.0,77.0,72.0,80.0,78.0,71.0,70.0,82.0]},{"n":"CJ Garces","t":"Jumz Delacruz","c":51,"lv":"Advanced","m":72,"b":92.0,"p":37,"d":-15.5,"k":[79,77,79,76,63,68,69,59],"w":7,"ld":"2026-09-21","sp":[43.0,42.0,74.0,45.0,65.0,48.0,71.0,50.0,42.0,37.0]},{"n":"Edin Rivas","t":"Jumz Delacruz","c":39,"lv":"Advanced","m":78,"b":96.0,"p":54,"d":-22.4,"k":[81,74,79,81,76,81,82,73],"w":7,"ld":"2026-09-14","sp":[71.0,80.0,74.0,72.0,74.0,79.0,80.0,24.0,21.0,68.0]},{"n":"Jardene Petines","t":"Jumz Delacruz","c":34,"lv":"Intermediate","m":74,"b":90.0,"p":53,"d":26.0,"k":[79,74,80,78,65,74,77,75],"w":4,"ld":"2026-08-30","sp":[90.0,81.0,88.0,85.0,84.0,64.0,64.0,86.0,83.0,83.0]},{"n":"Jessa Frayna","t":"Jumz Delacruz","c":47,"lv":"Advanced","m":71,"b":88.0,"p":30,"d":12.3,"k":[79,75,72,74,68,74,71,64],"w":7,"ld":"2026-09-14","sp":[43.0,46.0,56.0,56.0,82.0,75.0,54.0,69.0,76.0,72.0]},{"n":"Lance Dabu","t":"Jumz Delacruz","c":30,"lv":"Advanced","m":62,"b":87.0,"p":10,"d":3.8,"k":[72,70,68,66,58,57,64,55],"w":7,"ld":"2026-09-14","sp":[61.0,32.0,53.0,53.0,47.0,27.0,39.0,60.0,75.0,75.0]},{"n":"Leslie Logan","t":"Jumz Delacruz","c":47,"lv":"Intermediate","m":66,"b":92.0,"p":28,"d":15.2,"k":[74,80,76,67,54,61,64,57],"w":4,"ld":"2026-09-14","sp":[68.0,59.0,25.0,25.0,51.0,60.0,46.0,86.0,92.0,72.0]},{"n":"Roxanne Hila","t":"Jumz Delacruz","c":63,"lv":"Intermediate","m":62,"b":90.0,"p":8,"d":1.5,"k":[72,69,65,62,55,59,62,54],"w":7,"ld":"2026-09-18","sp":[37.0,57.0,25.0,64.0,63.0,78.0,53.0,70.0,71.0,59.0]}],"from":"2026-06-23","to":"2026-09-22"};
+const SIM_BAND=p=>p>=80?'#2f6b4a':p>=65?'#8f6210':'#a03526';
+const SIM_SOFT=p=>p>=80?'#dbe9e0':p>=65?'#f2e6cb':'#f3dcd7';
+let _csSort={k:'c',dir:-1};
+
+/* Which agents this viewer may see: a TL sees their own team, OM and the
+   assistant TLs see the whole cluster — the same scoping as every other view. */
+function csScope(){
+  if(!CU) return [];
+  if(CU.isAgentView){
+    const me=(CU.name||'').toLowerCase();
+    return SIM.agents.filter(a=>a.n.toLowerCase()===me);
+  }
+  const team=(!CU.isOM&&TL_TEAM_MAP[CU.email])?TL_TEAM_MAP[CU.email]:null;
+  if(team) return SIM.agents.filter(a=>('Team '+a.t)===team||a.t===team.replace('Team ',''));
+  return SIM.agents.slice();
+}
+
+function csAvg(xs){return xs.length?Math.round(xs.reduce((t,x)=>t+x,0)/xs.length):0;}
+
+function renderCallSim(){
+  const rows=csScope();
+  const scope=document.getElementById('cs-scope');
+  if(scope){
+    const teams=[...new Set(rows.map(a=>a.t))].sort();
+    scope.textContent=rows.length+' agent'+(rows.length===1?'':'s')+' · '+
+      rows.reduce((t,a)=>t+a.c,0).toLocaleString()+' simulations · '+
+      (teams.length>1?teams.length+' teams':teams[0]||'—')+' · '+SIM.from+' to '+SIM.to;
+  }
+  if(!rows.length){
+    document.getElementById('cs-rows').innerHTML='<tr><td colspan="10" style="padding:18px;color:var(--g500);">No simulator results for this view.</td></tr>';
+    document.getElementById('cs-tiles').innerHTML='';
+    document.getElementById('cs-cats').innerHTML='';
+    return;
+  }
+
+  /* Cluster/team summary. Averages are over agents, each agent counted once,
+     so a heavy tester cannot drag the headline on their own. */
+  const cat=[];
+  for(let i=0;i<8;i++){
+    const v=rows.map(a=>a.k[i]).filter(x=>x!==null&&x!==undefined);
+    cat.push(v.length?Math.round(v.reduce((t,x)=>t+x,0)/v.length):null);
+  }
+  let weakI=0; cat.forEach((v,i)=>{if(v!==null&&(cat[weakI]===null||v<cat[weakI]))weakI=i;});
+  const passAvg=csAvg(rows.map(a=>a.p));
+  document.getElementById('cs-tiles').innerHTML=
+    tile('Agents',rows.length,'with simulator results')+
+    tile('Simulations',rows.reduce((t,a)=>t+a.c,0).toLocaleString(),'recorded attempts')+
+    tile('Average score',csAvg(rows.map(a=>a.m)),'out of 100 · pass is 80')+
+    tile('Pass rate',passAvg+'%',"share of attempts scoring 80+",SIM_BAND(passAvg+40))+
+    tile('Weakest skill',SIM.cats[weakI],cat[weakI]+'% of available points','#a03526');
+  function tile(k,v,s,col){
+    return '<div class="cs-tile"><span class="k">'+k+'</span><span class="v"'+(col?' style="color:'+col+'"':'')+'>'+v+'</span><span class="s">'+s+'</span></div>';
+  }
+
+  document.getElementById('cs-cats').innerHTML=SIM.cats
+    .map((c,i)=>({c,i,v:cat[i]})).filter(x=>x.v!==null).sort((a,b)=>a.v-b.v)
+    .map(x=>'<div class="cs-brow"><span class="nm">'+x.c+'</span>'+
+      '<div class="cs-track"><div class="cs-fill" style="width:'+x.v+'%;background:'+SIM_SOFT(x.v)+';border-right:3px solid '+SIM_BAND(x.v)+'"></div></div>'+
+      '<span class="cs-pc" style="color:'+SIM_BAND(x.v)+'">'+x.v+'%</span></div>').join('');
+
+  const k=_csSort.k,dir=_csSort.dir;
+  const sorted=rows.slice().sort((a,b)=>{
+    let x=a[k],y=b[k];
+    if(k==='n'||k==='t'||k==='lv'){x=String(x);y=String(y);return x<y?-dir:x>y?dir:0;}
+    if(k==='w'){x=a.w;y=b.w;}
+    if(x===null||x===undefined)x=-999; if(y===null||y===undefined)y=-999;
+    return (x-y)*dir;
+  });
+  document.getElementById('cs-rows').innerHTML=sorted.map((a,i)=>{
+    const spark='<span class="cs-spark">'+a.sp.map(v=>'<i title="'+v+'" style="height:'+Math.max(3,Math.round(v/100*16))+'px;background:'+SIM_BAND(v)+'"></i>').join('')+'</span>';
+    const d=(a.d===null||a.d===undefined)?'<span style="color:var(--g400)">—</span>'
+      :'<span style="color:'+(a.d>0.5?'#2f6b4a':a.d<-0.5?'#a03526':'var(--g500)')+';font-weight:600">'+(a.d>0?'+':'')+a.d.toFixed(1)+'</span>';
+    return '<tr><td><span class="cs-name" data-i="'+i+'" tabindex="0">'+a.n+'</span></td>'+
+      '<td style="color:var(--g500)">'+a.t+'</td>'+
+      '<td><span class="cs-lvl">'+a.lv+'</span></td>'+
+      '<td class="n">'+a.c+'</td><td class="n">'+a.m+'</td><td class="n">'+a.b+'</td>'+
+      '<td class="n" style="color:'+SIM_BAND(a.p+40)+';font-weight:600">'+a.p+'%</td>'+
+      '<td class="n">'+d+'</td>'+
+      '<td style="color:var(--g600)">'+(a.w!==null&&a.w!==undefined?SIM.cats[a.w]:'—')+'</td>'+
+      '<td>'+spark+'</td></tr>';
+  }).join('');
+  document.getElementById('cs-rows')._rows=sorted;
+  document.querySelectorAll('#v-callsim thead th').forEach(th=>th.classList.toggle('on',th.dataset.k===_csSort.k));
+  const f=document.getElementById('cs-foot');
+  if(f) f.textContent='Skill percentages are scored against the Advanced rubric, which totals exactly 100 points. Uploaded from the simulator results sheet; last attempt recorded '+SIM.to+'.';
+}
+
+/* Hover (and keyboard focus) on a name opens the agent's full skill breakdown —
+   the point of the view is spotting an individual's opportunity without
+   leaving the table. */
+function csTip(el,show){
+  const tip=document.getElementById('cs-tip');
+  if(!tip) return;
+  if(!show){tip.style.display='none';tip.setAttribute('aria-hidden','true');return;}
+  const list=document.getElementById('cs-rows')._rows||[];
+  const a=list[+el.dataset.i]; if(!a) return;
+  const ranked=SIM.cats.map((c,i)=>({c,v:a.k[i]})).filter(x=>x.v!==null&&x.v!==undefined).sort((x,y)=>x.v-y.v);
+  tip.innerHTML='<h4>'+a.n+'</h4><div class="sub">'+a.t+' · '+a.c+' simulations · '+a.lv+' · last '+a.ld+'</div>'+
+    ranked.map(x=>'<div class="r"><span>'+x.c+'</span>'+
+      '<span class="tk"><span class="tf" style="width:'+x.v+'%;background:'+SIM_BAND(x.v)+'"></span></span>'+
+      '<span class="pv" style="color:'+SIM_BAND(x.v)+'">'+x.v+'%</span></div>').join('')+
+    '<div class="foot">Percentage of the points available for each skill, averaged over '+a.c+' simulations. Weakest first.</div>';
+  tip.style.display='block'; tip.setAttribute('aria-hidden','false');
+  const r=el.getBoundingClientRect();
+  let top=r.bottom+8, left=r.left;
+  if(top+tip.offsetHeight>window.innerHeight-10) top=Math.max(10,r.top-tip.offsetHeight-8);
+  if(left+300>window.innerWidth) left=Math.max(10,window.innerWidth-300);
+  tip.style.top=top+'px'; tip.style.left=left+'px';
+}
+document.addEventListener('mouseover',e=>{const t=e.target.closest&&e.target.closest('#v-callsim .cs-name'); if(t)csTip(t,true);});
+document.addEventListener('mouseout',e=>{const t=e.target.closest&&e.target.closest('#v-callsim .cs-name'); if(t)csTip(t,false);});
+document.addEventListener('focusin',e=>{const t=e.target.closest&&e.target.closest('#v-callsim .cs-name'); if(t)csTip(t,true);});
+document.addEventListener('focusout',e=>{const t=e.target.closest&&e.target.closest('#v-callsim .cs-name'); if(t)csTip(t,false);});
+document.addEventListener('click',e=>{
+  const th=e.target.closest&&e.target.closest('#v-callsim thead th[data-k]');
+  if(!th) return;
+  const k=th.dataset.k;
+  if(_csSort.k===k)_csSort.dir*=-1; else {_csSort.k=k;_csSort.dir=(k==='n'||k==='t')?1:-1;}
+  renderCallSim();
+});
+
 const CVR_WIN={w2:7,w23:14,life:35};                 // days from ticket open to sale
 // Counted by date, not by the clock: a ticket opened on the 1st still counts if
 // it closes on the 8th, whatever time of day either happened. Both dates are
