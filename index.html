@@ -920,6 +920,7 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
         <div class="sb-item" data-tab="ft" onclick="switchAgentTab('ft')"><span class="sb-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-13.6-5.7L4.2 7.2"/><path d="M4 4.2v3.6h3.6"/><path d="M4 13a8 8 0 0 0 13.6 5.7l2.2-1.9"/><path d="M20 19.8v-3.6h-3.6"/></svg></span><span>My Follow Through</span></div>
         <div class="sb-item" data-tab="perf" onclick="switchAgentTab('perf')"><span class="sb-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.2 20.4h17.6"/><path d="M6.8 20.4v-6.2M12 20.4V5.6M17.2 20.4v-9.4"/></svg></span><span>My Performance</span></div>
         <div class="sb-item" data-tab="mycad" onclick="switchAgentTab('mycad')"><span class="sb-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 17 8 11 12 15 17 7 21 12"/></svg></span><span>My Cadence</span></div>
+        <div class="sb-item" data-tab="callsim" onclick="switchAgentTab('callsim')"><span class="sb-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14.5V12a8 8 0 0 1 16 0v2.5"/><rect x="3" y="13.5" width="4" height="6" rx="1.6"/><rect x="17" y="13.5" width="4" height="6" rx="1.6"/><path d="M19 19.5v.8a2.2 2.2 0 0 1-2.2 2.2H13"/></svg></span><span>My Opportunity</span></div>
         <div class="sb-item" data-tab="cvr" onclick="switchAgentTab('cvr')"><span class="sb-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.8"/><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"/></svg></span><span>2nd Week CVR</span></div>
         <div class="sb-item" data-tab="clhist" onclick="switchAgentTab('clhist')"><span class="sb-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.6 12a8.4 8.4 0 1 0 2.6-6.1"/><path d="M3.2 4v4h4"/><path d="M12 7.8v4.6l3.2 1.9"/></svg></span><span>My Call History</span></div>
         <div class="sb-item" data-tab="calc" onclick="switchAgentTab('calc')"><span class="sb-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2.8" width="14" height="18.4" rx="2"/><rect x="8" y="6" width="8" height="3.2" rx="0.8"/><path d="M8.6 13.2h.01M12 13.2h.01M15.4 13.2h.01M8.6 17.2h.01M12 17.2h.01M15.4 17.2h.01"/></svg></span><span>Phoenix Calculator</span></div>
@@ -12585,9 +12586,9 @@ function onEmailInput(){
 function switchAgentTab(tab){
   document.querySelectorAll('#agent-nav .sb-item').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
   document.querySelectorAll('.av-section').forEach(s=>s.style.display='none');
-  const map={coaching:'av-coaching',nte:'av-nte',ft:'av-ft',perf:'av-perf',mycad:'av-mycad',cvr:'__cvr__',clhist:'av-cl-hist',calc:'av-calc',attendance:'av-attendance',leads:'av-leads',leadmgmt:'av-leadmgmt',myactions:'av-myactions',library:'av-lib',kb:'__kb__',settings:'__settings__',chat:'__chat__'};
+  const map={coaching:'av-coaching',nte:'av-nte',ft:'av-ft',perf:'av-perf',mycad:'av-mycad',cvr:'__cvr__',clhist:'av-cl-hist',calc:'av-calc',attendance:'av-attendance',leads:'av-leads',leadmgmt:'av-leadmgmt',myactions:'av-myactions',callsim:'__callsim__',library:'av-lib',kb:'__kb__',settings:'__settings__',chat:'__chat__'};
   const secId=map[tab];
-  if(secId==='__kb__'){showView('v-kb');renderAll();}else if(secId==='__settings__'){showView('v-settings');renderSettingsPage();}else if(secId==='__cvr__'){showView('v-cvr');}else if(secId==='__chat__'){showView('v-chat');initChatV2();clearChatBadge();}else{showView('v-agent');if(secId){const sec=document.getElementById(secId);if(sec)sec.style.display='';}}
+  if(secId==='__kb__'){showView('v-kb');renderAll();}else if(secId==='__settings__'){showView('v-settings');renderSettingsPage();}else if(secId==='__cvr__'){showView('v-cvr');}else if(secId==='__callsim__'){showView('v-callsim');simFetch();renderCallSim();}else if(secId==='__chat__'){showView('v-chat');initChatV2();clearChatBadge();}else{showView('v-agent');if(secId){const sec=document.getElementById(secId);if(sec)sec.style.display='';}}
   if(tab==='leads'){if(!_leadUnsub)subscribeLeads();else renderLeads();}
   if(tab==='leadmgmt')fetchHSLeads();
   if(tab==='myactions'){loadMyActions();updateMyActionsBadge();maStart();renderMyActionsShell();}
@@ -14123,8 +14124,12 @@ function csVisible(){
   const S=simSource();
   if(!CU) return [];
   if(CU.isAgentView){
-    const me=(CU.name||'').toLowerCase();
-    return S.agents.map((a,i)=>i).filter(i=>S.agents[i].n.toLowerCase()===me);
+    /* An agent sees themselves and no one else. Matching is done on the same
+       stripped key the sheet importer uses, so punctuation or casing in either
+       record cannot leave someone unable to see their own results. */
+    const key=t=>String(t||'').toLowerCase().replace(/[^a-z ]+/g,' ').replace(/\s+/g,' ').trim();
+    const me=key(CU.agentName||CU.name||'');
+    return S.agents.map((a,i)=>i).filter(i=>key(S.agents[i].n)===me);
   }
   const team=(!CU.isOM&&TL_TEAM_MAP[CU.email])?TL_TEAM_MAP[CU.email].replace('Team ',''):null;
   return S.agents.map((a,i)=>i).filter(i=>!team||S.agents[i].t===team);
@@ -14192,10 +14197,14 @@ function renderCallSim(){
   if(_csF.tl!=='All'&&!tls.includes(_csF.tl))_csF.tl='All';
   if(_csF.agent!=='All'&&!agentList.includes(_csF.agent))_csF.agent='All';
   const bar=document.getElementById('cs-filters');
+  /* An agent only ever has themselves in scope, so the Team Lead and Agent
+     pickers would be single-option controls that suggest there is something
+     else to look at. They get the certification filter alone. */
+  const solo=!!(CU&&CU.isAgentView);
   if(bar) bar.innerHTML=
     '<label style="font-size:.7rem;color:var(--g500);font-weight:600;">Certification '+csOpt('cs-f-cert',certs,_csF.cert)+'</label>'+
-    '<label style="font-size:.7rem;color:var(--g500);font-weight:600;">Team Lead '+csOpt('cs-f-tl',tls,_csF.tl)+'</label>'+
-    '<label style="font-size:.7rem;color:var(--g500);font-weight:600;">Agent '+csOpt('cs-f-agent',agentList,_csF.agent)+'</label>'+
+    (solo?'':'<label style="font-size:.7rem;color:var(--g500);font-weight:600;">Team Lead '+csOpt('cs-f-tl',tls,_csF.tl)+'</label>')+
+    (solo?'':'<label style="font-size:.7rem;color:var(--g500);font-weight:600;">Agent '+csOpt('cs-f-agent',agentList,_csF.agent)+'</label>')+
     '<button type="button" id="cs-f-clear" style="font-size:.72rem;padding:5px 10px;border:1px solid var(--g300);background:#fff;border-radius:7px;color:var(--g600);cursor:pointer;align-self:flex-end;">Clear</button>';
 
   const recs=csRecords();
@@ -14203,14 +14212,22 @@ function renderCallSim(){
   const scope=document.getElementById('cs-scope');
   if(scope){
     const teams=[...new Set(rows.map(a=>a.t))].sort();
-    scope.textContent=rows.length+' agent'+(rows.length===1?'':'s')+' · '+
+    scope.textContent=(CU&&CU.isAgentView?'Your results':rows.length+' agent'+(rows.length===1?'':'s'))+' · '+
       recs.length.toLocaleString()+' simulation'+(recs.length===1?'':'s')+' · '+
       (teams.length>1?teams.length+' teams':(teams[0]||'—'))+' · '+S.from+' to '+S.to;
   }
   const tiles=document.getElementById('cs-tiles'), catsEl=document.getElementById('cs-cats');
   if(!recs.length){
-    document.getElementById('cs-rows').innerHTML='<tr><td colspan="13" style="padding:18px;color:var(--g500);">Nothing matches these filters.</td></tr>';
+    const why=(CU&&CU.isAgentView)
+      ? (_csF.cert==='All' ? 'No simulator results recorded for you yet.'
+                           : 'No '+_csF.cert+' simulations recorded for you yet.')
+      : 'Nothing matches these filters.';
+    document.getElementById('cs-rows').innerHTML='<tr><td colspan="13" style="padding:18px;color:var(--g500);">'+why+'</td></tr>';
     if(tiles)tiles.innerHTML=''; if(catsEl)catsEl.innerHTML='';
+    /* Hide the comparison too — an empty bordered heading reads as a fault. */
+    const tw0=document.getElementById('cs-transfer-wrap');
+    if(tw0) tw0.style.display='none';
+    const f0=document.getElementById('cs-foot'); if(f0) f0.textContent='';
     return;
   }
   /* Skill percentages are averaged over ATTEMPTS, not over agents, so the
