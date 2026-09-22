@@ -2760,7 +2760,7 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
 
   <div>
     <div style="font-size:.85rem;font-weight:700;color:var(--g800);margin-bottom:3px;">By agent</div>
-    <div class="cs-note" style="margin-bottom:8px;">One row per agent. <strong>Hover an agent's name</strong> to see their full skill breakdown, late-stage skills included. &Delta; compares their earliest and latest attempts <em>at their current level</em> and needs at least four there &mdash; a dash means not enough yet. Recent form shows their last 10 attempts in order; green is a pass (80+).</div>
+    <div class="cs-note" style="margin-bottom:8px;">One row per agent. <strong>Hover an agent's name</strong> to see their full skill breakdown, late-stage skills included. &Delta; compares their earliest and latest attempts <em>at their current level</em> and needs at least four there &mdash; a dash means not enough yet. The two focus columns are the same calculation run separately over simulations and over evaluated live calls, both skipping Closing and FCF &amp; Membership; the number beside the live focus is how many calls it is based on. Recent form shows their last 10 attempts in order; green is a pass (80+).</div>
     <div style="overflow-x:auto;border:1px solid var(--g200);border-radius:10px;background:#fff;">
       <table>
         <thead><tr>
@@ -2768,7 +2768,7 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
           <th data-k="c" class="n">Sims</th><th data-k="m" class="n">Avg</th><th data-k="b" class="n">Best</th>
           <th data-k="p" class="n">Pass</th><th data-k="d" class="n">&Delta;</th>
           <th data-k="lc" class="n">Calls</th><th data-k="lm" class="n">Live avg</th><th data-k="gp" class="n">Sim&rarr;Live</th>
-          <th data-k="w">Focus skill</th><th>Recent form</th>
+          <th data-k="w">Focus &mdash; sim</th><th data-k="wl">Focus &mdash; live</th><th>Recent form</th>
         </tr></thead>
         <tbody id="cs-rows"></tbody>
       </table>
@@ -11509,7 +11509,7 @@ function renderOMN(){
       <td>${statusBadge}</td>
       <td>${CU&&!NO_DELETE.has(CU.email)?`<button class="btn btn-outline btn-sm" onclick="delNTE('${r.id}')">🗑</button>`:'—'}</td>
     </tr>`;
-  }).join('')||`<tr><td colspan="13"><div class="empty-st"><div class="ei">📝</div><p>No NTE logs yet.</p></div></td></tr>`;
+  }).join('')||`<tr><td colspan="14"><div class="empty-st"><div class="ei">📝</div><p>No NTE logs yet.</p></div></td></tr>`;
 }
 
 /* Helper: look up TL from roster for an agent name */
@@ -14266,7 +14266,7 @@ function renderCallSim(){
       ? (_csF.cert==='All' ? 'No simulator results recorded for you yet.'
                            : 'No '+_csF.cert+' simulations recorded for you yet.')
       : 'Nothing matches these filters.';
-    document.getElementById('cs-rows').innerHTML='<tr><td colspan="13" style="padding:18px;color:var(--g500);">'+why+'</td></tr>';
+    document.getElementById('cs-rows').innerHTML='<tr><td colspan="14" style="padding:18px;color:var(--g500);">'+why+'</td></tr>';
     if(tiles)tiles.innerHTML=''; if(catsEl)catsEl.innerHTML='';
     /* Hide the comparison too — an empty bordered heading reads as a fault. */
     const tw0=document.getElementById('cs-transfer-wrap');
@@ -14274,6 +14274,22 @@ function renderCallSim(){
     const f0=document.getElementById('cs-foot'); if(f0) f0.textContent='';
     return;
   }
+  /* Live-call records for the same scope. Computed here rather than further
+     down because both focus figures are shown in the summary tiles. */
+  const visSet=new Set(csVisible());
+  const liveRecs=(S.live||[]).filter(r=>{
+    if(!visSet.has(r[0])) return false;
+    const a=S.agents[r[0]];
+    if(_csF.tl!=='All'    && a.t!==_csF.tl) return false;
+    if(_csF.agent!=='All' && a.n!==_csF.agent) return false;
+    return true;   // certification is a simulator concept; live calls have no level
+  });
+  const liveCat=[];
+  for(let i=0;i<8;i++){
+    const v=liveRecs.map(r=>r[4][i]).filter(x=>x>=0);
+    liveCat.push(v.length?Math.round(v.reduce((t,x)=>t+x,0)/v.length):null);
+  }
+
   /* Skill percentages are averaged over ATTEMPTS, not over agents, so the
      figure answers "how did these simulations go" rather than weighting a
      three-attempt agent equally with a sixty-attempt one. */
@@ -14283,13 +14299,18 @@ function renderCallSim(){
     cat.push(v.length?Math.round(v.reduce((t,x)=>t+x,0)/v.length):null);
   }
   const weakI=csFocusIdx(cat);
+  const liveWeakI=liveRecs.length?csFocusIdx(liveCat):null;
   const passPct=Math.round(100*recs.filter(r=>r[3]).length/recs.length);
   tiles.innerHTML=
     tile('Agents',rows.length,'in this view')+
     tile('Simulations',recs.length.toLocaleString(),'attempts in scope')+
     tile('Average score',csMean(recs.map(r=>r[2])),'out of 100 · pass is 80')+
     tile('Pass rate',passPct+'%','of attempts scored 80+',SIM_BAND(passPct+40))+
-    tile('Focus skill',S.cats[weakI],cat[weakI]+'% of available points','#a03526');
+    tile('Focus &mdash; simulator',S.cats[weakI],cat[weakI]+'% of available points','#a03526')+
+    tile('Focus &mdash; live calls',
+         liveWeakI===null?'—':S.cats[liveWeakI],
+         liveWeakI===null?'no evaluated calls in scope':liveCat[liveWeakI]+'% over '+liveRecs.length+' call'+(liveRecs.length===1?'':'s'),
+         liveWeakI===null?null:'#a03526');
   function tile(k,v,s,col){
     return '<div class="cs-tile"><span class="k">'+k+'</span><span class="v"'+(col?' style="color:'+col+'"':'')+'>'+v+'</span><span class="s">'+s+'</span></div>';
   }
@@ -14306,14 +14327,6 @@ function renderCallSim(){
      The question this answers is whether a skill an agent shows under exam
      conditions survives a real customer. Only agents who have BOTH are
      included, so the two columns always describe the same people. */
-  const visSet=new Set(csVisible());
-  const liveRecs=(S.live||[]).filter(r=>{
-    if(!visSet.has(r[0])) return false;
-    const a=S.agents[r[0]];
-    if(_csF.tl!=='All'    && a.t!==_csF.tl) return false;
-    if(_csF.agent!=='All' && a.n!==_csF.agent) return false;
-    return true;   // certification is a simulator concept; live calls have no level
-  });
   const bothIds=new Set(liveRecs.map(r=>r[0]));
   const simForBoth=recs.filter(r=>bothIds.has(r[0]));
   const tw=document.getElementById('cs-transfer-wrap');
@@ -14355,9 +14368,10 @@ function renderCallSim(){
       cats.push(x.length?Math.round(x.reduce((t,y)=>t+y,0)/x.length):null);
     }
     liveByName[S.agents[k].n]={n:v.length,m:csMean(v.map(r=>r[1])),
-      p:Math.round(100*v.filter(r=>r[2]).length/v.length),k:cats};
+      p:Math.round(100*v.filter(r=>r[2]).length/v.length),k:cats,
+      w:csFocusIdx(cats)};   // same exclusions as the simulator focus
   });
-  rows.forEach(a=>{ a.live=liveByName[a.n]||null; a.gap=a.live?a.live.m-a.m:null; });
+  rows.forEach(a=>{ a.live=liveByName[a.n]||null; a.gap=a.live?a.live.m-a.m:null; a.wl=a.live?a.live.w:null; });
 
   const k=_csSort.k,dir=_csSort.dir;
   const sorted=rows.slice().sort((a,b)=>{
@@ -14367,6 +14381,7 @@ function renderCallSim(){
     if(k==='lm'){x=a.live?a.live.m:null;y=b.live?b.live.m:null;}
     if(k==='lc'){x=a.live?a.live.n:null;y=b.live?b.live.n:null;}
     if(k==='gp'){x=a.gap;y=b.gap;}
+    if(k==='wl'){x=a.wl;y=b.wl;}
     if(x===null||x===undefined)x=-999; if(y===null||y===undefined)y=-999;
     return (x-y)*dir;
   });
@@ -14384,7 +14399,9 @@ function renderCallSim(){
       '<td class="n">'+(a.live?'<span style="color:'+SIM_BAND(a.live.m)+';font-weight:600">'+a.live.m+'</span>':'<span style="color:var(--g400)">—</span>')+'</td>'+
       '<td class="n">'+(a.gap===null?'<span style="color:var(--g400)">—</span>'
         :'<span style="color:'+(a.gap<=-10?'#a03526':a.gap<0?'#8f6210':'#2f6b4a')+';font-weight:600">'+(a.gap>0?'+':'')+a.gap+'</span>')+'</td>'+
-      '<td style="color:var(--g600)">'+(a.w!==null?S.cats[a.w]:'—')+'</td>'+
+      '<td style="color:var(--g600)">'+(a.w!==null&&a.w!==undefined?S.cats[a.w]:'—')+'</td>'+
+      '<td style="color:'+(a.wl!==null&&a.wl!==undefined?'var(--g600)':'var(--g400)')+'">'+
+        (a.wl!==null&&a.wl!==undefined?S.cats[a.wl]+'<span style="color:var(--g400);font-size:.68rem;"> ('+a.live.n+')</span>':'—')+'</td>'+
       '<td>'+spark+'</td></tr>';
   }).join('');
   document.getElementById('cs-rows')._rows=sorted;
