@@ -2716,6 +2716,16 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
 #v-callsim .cs-mini .cs-track{flex:1;height:12px;}
 #v-callsim .cs-mini .val{font-size:.72rem;font-weight:700;width:30px;text-align:right;font-variant-numeric:tabular-nums;}
 #v-callsim .cs-gap{font-size:.78rem;font-weight:700;text-align:right;font-variant-numeric:tabular-nums;}
+#v-callsim table#cs-wow{min-width:560px;}
+#v-callsim #cs-wow th{font-size:.61rem;letter-spacing:.06em;text-transform:uppercase;color:var(--g400);font-weight:700;text-align:center;padding:7px 8px;border-bottom:1.5px solid var(--g200);white-space:nowrap;cursor:default;}
+#v-callsim #cs-wow th.sk{text-align:left;min-width:150px;}
+#v-callsim #cs-wow th small{display:block;font-weight:600;letter-spacing:0;text-transform:none;color:var(--g400);font-size:.6rem;}
+#v-callsim #cs-wow td{padding:6px 8px;border-bottom:1px solid var(--g100);text-align:center;font-variant-numeric:tabular-nums;font-size:.78rem;white-space:nowrap;}
+#v-callsim #cs-wow td.sk{text-align:left;font-weight:600;color:var(--g700);font-size:.76rem;}
+#v-callsim #cs-wow td.sk .mut{display:block;font-weight:500;font-size:.64rem;color:var(--g400);}
+#v-callsim #cs-wow tr.hd td{background:var(--g50);font-weight:700;color:var(--g700);}
+#v-callsim #cs-wow .dv{font-size:.62rem;display:block;}
+#v-callsim #cs-wow col.thin{background:rgba(0,0,0,.025);}
 #v-callsim .cs-thead{background:var(--g50);display:grid;grid-template-columns:150px 1fr 1fr 54px;gap:10px;padding:6px 12px;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--g400);font-weight:700;}
 #v-callsim .cs-pc{font-size:.78rem;font-weight:700;text-align:right;font-variant-numeric:tabular-nums;}
 #v-callsim table{width:100%;border-collapse:collapse;font-size:.79rem;}
@@ -2750,6 +2760,14 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
     <div style="font-size:.85rem;font-weight:700;color:var(--g800);margin-bottom:3px;">Where the opportunity is</div>
     <div class="cs-note" style="margin-bottom:8px;">Each skill as a percentage of the points available for it, averaged over every simulation in scope. Weakest first. <strong>Closing and FCF &amp; Membership are shown but never picked as the focus</strong> &mdash; many calls end before the offer is on the table, so a low score there often reflects how far the call got rather than the agent. The focus is the weakest skill they had a real chance to show.</div>
     <div class="cs-bars" id="cs-cats"></div>
+  </div>
+
+  <div id="cs-wow-wrap">
+    <div style="font-size:.85rem;font-weight:700;color:var(--g800);margin-bottom:3px;">Week over week</div>
+    <div class="cs-note" style="margin-bottom:8px;" id="cs-wow-note"></div>
+    <div style="overflow-x:auto;border:1px solid var(--g200);border-radius:10px;background:#fff;">
+      <table id="cs-wow"></table>
+    </div>
   </div>
 
   <div id="cs-transfer-wrap">
@@ -14145,6 +14163,17 @@ function simSubscribe(){
    is the weakest skill the agent actually had a chance to demonstrate; the
    excluded ones stay on screen, labelled, and still count everywhere else. */
 const SIM_NO_FOCUS=new Set(['Closing','FCF & Membership']);
+
+/* Week numbers on the same Monday epoch the CVR dashboard uses, so a week
+   called 557 here is the same week called 557 there. */
+const CS_WK_EPOCH=Date.UTC(2016,0,4);
+function csWeekOf(iso){
+  const p=String(iso||'').split('-');
+  if(p.length<3)return 0;
+  const t=Date.UTC(+p[0],+p[1]-1,+p[2]);
+  const dow=new Date(t).getUTCDay()||7;          // Monday=1 … Sunday=7
+  return Math.floor((t-(dow-1)*86400000-CS_WK_EPOCH)/(7*86400000))+1;
+}
 function csFocusIdx(cats){
   const S=simSource();
   let best=null;
@@ -14271,6 +14300,8 @@ function renderCallSim(){
     /* Hide the comparison too — an empty bordered heading reads as a fault. */
     const tw0=document.getElementById('cs-transfer-wrap');
     if(tw0) tw0.style.display='none';
+    const ww0=document.getElementById('cs-wow-wrap');
+    if(ww0) ww0.style.display='none';
     const f0=document.getElementById('cs-foot'); if(f0) f0.textContent='';
     return;
   }
@@ -14322,6 +14353,57 @@ function renderCallSim(){
         '<div class="cs-track"><div class="cs-fill" style="width:'+x.v+'%;background:'+SIM_SOFT(x.v)+';border-right:3px solid '+SIM_BAND(x.v)+'"></div></div>'+
         '<span class="cs-pc" style="color:'+SIM_BAND(x.v)+'">'+x.v+'%</span></div>';
     }).join('');
+
+  /* ── Week over week ───────────────────────────────────────────────────
+     Weeks are numbered off the same Monday epoch the CVR dashboard uses, so
+     wk557 here is wk557 there. Each cell is that week's attainment for one
+     skill; the small figure under it is the change from the week before.
+     Sample sizes are printed because a week with four attempts moves several
+     points on noise alone, and a coaching conversation should not start from
+     that. */
+  const wowN=8;
+  const byWk={};
+  recs.forEach(r=>{ (byWk[csWeekOf(r[4])]=byWk[csWeekOf(r[4])]||[]).push(r); });
+  const wks=Object.keys(byWk).map(Number).sort((a,b)=>a-b).slice(-wowN);
+  const curWk=csWeekOf(new Date(Date.now()-5*3600000).toISOString().slice(0,10));
+  const wowWrap=document.getElementById('cs-wow-wrap');
+  if(wowWrap) wowWrap.style.display=wks.length>1?'':'none';
+  if(wks.length>1){
+    const note=document.getElementById('cs-wow-note');
+    if(note) note.innerHTML='Each skill as a percentage of the points available, by week, for the simulations in scope. '+
+      'Week numbers match the CVR dashboard. The small figure under each cell is the change from the previous week; '+
+      '<strong>n</strong> is how many simulations that week rests on &mdash; a thin week moves on noise, so read those lightly.';
+    const cell=(v,prev)=>{
+      if(v===null) return '<td style="color:var(--g300)">—</td>';
+      const d=(prev===null||prev===undefined)?null:v-prev;
+      const dv=d===null?'' :
+        '<span class="dv" style="color:'+(d>0?'#2f6b4a':d<0?'#a03526':'var(--g400)')+'">'+(d>0?'▲':d<0?'▼':'·')+(d===0?'':Math.abs(d))+'</span>';
+      return '<td><span style="color:'+SIM_BAND(v)+';font-weight:700">'+v+'%</span>'+dv+'</td>';
+    };
+    const wkMean=(rs,i)=>{ const v=rs.map(r=>r[5][i]).filter(x=>x>=0); return v.length?Math.round(v.reduce((t,x)=>t+x,0)/v.length):null; };
+    let h='<colgroup><col>'+wks.map(w=>'<col'+(byWk[w].length<5?' class="thin"':'')+'>').join('')+'</colgroup>';
+    h+='<thead><tr><th class="sk">Skill</th>'+wks.map(w=>
+        '<th>wk'+w+(w===curWk?' *':'')+'<small>n='+byWk[w].length+'</small></th>').join('')+'</tr></thead><tbody>';
+    // Headline rows first: the score and the pass rate the skills roll up into.
+    h+='<tr class="hd"><td class="sk">Average score</td>'+wks.map((w,k)=>{
+        const m=csMean(byWk[w].map(r=>r[2]));
+        const p=k?csMean(byWk[wks[k-1]].map(r=>r[2])):null;
+        return cell(m,p);
+      }).join('')+'</tr>';
+    h+='<tr class="hd"><td class="sk">Pass rate</td>'+wks.map((w,k)=>{
+        const m=Math.round(100*byWk[w].filter(r=>r[3]).length/byWk[w].length);
+        const p=k?Math.round(100*byWk[wks[k-1]].filter(r=>r[3]).length/byWk[wks[k-1]].length):null;
+        return cell(m,p);
+      }).join('')+'</tr>';
+    S.cats.forEach((c,i)=>{
+      h+='<tr><td class="sk">'+c+(SIM_NO_FOCUS.has(c)?'<span class="mut">not used as focus</span>':'')+'</td>'+
+        wks.map((w,k)=>cell(wkMean(byWk[w],i), k?wkMean(byWk[wks[k-1]],i):null)).join('')+'</tr>';
+    });
+    h+='</tbody>';
+    const wowEl=document.getElementById('cs-wow');
+    if(wowEl) wowEl.innerHTML=h;
+    if(note&&wks.includes(curWk)) note.innerHTML+=' <strong>* wk'+curWk+' is still in progress.</strong>';
+  }
 
   /* ── Simulator vs live calls ──────────────────────────────────────────
      The question this answers is whether a skill an agent shows under exam
