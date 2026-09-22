@@ -8200,7 +8200,7 @@ function switchOM(tab){
   if(tab==='leads'){subscribeLeads();renderLeads();}
   if(tab==='leadmgmt')fetchHSLeads();
   if(tab==='caddash'){renderCadDash();saveDailyCadenceSnapshot();}
-  if(tab==='callsim'){simSubscribe();renderCallSim();}
+  if(tab==='callsim'){simFetch();simSubscribe();renderCallSim();}
   if(tab==='cvr')renderCVRDash(); else cvrStopPoll();
   if(tab==='myactions'){if(!_leadUnsub)subscribeLeads();loadMyActionsTL();updateMyActionsBadge();}
   if(tab==='onboard'){subscribeOnboard();renderOnboardDash();}
@@ -9551,7 +9551,7 @@ function tlShowView(tab){
   if(tab==='leads'){subscribeLeads();renderLeads();}
   if(tab==='leadmgmt')fetchHSLeads();
   if(tab==='caddash'){renderCadDash();saveDailyCadenceSnapshot();}
-  if(tab==='callsim'){simSubscribe();renderCallSim();}
+  if(tab==='callsim'){simFetch();simSubscribe();renderCallSim();}
   if(tab==='cvr')renderCVRDash(); else cvrStopPoll();
   if(tab==='myactions'){if(!_leadUnsub)subscribeLeads();loadMyActionsTL();updateMyActionsBadge();}
   if(tab==='onboard'){subscribeOnboard();renderOnboardDash();}
@@ -14075,6 +14075,27 @@ function simSource(){
   return _simCache;
 }
 
+/* Fetch the published feed. The organisation blocks service-account keys, so
+   the data comes from an Apps Script deployment running in the user's own
+   Google account, normalised by /api/sim-data. Falls back to the Firestore
+   document if a service account ever becomes available, and to the snapshot
+   compiled into this file if neither answers — the tab is never blank. */
+let _simFetched=false;
+async function simFetch(force){
+  if(_simFetched&&!force) return;
+  _simFetched=true;
+  try{
+    const r=await fetch('/api/sim-data'+(force?'?refresh=1':''));
+    if(r.status===503) return;           // feed not configured yet — keep the seed
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const p=await r.json();
+    if(p&&p.recs&&p.recs.length){
+      _simSynced=p; _simCache=null; _simStamp=p.generatedAt||null;
+      renderCallSim();
+    }
+  }catch(err){ console.warn('[sim] feed unavailable:',err.message); }
+}
+
 /* One document, one listener, every browser. */
 function simSubscribe(){
   if(_simUnsub||typeof FSB==='undefined'||!FSB) return;
@@ -14304,7 +14325,7 @@ function renderCallSim(){
   document.getElementById('cs-rows')._rows=sorted;
   document.querySelectorAll('#v-callsim thead th').forEach(th=>th.classList.toggle('on',th.dataset.k===_csSort.k));
   const f=document.getElementById('cs-foot');
-  if(f) f.textContent=(_simStamp?'Synced from the results sheets '+String(_simStamp).slice(0,16).replace('T',' ')+' UTC. ':'Built-in snapshot — the sheet sync has not run yet. ')+'Phoenix LOB only. Skill percentages score against the Advanced rubric, which totals exactly 100 points. Certification is taken from the simulator level, not the free-text certification field, which names no level on 45% of rows. Last simulation '+S.to+'; live-call evaluations '+S.liveFrom+' to '+S.liveTo+', covering '+new Set((S.live||[]).map(r=>r[0])).size+' of '+S.agents.length+' agents.';
+  if(f) f.textContent=(_simStamp?'Live from the results sheets, read '+String(_simStamp).slice(0,16).replace('T',' ')+' UTC. ':'Built-in snapshot — the sheet feed is not connected yet. ')+'Phoenix LOB only. Skill percentages score against the Advanced rubric, which totals exactly 100 points. Certification is taken from the simulator level, not the free-text certification field, which names no level on 45% of rows. Last simulation '+S.to+'; live-call evaluations '+S.liveFrom+' to '+S.liveTo+', covering '+new Set((S.live||[]).map(r=>r[0])).size+' of '+S.agents.length+' agents.';
 }
 
 document.addEventListener('change',e=>{
