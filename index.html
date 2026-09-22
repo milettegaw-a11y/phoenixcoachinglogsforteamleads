@@ -3952,6 +3952,11 @@ const DEFAULT_TLS=[
   'Maureen Ulao',
 ];
 let rosterAgents=[...AGENTS];
+/* Names an admin has deliberately removed. AGENTS below is a starting roster
+   that gets topped back up if Firestore is missing someone — without this list
+   that top-up silently undid every deletion, which is exactly what it did to
+   Joenel Las. Leaving is a normal event; the record of it has to persist. */
+let rosterRemoved=[];
 let rosterTLS=[...DEFAULT_TLS];
 
 function fillTLs(ids){
@@ -4480,16 +4485,24 @@ function setupListeners(){
     const docs={};
     snap.docs.forEach(d=>{docs[d.id]=d.data();});
     if(docs.agents){
-      rosterAgents=docs.agents.list
-        .filter(n=>AGENTS.some(a=>a.name===n)) // drop stale Firestore names not in AGENTS
+      rosterRemoved=docs.agents.removed||[];
+      const gone=new Set(rosterRemoved);
+      // No longer filtered against AGENTS: that discarded anyone added through
+      // the roster manager, so adding an agent appeared to do nothing either.
+      rosterAgents=(docs.agents.list||[])
+        .filter(n=>!gone.has(n))
         .map(n=>{
           const staticA=AGENTS.find(a=>a.name===n)||{};
           return {name:n, h:docs.agents.hire?.[n]||staticA.h||'2024-01-01', tl:docs.agents.teamLead?.[n]||staticA.tl||''};
         });
-      // Ensure every agent in AGENTS is present in rosterAgents — Firestore may have been
-      // edited with slightly different names, leaving some agents invisible in compliance view.
-      AGENTS.forEach(a=>{if(!rosterAgents.some(r=>r.name===a.name))rosterAgents.push({...a});});
+      // Top up from the starting roster so a name that drifted in Firestore does
+      // not make an agent invisible — but never resurrect a deliberate removal.
+      AGENTS.forEach(a=>{
+        if(gone.has(a.name))return;
+        if(!rosterAgents.some(r=>r.name===a.name))rosterAgents.push({...a});
+      });
     } else {
+      rosterRemoved=[];
       rosterAgents=AGENTS.map(a=>({...a}));
     }
     if(docs.tls){
@@ -12350,7 +12363,10 @@ async function rosterSaveInline(idx){
     hireMap[n]=a.name===oldName?(newHire||a.h):a.h;
     tlMap[n]  =a.name===oldName?newTL:(a.tl||'');
   });
-  await fsWrite('px_roster','agents',{list:newList,hire:hireMap,teamLead:tlMap});
+  // fsWrite replaces the whole document, so carry the removal list through or
+  // an unrelated edit would quietly un-delete everyone.
+  const removed=rosterRemoved.filter(n=>n!==oldName&&n!==newName);
+  await fsWrite('px_roster','agents',{list:newList,hire:hireMap,teamLead:tlMap,removed});
   toast('✅ Agent updated!');
 }
 
@@ -12370,7 +12386,9 @@ async function rosterAddAgent(){
   const hireMap={},tlMap={};
   rosterAgents.forEach(a=>{hireMap[a.name]=a.h;tlMap[a.name]=a.tl||'';});
   hireMap[name]=hire; tlMap[name]=tl;
-  await fsWrite('px_roster','agents',{list:newList,hire:hireMap,teamLead:tlMap});
+  // Re-adding someone previously removed clears that record, so they stay.
+  const removed=rosterRemoved.filter(n=>n!==name);
+  await fsWrite('px_roster','agents',{list:newList,hire:hireMap,teamLead:tlMap,removed});
   // Grant login access: store email→name in agent_access
   const curAccess=(await FSB.collection('px_roster').doc('agent_access').get()).data()||{};
   const curMap=curAccess.map||{};
@@ -12397,10 +12415,13 @@ function rosterDelByIdx(idx){
 
 async function rosterRemoveAgent(name){
   if(!confirm(`Remove "${name}" from the roster?`))return;
-  const newList=rosterAgents.filter(a=>a.name!==name).map(a=>a.name);
+  const keep=rosterAgents.filter(a=>a.name!==name);
+  const newList=keep.map(a=>a.name);
   const hireMap={},tlMap={};
-  rosterAgents.filter(a=>a.name!==name).forEach(a=>{hireMap[a.name]=a.h;tlMap[a.name]=a.tl||'';});
-  await fsWrite('px_roster','agents',{list:newList,hire:hireMap,teamLead:tlMap});
+  keep.forEach(a=>{hireMap[a.name]=a.h;tlMap[a.name]=a.tl||'';});
+  // Record the removal, or the starting-roster top-up puts them straight back.
+  const removed=[...new Set([...rosterRemoved,name])];
+  await fsWrite('px_roster','agents',{list:newList,hire:hireMap,teamLead:tlMap,removed});
   toast('🗑 Agent removed.');
 }
 
