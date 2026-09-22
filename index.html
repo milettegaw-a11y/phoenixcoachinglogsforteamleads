@@ -2698,6 +2698,15 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
 <div id="v-callsim" class="view">
 <style>
 #v-callsim .cs-wrap{display:flex;flex-direction:column;gap:18px;}
+#v-callsim .cs-you{background:linear-gradient(135deg,#2E5220 0%,#5E8A50 100%);border-radius:12px;padding:18px 20px;color:#fff;display:flex;flex-direction:column;gap:12px;}
+#v-callsim .cs-you .lbl{font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;opacity:.75;font-weight:700;}
+#v-callsim .cs-you .big{font-size:1.5rem;font-weight:800;line-height:1.2;}
+#v-callsim .cs-you .desc{font-size:.85rem;opacity:.92;max-width:46ch;line-height:1.5;}
+#v-callsim .cs-you .facts{display:flex;flex-wrap:wrap;gap:22px;border-top:1px solid rgba(255,255,255,.22);padding-top:12px;}
+#v-callsim .cs-you .fact{display:flex;flex-direction:column;gap:1px;}
+#v-callsim .cs-you .fact b{font-size:1.05rem;font-weight:800;font-variant-numeric:tabular-nums;}
+#v-callsim .cs-you .fact span{font-size:.66rem;opacity:.78;letter-spacing:.06em;text-transform:uppercase;font-weight:700;}
+#v-callsim .cs-help{background:var(--yellow-lt);border:1px solid #cfe3b4;border-radius:10px;padding:10px 13px;font-size:.76rem;color:#3d6b2c;line-height:1.55;}
 #v-callsim .cs-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--g200);border:1px solid var(--g200);border-radius:10px;overflow:hidden;}
 #v-callsim .cs-tile{background:#fff;padding:12px 14px;display:flex;flex-direction:column;gap:2px;}
 #v-callsim .cs-tile .k{font-size:.62rem;letter-spacing:.09em;text-transform:uppercase;color:var(--g400);font-weight:600;}
@@ -2753,6 +2762,7 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
     <div style="font-size:.95rem;font-weight:700;color:var(--g800);">Agent's Opportunity &mdash; call simulator</div>
     <div class="cs-note" id="cs-scope">&nbsp;</div>
   </div>
+  <div id="cs-you"></div>
   <div id="cs-filters" style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;"></div>
   <div class="cs-tiles" id="cs-tiles"></div>
 
@@ -2784,9 +2794,9 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
         <thead><tr>
           <th data-k="n">Agent</th><th data-k="t">Team</th><th data-k="lv">Level</th>
           <th data-k="c" class="n">Sims</th><th data-k="m" class="n">Avg</th><th data-k="b" class="n">Best</th>
-          <th data-k="p" class="n">Pass</th><th data-k="d" class="n">&Delta;</th>
-          <th data-k="lc" class="n">Calls</th><th data-k="lm" class="n">Live avg</th><th data-k="gp" class="n">Sim&rarr;Live</th>
-          <th data-k="w">Focus &mdash; sim</th><th data-k="wl">Focus &mdash; live</th><th>Recent form</th>
+          <th data-k="p" class="n">Pass</th><th data-k="d" class="n">Trend</th>
+          <th data-k="lc" class="n">Calls</th><th data-k="lm" class="n">Live avg</th><th data-k="gp" class="n">Practice &rarr; live</th>
+          <th data-k="w">Focus (practice)</th><th data-k="wl">Focus (real calls)</th><th>Recent form</th>
         </tr></thead>
         <tbody id="cs-rows"></tbody>
       </table>
@@ -14164,6 +14174,20 @@ function simSubscribe(){
    excluded ones stay on screen, labelled, and still count everywhere else. */
 const SIM_NO_FOCUS=new Set(['Closing','FCF & Membership']);
 
+/* What each skill actually means, in the words an agent would use. The rubric
+   names are the grader's; nobody should have to guess what "Features as
+   Benefits" is being marked on. */
+const SIM_DESC={
+  'Rapport':'Building warmth and keeping control of the conversation.',
+  'Early Objections':'Handling the first brush-off before you have earned the right to pitch.',
+  'Discovery':'Asking enough of the right questions before you recommend anything.',
+  'Pain Points':'Finding the real reason cleaning is a problem for them.',
+  'FCF & Membership':'Explaining the offer and the membership clearly and correctly.',
+  'Features as Benefits':'Turning what the service does into what it does for them.',
+  'Objection Handling':'Working through a concern without arguing or caving.',
+  'Closing':'Asking for the commitment and confirming the next step.'
+};
+
 /* Week numbers on the same Monday epoch the CVR dashboard uses, so a week
    called 557 here is the same week called 557 there. */
 const CS_WK_EPOCH=Date.UTC(2016,0,4);
@@ -14282,6 +14306,7 @@ function renderCallSim(){
 
   const recs=csRecords();
   const rows=csAgents(recs);
+  const youEl=document.getElementById('cs-you');
   const scope=document.getElementById('cs-scope');
   if(scope){
     const teams=[...new Set(rows.map(a=>a.t))].sort();
@@ -14321,6 +14346,23 @@ function renderCallSim(){
     liveCat.push(v.length?Math.round(v.reduce((t,x)=>t+x,0)/v.length):null);
   }
 
+  /* Per-agent live figures. Computed here rather than lower down because the
+     agent's headline card needs them before anything else renders. */
+  const liveBy={};
+  liveRecs.forEach(r=>{ (liveBy[r[0]]=liveBy[r[0]]||[]).push(r); });
+  const liveByName={};
+  Object.keys(liveBy).forEach(k=>{
+    const v=liveBy[k], cats=[];
+    for(let i=0;i<8;i++){
+      const x=v.map(r=>r[4][i]).filter(y=>y>=0);
+      cats.push(x.length?Math.round(x.reduce((t,y)=>t+y,0)/x.length):null);
+    }
+    liveByName[S.agents[k].n]={n:v.length,m:csMean(v.map(r=>r[1])),
+      p:Math.round(100*v.filter(r=>r[2]).length/v.length),k:cats,
+      w:csFocusIdx(cats)};   // same exclusions as the simulator focus
+  });
+  rows.forEach(a=>{ a.live=liveByName[a.n]||null; a.gap=a.live?a.live.m-a.m:null; a.wl=a.live?a.live.w:null; });
+
   /* Skill percentages are averaged over ATTEMPTS, not over agents, so the
      figure answers "how did these simulations go" rather than weighting a
      three-attempt agent equally with a sixty-attempt one. */
@@ -14331,14 +14373,64 @@ function renderCallSim(){
   }
   const weakI=csFocusIdx(cat);
   const liveWeakI=liveRecs.length?csFocusIdx(liveCat):null;
+
+  /* The agent's own headline. One skill, what it means, and the few numbers
+     that put it in context — before any table. Everything below is the detail
+     behind this card, not a replacement for it. */
+  if(youEl){
+    if(CU&&CU.isAgentView&&rows.length===1){
+      const me=rows[0];
+      const fi=me.w!==null&&me.w!==undefined?me.w:weakI;
+      const skill=S.cats[fi], pctNow=me.k[fi];
+      /* Direction on the focus skill, from the last two weeks that each hold
+         enough attempts to mean anything. Comparing a week with one simulation
+         against a full one produced headlines like "down 40 points" — a
+         sentence an agent would read as a verdict on themselves when it is
+         really a verdict on the sample. A week under three attempts is not
+         compared, and the card says so plainly instead. */
+      const MIN_WK=3;
+      const wkOf={};
+      recs.forEach(r=>{ (wkOf[csWeekOf(r[4])]=wkOf[csWeekOf(r[4])]||[]).push(r); });
+      const mean=(arr)=>{const v=arr.map(r=>r[5][fi]).filter(x=>x>=0);return v.length?Math.round(v.reduce((t,x)=>t+x,0)/v.length):null;};
+      const solid=Object.keys(wkOf).map(Number).sort((a,b)=>a-b)
+        .filter(w=>wkOf[w].length>=MIN_WK && mean(wkOf[w])!==null);
+      let trend='Too few to say yet';
+      if(solid.length>=2){
+        const a=mean(wkOf[solid[solid.length-2]]), b=mean(wkOf[solid[solid.length-1]]);
+        const d=b-a;
+        trend=d>2?('Up '+d+' pts'):d<-2?('Down '+Math.abs(d)+' pts'):'Holding steady';
+      }
+      const liveBit=me.live
+        ? '<div class="fact"><b>'+me.live.k[fi]+'%</b><span>on real calls ('+me.live.n+')</span></div>'
+        : '';
+      youEl.innerHTML='<div class="cs-you">'+
+        '<div><div class="lbl">Your focus right now</div>'+
+        '<div class="big">'+skill+'</div>'+
+        '<div class="desc">'+(SIM_DESC[skill]||'')+'</div></div>'+
+        '<div class="facts">'+
+          '<div class="fact"><b>'+pctNow+'%</b><span>your score here</span></div>'+
+          '<div class="fact"><b>80%</b><span>what a pass looks like</span></div>'+
+          liveBit+
+          '<div class="fact"><b>'+trend+'</b><span>vs your previous week</span></div>'+
+          '<div class="fact"><b>'+me.c+'</b><span>simulations taken</span></div>'+
+        '</div></div>'+
+        '<div class="cs-help" style="margin-top:12px;">Every skill below is scored out of the points that skill is worth, shown as a percentage. '+
+        '<strong>80% is the pass mark.</strong> Your focus is the lowest skill you get a fair chance to show on most calls &mdash; '+
+        'Closing and the membership explanation are left out of that choice because a lot of calls end before you reach them.</div>';
+    } else {
+      youEl.innerHTML='<div class="cs-help">Each skill is scored out of the points it is worth, shown as a percentage; <strong>80% is the pass mark</strong>. '+
+        'The focus skill is the weakest one an agent gets a fair chance to demonstrate &mdash; Closing and FCF &amp; Membership are excluded from that choice, '+
+        'because many calls end before those stages are reached.</div>';
+    }
+  }
   const passPct=Math.round(100*recs.filter(r=>r[3]).length/recs.length);
   tiles.innerHTML=
     tile('Agents',rows.length,'in this view')+
     tile('Simulations',recs.length.toLocaleString(),'attempts in scope')+
     tile('Average score',csMean(recs.map(r=>r[2])),'out of 100 · pass is 80')+
     tile('Pass rate',passPct+'%','of attempts scored 80+',SIM_BAND(passPct+40))+
-    tile('Focus &mdash; simulator',S.cats[weakI],cat[weakI]+'% of available points','#a03526')+
-    tile('Focus &mdash; live calls',
+    tile('Focus &mdash; practice',S.cats[weakI],cat[weakI]+'% of available points','#a03526')+
+    tile('Focus &mdash; real calls',
          liveWeakI===null?'—':S.cats[liveWeakI],
          liveWeakI===null?'no evaluated calls in scope':liveCat[liveWeakI]+'% over '+liveRecs.length+' call'+(liveRecs.length===1?'':'s'),
          liveWeakI===null?null:'#a03526');
@@ -14349,7 +14441,8 @@ function renderCallSim(){
     .map(x=>{
       const skip=SIM_NO_FOCUS.has(x.c);
       return '<div class="cs-brow"'+(skip?' style="opacity:.62"':'')+'><span class="nm">'+x.c+
-        (skip?'<span style="display:block;font-weight:500;font-size:.66rem;color:var(--g400);">not used as focus</span>':'')+'</span>'+
+        '<span style="display:block;font-weight:500;font-size:.66rem;color:var(--g400);line-height:1.35;">'+
+          (skip?'not used as focus &middot; ':'')+(SIM_DESC[x.c]||'')+'</span></span>'+
         '<div class="cs-track"><div class="cs-fill" style="width:'+x.v+'%;background:'+SIM_SOFT(x.v)+';border-right:3px solid '+SIM_BAND(x.v)+'"></div></div>'+
         '<span class="cs-pc" style="color:'+SIM_BAND(x.v)+'">'+x.v+'%</span></div>';
     }).join('');
@@ -14439,21 +14532,6 @@ function renderCallSim(){
         '<span class="val" style="color:'+SIM_BAND(v)+'">'+v+'%</span></span>';
     }
   }
-  /* Per-agent live figures, for the table and the hover card. */
-  const liveBy={};
-  liveRecs.forEach(r=>{ (liveBy[r[0]]=liveBy[r[0]]||[]).push(r); });
-  const liveByName={};
-  Object.keys(liveBy).forEach(k=>{
-    const v=liveBy[k], cats=[];
-    for(let i=0;i<8;i++){
-      const x=v.map(r=>r[4][i]).filter(y=>y>=0);
-      cats.push(x.length?Math.round(x.reduce((t,y)=>t+y,0)/x.length):null);
-    }
-    liveByName[S.agents[k].n]={n:v.length,m:csMean(v.map(r=>r[1])),
-      p:Math.round(100*v.filter(r=>r[2]).length/v.length),k:cats,
-      w:csFocusIdx(cats)};   // same exclusions as the simulator focus
-  });
-  rows.forEach(a=>{ a.live=liveByName[a.n]||null; a.gap=a.live?a.live.m-a.m:null; a.wl=a.live?a.live.w:null; });
 
   const k=_csSort.k,dir=_csSort.dir;
   const sorted=rows.slice().sort((a,b)=>{
