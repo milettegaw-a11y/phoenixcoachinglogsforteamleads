@@ -2748,7 +2748,7 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
 
   <div>
     <div style="font-size:.85rem;font-weight:700;color:var(--g800);margin-bottom:3px;">Where the opportunity is</div>
-    <div class="cs-note" style="margin-bottom:8px;">Each skill as a percentage of the points available for it, averaged over every simulation in scope. Weakest first. <strong>Closing is shown but never picked as the focus</strong> &mdash; many calls end before a close is on the table, so a low score there often reflects how far the call got rather than the agent. The focus is the weakest skill they had a real chance to show.</div>
+    <div class="cs-note" style="margin-bottom:8px;">Each skill as a percentage of the points available for it, averaged over every simulation in scope. Weakest first. <strong>Closing and FCF &amp; Membership are shown but never picked as the focus</strong> &mdash; many calls end before the offer is on the table, so a low score there often reflects how far the call got rather than the agent. The focus is the weakest skill they had a real chance to show.</div>
     <div class="cs-bars" id="cs-cats"></div>
   </div>
 
@@ -2760,7 +2760,7 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
 
   <div>
     <div style="font-size:.85rem;font-weight:700;color:var(--g800);margin-bottom:3px;">By agent</div>
-    <div class="cs-note" style="margin-bottom:8px;">One row per agent. <strong>Hover an agent's name</strong> to see their full skill breakdown, Closing included. &Delta; compares their earliest and latest attempts <em>at their current level</em> and needs at least four there &mdash; a dash means not enough yet. Recent form shows their last 10 attempts in order; green is a pass (80+).</div>
+    <div class="cs-note" style="margin-bottom:8px;">One row per agent. <strong>Hover an agent's name</strong> to see their full skill breakdown, late-stage skills included. &Delta; compares their earliest and latest attempts <em>at their current level</em> and needs at least four there &mdash; a dash means not enough yet. Recent form shows their last 10 attempts in order; green is a pass (80+).</div>
     <div style="overflow-x:auto;border:1px solid var(--g200);border-radius:10px;background:#fff;">
       <table>
         <thead><tr>
@@ -14136,14 +14136,15 @@ function simSubscribe(){
   }catch(err){}
 }
 
-/* Closing is reported but never chosen as the focus skill.
-   A great many calls end before a close is on the table at all — the customer
+/* Late-stage skills are reported but never chosen as the focus skill.
+   A great many calls end before the offer is even on the table — the customer
    rings off, the transcript stops, the conversation never reaches that stage —
-   so a low Closing score often measures how far the call got rather than what
-   the agent can do. Pointing coaching at it would send people to work on the
-   one number the call itself decided. The focus is the weakest skill the agent
-   actually had a chance to demonstrate; Closing stays on screen, labelled. */
-const SIM_NO_FOCUS=new Set(['Closing']);
+   so a low score on Closing or on the membership explanation often measures
+   how far the call got rather than what the agent can do. Pointing coaching at
+   those sends people to work on the numbers the call itself decided. The focus
+   is the weakest skill the agent actually had a chance to demonstrate; the
+   excluded ones stay on screen, labelled, and still count everywhere else. */
+const SIM_NO_FOCUS=new Set(['Closing','FCF & Membership']);
 function csFocusIdx(cats){
   const S=simSource();
   let best=null;
@@ -14431,7 +14432,7 @@ function csTip(el,show){
     '<div class="foot">'+(L
       ? 'Bar is the simulator score; the figure on the right is the same skill on '+L.n+' live call'+(L.n===1?'':'s')+'. Percentage of points available, weakest sim skill first.'
       : 'Percentage of the points available for each skill, averaged over '+a.c+' simulation'+(a.c===1?'':'s')+'. No live-call evaluations for this agent yet. Weakest first.')+
-      ' <br>* Closing is not used to pick the focus skill.</div>';
+      ' <br>* Late-stage skills are not used to pick the focus.</div>';
   tip.style.display='block'; tip.setAttribute('aria-hidden','false');
   const r=el.getBoundingClientRect();
   let top=r.bottom+8, left=r.left;
