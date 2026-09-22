@@ -2748,7 +2748,7 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
 
   <div>
     <div style="font-size:.85rem;font-weight:700;color:var(--g800);margin-bottom:3px;">Where the opportunity is</div>
-    <div class="cs-note" style="margin-bottom:8px;">Each skill as a percentage of the points available for it, averaged over every simulation in scope. Weakest first &mdash; the top row is where coaching buys the most.</div>
+    <div class="cs-note" style="margin-bottom:8px;">Each skill as a percentage of the points available for it, averaged over every simulation in scope. Weakest first. <strong>Closing is shown but never picked as the focus</strong> &mdash; many calls end before a close is on the table, so a low score there often reflects how far the call got rather than the agent. The focus is the weakest skill they had a real chance to show.</div>
     <div class="cs-bars" id="cs-cats"></div>
   </div>
 
@@ -2760,7 +2760,7 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
 
   <div>
     <div style="font-size:.85rem;font-weight:700;color:var(--g800);margin-bottom:3px;">By agent</div>
-    <div class="cs-note" style="margin-bottom:8px;">One row per agent. <strong>Hover an agent's name</strong> to see their full skill breakdown. &Delta; compares their earliest and latest attempts <em>at their current level</em> and needs at least four there &mdash; a dash means not enough yet. Recent form shows their last 10 attempts in order; green is a pass (80+).</div>
+    <div class="cs-note" style="margin-bottom:8px;">One row per agent. <strong>Hover an agent's name</strong> to see their full skill breakdown, Closing included. &Delta; compares their earliest and latest attempts <em>at their current level</em> and needs at least four there &mdash; a dash means not enough yet. Recent form shows their last 10 attempts in order; green is a pass (80+).</div>
     <div style="overflow-x:auto;border:1px solid var(--g200);border-radius:10px;background:#fff;">
       <table>
         <thead><tr>
@@ -2768,7 +2768,7 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
           <th data-k="c" class="n">Sims</th><th data-k="m" class="n">Avg</th><th data-k="b" class="n">Best</th>
           <th data-k="p" class="n">Pass</th><th data-k="d" class="n">&Delta;</th>
           <th data-k="lc" class="n">Calls</th><th data-k="lm" class="n">Live avg</th><th data-k="gp" class="n">Sim&rarr;Live</th>
-          <th data-k="w">Weakest skill</th><th>Recent form</th>
+          <th data-k="w">Focus skill</th><th>Recent form</th>
         </tr></thead>
         <tbody id="cs-rows"></tbody>
       </table>
@@ -14136,6 +14136,27 @@ function simSubscribe(){
   }catch(err){}
 }
 
+/* Closing is reported but never chosen as the focus skill.
+   A great many calls end before a close is on the table at all — the customer
+   rings off, the transcript stops, the conversation never reaches that stage —
+   so a low Closing score often measures how far the call got rather than what
+   the agent can do. Pointing coaching at it would send people to work on the
+   one number the call itself decided. The focus is the weakest skill the agent
+   actually had a chance to demonstrate; Closing stays on screen, labelled. */
+const SIM_NO_FOCUS=new Set(['Closing']);
+function csFocusIdx(cats){
+  const S=simSource();
+  let best=null;
+  cats.forEach((v,i)=>{
+    if(v===null||v===undefined)return;
+    if(SIM_NO_FOCUS.has(S.cats[i]))return;
+    if(best===null||v<cats[best])best=i;
+  });
+  // Everything excluded (a rubric with only Closing scored) — fall back rather
+  // than show nothing at all.
+  if(best===null)cats.forEach((v,i)=>{ if(v!==null&&v!==undefined&&(best===null||v<cats[best]))best=i; });
+  return best;
+}
 const SIM_BAND=p=>p>=80?'#2f6b4a':p>=65?'#8f6210':'#a03526';
 const SIM_SOFT=p=>p>=80?'#dbe9e0':p>=65?'#f2e6cb':'#f3dcd7';
 let _csSort={k:'c',dir:-1};
@@ -14193,7 +14214,7 @@ function csAgents(recs){
       const v=rs.map(r=>r[5][i]).filter(x=>x>=0);
       cats.push(v.length?Math.round(v.reduce((t,x)=>t+x,0)/v.length):null);
     }
-    let w=null; cats.forEach((v,i)=>{ if(v!==null&&(w===null||v<cats[w])) w=i; });
+    const w=csFocusIdx(cats);
     return {n:a.n,t:a.t,c:rs.length,lv:cur,m:csMean(rs.map(r=>r[2])),
       b:Math.max.apply(null,rs.map(r=>r[2])),
       p:Math.round(100*rs.filter(r=>r[3]).length/rs.length),
@@ -14260,21 +14281,25 @@ function renderCallSim(){
     const v=recs.map(r=>r[5][i]).filter(x=>x>=0);
     cat.push(v.length?Math.round(v.reduce((t,x)=>t+x,0)/v.length):null);
   }
-  let weakI=0; cat.forEach((v,i)=>{ if(v!==null&&(cat[weakI]===null||v<cat[weakI])) weakI=i; });
+  const weakI=csFocusIdx(cat);
   const passPct=Math.round(100*recs.filter(r=>r[3]).length/recs.length);
   tiles.innerHTML=
     tile('Agents',rows.length,'in this view')+
     tile('Simulations',recs.length.toLocaleString(),'attempts in scope')+
     tile('Average score',csMean(recs.map(r=>r[2])),'out of 100 · pass is 80')+
     tile('Pass rate',passPct+'%','of attempts scored 80+',SIM_BAND(passPct+40))+
-    tile('Weakest skill',S.cats[weakI],cat[weakI]+'% of available points','#a03526');
+    tile('Focus skill',S.cats[weakI],cat[weakI]+'% of available points','#a03526');
   function tile(k,v,s,col){
     return '<div class="cs-tile"><span class="k">'+k+'</span><span class="v"'+(col?' style="color:'+col+'"':'')+'>'+v+'</span><span class="s">'+s+'</span></div>';
   }
   catsEl.innerHTML=S.cats.map((c,i)=>({c,v:cat[i]})).filter(x=>x.v!==null).sort((a,b)=>a.v-b.v)
-    .map(x=>'<div class="cs-brow"><span class="nm">'+x.c+'</span>'+
-      '<div class="cs-track"><div class="cs-fill" style="width:'+x.v+'%;background:'+SIM_SOFT(x.v)+';border-right:3px solid '+SIM_BAND(x.v)+'"></div></div>'+
-      '<span class="cs-pc" style="color:'+SIM_BAND(x.v)+'">'+x.v+'%</span></div>').join('');
+    .map(x=>{
+      const skip=SIM_NO_FOCUS.has(x.c);
+      return '<div class="cs-brow"'+(skip?' style="opacity:.62"':'')+'><span class="nm">'+x.c+
+        (skip?'<span style="display:block;font-weight:500;font-size:.66rem;color:var(--g400);">not used as focus</span>':'')+'</span>'+
+        '<div class="cs-track"><div class="cs-fill" style="width:'+x.v+'%;background:'+SIM_SOFT(x.v)+';border-right:3px solid '+SIM_BAND(x.v)+'"></div></div>'+
+        '<span class="cs-pc" style="color:'+SIM_BAND(x.v)+'">'+x.v+'%</span></div>';
+    }).join('');
 
   /* ── Simulator vs live calls ──────────────────────────────────────────
      The question this answers is whether a skill an agent shows under exam
@@ -14398,13 +14423,15 @@ function csTip(el,show){
     (L?'<div class="r" style="font-size:.62rem;color:var(--g400);text-transform:uppercase;letter-spacing:.07em;font-weight:700;"><span></span><span>Sim</span><span style="text-align:right">Live</span></div>':'')+
     ranked.map(x=>{
       const lv=L?L.k[x.i]:null;
-      return '<div class="r"><span>'+x.c+'</span>'+
+      const skip=SIM_NO_FOCUS.has(x.c);
+      return '<div class="r"'+(skip?' style="opacity:.6"':'')+'><span>'+x.c+(skip?' *':'')+'</span>'+
         '<span class="tk"><span class="tf" style="width:'+x.v+'%;background:'+SIM_BAND(x.v)+'"></span></span>'+
         '<span class="pv" style="color:'+(lv===null?SIM_BAND(x.v):SIM_BAND(lv))+'">'+(lv===null?x.v:lv)+'%</span></div>';
     }).join('')+
     '<div class="foot">'+(L
       ? 'Bar is the simulator score; the figure on the right is the same skill on '+L.n+' live call'+(L.n===1?'':'s')+'. Percentage of points available, weakest sim skill first.'
-      : 'Percentage of the points available for each skill, averaged over '+a.c+' simulation'+(a.c===1?'':'s')+'. No live-call evaluations for this agent yet. Weakest first.')+'</div>';
+      : 'Percentage of the points available for each skill, averaged over '+a.c+' simulation'+(a.c===1?'':'s')+'. No live-call evaluations for this agent yet. Weakest first.')+
+      ' <br>* Closing is not used to pick the focus skill.</div>';
   tip.style.display='block'; tip.setAttribute('aria-hidden','false');
   const r=el.getBoundingClientRect();
   let top=r.bottom+8, left=r.left;
