@@ -1113,6 +1113,7 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
         <button class="btn btn-outline btn-sm" onclick="clearFilters()">✕ Clear</button>
       </div>
 
+      <div id="tl-c-metrics" style="margin-bottom:16px"></div>
       <div class="tbl-wrap">
         <div class="tbl-hdr"><h3>Coaching Entries</h3><span class="cnt-badge" id="tbl-cnt">0</span></div>
         <div class="tbl-scroll">
@@ -1344,6 +1345,7 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
         <button class="btn btn-outline btn-sm" onclick="clearOMCFilters()">✕ Clear</button>
         <button class="btn btn-yellow" onclick="exportCSV('coaching')" style="margin-left:auto">⬇ Export</button>
       </div>
+      <div id="om-c-metrics" style="margin-bottom:16px"></div>
       <div class="tbl-wrap">
         <div class="tbl-hdr"><h3>Coaching Logs</h3><span class="cnt-badge" id="om-c-cnt">0</span></div>
         <div class="tbl-scroll">
@@ -8357,6 +8359,7 @@ function renderStats(){
 function renderTable(){
   const rows=getFilt();
   document.getElementById('tbl-cnt').textContent=rows.length;
+  cfRenderMetrics('tl-c-metrics',rows);
   const tb=document.getElementById('tbl-body');
   if(!rows.length){
     tb.innerHTML=`<tr><td colspan="14"><div class="empty-st"><div class="ei">📋</div><p>No coaching entries for this week yet.<br>Use the ☰ menu → <strong>Coaching Log</strong> to add one.</p></div></td></tr>`;
@@ -11615,6 +11618,134 @@ function renderOMDash(){
 }
 
 /* ── Coaching Logs — table (like NTE / FT) ── */
+/* ─── CALL FLOW METRICS ────────────────────────────────────────────────────
+   Built from the reviews stored on coaching logs, so it answers the question a
+   team lead actually has: is this agent handling calls better than they were.
+
+   A stage the call never reached is left out of its own denominator entirely.
+   An agent whose calls keep ending before the close has no Closing score — not
+   a zero — because scoring a stage they never got to would say more about the
+   customer than about them, and would make the number move for the wrong
+   reason. Where that leaves nothing to measure, the cell is blank. */
+const CF_PARTS=[[1,'Opening'],[2,'Onset objections'],[3,'Discovery'],[4,'Elevator pitch'],
+                [5,'Data gathering'],[6,'Sales pitch + negotiation'],[7,'Booking']];
+
+function cfReviewed(logs){
+  return (logs||[]).filter(l=>l&&l.review&&typeof l.review.followedPct==='number')
+    .slice().sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')));
+}
+const cfBand=v=>v>=70?'#2f6b4a':v>=40?'#8f6210':'#a03526';
+function cfArrow(d){
+  if(d===null||d===undefined) return '<span style="color:var(--g400)">—</span>';
+  const c=d>2?'#2f6b4a':d<-2?'#a03526':'var(--g500)';
+  return '<span style="color:'+c+';font-weight:700">'+(d>2?'▲':d<-2?'▼':'·')+' '+(Math.abs(d)>2?Math.abs(Math.round(d)):'steady')+'</span>';
+}
+/* Direction across a run of coaching sessions: the later half against the
+   earlier half. One session against the one before it swings on noise. */
+function cfTrend(vals){
+  if(vals.length<2) return null;
+  const k=Math.max(1,Math.floor(vals.length/2));
+  const a=vals.slice(0,k), b=vals.slice(-k);
+  const m=x=>x.reduce((t,v)=>t+v,0)/x.length;
+  return m(b)-m(a);
+}
+
+function cfRenderMetrics(hostId,logs){
+  const host=document.getElementById(hostId);
+  if(!host) return;
+  const rs=cfReviewed(logs);
+  if(!rs.length){
+    host.innerHTML='<div style="background:#f8fafb;border:1px solid var(--g200);border-radius:10px;padding:12px 14px;font-size:.78rem;color:var(--g500);">'+
+      'No reviewed calls in this selection yet. Call-flow measurement appears once a coaching log is saved with a call review attached.</div>';
+    return;
+  }
+  const pct=rs.map(r=>r.review.followedPct);
+  const trend=cfTrend(pct);
+  const agents=[...new Set(rs.map(r=>r.agent))];
+
+  /* Per stage. reached counts the logs where the call got that far; the ones it
+     did not are held separately and never divided into. */
+  const per=CF_PARTS.map(([n,name])=>{
+    let reached=0,done=0,partial=0,missed=0,never=0;
+    const series=[];
+    rs.forEach(r=>{
+      const v=r.review;
+      if((v.partsNotReached||[]).indexOf(n)>=0){ never++; return; }
+      reached++;
+      const m=(v.partsMissed||[]).find(x=>x.n===n);
+      if(!m){ done++; series.push(100); }
+      else if(m.status==='partial'){ partial++; series.push(50); }
+      else { missed++; series.push(0); }
+    });
+    return {n,name,reached,done,partial,missed,never,
+      score:reached?Math.round((done*100+partial*50)/reached):null,
+      trend:cfTrend(series)};
+  });
+
+  const tile=(k,v,s,col)=>'<div style="background:#fff;padding:11px 13px;"><div style="font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--g400);font-weight:700;">'+k+'</div>'+
+    '<div style="font-size:1.45rem;font-weight:800;line-height:1.15;'+(col?'color:'+col:'')+'">'+v+'</div>'+
+    '<div style="font-size:.7rem;color:var(--g500);">'+s+'</div></div>';
+
+  let h='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1px;background:var(--g200);border:1px solid var(--g200);border-radius:10px;overflow:hidden;margin-bottom:12px;">'+
+    tile('Calls reviewed',rs.length,agents.length===1?agents[0]:agents.length+' agents')+
+    tile('Call flow followed',pct[pct.length-1]+'%','most recent review',cfBand(pct[pct.length-1]))+
+    tile('Average',Math.round(pct.reduce((t,v)=>t+v,0)/pct.length)+'%','across '+rs.length+' review'+(rs.length===1?'':'s'))+
+    tile('Direction',cfArrow(trend),rs.length<2?'needs a second review':'later half vs earlier')+
+    '</div>';
+
+  /* Per stage — the thing that says what is actually improving. */
+  h+='<div style="overflow-x:auto;border:1px solid var(--g200);border-radius:10px;background:#fff;margin-bottom:12px;">'+
+     '<table style="width:100%;border-collapse:collapse;font-size:.79rem;min-width:520px;">'+
+     '<thead><tr>'+
+       ['Stage','Reached','Done','Partial','Missed','Score','Direction'].map((c,i)=>
+         '<th style="text-align:'+(i?'right':'left')+';font-size:.6rem;letter-spacing:.09em;text-transform:uppercase;color:var(--g400);font-weight:700;padding:7px 10px;border-bottom:1.5px solid var(--g200);white-space:nowrap;">'+c+'</th>').join('')+
+     '</tr></thead><tbody>';
+  per.forEach(p=>{
+    const blank=p.reached===0;
+    h+='<tr'+(blank?' style="opacity:.55"':'')+'>'+
+      '<td style="padding:6px 10px;border-bottom:1px solid var(--g100);font-weight:600;">'+p.n+'. '+e(p.name)+
+        (p.never?'<span style="display:block;font-weight:500;font-size:.66rem;color:var(--g400);">never reached on '+p.never+' of '+rs.length+'</span>':'')+'</td>'+
+      '<td style="padding:6px 10px;border-bottom:1px solid var(--g100);text-align:right;font-variant-numeric:tabular-nums;">'+(blank?'—':p.reached)+'</td>'+
+      '<td style="padding:6px 10px;border-bottom:1px solid var(--g100);text-align:right;color:#2f6b4a;font-variant-numeric:tabular-nums;">'+(blank?'':p.done||'')+'</td>'+
+      '<td style="padding:6px 10px;border-bottom:1px solid var(--g100);text-align:right;color:#8f6210;font-variant-numeric:tabular-nums;">'+(blank?'':p.partial||'')+'</td>'+
+      '<td style="padding:6px 10px;border-bottom:1px solid var(--g100);text-align:right;color:#a03526;font-variant-numeric:tabular-nums;">'+(blank?'':p.missed||'')+'</td>'+
+      '<td style="padding:6px 10px;border-bottom:1px solid var(--g100);text-align:right;font-weight:700;font-variant-numeric:tabular-nums;'+(blank?'':'color:'+cfBand(p.score))+'">'+(blank?'—':p.score+'%')+'</td>'+
+      '<td style="padding:6px 10px;border-bottom:1px solid var(--g100);text-align:right;">'+(blank?'<span style="color:var(--g400)">—</span>':cfArrow(p.trend))+'</td>'+
+      '</tr>';
+  });
+  h+='</tbody></table></div>';
+
+  /* Per agent, when more than one is in view — the overview a TL or OM wants. */
+  if(agents.length>1){
+    const rows=agents.map(a=>{
+      const mine=rs.filter(r=>r.agent===a);
+      const v=mine.map(r=>r.review.followedPct);
+      return {a,n:mine.length,first:v[0],last:v[v.length-1],trend:cfTrend(v),
+              last_date:mine[mine.length-1].date,
+              gap:(mine[mine.length-1].review.primaryGap||{}).partName||''};
+    }).sort((x,y)=>(y.trend===null?-1e9:y.trend)-(x.trend===null?-1e9:x.trend));
+    h+='<div style="overflow-x:auto;border:1px solid var(--g200);border-radius:10px;background:#fff;">'+
+       '<table style="width:100%;border-collapse:collapse;font-size:.79rem;min-width:560px;">'+
+       '<thead><tr>'+['Agent','Reviews','First','Latest','Direction','Latest focus'].map((c,i)=>
+         '<th style="text-align:'+(i&&i<5?'right':'left')+';font-size:.6rem;letter-spacing:.09em;text-transform:uppercase;color:var(--g400);font-weight:700;padding:7px 10px;border-bottom:1.5px solid var(--g200);white-space:nowrap;">'+c+'</th>').join('')+
+       '</tr></thead><tbody>';
+    rows.forEach(r=>{
+      h+='<tr><td style="padding:6px 10px;border-bottom:1px solid var(--g100);font-weight:600;">'+e(r.a)+'</td>'+
+        '<td style="padding:6px 10px;border-bottom:1px solid var(--g100);text-align:right;">'+r.n+'</td>'+
+        '<td style="padding:6px 10px;border-bottom:1px solid var(--g100);text-align:right;color:var(--g500);font-variant-numeric:tabular-nums;">'+r.first+'%</td>'+
+        '<td style="padding:6px 10px;border-bottom:1px solid var(--g100);text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:'+cfBand(r.last)+'">'+r.last+'%</td>'+
+        '<td style="padding:6px 10px;border-bottom:1px solid var(--g100);text-align:right;">'+cfArrow(r.trend)+'</td>'+
+        '<td style="padding:6px 10px;border-bottom:1px solid var(--g100);color:var(--g600);font-size:.75rem;">'+e(r.gap)+'</td></tr>';
+    });
+    h+='</tbody></table></div>';
+  }
+
+  h+='<div style="font-size:.7rem;color:var(--g400);margin-top:7px;line-height:1.5;">'+
+     'A stage the call never reached is left out of its own score rather than counted as a failure, so a blank means there was nothing to measure. '+
+     'Direction compares the later half of an agent\'s reviews against the earlier half; a single review shows no direction.</div>';
+  host.innerHTML=h;
+}
+
 function renderOMC(){
   // Populate team dropdown from roster
   const ft=document.getElementById('om-c-f-team');
@@ -11628,6 +11759,7 @@ function renderOMC(){
     (!sq||(l.agent||'').toLowerCase().includes(sq)||(l.tl||'').toLowerCase().includes(sq))
   );
   document.getElementById('om-c-cnt').textContent=data.length;
+  cfRenderMetrics('om-c-metrics',data);
   const tb=document.getElementById('om-c-body');
   if(!data.length){
     tb.innerHTML=`<tr><td colspan="15"><div class="empty-st"><div class="ei">📋</div><p>No coaching logs yet.</p></div></td></tr>`;
