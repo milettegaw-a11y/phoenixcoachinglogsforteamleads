@@ -4303,8 +4303,7 @@ async function syncToSheet(type, action, id, row){
 function sheetReviewCols(entry){
   const r = entry && entry.review;
   if(!r) return {'Call Dropped At':'','Why It Dropped':'','Call Flow %':'',
-                 'Stages Missed':'','Stages Not Reached':'',
-                 'Gap To Coach':'','Say Instead':'','TL Verdict':''};
+                 'Stages Missed':'','Gap To Coach':'','Say Instead':'','TL Verdict':''};
   const NAMES={1:'Opening',2:'Onset objections',3:'Discovery',4:'Elevator pitch',
                5:'Data gathering',6:'Sales pitch + negotiation',7:'Booking'};
   const dp = r.dropPoint || {};
@@ -4314,13 +4313,11 @@ function sheetReviewCols(entry){
     (p.timestamp?' '+p.timestamp:'')+
     ' — '+(p.status==='partial'?'partial: ':'missed: ')+(p.missed||'')
   ).join('\n');
-  const never = (r.partsNotReached||[]).map(n=>'Part '+n+' '+(NAMES[n]||'')).join(', ');
   return {
     'Call Dropped At':    dp.part ? ('Part '+dp.part+' '+(dp.partName||NAMES[dp.part]||'')+(dp.timestamp?' '+dp.timestamp:'')) : '',
     'Why It Dropped':     dp.what || '',
     'Call Flow %':        (typeof r.followedPct==='number') ? r.followedPct : '',
     'Stages Missed':      missed,
-    'Stages Not Reached': never,
     'Gap To Coach':       g.behaviour || '',
     'Say Instead':        g.suggestedWording || '',
     'TL Verdict':         r.tlVerdict || ''
