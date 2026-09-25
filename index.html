@@ -11341,6 +11341,37 @@ async function saveCommit(){
    • Otherwise → opens a pre-filled mailto: in the agent's/TL's email client
      (one click to Send — works with zero setup)
    ─────────────────────────────────────────────────────────────────────── */
+/* The coaching content for the agent's copy. The commitment says what they
+   agreed to do; without this it arrives with no account of why. Everything is
+   plain text and every field falls back to an em dash, because an email that
+   prints "undefined" at an agent is worse than one that prints nothing. */
+function coachingEmailFields(logEntry){
+  const r=(logEntry&&logEntry.review)||null;
+  const NAMES={1:'Opening',2:'Onset objections',3:'Discovery',4:'Elevator pitch',
+               5:'Data gathering',6:'Sales pitch + negotiation',7:'Booking'};
+  const gapTyped=(logEntry&&logEntry.opp)||'';
+  if(!r){
+    return {coaching_focus:gapTyped||'—', call_dropped:'—', call_flow:'—',
+            stages_missed:'—', say_instead:'—', did_well:(logEntry&&logEntry.hi)||'—',
+            hasReview:false};
+  }
+  const g=r.primaryGap||{}, dp=r.dropPoint||{};
+  const missed=(r.partsMissed||[]).map(p=>
+    '• Part '+p.n+' '+(p.name||NAMES[p.n]||'')+(p.timestamp?' '+p.timestamp:'')+
+    ' — '+(p.status==='partial'?'partial: ':'')+(p.missed||'')).join('\n');
+  return {
+    /* The team lead's own wording wins. They may have overturned the review,
+       and what they wrote is what the agent was actually coached on. */
+    coaching_focus: gapTyped || g.behaviour || '—',
+    call_dropped:   dp.part ? ('Part '+dp.part+' '+(dp.partName||NAMES[dp.part]||'')+(dp.timestamp?' '+dp.timestamp:'')+(dp.what?' — '+dp.what:'')) : '—',
+    call_flow:      (typeof r.followedPct==='number') ? (r.followedPct+'% of the call flow followed') : '—',
+    stages_missed:  missed || '—',
+    say_instead:    g.suggestedWording || '—',
+    did_well:       (logEntry&&logEntry.hi) || (r.coaching&&r.coaching.strength) || '—',
+    hasReview:      true
+  };
+}
+
 async function sendCommitmentEmail(cmData, logEntry){
   const toEmail   = cmData.agentEmail || '';
   const agentName = logEntry?.agent || CU?.agentName || (toEmail.split('@')[0]);
@@ -11357,6 +11388,7 @@ async function sendCommitmentEmail(cmData, logEntry){
   // ── Path A: EmailJS (automatic, no user action) ──────────────────────
   if(EMAILJS_PUBLIC_KEY && !EMAILJS_PUBLIC_KEY.startsWith('YOUR_')){
     try{
+      const cf=coachingEmailFields(logEntry);
       await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID,{
         to_email    : toEmail,
         agent_name  : agentName,
@@ -11366,22 +11398,32 @@ async function sendCommitmentEmail(cmData, logEntry){
         action      : cmData.action    || '—',
         result      : cmData.result    || '—',
         submitted_at: submittedAt,
+        /* These reach the agent only once the EmailJS template references them.
+           Sending a variable the template does not use is silently dropped, so
+           nothing breaks while the template is still being updated. */
+        coaching_focus: cf.coaching_focus,
+        call_dropped  : cf.call_dropped,
+        call_flow     : cf.call_flow,
+        stages_missed : cf.stages_missed,
+        say_instead   : cf.say_instead,
+        did_well      : cf.did_well,
       });
       toast('📧 Email copy sent to '+toEmail);
     }catch(ex){
       console.error('EmailJS send failed:',ex);
       toast('⚠️ Commitment saved — email could not be sent automatically.');
-      openMailto(toEmail,agentName,week,date,tlName,cmData,submittedAt);
+      openMailto(toEmail,agentName,week,date,tlName,cmData,submittedAt,logEntry);
     }
     return;
   }
 
   // ── Path B: mailto: fallback (works immediately, one-click send) ──────
-  openMailto(toEmail,agentName,week,date,tlName,cmData,submittedAt);
+  openMailto(toEmail,agentName,week,date,tlName,cmData,submittedAt,logEntry);
 }
 
-function openMailto(toEmail,agentName,week,date,tlName,cmData,submittedAt){
+function openMailto(toEmail,agentName,week,date,tlName,cmData,submittedAt,logEntry){
   const subject=`Your Phoenix Coaching Commitment — ${week}`;
+  const cf=coachingEmailFields(logEntry);
   const body=[
     `Hi ${agentName},`,
     '',
@@ -11390,6 +11432,22 @@ function openMailto(toEmail,agentName,week,date,tlName,cmData,submittedAt){
     `Date: ${date}  |  ${week}`,
     `Team Lead: ${tlName}`,
     '',
+    ...(cf.hasReview ? [
+      `THE CALL WE REVIEWED`,
+      cf.call_flow,
+      `Where it dropped: ${cf.call_dropped}`,
+      '',
+      `What the call flow missed:`,
+      cf.stages_missed,
+      '',
+      `WHAT TO WORK ON`,
+      cf.coaching_focus,
+      ...(cf.say_instead!=='—' ? ['', `Try saying: "${cf.say_instead}"`] : []),
+      ...(cf.did_well!=='—'   ? ['', `What you did well: ${cf.did_well}`] : []),
+      '',
+      `YOUR COMMITMENT`,
+      ''
+    ] : []),
     `S — Situation:`,
     cmData.situation||'—',
     '',
