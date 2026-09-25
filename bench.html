@@ -1,86 +1,111 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Call Review Bench v2</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Call Review Bench</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Public+Sans:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap">
 <style>
 :root{--paper:#f4f6f2;--surface:#fff;--sunk:#eef1ea;--ink:#1a1d19;--muted:#5f6b5c;--faint:#909a8d;
---rule:#dfe3da;--rule2:#c6cdbe;--accent:#2E5220;--accent2:#5E8A50;--ok:#2f6b4a;--flag:#a03526;color-scheme:light}
+--rule:#dfe3da;--rule2:#c6cdbe;--accent:#2E5220;--accent2:#5E8A50;--ok:#2f6b4a;--warn:#8f6210;--flag:#a03526;color-scheme:light}
 *{box-sizing:border-box} html,body{margin:0}
 body{background:var(--paper);color:var(--ink);font-family:"Public Sans",-apple-system,BlinkMacSystemFont,sans-serif;font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
-.wrap{max-width:1180px;margin:0 auto;padding-block:24px 64px;padding-left:18px;padding-right:18px}
-h1{font-family:"Source Serif 4",Georgia,serif;font-size:1.5rem;font-weight:700;margin:0;letter-spacing:-.01em}
-h2{font-family:"Source Serif 4",Georgia,serif;font-size:1.02rem;font-weight:600;margin:0}
-.lede{color:var(--muted);font-size:.88rem;margin:3px 0 0;max-width:64ch}
-header{display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;align-items:flex-start;border-bottom:2px solid var(--ink);padding-bottom:14px;margin-bottom:18px}
-.meter{display:flex;gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:8px;overflow:hidden;flex:none}
-.meter div{background:var(--surface);padding:7px 12px;min-width:80px}
-.meter .k{font-family:"JetBrains Mono",monospace;font-size:.57rem;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);font-weight:600}
-.meter .v{font-family:"JetBrains Mono",monospace;font-size:1rem;font-weight:600;font-variant-numeric:tabular-nums}
-.cols{display:grid;grid-template-columns:minmax(300px,.8fr) minmax(320px,1.2fr);gap:16px;align-items:start}
-@media(max-width:860px){.cols{grid-template-columns:1fr}}
+.wrap{max-width:1200px;margin:0 auto;padding-block:24px 64px;padding-left:18px;padding-right:18px}
+h1{font-family:"Source Serif 4",Georgia,serif;font-size:1.5rem;font-weight:700;margin:0}
+h2{font-family:"Source Serif 4",Georgia,serif;font-size:1rem;font-weight:600;margin:0}
+.lede{color:var(--muted);font-size:.87rem;margin:3px 0 0;max-width:66ch}
+header{border-bottom:2px solid var(--ink);padding-bottom:14px;margin-bottom:16px}
+.modes{display:flex;gap:0;margin-bottom:16px;border:1.5px solid var(--rule2);border-radius:9px;overflow:hidden;width:fit-content;max-width:100%}
+.modes button{border:0;border-radius:0;padding:9px 18px;font-size:.82rem;font-weight:600;background:var(--surface);color:var(--muted);cursor:pointer}
+.modes button[aria-pressed="true"]{background:var(--accent);color:#fff}
+.modes button:focus-visible{outline:2px solid var(--accent2);outline-offset:-3px}
+.cols{display:grid;grid-template-columns:minmax(300px,.85fr) minmax(320px,1.15fr);gap:16px;align-items:start}
+@media(max-width:880px){.cols{grid-template-columns:1fr}}
 .card{background:var(--surface);border:1px solid var(--rule);border-radius:10px;overflow:hidden}
 .card>.hd{padding:11px 14px;border-bottom:1px solid var(--rule);display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
 .card>.bd{padding:14px}
-textarea{width:100%;border:1.5px solid var(--rule2);border-radius:8px;padding:10px 12px;font-family:"JetBrains Mono",monospace;font-size:.75rem;line-height:1.5;resize:vertical;background:var(--sunk);color:var(--ink);outline:none}
+textarea{width:100%;border:1.5px solid var(--rule2);border-radius:8px;padding:10px 12px;font-family:"JetBrains Mono",monospace;font-size:.74rem;line-height:1.5;resize:vertical;background:var(--sunk);color:var(--ink);outline:none}
 textarea:focus{border-color:var(--accent2)}
 .row{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:10px}
-button{font-family:inherit;border-radius:8px;cursor:pointer;font-size:.8rem;padding:8px 15px;border:1.5px solid var(--rule2);background:var(--surface);color:var(--ink);font-weight:600}
-button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
-button:disabled{opacity:.55;cursor:default}
-button:focus-visible{outline:2px solid var(--accent2);outline-offset:2px}
+button.b{font-family:inherit;border-radius:8px;cursor:pointer;font-size:.8rem;padding:8px 15px;border:1.5px solid var(--rule2);background:var(--surface);color:var(--ink);font-weight:600}
+button.b.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button.b:disabled{opacity:.55;cursor:default}
+button.b:focus-visible{outline:2px solid var(--accent2);outline-offset:2px}
 .status{font-size:.76rem;color:var(--muted);margin-top:8px;min-height:1.2em}
-.status.err{color:var(--flag)}
-.drop{border:1.5px dashed var(--rule2);border-radius:8px;padding:9px 12px;font-size:.76rem;color:var(--muted);text-align:center;margin-top:9px}
+.status.err{color:var(--flag)} .status.good{color:var(--ok)}
+.drop{border:1.5px dashed var(--rule2);border-radius:8px;padding:9px 12px;font-size:.75rem;color:var(--muted);text-align:center;margin-top:9px}
 .drop.over{border-color:var(--accent2);background:var(--sunk)}
-.note{background:var(--sunk);border:1px solid var(--rule);border-radius:8px;padding:11px 13px;font-size:.78rem;color:var(--muted);line-height:1.5;margin-top:16px}
+.steps{counter-reset:s;display:flex;flex-direction:column;gap:9px;margin:0 0 12px;padding:0;list-style:none}
+.steps li{counter-increment:s;display:grid;grid-template-columns:22px 1fr;gap:9px;font-size:.79rem;color:var(--muted);line-height:1.45}
+.steps li::before{content:counter(s);font-family:"JetBrains Mono",monospace;font-size:.68rem;font-weight:700;color:var(--accent);background:var(--sunk);border-radius:50%;width:22px;height:22px;display:grid;place-items:center}
+.steps b{color:var(--ink)}
+.note{background:var(--sunk);border:1px solid var(--rule);border-radius:8px;padding:11px 13px;font-size:.77rem;color:var(--muted);line-height:1.5;margin-top:14px}
 .note b{color:var(--ink)}
+.meter{display:flex;gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:8px;overflow:hidden;margin-top:12px}
+.meter div{background:var(--surface);padding:6px 11px;flex:1;min-width:74px}
+.meter .k{font-family:"JetBrains Mono",monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);font-weight:600}
+.meter .v{font-family:"JetBrains Mono",monospace;font-size:.95rem;font-weight:600;font-variant-numeric:tabular-nums}
 .tag{font-family:"JetBrains Mono",monospace;font-size:.6rem;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);font-weight:600}
 .btn-outline{background:#fff;border:1.5px solid var(--rule2);color:#4b5563}
 .req{color:var(--flag)}
 </style></head><body><div class="wrap">
 <header>
-  <div><h1>Call Review Bench v2</h1>
-  <p class="lede">Upload a call, run it through the live reviewer, and judge whether the thing it says to coach is the thing you would coach. Opens on a real run of the sample call.</p></div>
-  <div class="meter">
-    <div><div class="k">Runs</div><div class="v" id="m-runs">0</div></div>
-    <div><div class="k">Output tok</div><div class="v" id="m-out">0</div></div>
-    <div><div class="k">New input</div><div class="v" id="m-in">0</div></div>
-    <div><div class="k">Cached</div><div class="v" id="m-cache">0</div></div>
-  </div>
+  <h1>Call Review Bench</h1>
+  <p class="lede">Test how the reviewer reads a real call before it goes near a team lead. Free mode costs nothing: you carry the transcript to chat and paste the answer back.</p>
 </header>
+<div class="modes" role="group" aria-label="Mode">
+  <button id="mode-free" aria-pressed="true">Free — review in chat</button>
+  <button id="mode-live" aria-pressed="false">Live — uses your tokens</button>
+</div>
 <div class="cols">
   <div>
     <div class="card">
       <div class="hd"><h2>The call</h2><span class="tag" id="chars">— characters</span></div>
       <div class="bd">
-        <textarea id="tr" rows="15" spellcheck="false"></textarea>
+        <textarea id="tr" rows="13" spellcheck="false"></textarea>
         <div class="drop" id="drop">Drop a <b>.txt</b>, <b>.vtt</b> or <b>.srt</b> here, or paste above</div>
-        <div class="row">
-          <button class="primary" id="run">Review this call</button>
-          <button id="sample">Reload sample</button>
-          <button id="clear">Clear</button>
+        <div class="row" id="row-free">
+          <button class="b primary" id="copy">Copy for chat</button>
+          <button class="b" id="sample">Reload sample</button>
+          <button class="b" id="clear">Clear</button>
+        </div>
+        <div class="row" id="row-live" hidden>
+          <button class="b primary" id="run">Review this call</button>
+          <button class="b" id="sample2">Reload sample</button>
         </div>
         <div class="status" id="status"></div>
       </div>
     </div>
+
+    <div class="card" id="paste-card" style="margin-top:14px">
+      <div class="hd"><h2>Paste the review back</h2></div>
+      <div class="bd">
+        <ol class="steps">
+          <li><b>Copy for chat</b> puts the transcript and the instruction on your clipboard.</li>
+          <li>Paste it into the Claude chat. You get a block of JSON back.</li>
+          <li>Paste that JSON below and press <b>Show it</b>. Nothing is charged to your key.</li>
+        </ol>
+        <textarea id="json" rows="4" spellcheck="false" placeholder="Paste the JSON here"></textarea>
+        <div class="row"><button class="b primary" id="show">Show it</button></div>
+      </div>
+    </div>
+
+    <div class="meter" id="meter" hidden>
+      <div><div class="k">Runs</div><div class="v" id="m-runs">0</div></div>
+      <div><div class="k">Output</div><div class="v" id="m-out">0</div></div>
+      <div><div class="k">New in</div><div class="v" id="m-in">0</div></div>
+      <div><div class="k">Cached</div><div class="v" id="m-cache">0</div></div>
+    </div>
+
     <div class="note">
-      <b>What changed in this version.</b> The drop point is judged across the whole call, not assumed to be the pitch. Only the parts the agent did not follow are listed. Every quote carries its timestamp. QA reports guardrail breaches only — a clean call says so in one line instead of listing checks that passed. The thing to coach is a selling behaviour, never a rule the agent broke.
+      <b>How a part is scored.</b> Not word for word. A stage is <b>done</b> if it happened and achieved its purpose however it was worded, <b>partial</b> if it got part of the way, <b>missed</b> only if its purpose was not served. Partial carries half weight. A stage the call never reached is left out of the total rather than scored zero.
       <br><br>
-      <b>Measured on the sample call:</b> 3,441 output tokens, down from 6,428. 44 seconds, down from 70.
-      <br><br>
-      <b>The endpoint has no authentication.</b> Anyone with the URL can spend your Anthropic credit.
+      <b>What counts as a QA finding.</b> Only something the agent said that was wrong — a wrong offer, price, hours or terms, a misrepresentation, an overpromise, a disclosure withheld before agreement, a DNC request ignored. Sequencing and thin discovery are call-flow issues and report there.
     </div>
   </div>
   <div class="card">
-    <div class="hd"><h2>The review</h2><span class="tag" id="runtag">sample run · 3,441 tok</span></div>
+    <div class="hd"><h2>The review</h2><span class="tag" id="runtag">sample run</span></div>
     <div class="bd"><div id="rv-out"></div></div>
   </div>
 </div>
 <script>
-/* Renders through the same rvRender the coaching form will use, so what you
-   judge here is what a team lead will see. The app has not been updated yet —
-   this file carries the new renderer so the format can be agreed first. */
 var CU={email:'bench'}; function saveDraftLog(){}
 /* ─── CALL REVIEW (coaching form) ──────────────────────────────────────────
    Replaces the free-text feedback a team lead used to type. The team lead
@@ -98,10 +123,6 @@ var CU={email:'bench'}; function saveDraftLog(){}
    deliberately not here. That is a separate path. */
 let _rvReview=null, _rvVerdict='';
 
-function rvStatus(t,err){
-  const el=document.getElementById('rv-status');
-  if(el){ el.textContent=t||''; el.style.color=err?'#a03526':'#6b7280'; }
-}
 function rvEsc(t){return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
 function rvRender(d){
@@ -132,7 +153,8 @@ function rvRender(d){
        '<div style="font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:#9ca3af;font-weight:700;">Call flow followed</div>'+
        '<div style="font-size:1.5rem;font-weight:800;color:'+(d.followedPct>=70?'#2f6b4a':d.followedPct>=40?'#8f6210':'#a03526')+';">'+(d.followedPct===null||d.followedPct===undefined?'—':d.followedPct+'%')+'</div>'+
        '<div style="font-size:.68rem;color:#6b7280;">of the '+(d.reachedWeight||0)+'% of the call reached</div>'+
-       ((d.partsNotReached||[]).length?'<div style="font-size:.66rem;color:#9ca3af;margin-top:3px;">Part'+(d.partsNotReached.length>1?'s':'')+' '+d.partsNotReached.join(', ')+' never reached</div>':'')+
+       ((d.partsDone||[]).length?'<div style="font-size:.66rem;color:#2f6b4a;margin-top:3px;">Part'+(d.partsDone.length>1?'s':'')+' '+d.partsDone.join(', ')+' done</div>':'')+
+       ((d.partsNotReached||[]).length?'<div style="font-size:.66rem;color:#9ca3af;margin-top:2px;">Part'+(d.partsNotReached.length>1?'s':'')+' '+d.partsNotReached.join(', ')+' never reached</div>':'')+
      '</div></div>';
 
   if(d.summary) h+='<div style="font-size:.78rem;color:#4b5563;line-height:1.5;margin-bottom:4px;">'+E(d.summary)+'</div>';
@@ -155,12 +177,16 @@ function rvRender(d){
   /* 3 — Which parts of the flow were not followed. Only the misses. */
   const pm=d.partsMissed||[];
   if(pm.length){
-    h+=head('Call flow not followed');
+    h+=head('Where the flow fell short');
     h+='<div style="border:1px solid #e5e7eb;border-radius:9px;overflow:hidden;">';
-    pm.forEach(p=>{
+    /* Partial and missed are shown apart. A stage done thinly is a different
+       conversation from one that never happened. */
+    pm.slice().sort((a,b)=>(a.status==='partial'?1:0)-(b.status==='partial'?1:0)).forEach(p=>{
+      const part=p.status==='partial';
       h+='<div style="padding:7px 11px;border-bottom:1px solid #f3f4f6;display:flex;gap:9px;align-items:baseline;flex-wrap:wrap;">'+
-        '<span style="font-size:.72rem;font-weight:800;color:#a03526;min-width:44px;">Part '+p.n+'</span>'+
-        '<span style="font-size:.76rem;font-weight:600;color:#1f2937;min-width:120px;">'+E(p.name)+'</span>'+
+        '<span style="font-size:.59rem;font-weight:800;border-radius:4px;padding:1px 5px;'+
+          (part?'background:#f2e6cb;color:#8f6210;':'background:#f3dcd2;color:#a03526;')+'">'+(part?'PARTIAL':'MISSED')+'</span>'+
+        '<span style="font-size:.74rem;font-weight:700;color:#1f2937;min-width:132px;">'+p.n+'. '+E(p.name)+'</span>'+
         '<span style="font-size:.74rem;color:#4b5563;flex:1;min-width:180px;">'+ts(p.timestamp)+E(p.missed)+'</span></div>';
     });
     h+='</div>';
@@ -214,18 +240,62 @@ function rvRender(d){
 }
 
 
-var ENDPOINT='/api/call-review';   // same origin — no CORS, no preview-pane problem
-var DATA={"sample": "[00:00] AGENT: Hi, is this Denise? This is Marco calling from Homeaglow.\n[00:04] CUSTOMER: Yes, speaking.\n[00:06] AGENT: You had looked into home cleaning services with us a while back, and I just wanted to see if getting help with the cleaning is still something you'd be interested in.\n[00:15] CUSTOMER: Oh. Honestly I forgot I even signed up for anything.\n[00:19] AGENT: Totally fair, it was a while ago. How have you been managing the cleaning since then?\n[00:25] CUSTOMER: Myself, mostly. It's been a lot. I've been doing longer hours at work and the kitchen and bathrooms just get away from me.\n[00:34] AGENT: That makes sense. Is that still something you'd like help with today?\n[00:38] CUSTOMER: I mean, yeah, probably. I just don't know what it costs these days.\n[00:44] AGENT: Okay great, so let me tell you what we've got running at the moment. Homeaglow's now the largest home cleaning company in the country, over two point six million cleanings done, and we connect you with background-checked cleaners, over twenty thousand of them.\n[01:02] CUSTOMER: Okay.\n[01:04] AGENT: So for a place like yours it'd be about forty-six dollars a cleaning, and your first one you'd only pay nineteen.\n[01:12] CUSTOMER: Nineteen dollars? For the whole clean?\n[01:15] AGENT: For the first one, yes. It's a really good deal right now.\n[01:19] CUSTOMER: And then after that it's forty-six each time?\n[01:23] AGENT: That's right, forty-six a cleaning. There's a small monthly thing attached but we can go over that after.\n[01:30] CUSTOMER: Wait, what monthly thing?\n[01:33] AGENT: We can go over that after, it's nothing to worry about. So when would you like to have your first cleaning?\n[01:40] CUSTOMER: No, hang on. What's the monthly charge?\n[01:44] AGENT: It's basically just the cleaning, forty-six a time, and then there's the membership side of it.\n[01:51] CUSTOMER: So there's a membership. How much is that?\n[01:55] AGENT: Let me get you booked in first and I can send all that over in the email.\n[02:01] CUSTOMER: No, I'm alright thanks. Bye.\n[02:03] AGENT: Okay, no problem, have a good day.", "seed": {"summary": "Marco opened cleanly and Denise confirmed a real need (long hours, kitchen and bathrooms getting away from her), but he jumped straight to a $46/$19 quote with no home details and then deflected her direct questions about the monthly charge twice. She ended the call herself at [02:01] with no booking.", "outcome": "not_sold", "customerNeed": "Working longer hours and can't keep up with the kitchen and bathrooms herself; wants help but doesn't know current cost.", "dropPoint": {"part": 6, "partName": "Sales pitch and negotiation", "timestamp": "[01:33]", "what": "Denise asked a direct, reasonable question about the monthly charge and the agent brushed it aside and tried to close, which read as evasive and cost him the trust the opening had built.", "evidence": "CUSTOMER: Wait, what monthly thing? / AGENT: We can go over that after, it's nothing to worry about. So when would you like to have your first cleaning?", "avoidable": true}, "partsMissed": [{"n": 3, "name": "Discovery", "missed": "Only two discovery questions; never asked the original reason for looking, prior hesitation, or bedrooms/bathrooms/area.", "timestamp": "[00:38]"}, {"n": 4, "name": "Elevator pitch", "missed": "Not framed as an update and omitted the lower-rates hook and cleaners in her area.", "timestamp": "[00:44]"}, {"n": 5, "name": "Data gathering", "missed": "Skipped entirely \u2014 no bed/bath confirmation, no frequency, no pets/focus areas, quoted 'for a place like yours' without any of it.", "timestamp": "[01:04]"}, {"n": 6, "name": "Sales pitch and negotiation", "missed": "No hours recommendation, no $150 anchor, and none of the ForeverClean disclosures ($59/month, discounted hourly rate, cancel anytime, early cancellation fee) despite two direct asks.", "timestamp": "[01:23]"}], "partsNotReached": [7], "opportunities": [{"n": 3, "partName": "Discovery", "timestamp": "[00:25]", "what": "She volunteered longer work hours and kitchen/bathrooms as the problem areas; he acknowledged but never asked how many bedrooms/bathrooms or what area she's in.", "why": "Home size and her priority rooms would have made the quote specific and credible instead of a bare number."}, {"n": 4, "partName": "Elevator pitch", "timestamp": "[00:44]", "what": "She said she didn't know what it costs these days \u2014 a direct invitation for the 'we've lowered our rates since you last looked' hook.", "why": "It answers her actual question and gives an aged lead a reason to re-engage."}, {"n": 6, "partName": "Sales pitch and negotiation", "timestamp": "[01:51]", "what": "'So there's a membership. How much is that?' was a buying question, not an objection.", "why": "A straight answer plus the per-cleaning value would likely have kept her on the call."}], "primaryGap": {"behaviour": "Build the quote out of what the customer just told you \u2014 her hours, her kitchen and bathrooms, her home size \u2014 before any number leaves your mouth.", "part": 6, "partName": "Sales pitch and negotiation", "timestamp": "[01:04]", "evidence": "AGENT: So for a place like yours it'd be about forty-six dollars a cleaning, and your first one you'd only pay nineteen.", "why": "Denise had just handed him a clear pain point and an open cost question; with no home details and no value tied to her situation, the price was just a number she had to interrogate, so the first hint of a hidden fee ended the call.", "suggestedWording": "You mentioned the kitchen and bathrooms are what get away from you with the longer hours \u2014 how many bedrooms and bathrooms are we looking at, and would you want someone every other week or monthly? Then I can give you exact numbers rather than a ballpark.", "observableNextTime": "Agent confirms bed/bath, area and frequency and restates the customer's own reason for wanting help before quoting any figure."}, "qaFindings": [{"finding": "Withheld the recurring membership fee and terms after two direct customer questions, minimised it as 'nothing to worry about', and attempted to close; no $59/month, hourly rate, cancel-anytime or early cancellation fee disclosure was ever given.", "evidence": "CUSTOMER: So there's a membership. How much is that? / AGENT: Let me get you booked in first and I can send all that over in the email.", "timestamp": "[01:55]", "source": "call flow part 6 | QA guide section 5 (recurring membership and billing timing)", "level": "L3", "autoFail": true}, {"finding": "Quoted a per-cleaning and first-cleaning price without establishing home size, hours or frequency, so the figures were unsupported for this customer.", "evidence": "AGENT: So for a place like yours it'd be about forty-six dollars a cleaning", "timestamp": "[01:04]", "source": "call flow part 5 | QA guide section 2 (cleaning hours and realistic scope)", "level": "not established by supplied sources", "autoFail": false}], "coaching": {"strength": "Warm, non-defensive handling of 'I forgot I even signed up' at [00:19], which got her talking about her real situation within seconds.", "proposedCommitment": "On my next reviewed calls I will confirm bedrooms, bathrooms, area and frequency and tie the offer to the customer's stated pain before quoting, and answer any fee question in full the moment it is asked."}, "humanReviewRequired": true, "limitations": null, "reachedWeight": 85, "followedPct": 24, "model": "claude-opus-5", "generatedAt": "2026-09-25T01:15:28.266Z", "usage": {"input_tokens": 933, "cache_creation_input_tokens": 14436, "cache_read_input_tokens": 0, "cache_creation": {"ephemeral_5m_input_tokens": 14436, "ephemeral_1h_input_tokens": 0}, "output_tokens": 3441, "output_tokens_details": {"thinking_tokens": 1385}, "service_tier": "standard", "inference_geo": "global"}, "transcriptChars": 2099, "truncated": false}};
+var ENDPOINT='/api/call-review';
+var DATA={"sample": "[00:00] AGENT: Hi, is this Denise? This is Marco calling from Homeaglow.\n[00:04] CUSTOMER: Yes, speaking.\n[00:06] AGENT: You had looked into home cleaning services with us a while back, and I just wanted to see if getting help with the cleaning is still something you'd be interested in.\n[00:15] CUSTOMER: Oh. Honestly I forgot I even signed up for anything.\n[00:19] AGENT: Totally fair, it was a while ago. How have you been managing the cleaning since then?\n[00:25] CUSTOMER: Myself, mostly. It's been a lot. I've been doing longer hours at work and the kitchen and bathrooms just get away from me.\n[00:34] AGENT: That makes sense. Is that still something you'd like help with today?\n[00:38] CUSTOMER: I mean, yeah, probably. I just don't know what it costs these days.\n[00:44] AGENT: Okay great, so let me tell you what we've got running at the moment. Homeaglow's now the largest home cleaning company in the country, over two point six million cleanings done, and we connect you with background-checked cleaners, over twenty thousand of them.\n[01:02] CUSTOMER: Okay.\n[01:04] AGENT: So for a place like yours it'd be about forty-six dollars a cleaning, and your first one you'd only pay nineteen.\n[01:12] CUSTOMER: Nineteen dollars? For the whole clean?\n[01:15] AGENT: For the first one, yes. It's a really good deal right now.\n[01:19] CUSTOMER: And then after that it's forty-six each time?\n[01:23] AGENT: That's right, forty-six a cleaning. There's a small monthly thing attached but we can go over that after.\n[01:30] CUSTOMER: Wait, what monthly thing?\n[01:33] AGENT: We can go over that after, it's nothing to worry about. So when would you like to have your first cleaning?\n[01:40] CUSTOMER: No, hang on. What's the monthly charge?\n[01:44] AGENT: It's basically just the cleaning, forty-six a time, and then there's the membership side of it.\n[01:51] CUSTOMER: So there's a membership. How much is that?\n[01:55] AGENT: Let me get you booked in first and I can send all that over in the email.\n[02:01] CUSTOMER: No, I'm alright thanks. Bye.\n[02:03] AGENT: Okay, no problem, have a good day.", "seed": {"summary": "Marco opened well and Denise confirmed a real, current need (long work hours, kitchen and bathrooms getting away from her), but he jumped to a $46/$19 quote without ever establishing her home size or frequency. When she twice asked directly what the monthly charge was, he deflected and tried to book first, and she ended the call.", "outcome": "not_sold", "customerNeed": "Working longer hours and can't keep up with the kitchen and bathrooms herself; wants help but doesn't know current pricing.", "dropPoint": {"part": 6, "partName": "Sales pitch and negotiation", "timestamp": "[01:33]", "what": "Denise asked a direct, reasonable question about the monthly charge and the agent deferred it twice and pushed for the booking instead, which destroyed trust on a recycled lead", "evidence": "CUSTOMER: 'Wait, what monthly thing?' / AGENT: 'We can go over that after, it's nothing to worry about. So when would you like to have your first cleaning?'", "avoidable": true}, "partsDone": [1, 2], "partsMissed": [{"n": 3, "name": "Discovery", "status": "partial", "missed": "Got the situation and the pain but never asked area, bedrooms/bathrooms, original reason for looking, or prior hesitation, so the quote that followed had nothing behind it.", "timestamp": "[00:38]"}, {"n": 4, "name": "Elevator pitch", "status": "missed", "missed": "Delivered a generic first-time intro with no 'what's changed' framing and no lower-rates hook, so an aged lead got no reason to re-engage.", "timestamp": "[00:44]"}, {"n": 5, "name": "Data gathering", "status": "missed", "missed": "No bedrooms, bathrooms, frequency, pets or focus areas before a specific per-cleaning price was quoted.", "timestamp": "[01:04]"}, {"n": 6, "name": "Sales pitch and negotiation", "status": "missed", "missed": "No hours recommendation, no national-average anchor, and no $59/month or early cancellation fee disclosure before asking for the booking.", "timestamp": "[01:23]"}], "partsNotReached": [7], "opportunities": [{"n": 3, "partName": "Discovery", "timestamp": "[00:25]", "what": "She named the exact rooms that defeat her \u2014 kitchen and bathrooms \u2014 and the agent moved on without asking about size, area or focus areas", "why": "Would have produced an accurate hours recommendation and let the quote be framed around the rooms she actually cares about"}, {"n": 3, "partName": "Discovery", "timestamp": "[00:38]", "what": "'I just don't know what it costs these days' was an open invitation to explore her price expectation and what held her back last time", "why": "Knowing her expected number would have let him position $46 as a win rather than a bare figure"}, {"n": 4, "partName": "Elevator pitch", "timestamp": "[00:44]", "what": "Never said rates are lower than when she last looked", "why": "That is the whole re-engagement hook for an aged lead who dropped out on price uncertainty"}], "primaryGap": {"behaviour": "Build the price on what the customer just told you \u2014 her hours, her kitchen and bathrooms, her home size \u2014 before the number is spoken, then give the whole number in one piece.", "part": 6, "partName": "Sales pitch and negotiation", "timestamp": "[01:04]", "evidence": "AGENT: 'So for a place like yours it'd be about forty-six dollars a cleaning, and your first one you'd only pay nineteen.'", "why": "Denise's only stated barrier was not knowing what cleaning costs; a number dropped before he knew her home or referenced her pain left her with a price and no value, so the first hint of a hidden charge ended it.", "suggestedWording": "\"You said the kitchen and bathrooms are what get away from you \u2014 how many bedrooms and bathrooms are we talking, and what area are you in? ... For a 2-hour clean the national average is about $150; on ForeverClean it's about $46 a cleaning, you'd pay $19 today, and the membership is $59 a month on the same date until you cancel. How does that sound?\"", "observableNextTime": "Agent confirms bed/bath, area and frequency and repeats back the customer's own pain point before any dollar figure is said."}, "qaFindings": [{"finding": "Asked for the booking without disclosing the $59/month recurring membership or the early cancellation fee, and minimised the charge when directly asked twice", "evidence": "AGENT: 'There's a small monthly thing attached but we can go over that after.' ... 'We can go over that after, it's nothing to worry about.' ... 'Let me get you booked in first and I can send all that over in the email.'", "timestamp": "[01:23]\u2013[01:55]", "source": "call flow part 6 (auto-fail: missing $59/month or early cancellation fee disclosure); QA guide section 5 (missing key MF/MCT details, slide 13)", "level": "L3", "autoFail": true}], "coaching": {"strength": "Opened cleanly and handled 'I forgot I even signed up' with curiosity, which surfaced a genuine current need within 30 seconds [00:19]\u2013[00:34].", "proposedCommitment": "On my next reviewed calls, I will confirm bedrooms, bathrooms, area and frequency before quoting, and state the per-cleaning price, the $19 today, the $59/month and the cancellation fee together in one disclosure."}, "humanReviewRequired": true, "limitations": null, "reachedWeight": 85, "followedPct": 35, "model": "claude-opus-5", "generatedAt": "2026-09-25T01:34:13.938Z", "usage": {"input_tokens": 933, "cache_creation_input_tokens": 0, "cache_read_input_tokens": 14992, "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 0}, "output_tokens": 3801, "output_tokens_details": {"thinking_tokens": 1709}, "service_tier": "standard", "inference_geo": "global"}, "transcriptChars": 2099, "truncated": false}};
 var T={runs:0,out:0,inp:0,cache:0};
 var $=function(i){return document.getElementById(i);};
-function st(t,e){var x=$('status');x.textContent=t||'';x.className='status'+(e?' err':'');}
+function st(t,cls){var x=$('status');x.textContent=t||'';x.className='status'+(cls?' '+cls:'');}
 function chars(){$('chars').textContent=$('tr').value.length.toLocaleString()+' characters';}
 function meter(){$('m-runs').textContent=T.runs;$('m-out').textContent=T.out.toLocaleString();
   $('m-in').textContent=T.inp.toLocaleString();$('m-cache').textContent=T.cache.toLocaleString();}
-rvRender(DATA.seed); $('tr').value=DATA.sample; chars(); meter();
-$('tr').addEventListener('input',chars);
+
+rvRender(DATA.seed); $('tr').value=DATA.sample; chars();
+
+/* Free mode is the default: the transcript goes to chat and the answer comes
+   back by clipboard, so tuning the reviewer costs nothing while the wording of
+   the rules is still moving. */
+function setMode(free){
+  $('mode-free').setAttribute('aria-pressed',free);
+  $('mode-live').setAttribute('aria-pressed',!free);
+  $('row-free').hidden=!free; $('row-live').hidden=free;
+  $('paste-card').hidden=!free; $('meter').hidden=free;
+  st('');
+}
+$('mode-free').addEventListener('click',function(){setMode(true);});
+$('mode-live').addEventListener('click',function(){setMode(false);});
+
+var PROMPT='Review this Phoenix call with the call-review rules and reply with ONLY the JSON object, no prose around it.\n\n';
+$('copy').addEventListener('click',async function(){
+  var t=$('tr').value.trim();
+  if(t.length<200){st('Paste or drop a transcript first.','err');return;}
+  var payload=PROMPT+'<<<TRANSCRIPT>>>\n'+t+'\n<<<END TRANSCRIPT>>>';
+  try{
+    await navigator.clipboard.writeText(payload);
+    st('Copied. Paste it into the chat, then bring the JSON back here.','good');
+  }catch(e){
+    /* Clipboard is refused in some app views; fall back to selecting the text
+       so it can still be copied by hand. */
+    $('json').value=payload; $('json').focus(); $('json').select();
+    st('Could not reach the clipboard. The text is selected in the box below — copy it from there.','err');
+  }
+});
+$('show').addEventListener('click',function(){
+  var raw=$('json').value.trim();
+  if(!raw){st('Paste the JSON first.','err');return;}
+  var a=raw.indexOf('{'), b=raw.lastIndexOf('}');
+  if(a===-1||b===-1){st('That does not look like JSON. Copy the whole block including the braces.','err');return;}
+  try{
+    var d=JSON.parse(raw.slice(a,b+1));
+    rvRender(d); $('runtag').textContent='from chat';
+    st('Rendered. Nothing was charged to your key.','good');
+  }catch(err){ st('Could not read that JSON: '+err.message,'err'); }
+});
+
 $('clear').addEventListener('click',function(){$('tr').value='';chars();st('');});
-$('sample').addEventListener('click',function(){$('tr').value=DATA.sample;chars();st('Sample call reloaded.');});
+function reload(){$('tr').value=DATA.sample;chars();st('Sample call reloaded.');}
+$('sample').addEventListener('click',reload); $('sample2').addEventListener('click',reload);
+$('tr').addEventListener('input',chars);
+
 var drop=$('drop');
 ['dragenter','dragover'].forEach(function(e){drop.addEventListener(e,function(x){x.preventDefault();drop.classList.add('over');});});
 ['dragleave','drop'].forEach(function(e){drop.addEventListener(e,function(x){x.preventDefault();drop.classList.remove('over');});});
@@ -235,23 +305,24 @@ drop.addEventListener('drop',function(e){
   r.onload=function(){$('tr').value=String(r.result||'');chars();st(f.name+' loaded.');};
   r.readAsText(f);
 });
+
 $('run').addEventListener('click',async function(){
   var text=$('tr').value.trim();
-  if(text.length<200){st('Paste or drop a transcript first.',true);return;}
+  if(text.length<200){st('Paste or drop a transcript first.','err');return;}
   var b=$('run'); b.disabled=true; b.textContent='Reading…';
   st('Running a real review. Around 45 seconds.');
   var t0=Date.now();
   try{
     var r=await fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({transcript:text})});
     var d=await r.json().catch(function(){return{};});
-    if(!r.ok){st(d.hint||d.error||('Failed — HTTP '+r.status),true);return;}
+    if(!r.ok){st(d.hint||d.error||('Failed — HTTP '+r.status),'err');return;}
     rvRender(d);
     var u=d.usage||{}, secs=Math.round((Date.now()-t0)/1000);
     T.runs++;T.out+=(u.output_tokens||0);T.inp+=(u.input_tokens||0);T.cache+=(u.cache_read_input_tokens||0);meter();
-    $('runtag').textContent='your run · '+(u.output_tokens||0).toLocaleString()+' tok · '+secs+'s';
-    st('Done in '+secs+'s. '+(u.output_tokens||0).toLocaleString()+' output, '+(u.input_tokens||0).toLocaleString()+' new input, '+(u.cache_read_input_tokens||0).toLocaleString()+' cached.');
-  }catch(err){
-    st('Failed: '+err.message+' — check you are online and try again.',true);
-  }finally{b.disabled=false;b.textContent='Review this call';}
+    $('runtag').textContent='live · '+(u.output_tokens||0).toLocaleString()+' tok · '+secs+'s';
+    st('Done in '+secs+'s. '+(u.output_tokens||0).toLocaleString()+' output tokens.');
+  }catch(err){ st('Failed: '+err.message,'err'); }
+  finally{b.disabled=false;b.textContent='Review this call';}
 });
+setMode(true);
 </script></div></body></html>
