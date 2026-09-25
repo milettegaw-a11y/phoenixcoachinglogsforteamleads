@@ -4295,8 +4295,41 @@ async function syncToSheet(type, action, id, row){
   } catch(e){ console.warn('Sheet sync skipped:', e.message); }
 }
 
+/* Flatten the review into sheet columns. The sheet is read by people and by
+   formulas, not by the app, so everything is plain text: no JSON, no ids, and
+   every stage written out in words rather than left as a number to look up.
+   A log with no review leaves these blank rather than writing zeros, which
+   would be indistinguishable from a call that followed nothing. */
+function sheetReviewCols(entry){
+  const r = entry && entry.review;
+  if(!r) return {'Call Dropped At':'','Why It Dropped':'','Call Flow %':'',
+                 'Stages Missed':'','Stages Not Reached':'',
+                 'Gap To Coach':'','Say Instead':'','TL Verdict':''};
+  const NAMES={1:'Opening',2:'Onset objections',3:'Discovery',4:'Elevator pitch',
+               5:'Data gathering',6:'Sales pitch + negotiation',7:'Booking'};
+  const dp = r.dropPoint || {};
+  const g  = r.primaryGap || {};
+  const missed = (r.partsMissed||[]).map(p=>
+    'Part '+p.n+' '+(p.name||NAMES[p.n]||'')+
+    (p.timestamp?' '+p.timestamp:'')+
+    ' — '+(p.status==='partial'?'partial: ':'missed: ')+(p.missed||'')
+  ).join('\n');
+  const never = (r.partsNotReached||[]).map(n=>'Part '+n+' '+(NAMES[n]||'')).join(', ');
+  return {
+    'Call Dropped At':    dp.part ? ('Part '+dp.part+' '+(dp.partName||NAMES[dp.part]||'')+(dp.timestamp?' '+dp.timestamp:'')) : '',
+    'Why It Dropped':     dp.what || '',
+    'Call Flow %':        (typeof r.followedPct==='number') ? r.followedPct : '',
+    'Stages Missed':      missed,
+    'Stages Not Reached': never,
+    'Gap To Coach':       g.behaviour || '',
+    'Say Instead':        g.suggestedWording || '',
+    'TL Verdict':         r.tlVerdict || ''
+  };
+}
+
 function sheetRowCoaching(entry, cm){
   return {
+    ...sheetReviewCols(entry),
     'ID':              entry.id,
     'Date':            entry.date,
     'Agent':           entry.agent,
