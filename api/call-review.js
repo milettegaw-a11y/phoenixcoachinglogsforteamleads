@@ -37,13 +37,40 @@ BE BRIEF. Every field is read by a team lead between calls. One sentence where o
 
 TIMESTAMPS. Transcripts usually carry [mm:ss] markers. Put the timestamp on every piece of evidence. If the transcript has no timestamps, use the speaker line instead and say so once in limitations. Never invent one.
 
-WHICH PARTS WERE NOT FOLLOWED. Go through all seven parts. Report ONLY the parts the agent did not follow, one line each, saying what was skipped or done wrong. A part done adequately is not reported. A part the call never reached is not a failure — list it in partsNotReached instead.
+HOW EACH PART WENT. Judge whether the part DID ITS JOB, not whether the script was followed word for word. The reference lines are examples of language, not a checklist — an agent who paraphrases well has done the part. Ask only: did this stage happen, and did it achieve what it is for?
+
+  done      — the stage happened and achieved its purpose, however it was worded.
+              An opening that re-introduced Homeaglow and found out whether the
+              need still exists is done, even with none of the three openers used.
+              A discovery that established the situation, the need and the home is
+              done, even if it took three questions rather than five.
+  partial   — the stage happened but thinly: it got part of the way, or was rushed,
+              or skipped something that mattered to what followed.
+  missed    — the stage did not happen, or happened in a way that defeated its own
+              purpose (pitching before the need was established; quoting before the
+              home was known; arguing with an objection instead of understanding it).
+
+Be willing to mark a part done. A part is not "missed" because one sub-question went unasked; it is missed when its purpose was not served. Most real calls have several parts done and one or two that genuinely failed — a review where every part is missed is almost always the reviewer being too strict, not the agent being that bad.
+
+Report every part that is partial or missed. Parts that are done are not listed individually; just record them in partsDone. A part the call never reached goes in partsNotReached and is neither.
 
 WHERE THE CALL DROPPED. Find the moment the sale was lost or the customer disengaged, wherever it happened. Do not assume it was the pitch. A call is lost in the opening as often as at the close: a cold read of the opener, no reason given for calling, a discovery that felt like an interrogation, a pitch that never connected to anything the customer said, an objection argued with instead of understood. Judge it on how the agent handled the customer, not on which script line was missed. Quote the exchange and give its timestamp.
 
 OPPORTUNITIES. Beyond the one gap being coached, list the parts where the agent had a real chance to move the call and did not take it. Up to three, each tied to a part and a timestamp. These are not the coaching focus; they are what a team lead might mention in passing.
 
-QA FINDINGS ARE GUARDRAIL BREACHES ONLY. Report a QA finding only where the agent actually did something the guardrails prohibit: stated something incorrect about the product, price, hours or terms; overpromised; omitted a required disclosure; mishandled a DNC request; asked for sensitive information over the wrong channel; or anything matching a Level 5 ZTP category. If the agent did none of these, return an empty array. Do NOT list checks that passed, do NOT list items you could not assess, and do NOT walk the guardrails line by line. No findings is the normal result on a clean call and should be reported as such.
+QA FINDINGS ARE THINGS THE AGENT SAID THAT WERE WRONG. A QA finding is a call-out: something stated to the customer that was incorrect, misleading, or prohibited. Specifically:
+
+  - a wrong offer, wrong price, wrong hours, wrong terms
+  - a misrepresentation or a misleading impression left uncorrected
+  - an overpromise the service cannot keep
+  - a required disclosure omitted before the customer agreed
+  - a DNC request not honoured
+  - sensitive information requested over the wrong channel
+  - anything matching a Level 5 ZTP category
+
+Process and sequencing are NOT QA findings. Quoting before confirming the home size, thin discovery, a skipped hook, poor structure — those are call-flow issues and belong in partsMissed, not here. The test is: did the agent tell the customer something that was wrong, or withhold something they were required to say? If not, it is not a QA finding.
+
+If the agent said nothing wrong, return an empty array. That is the normal result on a clean call. Never list checks that passed, never list what you could not assess, never walk the guardrails line by line.
 
 Assign a policy level only where a supplied rule supports it; otherwise say the level is not established by the supplied sources. An overpromise is not automatically Level 5. Do not infer a CRM tag, payment, refund or DNC update from a transcript alone.
 
@@ -63,8 +90,10 @@ Return ONLY a JSON object, no prose around it:
     "evidence": "verbatim exchange",
     "avoidable": true | false
   },
+  "partsDone": [1, 2],
   "partsMissed": [
-    {"n": 1-7, "name": "...", "missed": "one line on what was skipped or done wrong", "timestamp": "[mm:ss] or null"}
+    {"n": 1-7, "name": "...", "status": "partial | missed",
+     "missed": "one line on what its purpose needed and did not get", "timestamp": "[mm:ss] or null"}
   ],
   "partsNotReached": [7],
   "opportunities": [
@@ -162,12 +191,15 @@ export default async function handler(req, res) {
     // arithmetic is not judgement and should not be asked of the model.
     const WEIGHTS = { 1:10, 2:10, 3:20, 4:10, 5:10, 6:25, 7:15 };
     const notReached = new Set(review.partsNotReached || []);
-    const missed = new Set((review.partsMissed || []).map(p => p.n));
+    // Partial credit: a stage that happened thinly is not the same as one that
+    // never happened, and scoring both as zero is what put every call at 0%.
+    const state = {};
+    for (const p of (review.partsMissed || [])) state[p.n] = (p.status === 'partial') ? 0.5 : 0;
     let reached = 0, followed = 0;
     for (const n of [1,2,3,4,5,6,7]) {
       if (notReached.has(n)) continue;
       reached += WEIGHTS[n];
-      if (!missed.has(n)) followed += WEIGHTS[n];
+      followed += WEIGHTS[n] * (n in state ? state[n] : 1);
     }
     review.reachedWeight = reached;
     review.followedPct = reached ? Math.round(followed / reached * 100) : null;
