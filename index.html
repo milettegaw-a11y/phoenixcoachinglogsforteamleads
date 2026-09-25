@@ -3222,8 +3222,22 @@ html[data-theme="rose"] .cl-subtab.active{color:#7a1232;border-bottom-color:#7a1
         </div>
         <div class="fg"><label>NTE Link</label><input type="url" id="cl-nte-link" placeholder="https://…" oninput="saveDraftLog()"/></div>
         <div class="fg"><label>Aircall Link</label><input type="url" id="cl-air" placeholder="https://phone.aircall.io/…" oninput="saveDraftLog()"/></div>
-        <div class="fg full"><label>Highlights ✨</label><textarea id="cl-hi" placeholder="What the agent did well…" oninput="saveDraftLog()"></textarea></div>
-        <div class="fg full"><label>Agent Opportunities 🎯</label><textarea id="cl-opp" placeholder="Areas for growth and improvement…" oninput="saveDraftLog()"></textarea></div>
+        <div class="fg full">
+          <div id="rv-wrap" style="border:1.5px solid #e5e7eb;border-radius:10px;overflow:hidden;">
+            <div style="background:#f8fafb;padding:10px 13px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+              <div><div style="font-size:.82rem;font-weight:700;color:#1f2937;">Call review</div>
+              <div style="font-size:.7rem;color:#6b7280;">Reads the call against the Phoenix call flow and QA guardrails, and names one gap to coach. You confirm or overturn it.</div></div>
+              <button type="button" class="btn" id="rv-btn" onclick="rvRun()" style="background:linear-gradient(135deg,#5e8a50,#7ab865);color:#fff;border:none;font-weight:700;font-size:.78rem;padding:7px 14px;">Review call</button>
+            </div>
+            <div style="padding:12px 13px;">
+              <textarea id="rv-transcript" rows="4" placeholder="Paste the call transcript, or drop a .txt/.vtt/.srt file here…" style="width:100%;box-sizing:border-box;border:1.5px solid #e5e7eb;border-radius:8px;padding:10px 12px;font-size:.8rem;font-family:ui-monospace,monospace;resize:vertical;line-height:1.45;outline:none;"></textarea>
+              <div id="rv-status" style="font-size:.72rem;color:#6b7280;margin-top:6px;"></div>
+              <div id="rv-out" style="margin-top:12px;"></div>
+            </div>
+          </div>
+        </div>
+        <div class="fg full"><label>What the agent did well ✨</label><textarea id="cl-hi" placeholder="Filled from the review — edit if you disagree" oninput="saveDraftLog()"></textarea></div>
+        <div class="fg full"><label>The gap to coach 🎯 <span class="req">★</span></label><textarea id="cl-opp" placeholder="Filled from the review once you confirm it — this is what the agent gets coached on" oninput="saveDraftLog()"></textarea></div>
       </div>
     </div>
     <div class="mfooter">
@@ -10297,7 +10311,9 @@ function openLogModal(){
   fillAgents(['cl-agent']);
   fillTLs(['cl-tl']);
   fillWeeks(['cl-wk']);
-  ['cl-date','cl-leads','cl-conn','cl-sales','cl-wk2','cl-nte-link','cl-air','cl-hi','cl-opp'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['cl-date','cl-leads','cl-conn','cl-sales','cl-wk2','cl-nte-link','cl-air','cl-hi','cl-opp','rv-transcript'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  _rvReview=null; _rvVerdict='';
+  ['rv-out','rv-status'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='';});
   document.getElementById('cl-agent').value='';
   document.getElementById('cl-tl').value='';
   document.getElementById('cl-wk').value='';
@@ -10766,6 +10782,11 @@ function renderSuggestionHistory(){
 }
 
 async function saveLog(){
+  /* The gap is the one field the whole form exists to produce. A log saved
+     without it records that coaching happened and not what it was about. */
+  const _gap=(document.getElementById('cl-opp')||{}).value||'';
+  if(!_gap.trim()){ toast('⚠️ Add the gap to coach before saving.'); document.getElementById('cl-opp').focus(); return; }
+  if(_rvReview&&!_rvVerdict){ toast('⚠️ Say whether the review named the right gap before saving.'); return; }
   if(!req('cl-date','Date of Coaching'))return;
   if(!req('cl-agent','Agent Name'))return;
   if(!req('cl-tl','Team Lead'))return;
@@ -10797,6 +10818,20 @@ async function saveLog(){
     aircall:document.getElementById('cl-air').value,
     hi:document.getElementById('cl-hi').value,
     opp:document.getElementById('cl-opp').value,
+    /* What the review proposed, kept beside what the team lead decided. Stored
+       separately and never merged into `opp`, so later you can tell how often
+       the proposal was right rather than only what was agreed. */
+    review: _rvReview ? {
+      generatedAt:_rvReview.generatedAt, model:_rvReview.model,
+      primaryGap:_rvReview.primaryGap||null,
+      lostAt:_rvReview.lostAt||null,
+      outcome:_rvReview.outcome||'',
+      weightedScore:_rvReview.weightedScore, scoredWeight:_rvReview.scoredWeight,
+      autoFails:(_rvReview.compliance||[]).filter(c=>c.autoFail).map(c=>c.check),
+      humanReviewRequired:!!_rvReview.humanReviewRequired,
+      transcriptChars:_rvReview.transcriptChars||0, truncated:!!_rvReview.truncated,
+      tlVerdict:_rvVerdict||'', tlEmail:CU?CU.email:''
+    } : null,
     // Coaching focus & calculator
     focus:['TCR%','CSR%','CVR%','WK2 CVR%'].filter((_,i)=>
       [document.getElementById('fc-tcr'),document.getElementById('fc-csr'),
@@ -10920,6 +10955,7 @@ function openCLModal(){
   document.getElementById('cl-outcome').value='';
   const notesEl=document.getElementById('cl-notes');
   if(notesEl) notesEl.value='';
+
   for(let i=1;i<=7;i++){
     const el=document.getElementById('cl-r'+i);
     if(el){ el.value=''; styleCLSelect(el); }
@@ -10927,6 +10963,132 @@ function openCLModal(){
   updateCLScore();
   openM('m-cl');
 }
+/* ─── CALL REVIEW (coaching form) ──────────────────────────────────────────
+   Replaces the free-text feedback a team lead used to type. The team lead
+   pastes the transcript; /api/call-review reads it against the Phoenix call
+   flow and the QA guardrails and proposes ONE gap to coach. The team lead
+   confirms or overturns it, and what they confirm is what the log stores.
+
+   The two existing fields are kept as the storage target on purpose. Ten
+   months of coaching logs already hold `hi` and `opp`, the sheet import reads
+   them, and opening an old log reads them back — changing the shape would
+   orphan all of it. What changed is the process, not the record: the team lead
+   confirms a proposal instead of starting from an empty box.
+
+   Follow-through — checking later calls for the coached behaviour — is
+   deliberately not here. That is a separate path. */
+let _rvReview=null, _rvVerdict='';
+
+function rvStatus(t,err){
+  const el=document.getElementById('rv-status');
+  if(el){ el.textContent=t||''; el.style.color=err?'#a03526':'#6b7280'; }
+}
+function rvEsc(t){return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+document.addEventListener('dragover',e=>{ if(e.target&&e.target.id==='rv-transcript')e.preventDefault(); });
+document.addEventListener('drop',e=>{
+  if(!e.target||e.target.id!=='rv-transcript')return;
+  e.preventDefault();
+  const f=(e.dataTransfer&&e.dataTransfer.files||[])[0]; if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{ document.getElementById('rv-transcript').value=String(r.result||'');
+    rvStatus(f.name+' loaded — '+String(r.result||'').length.toLocaleString()+' characters'); };
+  r.readAsText(f);
+});
+
+async function rvRun(){
+  const ta=document.getElementById('rv-transcript');
+  const text=(ta&&ta.value||'').trim();
+  if(text.length<200){ rvStatus('Paste the full transcript first — under 200 characters there is nothing to review.',true); return; }
+  const btn=document.getElementById('rv-btn');
+  if(btn){ btn.disabled=true; btn.textContent='Reading…'; }
+  rvStatus('Reading the call against the call flow and QA guardrails. About a minute.');
+  document.getElementById('rv-out').innerHTML='';
+  try{
+    const r=await fetch('/api/call-review',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({transcript:text,
+        agent:(document.getElementById('cl-agent')||{}).value||'',
+        callDate:(document.getElementById('cl-date')||{}).value||''})});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok){ rvStatus(d.hint||d.error||('Review failed — HTTP '+r.status),true); return; }
+    _rvReview=d; _rvVerdict='';
+    rvStatus('Reviewed '+new Date(d.generatedAt).toLocaleTimeString()+' · '+(d.transcriptChars||0).toLocaleString()+' characters'+(d.truncated?' (truncated — earlier portion not assessed)':''));
+    rvRender(d);
+  }catch(err){ rvStatus('Review failed: '+err.message,true); }
+  finally{ if(btn){ btn.disabled=false; btn.textContent='Review call'; } }
+}
+
+function rvRender(d){
+  /* Hold the review here rather than relying on the caller having set it.
+     Confirming reads from this; if it were ever unset the verdict would appear
+     to register and quietly fill nothing. */
+  _rvReview=d;
+  const q=t=>t?'<div style="border-left:3px solid #e5e7eb;padding:4px 0 4px 9px;margin-top:5px;font-size:.73rem;color:#4b5563;font-style:italic;line-height:1.45;">'+rvEsc(t)+'</div>':'';
+  const g=d.primaryGap;
+  let h='';
+
+  if(g){
+    h+='<div style="background:#fdf4f2;border:1px solid #f0d8d2;border-radius:10px;padding:12px 14px;margin-bottom:12px;">'+
+      '<div style="font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:#a03526;font-weight:700;">The one gap to coach</div>'+
+      '<div style="font-size:.95rem;font-weight:800;color:#1f2937;line-height:1.35;margin:2px 0 3px;">'+rvEsc(g.behaviour)+'</div>'+
+      '<div style="font-size:.72rem;color:#6b7280;">Part '+g.part+' — '+rvEsc(g.partName)+(g.mustHit?' · '+rvEsc(g.mustHit):'')+'</div>'+
+      q(g.evidence)+
+      '<div style="font-size:.76rem;color:#4b5563;line-height:1.45;margin-top:7px;">'+rvEsc(g.why||'')+'</div>'+
+      (g.suggestedWording?'<div style="font-size:.74rem;color:#4b5563;background:#fff;border-radius:7px;padding:7px 9px;margin-top:7px;font-style:italic;">“'+rvEsc(g.suggestedWording)+'”</div>':'')+
+      (g.observableNextTime?'<div style="font-size:.71rem;color:#6b7280;margin-top:6px;"><strong>Look for next time:</strong> '+rvEsc(g.observableNextTime)+'</div>':'')+
+      '</div>';
+  } else {
+    h+='<div style="background:#f8fafb;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:.8rem;color:#4b5563;">'+
+       'No single gap could be identified from this call. '+rvEsc((d.secondaryNotes||[]).join(' ')||'')+'</div>';
+  }
+
+  if(d.callSummary) h+='<div style="font-size:.77rem;color:#4b5563;line-height:1.5;margin-bottom:8px;">'+rvEsc(d.callSummary)+'</div>';
+  if(d.lostAt&&d.lostAt.part) h+='<div style="font-size:.75rem;color:#6b7280;margin-bottom:10px;"><strong>Sale lost at Part '+d.lostAt.part+' — '+rvEsc(d.lostAt.partName)+'.</strong> '+rvEsc(d.lostAt.what||'')+(d.lostAt.avoidable===false?' <em>Judged not avoidable by the agent.</em>':'')+'</div>';
+
+  /* Auto-fails and anything needing human QA are surfaced here even though the
+     gap is what gets coached — a disclosure miss is not a coaching preference. */
+  const flags=(d.compliance||[]).filter(c=>c.autoFail||c.status==='potential_violation_verification_needed');
+  if(flags.length){
+    h+='<div style="border:1px solid #f0d8d2;border-radius:9px;overflow:hidden;margin-bottom:10px;">';
+    flags.forEach(c=>{
+      h+='<div style="padding:8px 11px;border-bottom:1px solid #fbeeea;background:#fffaf9;">'+
+        (c.autoFail?'<span style="font-size:.6rem;font-weight:800;background:#a03526;color:#fff;border-radius:4px;padding:1px 5px;margin-right:6px;">AUTO-FAIL</span>':'')+
+        '<span style="font-size:.76rem;font-weight:600;color:#1f2937;">'+rvEsc(c.check)+'</span>'+
+        '<div style="font-size:.68rem;color:#9ca3af;margin-top:2px;">'+rvEsc(c.source||'')+'</div>'+q(c.evidence)+'</div>';
+    });
+    h+='</div>';
+  }
+  if(d.humanReviewRequired) h+='<div style="background:#fdf4f2;border:1px solid #f0d8d2;border-radius:8px;padding:9px 11px;font-size:.74rem;color:#a03526;margin-bottom:10px;"><strong>Human QA review required.</strong> A possible policy issue was raised that this review cannot settle.</div>';
+
+  h+='<div style="background:#f8fafb;border:1.5px solid #cfe3b4;border-radius:10px;padding:12px 13px;">'+
+     '<div style="font-size:.78rem;font-weight:800;color:#2E5220;margin-bottom:2px;">Is that the right gap?</div>'+
+     '<div style="font-size:.71rem;color:#6b7280;margin-bottom:9px;">Your answer is what the log stores. Confirming fills the two fields below; you can still edit them.</div>'+
+     '<div style="display:flex;gap:7px;flex-wrap:wrap;" id="rv-verdict">'+
+       ['Correct','Partly right','Wrong'].map(v=>'<button type="button" class="btn btn-outline" data-v="'+v+'" onclick="rvSetVerdict(this)" style="font-size:.74rem;padding:5px 12px;">'+v+'</button>').join('')+
+     '</div></div>';
+  document.getElementById('rv-out').innerHTML=h;
+}
+
+function rvSetVerdict(btn){
+  _rvVerdict=btn.dataset.v;
+  document.querySelectorAll('#rv-verdict button').forEach(b=>{
+    const on=b===btn;
+    b.style.background=on?'#5E8A50':''; b.style.color=on?'#fff':''; b.style.borderColor=on?'#5E8A50':'';
+  });
+  /* Confirming writes the proposal into the fields the log already stores. On
+     "Wrong" nothing is written — the team lead types the gap themselves, which
+     is the whole point of asking. */
+  const hi=document.getElementById('cl-hi'), opp=document.getElementById('cl-opp');
+  const d=_rvReview||{}, g=d.primaryGap;
+  if(hi&&!hi.value.trim()&&d.coaching&&d.coaching.strength) hi.value=d.coaching.strength;
+  if(opp&&g&&_rvVerdict!=='Wrong'&&!opp.value.trim()){
+    opp.value=g.behaviour+(g.suggestedWording?'\n\nSay instead: “'+g.suggestedWording+'”':'')+
+      (g.observableNextTime?'\n\nLook for next time: '+g.observableNextTime:'');
+  }
+  if(_rvVerdict==='Wrong'&&opp) opp.focus();
+  if(typeof saveDraftLog==='function') saveDraftLog();
+}
+
 async function saveCL(){
   const agent=document.getElementById('cl2-agent').value;
   const tl=document.getElementById('cl2-tl').value;
@@ -10945,6 +11107,7 @@ async function saveCL(){
   const score=clScore();
   const level=clLevel(score);
   const notesEl=document.getElementById('cl-notes');
+
   const clEntry={
     id: uid(),
     date,
