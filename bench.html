@@ -97,6 +97,8 @@ button.b:focus-visible{outline:2px solid var(--accent2);outline-offset:2px}
     <div class="note">
       <b>How a part is scored.</b> Not word for word. A stage is <b>done</b> if it happened and achieved its purpose however it was worded, <b>partial</b> if it got part of the way, <b>missed</b> only if its purpose was not served. Partial carries half weight. A stage the call never reached is left out of the total rather than scored zero.
       <br><br>
+      <b>Same call, same review, no second charge.</b> A transcript already reviewed in the last hour comes back from the earlier run rather than being re-read. Pressing the button twice costs once.
+      <br><br>
       <b>QA guardrails are switched off.</b> The reviewer reads the call flow only. Nothing is scored against the QA guide, and no policy findings are produced — that section was not behaving the way it needed to, so it was taken out rather than left half-right. It can be switched back on without rebuilding anything.
     </div>
   </div>
@@ -201,7 +203,7 @@ function rvRender(d){
       h+='<div style="padding:8px 11px;border-bottom:1px solid #f3f4f6;">'+
         '<div style="font-size:.75rem;font-weight:600;color:#1f2937;">'+ts(o.timestamp)+'Part '+o.n+' — '+E(o.partName)+'</div>'+
         '<div style="font-size:.74rem;color:#4b5563;line-height:1.45;margin-top:2px;">'+E(o.what)+'</div>'+
-        (o.why?'<div style="font-size:.7rem;color:#6b7280;margin-top:1px;">'+E(o.why)+'</div>':'')+'</div>';
+        '</div>';
     });
     h+='</div>';
   }
@@ -209,6 +211,7 @@ function rvRender(d){
   const co=d.coaching||{};
   if(co.strength) h+='<div style="font-size:.76rem;color:#2f6b4a;margin-top:12px;"><strong>Did well:</strong> '+E(co.strength)+'</div>';
   if(d.limitations) h+='<div style="font-size:.7rem;color:#9ca3af;margin-top:6px;">'+E(d.limitations)+'</div>';
+  if(d.reusedFromEarlierRun) h+='<div style="font-size:.68rem;color:#9ca3af;margin-top:4px;">Shown from an earlier review of this same transcript — not re-run, not re-billed.</div>';
 
   /* 6 — The team lead's ruling, which is what the log stores. */
   h+='<div style="background:#f8fafb;border:1.5px solid #cfe3b4;border-radius:10px;padding:12px 13px;margin-top:14px;">'+
