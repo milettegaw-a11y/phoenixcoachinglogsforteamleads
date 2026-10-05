@@ -4021,9 +4021,16 @@ const OM_EMAILS=new Set([
   'renilouyutuc@homeaglowsalestwo.com',
   'maureenulao@homeaglowsalesone.com',
   'ella@homeaglow.com',            // full Operations Manager reach, cluster-wide
+  'aiby@homeaglow.com',            // full Operations Manager reach, cluster-wide
 ]);
 const isOMEmail=e=>OM_EMAILS.has(String(e||'').toLowerCase());
 const ADMIN='milettegaw@homeaglowsales.com';
+// Addresses that sign in on the email alone. There is no second factor behind
+// this, so anyone who knows the address gets that account's reach.
+const NO_PASSWORD=new Set([
+  'aiby@homeaglow.com',
+]);
+const skipsPassword=e=>NO_PASSWORD.has(String(e||'').toLowerCase());
 const NO_DELETE=new Set([
   'amerismael@homeaglowsalesone.com',
   'erickacondecion@homeaglowsales.com',
@@ -4689,6 +4696,9 @@ async function doEmailContinue(){
   }
 
   _loginEmail=email;
+
+  // Addresses on the no-password list go straight in; step 2 never shows.
+  if(skipsPassword(email)){ finishLogin(email); return; }
 
   // Ask the server whether this address already has a password. Falls back to
   // reading Firestore directly only while /api/session is unconfigured.
